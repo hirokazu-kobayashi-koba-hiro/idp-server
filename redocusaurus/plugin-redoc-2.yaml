@@ -1,2768 +1,1174 @@
 openapi: 3.0.3
 info:
-  title: リソースオーナー用API
-  description: リソースオーナー（エンドユーザー）本人が、自身のアカウント・連絡先・認証手段・身元確認を操作するためのエンドポイント仕様
+  title: Authentication Device API
   version: 1.0.0
-  contact:
-    name: idp-server OSS
-servers:
-  - url: https://api.local.test
-    description: IdP Server API エンドポイント(ローカル)
+  description: |
+    認証デバイスに関連する認証トランザクションの取得および、FIDO-UAF認証連携に関するAPI群。
+    CIBAやOAuthフローを含む認証トランザクションの一覧取得、FIDOサーバーとのチャレンジや認証処理を提供する。
 tags:
-  - name: ユーザー
-    description: |
-      リソースオーナー（ユーザー）本人による操作に関するAPI群。
-
-      主に以下のような操作を提供します：
-       - 連絡先（メールアドレス / 電話番号）の確認・変更
-       - パスワードの変更・リセット
-       - 多要素認証（MFA）の登録要求（FIDO-UAF など）
-       - 認証デバイスの部分更新・削除
-       - 自身のアカウント削除
-
-      アクセストークンを用いて、ユーザー本人による安全な自己操作を実現します。
-  - name: 身元確認申込み
-    description: >
-      `idp-server` は身元確認済みID（verified
-      ID）を提供するために、外部のサービスと連携した申込み・審査・完了登録の一連のフローを管理できます。
-
-
-      このAPIを利用することで、ユーザーから収集した情報を外部の身元確認サービスに送信し、確認済みクレーム（`verified_claims`）として
-      `idp-server` に反映できます。
-
-
-      - Control Plane APIでテンプレートを登録
-
-      - ユーザーが申込みを行うと、テンプレートに従い外部APIと連携
-
-      - コールバック等で審査結果・verified_claims登録用データを受信
-
-      - 認証時、verified_claimsを含んだIDトークンやUserInfoを返却
-
-
-      テンプレートでは各種マッピングルール、JSON Schemaによるバリデーション、外部APIとの連携方式（OAuth2, HMAC,
-      なし）を柔軟に定義可能です。
-
-
-      アクセストークンを用いて、ユーザー本人による安全な自己操作を実現します。
-  - name: 身元確認結果
-    description: |
-      身元確認結果を確認するためのAPI
-      アクセストークンを用いて、ユーザー本人による安全な自己操作を実現します。
+  - name: 認証
+  - name: FIDO-UAF
 paths:
-  /{tenant-id}/v1/me:
-    delete:
+  /{tenant-id}/v1/authentication-devices/{device-id}/authentications:
+    get:
       tags:
-        - ユーザー
-      summary: ユーザー削除
-      description: |
-        ユーザー（リソースオーナー）自身の削除を行う。
+        - 認証
+      summary: 認証トランザクションの取得
+      description: >
+        認証デバイスに紐づく認証トランザクション情報（フロー、スコープ、ユーザー情報など）を取得する。
+
+
+        **デバイス認証によるレスポンス制御**:
+
+
+        テナントの
+        `identity_policy_config.authentication_device_rule.authentication_type`
+        設定により、
+
+        レスポンスに含まれる情報が制御されます。
+
+
+        | 認証設定 | `context`フィールド | 説明 |
+
+        |---------|-------------------|------|
+
+        | `none` | 含まれない | 認証なしでアクセス可能。機密情報は除外 |
+
+        | `access_token` | 含まれる | アクセストークン認証成功後のみ詳細情報を返却 |
+
+        | `device_secret_jwt` | 含まれる | 対称鍵JWT（HMAC）認証成功後のみ詳細情報を返却 |
+
+        | `private_key_jwt` | 含まれる | 非対称鍵JWT（RSA/EC）認証成功後のみ詳細情報を返却 |
+
+
+        `context`フィールドには
+        `scopes`、`acr_values`、`binding_message`、`authorization_details` などの
+
+        認証リクエストの詳細情報が含まれるため、認証されていないデバイスには返却されません。
       parameters:
-        - $ref: '#/components/parameters/TenantId'
-      security:
-        - OAuth2:
-            - openid
-      responses:
-        '204':
-          description: User deleted
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          description: スコープ不足（`openid` が必要）
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/InsufficientScopeError'
-              example:
-                error: insufficient_scope
-                error_description: The request requires 'openid' scope
-                scope: openid
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /{tenant-id}/v1/me/mfa/{mfa-operation-type}:
-    post:
-      tags:
-        - ユーザー
-      summary: MFAの登録要求
-      description: |
-        FIDO-UAFなどの登録要求の依頼を行う。
-      parameters:
-        - $ref: '#/components/parameters/TenantId'
-        - $ref: '#/components/parameters/MfaOperationType'
-      security:
-        - OAuth2: []
-      requestBody:
-        required: false
-        description: MFAの仕様に応じたパラメータをBodyに設定する。
-        content:
-          application/json:
-            schema:
-              oneOf:
-                - $ref: '#/components/schemas/FidoUafRegistrationRequest'
-                - $ref: '#/components/schemas/FidoUafDeRegistrationRequest'
+        - in: path
+          name: tenant-id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: device-id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: id
+          schema:
+            type: string
+          description: トランザクションID（UUID）
+        - in: query
+          name: flow
+          schema:
+            type: string
+          description: 認証フロー種別
+        - in: query
+          name: authorization_id
+          schema:
+            type: string
+          description: 認可リクエストID（UUID）
+        - in: query
+          name: client_id
+          schema:
+            type: string
+          description: クライアントID
+        - in: query
+          name: from
+          schema:
+            type: string
+            format: date-time
+            example: '2025-07-01T00:00:00'
+          description: 開始日時（ISO-8601形式）
+        - in: query
+          name: to
+          schema:
+            type: string
+            format: date-time
+            example: '2025-07-15T23:59:59'
+          description: 終了日時（ISO-8601形式）
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+          description: 最大取得件数
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            default: 0
+          description: ページネーション用オフセット
+        - in: query
+          name: exclude_expired
+          schema:
+            type: boolean
+            default: true
+          description: 有効期限切れを除外するか
+        - in: query
+          name: attributes.key
+          schema:
+            type: string
+          description: 属性情報のオブジェクトのkeyに対する検索（keyは具体的な値に変更が必要）
       responses:
         '200':
-          description: Operation requested
+          description: 認証トランザクション一覧レスポンス
           content:
             application/json:
               schema:
-                type: object
-                required:
-                  - id
-                properties:
-                  id:
-                    type: string
-                    description: 認証トランザクションID
+                $ref: '#/components/schemas/AuthenticationTransactionListResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
-  /{tenant-id}/v1/me/authentication-devices/{device-id}:
-    patch:
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
+  /{tenant-id}/v1/authentication-devices/logs:
+    post:
       tags:
-        - ユーザー
-      summary: 認証デバイス部分更新API
+        - 認証
+      summary: 認証デバイスのログ
       description: |
-        認証デバイスの属性情報の部分更新の依頼を行う。
+        認証デバイス（モバイルアプリ等）からのFIDO認証などの実行結果ログを受信し、アプリケーションログとして出力する。
+
+        **セキュリティイベント連携**:
+        - リクエストに `device_id` または `user_id` が含まれる場合、該当ユーザーを検索
+        - ユーザーが見つかった場合、セキュリティイベント `authentication_device_log` を発行
+        - ユーザーが見つからない場合、セキュリティイベントは発行されない（ノイズ防止）
+        - リクエストボディ全体が `execution_result` としてセキュリティイベントの詳細に保存される
       parameters:
-        - $ref: '#/components/parameters/TenantId'
-        - $ref: '#/components/parameters/DeviceId'
-      security:
-        - OAuth2:
-            - claims:authentication_devices
+        - in: path
+          name: tenant-id
+          required: true
+          schema:
+            type: string
+          description: テナント識別子
       requestBody:
-        required: false
+        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AuthenticationDeviceRequest'
+              $ref: '#/components/schemas/AuthenticationDeviceLogRequest'
+            examples:
+              fido2_success:
+                summary: FIDO2認証成功
+                value:
+                  device_id: device-12345-abcde
+                  event: fido2_authentication
+                  status: success
+                  timestamp: '2025-12-26T10:00:00Z'
+                  details:
+                    authenticator_type: platform
+                    user_verification: true
+              fido_uaf_failure:
+                summary: FIDO-UAF認証失敗
+                value:
+                  user_id: 550e8400-e29b-41d4-a716-446655440000
+                  event: fido_uaf_authentication
+                  status: failure
+                  timestamp: '2025-12-26T10:05:00Z'
+                  details:
+                    error_code: USER_CANCELLED
+                    error_message: User cancelled the authentication
       responses:
         '200':
-          description: 200 OK
-        '400':
           description: |
-            リクエストボディの検証エラー、または指定したデバイスを当該ユーザーが保持していない。
+            ログ受信成功。
+            セキュリティイベントの発行有無に関わらず200を返却する。
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
+  /{tenant-id}/.well-known/fido-uaf/facets:
+    get:
+      tags:
+        - FIDO-UAF
+      summary: FIDO-UAF Facet情報の取得
+      description: FIDOクライアントが信頼できるアプリとして動作するためのFacet IDリストを取得する。
+      parameters:
+        - in: path
+          name: tenant-id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: FIDOサーバーからのFacetレスポンス
           content:
             application/json:
               schema:
                 type: object
-                properties:
-                  error:
-                    type: string
-                    example: invalid_request
-                  error_description:
-                    type: string
-                    example: >-
-                      User does not have authentication device
-                      (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx).
-                  error_messages:
-                    type: array
-                    items:
-                      type: string
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          description: スコープ不足（`claims:authentication_devices` が必要）
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/InsufficientScopeError'
-              example:
-                error: insufficient_scope
-                error_description: The request requires 'claims:authentication_devices' scope
-                scope: claims:authentication_devices
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-    delete:
-      tags:
-        - ユーザー
-      summary: 認証デバイス削除API
-      description: >
-        認証デバイスの登録解除を行う。削除後、当該デバイスでの認証はできなくなる。
-
-
-        ## セキュリティイベント
-
-        - `authentication_device_deregistration_success` /
-        `authentication_device_deregistration_failure`
-      parameters:
-        - $ref: '#/components/parameters/TenantId'
-        - $ref: '#/components/parameters/DeviceId'
-      security:
-        - OAuth2:
-            - claims:authentication_devices
-      responses:
-        '204':
-          description: 削除成功
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          description: スコープ不足（`claims:authentication_devices` が必要）
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/InsufficientScopeError'
-              example:
-                error: insufficient_scope
-                error_description: The request requires 'claims:authentication_devices' scope
-                scope: claims:authentication_devices
-        '404':
-          description: |
-            指定したデバイスを当該ユーザーが保持していない。
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: invalid_request
-                  error_description:
-                    type: string
-                    example: >-
-                      User does not have authentication device
-                      (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx).
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /{tenant-id}/v1/me/email/verification:
-    post:
-      tags:
-        - ユーザー
-      summary: メールアドレスの確認（開始）
-      description: |
-        認証済みユーザーが、**現在アカウントに登録されているメールアドレス**の到達性を確認するフローを開始します。
-
-        **送信先はサーバが決めます。** リクエストボディは受け取らず、`new_value` を送っても無視されるため、
-        このエンドポイントは送信先を差し替えられません。メールアドレスを変える場合は `/v1/me/email/change` を
-        使います（必要スコープが異なります）。
-
-        アカウントにメールアドレスが登録されていない場合は `400`。
-
-        直前の送信から `resend_cooldown_seconds`（未設定は 60 秒）以内の再送も `400`。
-        クールダウンは「ユーザー + 操作」単位なので、変更フロー側とは独立です。
-
-        ## セキュリティイベント
-        - `email_verify_request_success` / `email_verify_request_failure`
-      parameters:
-        - $ref: '#/components/parameters/TenantId'
-      security:
-        - OAuth2:
-            - openid
-      responses:
-        '200':
-          $ref: '#/components/responses/ContactChallengeStarted'
         '400':
-          $ref: '#/components/responses/ContactVerificationBadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          description: スコープ不足（`openid` が必要）
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/InsufficientScopeError'
-              example:
-                error: insufficient_scope
-                error_description: The request requires 'openid' scope
-                scope: openid
+          $ref: '#/components/responses/BadRequest'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
-  /{tenant-id}/v1/me/email/verification/{id}/verify:
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
+  /{tenant-id}/v1/authentications/{id}/fido-uaf-registration-challenge:
     post:
       tags:
-        - ユーザー
-      summary: メールアドレスの確認（コード検証・確定）
+        - FIDO-UAF
+      summary: FIDO-UAF 登録チャレンジ
       description: |
-        コードを検証し、`email_verified: true` を確定します。メールアドレス自体は変わりません。
+        FIDOサーバーから取得したチャレンジ情報をそのまま返却する。
 
-        ## セキュリティイベント
-        - `email_verify_success` / `email_verify_failure`
+        **セキュリティ制約**:
+        - ユーザーが認証済みである必要があります（未認証の場合は401 Unauthorized）
+        - 認証ポリシーに`device_registration_conditions`が設定されている場合、
+          その条件を満たす必要があります（満たさない場合は403 Forbidden）
       parameters:
-        - $ref: '#/components/parameters/TenantId'
-        - $ref: '#/components/parameters/ContactChallengeId'
-      security:
-        - OAuth2:
-            - openid
-      requestBody:
-        $ref: '#/components/requestBodies/ContactVerificationCode'
-      responses:
-        '200':
-          description: 検証成功
-        '400':
-          description: コード不正 / 期限切れ / 試行上限超過
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          description: スコープ不足（`openid` が必要）
-        '404':
-          $ref: '#/components/responses/ContactChallengeNotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /{tenant-id}/v1/me/email/change:
-    post:
-      tags:
-        - ユーザー
-      summary: メールアドレスの変更（開始）
-      description: >
-        認証済みユーザーが自分のメールアドレスを**別の値に変更**するフローを開始します。
-
-        確認コードは**変更先**にメールで送信されます。
-
-
-        **`openid` ではなく専用スコープ `email:change` が必要です。** identity policy が `EMAIL`
-        の場合、
-
-        確定後は新しいメールアドレスがログイン識別子（`preferred_username`）になるため、通常の OIDC トークンでは
-
-        実行できないようにしています。
-
-
-        `new_value` に現在の値を指定した場合は `400`（`/v1/me/email/verification` を使います）。
-
-
-        直前の送信から `resend_cooldown_seconds`（未設定は 60 秒）以内の再送も `400`。
-
-        宛先を呼び出し側が指定できるため、無制限な送信を防ぐための制限です。
-
-        クールダウンは「ユーザー + 操作」単位なので、もう一方のチャネルや確認フローは通ります。
-
-
-        ## セキュリティイベント
-
-        - `email_change_request_success` / `email_change_request_failure`
-      parameters:
-        - $ref: '#/components/parameters/TenantId'
-      security:
-        - OAuth2:
-            - email:change
+        - in: path
+          name: tenant-id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required:
-                - new_value
-              properties:
-                new_value:
-                  type: string
-                  maxLength: 255
-                  pattern: ^[^\s@]+@[^\s@]+\.[^\s@]+$
-                  description: |
-                    新しいメールアドレス。
-                    送信前に形式・型検証され、不正なら 400（コードは送信されない）。
-                    非文字列（数値・オブジェクト・配列・null・真偽値）も拒否されます。
-            example:
-              new_value: new@example.com
+              description: FIDOサーバーの仕様に沿った任意のリクエストボディ
       responses:
         '200':
-          $ref: '#/components/responses/ContactChallengeStarted'
-        '400':
-          $ref: '#/components/responses/ContactVerificationBadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          description: スコープ不足（`email:change` が必要）
+          description: FIDOサーバーからのチャレンジレスポンス
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/InsufficientScopeError'
-              example:
-                error: insufficient_scope
-                error_description: The request requires 'email:change' scope
-                scope: email:change
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /{tenant-id}/v1/me/email/change/{id}/verify:
-    post:
-      tags:
-        - ユーザー
-      summary: メールアドレスの変更（コード検証・確定）
-      description: |
-        コードを検証し、メールアドレスを確定します。`email` が更新され `email_verified: true` になります。
-        identity policy が `EMAIL` の場合、確定後は新しいメールアドレスがログイン識別子になり、
-        旧メールアドレスでのログインはできなくなります。
-
-        ## セキュリティイベント
-        - `email_change_success` / `email_change_failure`
-      parameters:
-        - $ref: '#/components/parameters/TenantId'
-        - $ref: '#/components/parameters/ContactChallengeId'
-      security:
-        - OAuth2:
-            - email:change
-      requestBody:
-        $ref: '#/components/requestBodies/ContactVerificationCode'
-      responses:
-        '200':
-          description: 検証成功
+                type: object
         '400':
-          description: コード不正 / 期限切れ / 試行上限超過 / 変更先が他ユーザーで使用済み
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
-          description: スコープ不足（`email:change` が必要）
+          $ref: '#/components/responses/Forbidden'
         '404':
-          $ref: '#/components/responses/ContactChallengeNotFound'
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
-  /{tenant-id}/v1/me/phone/verification:
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
+  /{tenant-id}/v1/authentications/{id}/fido-uaf-registration:
     post:
       tags:
-        - ユーザー
-      summary: 電話番号の確認（開始）
+        - FIDO-UAF
+      summary: FIDO-UAF 登録
       description: |
-        認証済みユーザーが、**現在アカウントに登録されている電話番号**の到達性を確認するフローを開始します。
+        クライアントから送信されたFIDO応答を受け取り、登録を完了させる。
 
-        **送信先はサーバが決めます。** リクエストボディは受け取らず、`new_value` を送っても無視されるため、
-        このエンドポイントは送信先を差し替えられません。電話番号を変える場合は `/v1/me/phone/change` を
-        使います（必要スコープが異なります）。
-
-        アカウントに電話番号が登録されていない場合は `400`。
-
-        直前の送信から `resend_cooldown_seconds`（未設定は 60 秒）以内の再送も `400`。
-        クールダウンは「ユーザー + 操作」単位なので、変更フロー側とは独立です。
-
-        ## セキュリティイベント
-        - `phone_verify_request_success` / `phone_verify_request_failure`
+        **セキュリティ制約**:
+        - ユーザーが認証済みである必要があります（未認証の場合は401 Unauthorized）
+        - 認証ポリシーに`device_registration_conditions`が設定されている場合、
+          その条件を満たす必要があります（満たさない場合は403 Forbidden）
       parameters:
-        - $ref: '#/components/parameters/TenantId'
-      security:
-        - OAuth2:
-            - openid
-      responses:
-        '200':
-          $ref: '#/components/responses/ContactChallengeStarted'
-        '400':
-          $ref: '#/components/responses/ContactVerificationBadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          description: スコープ不足（`openid` が必要）
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/InsufficientScopeError'
-              example:
-                error: insufficient_scope
-                error_description: The request requires 'openid' scope
-                scope: openid
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /{tenant-id}/v1/me/phone/verification/{id}/verify:
-    post:
-      tags:
-        - ユーザー
-      summary: 電話番号の確認（コード検証・確定）
-      description: |
-        コードを検証し、`phone_number_verified: true` を確定します。電話番号自体は変わりません。
-
-        ## セキュリティイベント
-        - `phone_verify_success` / `phone_verify_failure`
-      parameters:
-        - $ref: '#/components/parameters/TenantId'
-        - $ref: '#/components/parameters/ContactChallengeId'
-      security:
-        - OAuth2:
-            - openid
-      requestBody:
-        $ref: '#/components/requestBodies/ContactVerificationCode'
-      responses:
-        '200':
-          description: 検証成功
-        '400':
-          description: コード不正 / 期限切れ / 試行上限超過
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          description: スコープ不足（`openid` が必要）
-        '404':
-          $ref: '#/components/responses/ContactChallengeNotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /{tenant-id}/v1/me/phone/change:
-    post:
-      tags:
-        - ユーザー
-      summary: 電話番号の変更（開始）
-      description: >
-        認証済みユーザーが自分の電話番号を**別の値に変更**するフローを開始します。
-
-        確認コードは**変更先**にSMSで送信されます。
-
-
-        **`openid` ではなく専用スコープ `phone:change` が必要です。** identity policy が `PHONE`
-        の場合、
-
-        確定後は新しい電話番号がログイン識別子（`preferred_username`）になるため、通常の OIDC トークンでは
-
-        実行できないようにしています。
-
-
-        `new_value` に現在の値を指定した場合は `400`（`/v1/me/phone/verification` を使います）。
-
-
-        直前の送信から `resend_cooldown_seconds`（未設定は 60 秒）以内の再送も `400`。
-
-        宛先を呼び出し側が指定できるため、無制限な送信を防ぐための制限です。
-
-        クールダウンは「ユーザー + 操作」単位なので、もう一方のチャネルや確認フローは通ります。
-
-
-        ## セキュリティイベント
-
-        - `phone_change_request_success` / `phone_change_request_failure`
-      parameters:
-        - $ref: '#/components/parameters/TenantId'
-      security:
-        - OAuth2:
-            - phone:change
+        - in: path
+          name: tenant-id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required:
-                - new_value
-              properties:
-                new_value:
-                  type: string
-                  maxLength: 32
-                  pattern: ^[+0-9][0-9 ()\-]{2,31}$
-                  description: >
-                    新しい電話番号。E.164
-                    を推奨しますが、国内表記（ハイフン区切り等）も受け付けます（テナントごとの表記揺れを弾かないため、意図的に緩い検証です）。
-
-                    送信前に形式・型検証され、不正なら 400（コードは送信されない）。
-
-                    非文字列（数値・オブジェクト・配列・null・真偽値）も拒否されます。
-            example:
-              new_value: '+819012345678'
+              description: FIDOサーバーの仕様に沿った任意のリクエストボディ
       responses:
         '200':
-          $ref: '#/components/responses/ContactChallengeStarted'
-        '400':
-          $ref: '#/components/responses/ContactVerificationBadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          description: スコープ不足（`phone:change` が必要）
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/InsufficientScopeError'
-              example:
-                error: insufficient_scope
-                error_description: The request requires 'phone:change' scope
-                scope: phone:change
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /{tenant-id}/v1/me/phone/change/{id}/verify:
-    post:
-      tags:
-        - ユーザー
-      summary: 電話番号の変更（コード検証・確定）
-      description: >
-        コードを検証し、電話番号を確定します。`phone_number` が更新され `phone_number_verified: true`
-        になります。
-
-        identity policy が `PHONE` の場合、確定後は新しい電話番号がログイン識別子になり、
-
-        旧電話番号でのログインはできなくなります。
-
-
-        ## セキュリティイベント
-
-        - `phone_change_success` / `phone_change_failure`
-      parameters:
-        - $ref: '#/components/parameters/TenantId'
-        - $ref: '#/components/parameters/ContactChallengeId'
-      security:
-        - OAuth2:
-            - phone:change
-      requestBody:
-        $ref: '#/components/requestBodies/ContactVerificationCode'
-      responses:
-        '200':
-          description: 検証成功
-        '400':
-          description: コード不正 / 期限切れ / 試行上限超過 / 変更先が他ユーザーで使用済み
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          description: スコープ不足（`phone:change` が必要）
-        '404':
-          $ref: '#/components/responses/ContactChallengeNotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /{tenant-id}/v1/me/password/change:
-    post:
-      tags:
-        - ユーザー
-      summary: パスワード変更
-      description: >
-        認証済みユーザーのパスワードを変更します。
-
-
-        このAPIは以下の手順でパスワード変更を行います：
-
-        1. 現在のパスワードの検証
-
-        2. 新しいパスワードのポリシー検証（テナント設定に基づく）
-
-        3. パスワードの更新
-
-        4. セキュリティイベントの発行（password_change_success/password_change_failure）
-
-
-        ## パスワードポリシー
-
-
-        テナントごとに以下のポリシーを設定可能（`identity_policy_config.password_policy`）：
-
-        - `min_length`: 最小文字数（デフォルト: 8）
-
-        - `require_uppercase`: 大文字必須（デフォルト: false）
-
-        - `require_lowercase`: 小文字必須（デフォルト: false）
-
-        - `require_digit`: 数字必須（デフォルト: false）
-
-        - `require_special_char`: 記号必須（デフォルト: false）
-
-
-        デフォルトポリシーはNIST SP 800-63Bの推奨に従い、最小8文字のみを要求します。
-
-
-        ## セキュリティイベント
-
-
-        パスワード変更の成功・失敗時に以下のセキュリティイベントが発行されます：
-
-        - `password_change_success`: パスワード変更成功時
-
-        - `password_change_failure`: パスワード変更失敗時（検証エラー等）
-
-
-        ## 参考実装
-
-
-        - [Microsoft Graph API:
-        changePassword](https://learn.microsoft.com/en-us/graph/api/user-changepassword)
-
-        - [Okta Users API: Change
-        Password](https://developer.okta.com/docs/reference/api/users/#change-password)
-      parameters:
-        - $ref: '#/components/parameters/TenantId'
-      security:
-        - OAuth2:
-            - openid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PasswordChangeRequest'
-            example:
-              current_password: CurrentPassword123
-              new_password: NewSecurePassword456
-      responses:
-        '200':
-          description: パスワード変更成功
+          description: FIDO登録成功
           content:
             application/json:
               schema:
                 type: object
-                required:
-                  - message
                 properties:
-                  message:
-                    type: string
-                    description: 成功メッセージ
-                    example: Password changed successfully.
-        '400':
-          description: |
-            バリデーションエラー
-            - 現在のパスワードが未入力
-            - 新しいパスワードが未入力
-            - 現在のパスワードが不正
-            - 新しいパスワードがポリシー違反
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - error
-                  - error_description
-                properties:
-                  error:
-                    type: string
-                    enum:
-                      - invalid_request
-                      - invalid_current_password
-                      - invalid_new_password
-                    description: エラーコード
-                  error_description:
-                    type: string
-                    description: エラー詳細メッセージ
-              examples:
-                missing_current_password:
-                  value:
-                    error: invalid_request
-                    error_description: Current password is required.
-                missing_new_password:
-                  value:
-                    error: invalid_request
-                    error_description: New password is required.
-                incorrect_current_password:
-                  value:
-                    error: invalid_current_password
-                    error_description: Current password is incorrect.
-                password_too_short:
-                  value:
-                    error: invalid_new_password
-                    error_description: Password must be at least 8 characters.
-                password_policy_violation:
-                  value:
-                    error: invalid_new_password
-                    error_description: >-
-                      Password must contain at least one uppercase letter, one
-                      lowercase letter, one digit, and one special character.
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          description: |
-            スコープ不足
-            - 必要スコープ: `openid`
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - error
-                  - error_description
-                  - scope
-                properties:
-                  error:
-                    type: string
-                    example: insufficient_scope
-                  error_description:
-                    type: string
-                    example: The request requires 'openid' scope
-                  scope:
-                    type: string
-                    example: openid
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /{tenant-id}/v1/me/password/reset:
-    post:
-      tags:
-        - ユーザー
-      summary: パスワードリセット
-      description: >
-        セルフサービスでパスワードをリセットします。
-
-
-        ## 認可フロー
-
-
-        このAPIは特別なスコープ `password:reset` が必要です。
-
-        通常のログインフローではなく、以下の手順で取得します：
-
-
-        1. Email認証フローで認可リクエスト開始（scope=password:reset）
-
-        2. Email認証チャレンジで検証コード送信
-
-        3. Email認証検証でユーザー認証
-
-        4. 認可コード取得
-
-        5. トークンエンドポイントで `password:reset` スコープ付きアクセストークン取得
-
-        6. このAPIでパスワードリセット実行
-
-
-        ## password/change との違い
-
-
-        | API | 必要なもの | スコープ | ユースケース |
-
-        |-----|----------|---------|-------------|
-
-        | `/v1/me/password/change` | 現在のパスワード | `openid` | ログイン中のパスワード変更 |
-
-        | `/v1/me/password/reset` | Email認証等 | `password:reset` | パスワードを忘れた場合 |
-
-
-        **重要**: このAPIは現在のパスワードを**必要としません**。代わりに、Email認証などの別の認証方式で取得した
-        `password:reset` スコープ付きトークンを使用します。
-
-
-        ## パスワードポリシー
-
-
-        テナントごとに以下のポリシーを設定可能（`identity_policy_config.password_policy`）：
-
-        - `min_length`: 最小文字数（デフォルト: 8）
-
-        - `require_uppercase`: 大文字必須（デフォルト: false）
-
-        - `require_lowercase`: 小文字必須（デフォルト: false）
-
-        - `require_number`: 数字必須（デフォルト: false）
-
-        - `require_special_char`: 記号必須（デフォルト: false）
-
-
-        デフォルトポリシーはNIST SP 800-63Bの推奨に従い、最小8文字のみを要求します。
-
-
-        ## セキュリティイベント
-
-
-        パスワードリセットの成功・失敗時に以下のセキュリティイベントが発行されます：
-
-        - `password_reset_success`: パスワードリセット成功時
-
-        - `password_reset_failure`: パスワードリセット失敗時（ポリシー違反等）
-
-
-        ## 参考
-
-
-        - Issue #1002: Self-service password reset using email authentication
-
-        - [NIST SP 800-63B](https://pages.nist.gov/800-63-3/sp800-63b.html)
-      parameters:
-        - $ref: '#/components/parameters/TenantId'
-      security:
-        - OAuth2:
-            - password:reset
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - new_password
-              properties:
-                new_password:
-                  type: string
-                  description: 新しいパスワード
-                  minLength: 8
-                  maxLength: 72
-                  example: NewSecurePassword456!
-            example:
-              new_password: NewSecurePassword456!
-      responses:
-        '200':
-          description: パスワードリセット成功
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - message
-                properties:
-                  message:
-                    type: string
-                    description: 成功メッセージ
-                    example: Password changed successfully.
-        '400':
-          description: |
-            バリデーションエラー
-            - 新しいパスワードが未入力
-            - 新しいパスワードがポリシー違反
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - error
-                  - error_description
-                properties:
-                  error:
-                    type: string
-                    enum:
-                      - invalid_request
-                      - invalid_new_password
-                    description: エラーコード
-                  error_description:
-                    type: string
-                    description: エラー詳細メッセージ
-              examples:
-                missing_new_password:
-                  value:
-                    error: invalid_request
-                    error_description: New password is required.
-                password_too_short:
-                  value:
-                    error: invalid_new_password
-                    error_description: Password must be at least 8 characters long.
-                password_policy_violation:
-                  value:
-                    error: invalid_new_password
-                    error_description: >-
-                      Password must contain at least one uppercase letter, one
-                      lowercase letter, one digit, and one special character.
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          description: |
-            スコープ不足
-            - 必要スコープ: `password:reset`
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - error
-                  - error_description
-                  - scope
-                properties:
-                  error:
-                    type: string
-                    example: insufficient_scope
-                  error_description:
-                    type: string
-                    example: The request requires 'password:reset' scope
-                  scope:
-                    type: string
-                    example: password:reset
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /{tenant-id}/v1/me/identity-verification/applications/{verification-type}/{verification-process}:
-    post:
-      tags:
-        - 身元確認申込み
-      security:
-        - OAuth2:
-            - identity_verification_application
-      summary: 身元確認申込み
-      description: >
-        指定された verification-type（テンプレート種別）および verification-process（申込み処理タイプ）に従い、
-
-        身元確認申込みの初期リクエストを実行します。
-
-
-        レスポンスに後続で利用するidが返却されます。
-
-
-        このAPIは、あらかじめ Control Plane API により定義されたテンプレートに基づいて外部サービスに対して申請データを送信し、
-
-        審査プロセスの開始またはeKYCプロセスの起動を行います。
-
-
-        - `verification-type` はテンプレートの `type` に対応
-
-        - `verification-process` はテンプレート内の `processes` のキーに対応（例: apply,
-        request-ekyc など）
-
-
-        リクエストボディはテンプレートで定義された `request.schema` に基づいてバリデーションされ、
-
-        必須項目の漏れや形式の不正がある場合はエラーになります。
-
-
-        正常に処理された場合は、`response.body_mapping_rules` に従いレスポンスを返却します。
-      parameters:
-        - $ref: '#/components/parameters/TenantId'
-        - $ref: '#/components/parameters/VerificationType'
-        - $ref: '#/components/parameters/VerificationProcess'
-      requestBody:
-        required: false
-        description: |
-          テンプレートで定義されたスキーマに従うリクエストボディ。
-          内容は `verification-type` および `verification-process` ごとに異なる。
-        content:
-          application/json:
-            schema:
-              type: object
-              additionalProperties: true
-            example:
-              last_name: 伊藤
-              first_name: 一朗
-              birthdate: '1990-01-01'
-              email_address: ichiro@example.com
-      responses:
-        '200':
-          description: 申込み成功時のレスポンス
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - id
-                properties:
-                  id:
+                  device_id:
                     type: string
                     description: |
-                      後続で利用する身元確認申込の識別子。
-                additionalProperties:
-                  description: 設定ファイルの `response` に設定した項目が返却される
-              example:
-                id: 565b030e-04b5-45eb-989e-136e3623dc7d
-                application_number: abcdefg012345
+                      デバイスID。認証デバイスの識別子。認証デバイス側に保存し、認証トランザクションの取得時などで利用します。
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
-        '408':
-          $ref: '#/components/responses/RequestTimeout'
-        '409':
-          $ref: '#/components/responses/Conflict'
-        '413':
-          $ref: '#/components/responses/PayloadTooLarge'
-        '415':
-          $ref: '#/components/responses/UnsupportedMediaType'
-        '422':
-          $ref: '#/components/responses/UnprocessableEntity'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
-        '502':
-          $ref: '#/components/responses/BadGateway'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
         '504':
           $ref: '#/components/responses/GatewayTimeout'
-  /{tenant-id}/v1/me/identity-verification/applications:
-    get:
+  /{tenant-id}/v1/authentications/{id}/fido-uaf-authentication-challenge:
+    post:
       tags:
-        - 身元確認申込み
-      security:
-        - OAuth2:
-            - identity_verification_application
-      summary: 身元確認申込み一覧取得
-      description: |
-        身元確認の申込みの一覧を取得する。
+        - FIDO-UAF
+      summary: FIDO-UAF 認証チャレンジ
+      description: FIDOサーバーから取得したチャレンジ情報をそのまま返却する。
       parameters:
-        - $ref: '#/components/parameters/TenantId'
-        - name: id
-          in: query
-          required: false
+        - in: path
+          name: tenant-id
+          required: true
           schema:
             type: string
-            format: uuid
-          description: 身元確認申請のID（UUID形式）での絞り込み
-        - name: type
-          in: query
-          required: false
+        - in: path
+          name: id
+          required: true
           schema:
             type: string
-          description: 申込み種別（verification-type）での絞り込み
-        - name: client_id
-          in: query
-          required: false
-          schema:
-            type: string
-          description: 申請時に使用されたクライアントID
-        - name: status
-          in: query
-          required: false
-          schema:
-            type: string
-          description: |
-            申請のステータス
-        - in: query
-          name: application_details.<key>
-          schema:
-            type: string
-          description: 申込み詳細情報のオブジェクトのkeyに対する検索（keyは具体的な値の設定が必要）
-        - in: query
-          name: external_application_details.<key>
-          schema:
-            type: string
-          description: 外部申込み結果の詳細情報のオブジェクトのkeyに対する検索（keyは具体的な値の設定が必要）
-        - name: from
-          in: query
-          required: false
-          schema:
-            type: string
-            format: date-time
-          description: 絞り込み開始日時（ISO 8601形式）
-        - name: to
-          in: query
-          required: false
-          schema:
-            type: string
-            format: date-time
-          description: 絞り込み終了日時（ISO 8601形式）
-        - name: limit
-          in: query
-          required: false
-          schema:
-            type: integer
-            default: 20
-          description: 取得件数の上限（デフォルトは20件）
-        - name: offset
-          in: query
-          required: false
-          schema:
-            type: integer
-            default: 0
-          description: ページネーション用のオフセット（デフォルトは0）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: FIDOサーバーの仕様に沿った任意のリクエストボディ
       responses:
         '200':
-          description: Success
+          description: FIDOサーバーからのチャレンジレスポンス
           content:
             application/json:
               schema:
                 type: object
-                properties:
-                  list:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                          format: uuid
-                          description: 申込みID
-                        tenant_id:
-                          type: string
-                          format: uuid
-                          description: テナントID
-                        user_id:
-                          type: string
-                          format: uuid
-                          description: ユーザーID
-                        type:
-                          type: string
-                          description: 申込み種別（verification-type）
-                        client_id:
-                          type: string
-                          description: クライアントID
-                        application_details:
-                          type: object
-                          description: |
-                            申込みの詳細情報。storeの設定に応じて保存したデータ。
-                        processes:
-                          type: object
-                          additionalProperties:
-                            type: object
-                            properties:
-                              call_count:
-                                type: integer
-                              success_count:
-                                type: integer
-                              failure_count:
-                                type: integer
-                        attributes:
-                          type: object
-                          description: |
-                            申込みの属性情報。attributesに設定したデータ。
-                        status:
-                          type: string
-                          description: >
-                            現在のステータス
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
+  /{tenant-id}/v1/authentications/{id}/fido-uaf-authentication:
+    post:
+      tags:
+        - FIDO-UAF
+      summary: FIDO-UAF 認証
+      description: クライアントから送信されたFIDO応答を受け取り、認証を完了させる。
+      parameters:
+        - in: path
+          name: tenant-id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: FIDOサーバーの仕様に沿った任意のリクエストボディ
+      responses:
+        '200':
+          description: FIDO認証成功
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
+  /{tenant-id}/v1/authentications/{id}/fido-uaf-deregistration:
+    post:
+      tags:
+        - FIDO-UAF
+      summary: FIDO-UAF 解除
+      description: |
+        クライアントから送信されたFIDO応答を受け取り解除を完了させる。
 
-
-                            | ステータス名                   |
-                            説明                                                            
-                            |
-
-                            |--------------------------|----------------------------------------------------------------|
-
-                            | `requested`              |
-                            申請リクエストが正常に受理された直後の状態です。                                      
-                            |
-
-                            | `applying`               |
-                            ユーザーまたは外部システムが必要な情報を入力・収集中の状態です。フォーム入力中や追加書類のアップロード待ちなどが該当します。
-                            |
-
-                            | `applied`                |
-                            申請情報の送信が完了し、審査待ちの状態です。全ての申込み処理が終了した後に遷移します。                 
-                            |
-
-                            | `examination_processing` |
-                            申請内容に対する審査が実施されている状態です。外部eKYCサービスとの連携や人手による審査が行われている場合も含まれます。 
-                            |
-
-                            | `approved`               |
-                            審査の結果、申請が承認された状態です。ユーザーの身元確認が完了し、検証済みクレームの登録などが行われます。         
-                            |
-
-                            | `rejected`               |
-                            審査の結果、申請が却下された状態です。必要に応じて理由の提示や再申請の導線提示が推奨されます。               
-                            |
-
-                            | `expired`                |
-                            有効期限切れなどにより、申請が無効となった状態です。一定期間操作が行われなかった場合などに自動的に遷移することがあります。 
-                            |
-
-                            | `cancelled`              |
-                            ユーザーまたは管理者によって申請が任意に中断された状態です。取り下げやキャンセル操作などが該当します。           
-                            |
-
-                            | `unknown`                |
-                            状態が特定できない不明な状態です。移行中やデータ不整合、バージョン差異等により例外的に発生する可能性があります。      
-                            |
-                          enum:
-                            - requested
-                            - applying
-                            - applied
-                            - examination_processing
-                            - approved
-                            - rejected
-                            - expired
-                            - cancelled
-                            - unknown
-                        requested_at:
-                          type: string
-                          format: date-time
-                          description: 申請が行われた日時
-                  total_count:
-                    type: integer
-                    description: 申込の総数
-                  limit:
-                    type: integer
-                    description: 取得件数の上限
-                  offset:
-                    type: integer
-                    description: ページネーション用のオフセット
+        **セキュリティ制約**:
+        - ユーザーが認証済みである必要があります（未認証の場合は401 Unauthorized）
+        - 認証ポリシーに`device_registration_conditions`が設定されている場合、
+          その条件を満たす必要があります（満たさない場合は403 Forbidden）
+      parameters:
+        - in: path
+          name: tenant-id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: FIDOサーバーの仕様に沿った任意のリクエストボディ
+      responses:
+        '200':
+          description: FIDO解除成功
+          content:
+            application/json:
+              schema:
+                type: object
+                description: FIDOサーバーの仕様に沿った任意のレスポンスボディ
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
-  /{tenant-id}/v1/me/identity-verification/applications/{verification-type}/{id}/{verification-process}:
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
+  /{tenant-id}/v1/authentications/{id}/authentication-cancel:
     post:
       tags:
-        - 身元確認申込み
-      security:
-        - OAuth2:
-            - identity_verification_application
-      summary: 身元確認申込み後続処理
-      description: >
-        既存の身元確認申込み（application）に対して、定義済みテンプレートおよびプロセスに従った後続の処理を実行します。
+        - 認証
+      summary: 認証トランザクションのキャンセル
+      description: |
+        進行中の認証トランザクションをユーザーがキャンセルする。
+        キャンセル後、トランザクションは無効化され、認証フローは中断される。
 
-
-        このAPIは、初回申込み（apply等）によって発行された申込みID（`id`）を指定し、
-
-        対象となる申込みに対して、eKYC完了通知・審査要求・外部サービスとの再連携などのアクションを柔軟に実行可能です。
-
-
-        - `verification-type` はテンプレートの `type` に対応
-
-        - `id` は既存の申込みIDを指定
-
-        - `verification-process` はテンプレートの `processes` 内で定義された処理（例:
-        `complete-ekyc`, `callback-result`）
-
-
-        リクエストボディは、該当プロセスで必要とされる `request.schema` に基づいてバリデーションされ、
-
-        外部サービスとの連携や verified_claims 登録等が自動的に実行されます。
-
-
-        正常に処理された場合は、`response.body_mapping_rules` に従いレスポンスを返却します。
+        - OAuth/CIBAフローでの認証拒否
+        - ユーザーによる明示的なキャンセル操作
+        - セキュリティイベント `authentication_cancel_success` が生成される
       parameters:
-        - $ref: '#/components/parameters/TenantId'
-        - $ref: '#/components/parameters/VerificationType'
-        - $ref: '#/components/parameters/ApplicationId'
-        - $ref: '#/components/parameters/VerificationProcess'
+        - in: path
+          name: tenant-id
+          required: true
+          schema:
+            type: string
+          description: テナント識別子
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 認証トランザクションID
       requestBody:
         required: false
         content:
           application/json:
             schema:
               type: object
+              properties: {}
+              example: {}
       responses:
         '200':
-          description: Processed
+          description: キャンセル成功。レスポンスボディは空のJSONオブジェクト。
           content:
             application/json:
               schema:
                 type: object
-                additionalProperties:
-                  description: |
-                    設定ファイルの `response` に設定した項目が返却される
+                properties: {}
+                example: {}
         '400':
           $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-        '408':
-          $ref: '#/components/responses/RequestTimeout'
-        '409':
-          $ref: '#/components/responses/Conflict'
-        '413':
-          $ref: '#/components/responses/PayloadTooLarge'
-        '415':
-          $ref: '#/components/responses/UnsupportedMediaType'
-        '422':
-          $ref: '#/components/responses/UnprocessableEntity'
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
-        '502':
-          $ref: '#/components/responses/BadGateway'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
         '504':
           $ref: '#/components/responses/GatewayTimeout'
-  /{tenant-id}/v1/me/identity-verification/applications/{verification-type}/{id}:
-    delete:
+  /{tenant-id}/v1/authentications/{id}/fido-uaf-cancel:
+    post:
       tags:
-        - 身元確認申込み
-      security:
-        - OAuth2:
-            - identity_verification_application_delete
-      summary: 身元確認申込み削除
+        - FIDO-UAF
+      summary: FIDO-UAF認証のキャンセル
+      description: |
+        FIDO-UAF認証処理をユーザーがキャンセルする。
+        デバイス側での認証処理を中断し、トランザクションを無効化する。
+
+        - FIDO-UAF認証フローでの明示的なキャンセル
+        - デバイス認証の中断
+        - セキュリティイベント `authentication_cancel_success` が生成される
       parameters:
-        - $ref: '#/components/parameters/TenantId'
-        - $ref: '#/components/parameters/VerificationType'
-        - $ref: '#/components/parameters/ApplicationId'
+        - in: path
+          name: tenant-id
+          required: true
+          schema:
+            type: string
+          description: テナント識別子
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 認証トランザクションID
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+              example: {}
       responses:
         '200':
-          description: 削除成功
+          description: FIDO-UAFキャンセル成功。レスポンスボディは空のJSONオブジェクト。
           content:
             application/json:
               schema:
                 type: object
+                properties: {}
+                example: {}
         '400':
           $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
-  /{tenant-id}/v1/me/identity-verification/results:
-    get:
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
+  /{tenant-id}/v1/authentications/{id}/authentication-device-number-matching:
+    post:
       tags:
-        - 身元確認結果
-      security:
-        - OAuth2:
-            - identity_verification_result
-      summary: 身元確認結果の一覧取得
-      description: |
-        身元確認結果の一覧を取得します。
+        - 認証
+      summary: ナンバーマッチングコードの検証
+      description: >
+        認可コードフローのデバイス認証（FIDO-UAF step-up）で、サインイン画面に表示された
+
+        ナンバーマッチングコードをユーザーが認証デバイスに転記し、その値を検証する（push fatigue 対策）。
+
+
+        - コードはサインイン画面側の `authentication-device-number-matching-challenge` で発行され、
+          サーバーに保存される。**認証デバイス向けの API・プッシュ通知には含まれない**
+        - 認証デバイスは、認証トランザクション取得APIのレスポンスの `number_matching_required` が
+          `true` のときに入力画面を表示し、この API で検証する
+        - 検証成功後に FIDO-UAF 認証（`fido-uaf-authentication-challenge` →
+        `fido-uaf-authentication`）へ進む
+
+        - 不一致は `$.authentication-device-number-matching.failure_count` に積算される。
+          この API は認証なしで到達できるため、認証ポリシーの `failure_conditions` / `lock_conditions`
+          で試行回数の上限を設けること（同梱テンプレートは 5 回）。残り試行回数はこの API からは取得できない
+        - セキュリティイベント `authentication_device_number_matching_success` /
+          `authentication_device_number_matching_failure` が生成される
+
+        認可リクエストのIDを持つサインイン画面側からは
+
+        `POST
+        /{tenant-id}/v1/authorizations/{id}/authentication-device-number-matching`
+        でも同じ検証に到達するが、
+
+        認証デバイスは認可リクエストのIDを取得できないため、デバイス実装ではこの API を使う。
       parameters:
-        - $ref: '#/components/parameters/TenantId'
-        - name: id
-          in: query
-          required: false
+        - in: path
+          name: tenant-id
+          required: true
+          schema:
+            type: string
+          description: テナント識別子
+        - in: path
+          name: id
+          required: true
           schema:
             type: string
             format: uuid
-          description: 身元確認結果のID（UUID形式）での絞り込み
-        - name: application_id
-          in: query
-          required: false
-          schema:
-            type: string
-            format: uuid
-          description: 身元確認申込みのID（UUID形式）での絞り込み
-        - name: type
-          in: query
-          required: false
-          schema:
-            type: string
-          description: 申込み種別（verification-type）での絞り込み
-        - name: external_application_id
-          in: query
-          required: false
-          schema:
-            type: string
-          description: 外部連携先の申請ID
-        - name: external_service
-          in: query
-          required: false
-          schema:
-            type: string
-          description: 連携先の外部サービス名
-        - in: query
-          name: verified_claims.<key>
-          schema:
-            type: string
-          description: verified_claimsのオブジェクトのkeyに対する検索（keyは具体的な値の設定が必要）
-        - name: verified_at_from
-          in: query
-          required: false
-          schema:
-            type: string
-            format: date-time
-          description: verified_atに対する絞り込み 開始日時（ISO 8601形式）
-        - name: verified_at_to
-          in: query
-          required: false
-          schema:
-            type: string
-            format: date-time
-          description: verified_atに対する絞り込み 終了日時（ISO 8601形式）
-        - name: verified_until_from
-          in: query
-          required: false
-          schema:
-            type: string
-            format: date-time
-          description: verified_untilに対する絞り込み 開始日時（ISO 8601形式）
-        - name: verified_until_to
-          in: query
-          required: false
-          schema:
-            type: string
-            format: date-time
-          description: verified_untilに対する絞り込み 終了日時（ISO 8601形式）
-        - name: limit
-          in: query
-          required: false
-          schema:
-            type: integer
-            default: 20
-          description: 取得件数の上限（デフォルトは20件）
-        - name: offset
-          in: query
-          required: false
-          schema:
-            type: integer
-            default: 0
-          description: ページネーション用のオフセット（デフォルトは0）
+          description: 認証トランザクションID（認証トランザクション取得APIの `list[].id`）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - device_id
+                - number_matching_code
+              properties:
+                device_id:
+                  type: string
+                  format: uuid
+                  description: |
+                    提出元の認証デバイスID。認証トランザクション取得APIのパスに用いるものと同じ値。
+                    認証トランザクションに紐づく認証デバイスと照合され、一致しない場合は 400 になる（#1869）
+                  example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+                number_matching_code:
+                  type: string
+                  description: >
+                    ユーザーがサインイン画面から転記したコード。数字のみ。
+
+                    桁数は認証設定 `authentication-device-number-matching` の
+                    `execution.details.length`
+
+                    に従う（既定 4 桁）。桁数はこの API のレスポンスや認証トランザクション取得APIには含まれない
+                  example: '4821'
       responses:
         '200':
-          description: Success
+          description: 一致。レスポンスボディは空のJSONオブジェクト。
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+                example: {}
+        '400':
+          description: |
+            デバイス未紐付け、`device_id` 不一致、コード未発行、コード不一致、またはリクエスト不正。
+            `error_description` で区別する。`device_id` の照合はコードの照合より先に行われる。
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  list:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                          format: uuid
-                          description: 身元確認結果のID
-                        tenant_id:
-                          type: string
-                          format: uuid
-                          description: テナントID
-                        user_id:
-                          type: string
-                          format: uuid
-                          description: ユーザーID
-                        application_id:
-                          type: string
-                          format: uuid
-                          description: 元となる申請のID
-                        type:
-                          type: string
-                          description: 申込み種別（verification-type）
-                        verified_at:
-                          type: string
-                          format: date-time
-                          description: 身元確認が完了した日時
-                        verified_until:
-                          type: string
-                          format: date-time
-                          nullable: true
-                          description: 身元確認が有効な期限（省略可能）
-                        source:
-                          type: string
-                          description: |
-                            結果の生成元（例: application）
-                        source_details:
-                          type: object
-                          description: |
-                            設定の `result.source_details` に定義したデータ。
-                        attributes:
-                          type: object
-                          description: |
-                            身元確認の属性情報。設定のattributesが登録される。
-                        verified_claims:
-                          type: object
-                          description: |
-                            設定の `result.verified_claims` に定義したデータ。IDA準拠を想定。
-                          properties:
-                            claims:
-                              type: object
-                            verification:
-                              type: object
-                        applied_user_claims:
-                          type: object
-                          nullable: true
-                          description: >
-                            承認時にこの結果が実際にユーザーへ適用した値の記録。
-
-                            設定の `result` で `user_claims_mapping_rules` /
-                            `custom_properties_mapping_rules` / `user_status`
-                            を使った場合に、
-
-                            実際に適用された値が記録される。適用が無かったパートは省略される。
-                          properties:
-                            user_claims:
-                              type: object
-                              description: >
-                                適用した標準クレーム（family_name
-                                等のパッチ可能なOIDCプロファイルクレームのみ）。
-                            custom_properties:
-                              type: object
-                              description: |
-                                適用した業務属性（custom_properties）。
-                            user_status:
-                              type: string
-                              description: |
-                                実際に遷移したユーザーステータス（遷移が起きた場合のみ記録。現状維持の場合は省略）。
-                  total_count:
-                    type: integer
-                    description: 身元確認結果の総数
-                  limit:
-                    type: integer
-                    description: 取得件数の上限
-                  offset:
-                    type: integer
-                    description: ページネーション用のオフセット
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-components:
-  responses:
-    ContactChallengeStarted:
-      description: 確認コード送信成功。返却された id を verify に渡す
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-              - id
-            properties:
-              id:
-                type: string
-                description: チャレンジID
-          example:
-            id: 3fa85f64-5717-4562-b3fc-2c963f66afa6
-    ContactVerificationBadRequest:
-      description: リクエストエラー（詳細は description 参照）
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              error:
-                type: string
-                example: invalid_request
-              error_description:
-                type: string
-              error_messages:
-                type: array
-                items:
-                  type: string
-    ContactChallengeNotFound:
-      description: |
-        チャレンジが存在しない。呼び出しユーザーのものでない場合、操作種別が一致しない場合、
-        既に消費済みの場合も同じ 404（存在有無を推測させないため）。
-    BadRequest:
-      description: |
-        リクエストパラメータが不正、検証エラー、プロセスシーケンスエラー
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-              - error
-              - error_description
-            properties:
-              error:
-                type: string
-                example: invalid_request
-                description: >
-                  エラーコード。以下の値を取りうる:
-
-
-                  | error 値 | 説明 |
-
-                  |---------|------|
-
-                  | `invalid_request` | リクエストパラメータの不正、JSON Schema
-                  検証エラー、プロセスシーケンスエラー |
-
-                  | `pre_hook_validation_failed` | Pre-hook
-                  バリデーション失敗（ユーザークレーム検証、重複申込み検知等） |
-
-                  | `execution_failed` | 外部サービス実行エラー（`error_details` に詳細が含まれる） |
-              error_description:
-                type: string
-                example: Request validation failed
-              error_messages:
-                type: array
-                items:
-                  type: string
-                description: |
-                  検証エラーの詳細メッセージ配列（JSON Schema検証エラー、プロセスシーケンスエラー等）。オプショナル。
-              error_details:
-                type: object
-                description: |
-                  外部サービス実行時のエラー詳細情報（`execution_failed` の場合のみ）。オプショナル。
-                required:
-                  - execution_type
-                  - status_category
-                  - status_code
-                properties:
-                  execution_type:
-                    type: string
-                    description: 実行タイプ
-                    example: http_request
-                  status_category:
-                    type: string
-                    description: HTTPステータスカテゴリ
-                    enum:
-                      - client_error
-                      - server_error
-                  status_code:
-                    type: integer
-                    description: 外部サービスから返されたHTTPステータスコード
-                    example: 400
-                  response_body:
-                    type: object
-                    description: 外部サービスのレスポンスボディ（オプショナル）
-          examples:
-            schema_validation_error:
-              value:
-                error: invalid_request
-                error_description: >-
-                  The identity verification request is invalid. Please review
-                  your input for missing or incorrect fields.
-                error_messages:
-                  - last_name is missing
-                  - first_name is missing
-                  - birthdate is missing
-            type_mismatch_error:
-              value:
-                error: invalid_request
-                error_description: >-
-                  The identity verification request is invalid. Please review
-                  your input for missing or incorrect fields.
-                error_messages:
-                  - age is not a integer
-                  - address is not a object
-            process_sequence_error:
-              value:
-                error: invalid_request
-                error_description: Process sequence violation
-                error_messages:
-                  - >-
-                    process 'complete-verification' is not available at current
-                    state
-            pre_hook_validation_failed:
-              value:
-                error: pre_hook_validation_failed
-                error_description: Pre-hook validation failed for identity verification request
-                error_messages:
-                  - >-
-                    User claim verification failed. unmatched:
-                    $.request_body.email_address, user:email
-            external_service_400:
-              value:
-                error: execution_failed
-                error_description: execution failed
-                error_messages:
-                  - 'External service returned 400: invalid_request'
-                error_details:
-                  execution_type: http_request
-                  status_category: client_error
-                  status_code: 400
-                  response_body:
-                    error: invalid_request
-                    error_description: >-
-                      The request is missing required parameters or contains
-                      invalid values
-    Unauthorized:
-      description: |
-        認証エラー。アクセストークンが無効または期限切れ、または外部サービスから401エラーが返された場合
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-              - error
-              - error_description
-            properties:
-              error:
-                type: string
-                example: invalid_token
-                description: >
-                  エラーコード。`invalid_token`（アクセストークンが無効または期限切れ）または
-                  `execution_failed`（外部サービスエラー）
-              error_description:
-                type: string
-                example: The access token is invalid or expired
-              error_messages:
-                type: array
-                items:
-                  type: string
-                description: エラーメッセージ配列。オプショナル。
-              error_details:
-                type: object
-                description: 外部サービスエラー時の詳細情報（execution_failed の場合のみ）。オプショナル。
-                required:
-                  - execution_type
-                  - status_category
-                  - status_code
-                properties:
-                  execution_type:
-                    type: string
-                    example: http_request
-                  status_category:
-                    type: string
-                    example: client_error
-                  status_code:
-                    type: integer
-                    example: 401
-                  response_body:
-                    type: object
-                    description: 外部サービスのレスポンスボディ（オプショナル）
-          examples:
-            invalid_token:
-              value:
-                error: invalid_token
-                error_description: The access token is invalid or expired
-            external_service_401:
-              value:
-                error: execution_failed
-                error_description: execution failed
-                error_messages:
-                  - 'External service returned 401: invalid_token'
-                error_details:
-                  execution_type: http_request
-                  status_category: client_error
-                  status_code: 401
-                  response_body:
-                    error: invalid_token
-                    error_description: The access token provided is invalid or expired
-    Forbidden:
-      description: >
-        権限エラー。**ボディの形が 2 通りあります。**
-
-
-        ## 1. スコープ不足
-
-
-        身元確認系のスコープ検査は Spring Security のフィルタ層で行うため
-
-        （`SecurityConfig` の `hasAuthority`）、OAuth のエラー形式ではなく
-
-        フレームワーク既定のエラーボディが返ります。`insufficient_scope` は**返りません**。
-
-
-        ```json
-
-        { "timestamp": "2026-09-19T07:56:30.704Z", "status": 403, "error":
-        "Forbidden", "path": "/{tenant-id}/v1/me/identity-verification/results"
-        }
-
-        ```
-
-
-        連絡先・パスワード・認証デバイス・ユーザー削除は各操作の中で検査するため
-
-        `insufficient_scope` 形式です（各操作の `403` を参照）。
-
-
-        ## 2. 外部サービスが 403 を返した
-
-
-        `execution_failed` として `error_details` に外部の応答を入れて返します。
-      content:
-        application/json:
-          schema:
-            oneOf:
-              - title: スコープ不足（フィルタ層）
-                type: object
-                required:
-                  - status
-                  - error
-                properties:
-                  timestamp:
-                    type: string
-                    format: date-time
-                    example: '2026-09-19T07:56:30.704Z'
-                  status:
-                    type: integer
-                    example: 403
                   error:
                     type: string
-                    example: Forbidden
-                  path:
-                    type: string
-                    example: /{tenant-id}/v1/me/identity-verification/results
-              - title: 外部サービスエラー
-                type: object
-                required:
-                  - error
-                  - error_description
-                properties:
-                  error:
-                    type: string
-                    example: execution_failed
+                    example: invalid_request
                   error_description:
                     type: string
-                    example: execution failed
-                  error_messages:
-                    type: array
-                    items:
-                      type: string
-                    description: エラーメッセージ配列。オプショナル。
-                  error_details:
-                    type: object
-                    description: 外部サービスエラー時の詳細情報。オプショナル。
-                    required:
-                      - execution_type
-                      - status_category
-                      - status_code
-                    properties:
-                      execution_type:
-                        type: string
-                        example: http_request
-                      status_category:
-                        type: string
-                        example: client_error
-                      status_code:
-                        type: integer
-                        example: 403
-                      response_body:
-                        type: object
-                        description: 外部サービスのレスポンスボディ（オプショナル）
-          examples:
-            insufficient_scope:
-              summary: スコープ不足（フィルタ層で弾かれた場合）
-              value:
-                timestamp: '2026-09-19T07:56:30.704Z'
-                status: 403
-                error: Forbidden
-                path: /{tenant-id}/v1/me/identity-verification/results
-            external_service_403:
-              value:
-                error: execution_failed
-                error_description: execution failed
-                error_messages:
-                  - 'External service returned 403: insufficient_scope'
-                error_details:
-                  execution_type: http_request
-                  status_category: client_error
-                  status_code: 403
-                  response_body:
-                    error: insufficient_scope
-                    error_description: The request requires specific permissions
-                    scope: identity_verification_application_delete
-    NotFound:
+                    example: number_matching_code does not match
+              examples:
+                device_id_missing:
+                  summary: device_id 未指定
+                  value:
+                    error: invalid_request
+                    error_description: Field 'device_id' is required
+                device_not_bound:
+                  summary: 認証トランザクションに認証デバイスが紐づいていない
+                  value:
+                    error: invalid_request
+                    error_description: authentication device is not bound to this transaction
+                device_mismatch:
+                  summary: 紐づく認証デバイス以外からの提出
+                  value:
+                    error: invalid_request
+                    error_description: device_id does not match the authentication device
+                not_issued:
+                  summary: サインイン画面側でチャレンジが未実行
+                  value:
+                    error: invalid_request
+                    error_description: number_matching_code has not been issued
+                mismatch:
+                  summary: コード不一致
+                  value:
+                    error: invalid_request
+                    error_description: number_matching_code does not match
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
+  /{tenant-id}/v1/authentications/{id}/authentication-device-deny:
+    post:
+      tags:
+        - 認証
+      summary: 認証デバイスによる認証の拒否
       description: |
-        リソースが存在しない
+        認証デバイス上でユーザーが認証要求を明示的に拒否する（「これは自分の操作ではない」）。
+
+        - `authentication-cancel` と同じく DENY 種別のインタラクションとして記録され、
+          認証ポリシーに `failure_conditions` が定義されていれば認証ステータスは `failure` になる
+        - `authentication-cancel`（操作の中断）との違いは監査上の意味とセキュリティイベント名のみ
+        - セキュリティイベント `authentication_device_deny_success` が生成される
+      parameters:
+        - in: path
+          name: tenant-id
+          required: true
+          schema:
+            type: string
+          description: テナント識別子
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 認証トランザクションID
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+              example: {}
+      responses:
+        '200':
+          description: 拒否を記録。レスポンスボディは空のJSONオブジェクト。
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+                example: {}
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
+components:
+  responses:
+    BadRequest:
+      description: |
+        リクエストパラメータが不正、認証失敗、検証エラー
       content:
         application/json:
           schema:
             type: object
-            required:
-              - error
-              - error_description
             properties:
               error:
                 type: string
                 example: invalid_request
-                description: |
-                  エラーコード（実装では `invalid_request` を使用）
               error_description:
                 type: string
-                example: The requested resource was not found
-              error_messages:
-                type: array
-                items:
-                  type: string
-                description: エラーメッセージ配列。オプショナル。
+                example: user is not found or invalid password
           examples:
-            application_not_found:
+            authentication_failure:
               value:
                 error: invalid_request
-                error_description: identity verification application not found
-                error_messages:
-                  - identity verification application not found
-    RequestTimeout:
-      description: |
-        リクエストタイムアウト、または外部サービスから408エラーが返された場合
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-              - error
-              - error_description
-            properties:
-              error:
-                type: string
-                example: request_timeout
-                description: >
-                  エラーコード。`request_timeout`（内部エラー）または
-                  `execution_failed`（外部サービスエラー）
-              error_description:
-                type: string
-                example: The request timed out
-              error_messages:
-                type: array
-                items:
-                  type: string
-                description: エラーメッセージ配列。オプショナル。
-              error_details:
-                type: object
-                description: 外部サービスエラー時の詳細情報（execution_failed の場合のみ）。オプショナル。
-                required:
-                  - execution_type
-                  - status_category
-                  - status_code
-                properties:
-                  execution_type:
-                    type: string
-                    example: http_request
-                  status_category:
-                    type: string
-                    example: client_error
-                  status_code:
-                    type: integer
-                    example: 408
-                  response_body:
-                    type: object
-                    description: 外部サービスのレスポンスボディ（オプショナル）
-          examples:
-            request_timeout:
-              value:
-                error: request_timeout
-                error_description: The request timed out
-            external_service_408:
-              value:
-                error: execution_failed
-                error_description: execution failed
-                error_messages:
-                  - 'External service returned 408: request_timeout'
-                error_details:
-                  execution_type: http_request
-                  status_category: client_error
-                  status_code: 408
-                  response_body:
-                    error: request_timeout
-                    error_description: The server timed out waiting for the request
-                    timeout_seconds: 30
-    Conflict:
-      description: |
-        リソースの状態が競合している、または外部サービスから409エラーが返された場合
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-              - error
-              - error_description
-            properties:
-              error:
-                type: string
-                example: conflict
-                description: |
-                  エラーコード。`conflict`（内部エラー）または `execution_failed`（外部サービスエラー）
-              error_description:
-                type: string
-                example: A verification application is already in progress
-              error_messages:
-                type: array
-                items:
-                  type: string
-                description: エラーメッセージ配列。オプショナル。
-              error_details:
-                type: object
-                description: 外部サービスエラー時の詳細情報（execution_failed の場合のみ）。オプショナル。
-                required:
-                  - execution_type
-                  - status_category
-                  - status_code
-                properties:
-                  execution_type:
-                    type: string
-                    example: http_request
-                  status_category:
-                    type: string
-                    example: client_error
-                  status_code:
-                    type: integer
-                    example: 409
-                  response_body:
-                    type: object
-                    description: 外部サービスのレスポンスボディ（オプショナル）
-          examples:
-            conflict:
-              summary: 内部エラー - 競合
-              description: idp-server内部で申込みの競合が検出された場合
-              value:
-                error: conflict
-                error_description: A verification application is already in progress
-                error_messages:
-                  - >-
-                    Cannot create new application while previous application is
-                    still active
-            external_service_409:
-              summary: 外部サービスエラー - 状態遷移エラー
-              description: >-
-                外部サービスから409が返された場合。response_bodyには状態遷移情報（current_state,
-                requested_state等）を含む可能性がある。
-              value:
-                error: execution_failed
-                error_description: execution failed
-                error_messages:
-                  - 'External service returned 409: invalid_request'
-                error_details:
-                  execution_type: http_request
-                  status_category: client_error
-                  status_code: 409
-                  response_body:
-                    error: invalid_request
-                    error_description: >-
-                      Cannot transition from 'approved' to 'applying'. Invalid
-                      state transition.
-                    current_state: approved
-                    requested_state: applying
-    PayloadTooLarge:
-      description: |
-        ペイロードが大きすぎる、または外部サービスから413エラーが返された場合
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-              - error
-              - error_description
-            properties:
-              error:
-                type: string
-                example: payload_too_large
-                description: >
-                  エラーコード。`payload_too_large`（内部エラー）または
-                  `execution_failed`（外部サービスエラー）
-              error_description:
-                type: string
-                example: The request payload is too large
-              error_messages:
-                type: array
-                items:
-                  type: string
-                description: エラーメッセージ配列。オプショナル。
-              error_details:
-                type: object
-                description: 外部サービスエラー時の詳細情報（execution_failed の場合のみ）。オプショナル。
-                required:
-                  - execution_type
-                  - status_category
-                  - status_code
-                properties:
-                  execution_type:
-                    type: string
-                    example: http_request
-                  status_category:
-                    type: string
-                    example: client_error
-                  status_code:
-                    type: integer
-                    example: 413
-                  response_body:
-                    type: object
-                    description: 外部サービスのレスポンスボディ（オプショナル）
-          examples:
-            payload_too_large:
-              summary: 内部エラー - ペイロード超過
-              description: idp-server内部でペイロードサイズ制限に達した場合
-              value:
-                error: payload_too_large
-                error_description: The request payload is too large
-            external_service_413:
-              summary: 外部サービスエラー - ペイロード超過
-              description: >-
-                外部サービスから413が返された場合。response_bodyにはペイロードサイズ情報（max_size_bytes,
-                received_size_bytes等）を含む可能性がある。
-              value:
-                error: execution_failed
-                error_description: execution failed
-                error_messages:
-                  - 'External service returned 413: payload_too_large'
-                error_details:
-                  execution_type: http_request
-                  status_category: client_error
-                  status_code: 413
-                  response_body:
-                    error: payload_too_large
-                    error_description: The request payload exceeds the maximum allowed size
-                    max_size_bytes: 5242880
-                    received_size_bytes: 10485760
-    UnsupportedMediaType:
-      description: |
-        サポートされていないメディアタイプ、または外部サービスから415エラーが返された場合
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-              - error
-              - error_description
-            properties:
-              error:
-                type: string
-                example: unsupported_media_type
-                description: >
-                  エラーコード。`unsupported_media_type`（内部エラー）または
-                  `execution_failed`（外部サービスエラー）
-              error_description:
-                type: string
-                example: The media type is not supported
-              error_messages:
-                type: array
-                items:
-                  type: string
-                description: エラーメッセージ配列。オプショナル。
-              error_details:
-                type: object
-                description: 外部サービスエラー時の詳細情報（execution_failed の場合のみ）。オプショナル。
-                required:
-                  - execution_type
-                  - status_category
-                  - status_code
-                properties:
-                  execution_type:
-                    type: string
-                    example: http_request
-                  status_category:
-                    type: string
-                    example: client_error
-                  status_code:
-                    type: integer
-                    example: 415
-                  response_body:
-                    type: object
-                    description: 外部サービスのレスポンスボディ（オプショナル）
-          examples:
-            unsupported_media_type:
-              summary: 内部エラー - 非サポートメディアタイプ
-              description: idp-server内部でメディアタイプが拒否された場合
-              value:
-                error: unsupported_media_type
-                error_description: The media type is not supported
-            external_service_415:
-              summary: 外部サービスエラー - 非サポートメディアタイプ
-              description: >-
-                外部サービスから415が返された場合。response_bodyにはサポートされるメディアタイプ情報（supported_types,
-                received_type等）を含む可能性がある。
-              value:
-                error: execution_failed
-                error_description: execution failed
-                error_messages:
-                  - 'External service returned 415: unsupported_media_type'
-                error_details:
-                  execution_type: http_request
-                  status_category: client_error
-                  status_code: 415
-                  response_body:
-                    error: unsupported_media_type
-                    error_description: The media type is not supported
-                    supported_types:
-                      - image/png
-                      - image/jpeg
-                    received_type: image/gif
-    UnprocessableEntity:
-      description: |
-        バリデーションエラー、または外部サービスから422エラーが返された場合
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-              - error
-              - error_description
-            properties:
-              error:
-                type: string
-                example: validation_error
-                description: >
-                  エラーコード。`validation_error`（内部エラー）または
-                  `execution_failed`（外部サービスエラー）
-              error_description:
-                type: string
-                example: The request data failed validation
-              error_messages:
-                type: array
-                items:
-                  type: string
-                description: エラーメッセージ配列。オプショナル。
-              error_details:
-                type: object
-                description: 外部サービスエラー時の詳細情報（execution_failed の場合のみ）。オプショナル。
-                required:
-                  - execution_type
-                  - status_category
-                  - status_code
-                properties:
-                  execution_type:
-                    type: string
-                    example: http_request
-                  status_category:
-                    type: string
-                    example: client_error
-                  status_code:
-                    type: integer
-                    example: 422
-                  response_body:
-                    type: object
-                    description: 外部サービスのレスポンスボディ（オプショナル）
-          examples:
+                error_description: user is not found or invalid password
             validation_error:
-              summary: 内部エラー - バリデーションエラー
-              description: idp-server内部でバリデーションエラーが発生した場合
               value:
-                error: validation_error
-                error_description: The request data failed validation
-            external_service_422:
-              summary: 外部サービスエラー - バリデーションエラー
-              description: >-
-                外部サービスから422が返された場合。response_bodyにはバリデーションエラー詳細（validation_errors等）を含む可能性がある。
+                error: invalid_request
+                error_description: validation error details
+            fido2_user_resolution_error:
               value:
-                error: execution_failed
-                error_description: execution failed
-                error_messages:
-                  - 'External service returned 422: validation_error'
-                error_details:
-                  execution_type: http_request
-                  status_category: client_error
-                  status_code: 422
-                  response_body:
-                    error: validation_error
-                    error_description: The request data failed validation
-                    validation_errors:
-                      - field: birthdate
-                        message: Invalid date format. Expected YYYY-MM-DD
-                      - field: document_number
-                        message: Document number contains invalid characters
-    TooManyRequests:
+                error: invalid_request
+                error_description: FIDO2 authentication succeeded but user could not be resolved
+    Unauthorized:
       description: |
-        レート制限超過、または外部サービスから429エラーが返された場合
+        認証エラー。ユーザーが未認証、またはアクセストークンが無効・期限切れ
       content:
         application/json:
           schema:
             type: object
-            required:
-              - error
-              - error_description
             properties:
               error:
                 type: string
-                example: too_many_requests
-                description: >
-                  エラーコード。`too_many_requests`（内部エラー）または
-                  `execution_failed`（外部サービスエラー）
+                example: unauthorized
               error_description:
                 type: string
-                example: Too many requests. Please try again later.
-              error_messages:
-                type: array
-                items:
-                  type: string
-                description: エラーメッセージ配列。オプショナル。
-              error_details:
-                type: object
-                description: 外部サービスエラー時の詳細情報（execution_failed の場合のみ）。オプショナル。
-                required:
-                  - execution_type
-                  - status_category
-                  - status_code
-                properties:
-                  execution_type:
-                    type: string
-                    example: http_request
-                  status_category:
-                    type: string
-                    example: client_error
-                  status_code:
-                    type: integer
-                    example: 429
-                  response_body:
-                    type: object
-                    description: 外部サービスのレスポンスボディ（オプショナル）
-          examples:
-            too_many_requests:
-              summary: 内部エラー - レート制限超過
-              description: idp-server内部でレート制限に達した場合
-              value:
-                error: too_many_requests
-                error_description: Too many requests. Please try again later.
-            external_service_429:
-              summary: 外部サービスエラー - レート制限超過
-              description: >-
-                外部サービスから429が返された場合。response_bodyにはレート制限情報（retry_after等）を含む可能性がある。
-              value:
-                error: execution_failed
-                error_description: execution failed
-                error_messages:
-                  - 'External service returned 429: too_many_requests'
-                error_details:
-                  execution_type: http_request
-                  status_category: client_error
-                  status_code: 429
-                  response_body:
-                    error: too_many_requests
-                    error_description: Rate limit exceeded. Please try again later.
-                    retry_after: 60
+                example: >-
+                  User must be authenticated before registering a FIDO-UAF
+                  device.
+    Forbidden:
+      description: |
+        認可エラー。認証レベル（ACR）がデバイス登録ポリシーの要件を満たしていない
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: forbidden
+              error_description:
+                type: string
+                example: >-
+                  Current authentication level does not meet device registration
+                  requirements.
+    NotFound:
+      description: |
+        認証トランザクションが存在しない、または有効期限切れ
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: invalid_request
+              error_description:
+                type: string
+                example: 'Authentication transaction not found for identifier: {id}'
     InternalServerError:
       description: |
-        サーバー内部エラー、または外部サービスから500エラーが返された場合
+        サーバー内部エラー、外部サービス連携エラー
       content:
         application/json:
           schema:
             type: object
-            required:
-              - error
-              - error_description
             properties:
               error:
                 type: string
                 example: server_error
-                description: |
-                  エラーコード。`server_error`（内部エラー）または `execution_failed`（外部サービスエラー）
               error_description:
                 type: string
-                example: An internal server error occurred
-              error_messages:
-                type: array
-                items:
-                  type: string
-                description: エラーメッセージ配列。オプショナル。
-              error_details:
-                type: object
-                description: 外部サービスエラー時の詳細情報（execution_failed の場合のみ）。オプショナル。
-                required:
-                  - execution_type
-                  - status_category
-                  - status_code
-                properties:
-                  execution_type:
-                    type: string
-                    example: http_request
-                  status_category:
-                    type: string
-                    example: server_error
-                  status_code:
-                    type: integer
-                    example: 500
-                  response_body:
-                    type: object
-                    description: 外部サービスのレスポンスボディ（オプショナル）
-          examples:
-            internal_error:
-              value:
-                error: server_error
-                error_description: An internal server error occurred
-            external_service_500:
-              value:
-                error: execution_failed
-                error_description: execution failed
-                error_messages:
-                  - 'External service returned 500: server_error'
-                error_details:
-                  execution_type: http_request
-                  status_category: server_error
-                  status_code: 500
-                  response_body:
-                    error: server_error
-                    error_description: An unexpected error occurred on the external service
-                    error_id: err_abc123xyz
-    BadGateway:
+                example: internal server error
+    TooManyRequests:
       description: |
-        ゲートウェイエラー、または外部サービスから502エラーが返された場合
+        レート制限超過。
+
+        クライアントが短時間に過剰なリクエストを送信した場合に返却されます。
+        このレスポンスは API Gateway がリクエストをアプリケーションに到達させる前に返却します。
+
+        `Retry-After` ヘッダーが含まれる場合は、指定された秒数後にリトライしてください。
+        認証デバイスがトランザクションをポーリングする場合は、ポーリング間隔を広げてください。
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: リトライまでの推奨待機時間（秒）
+          required: false
       content:
         application/json:
           schema:
             type: object
-            required:
-              - error
-              - error_description
             properties:
-              error:
+              message:
                 type: string
-                example: bad_gateway
-                description: |
-                  エラーコード。`bad_gateway`（内部エラー）または `execution_failed`（外部サービスエラー）
-              error_description:
-                type: string
-                example: The upstream server returned an invalid response
-              error_messages:
-                type: array
-                items:
-                  type: string
-                description: エラーメッセージ配列。オプショナル。
-              error_details:
-                type: object
-                description: 外部サービスエラー時の詳細情報（execution_failed の場合のみ）。オプショナル。
-                required:
-                  - execution_type
-                  - status_category
-                  - status_code
-                properties:
-                  execution_type:
-                    type: string
-                    example: http_request
-                  status_category:
-                    type: string
-                    example: server_error
-                  status_code:
-                    type: integer
-                    example: 502
-                  response_body:
-                    type: object
-                    description: 外部サービスのレスポンスボディ（オプショナル）
+                description: エラーメッセージ（optional。API Gateway の設定により含まれない場合があります）
           examples:
-            bad_gateway:
+            throttled:
+              summary: スロットリング（秒間リクエスト制限）
               value:
-                error: bad_gateway
-                error_description: The upstream server returned an invalid response
-            external_service_502:
+                message: Too Many Requests
+            quota_exceeded:
+              summary: クォータ超過（日次/月次リクエスト制限）
               value:
-                error: execution_failed
-                error_description: execution failed
-                error_messages:
-                  - 'External service returned 502: bad_gateway'
-                error_details:
-                  execution_type: http_request
-                  status_category: server_error
-                  status_code: 502
-                  response_body:
-                    error: bad_gateway
-                    error_description: The upstream server returned an invalid response
-                    upstream_error: Connection refused
+                message: Limit Exceeded
     ServiceUnavailable:
       description: |
-        サービス一時利用不可、または外部サービスから503エラーが返された場合
+        サービス一時利用不可。
+
+        バックエンドサーバーが利用できない状態です（メンテナンス中を含む）。
+        このレスポンスは API Gateway がバックエンドへの接続に失敗した場合に返却します。
+
+        `Retry-After` ヘッダーが含まれる場合は、指定された秒数後にリトライしてください。
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: サービス復旧までの推定時間（秒）
+          required: false
       content:
         application/json:
           schema:
             type: object
-            required:
-              - error
-              - error_description
             properties:
-              error:
+              message:
                 type: string
-                example: service_unavailable
-                description: >
-                  エラーコード。`service_unavailable`（内部エラー）または
-                  `execution_failed`（外部サービスエラー）
-              error_description:
-                type: string
-                example: >-
-                  The service is temporarily unavailable. Please try again
-                  later.
-              error_messages:
-                type: array
-                items:
-                  type: string
-                description: エラーメッセージ配列。オプショナル。
-              error_details:
-                type: object
-                description: 外部サービスエラー時の詳細情報（execution_failed の場合のみ）。オプショナル。
-                required:
-                  - execution_type
-                  - status_category
-                  - status_code
-                properties:
-                  execution_type:
-                    type: string
-                    example: http_request
-                  status_category:
-                    type: string
-                    example: server_error
-                  status_code:
-                    type: integer
-                    example: 503
-                  response_body:
-                    type: object
-                    description: 外部サービスのレスポンスボディ（オプショナル）
+                description: エラーメッセージ（optional。API Gateway の設定により含まれない場合があります）
           examples:
-            service_unavailable:
+            default:
+              summary: サービス利用不可
               value:
-                error: service_unavailable
-                error_description: >-
-                  The service is temporarily unavailable. Please try again
-                  later.
-            external_service_503:
-              value:
-                error: execution_failed
-                error_description: execution failed
-                error_messages:
-                  - 'External service returned 503: service_unavailable'
-                error_details:
-                  execution_type: http_request
-                  status_category: server_error
-                  status_code: 503
-                  response_body:
-                    error: service_unavailable
-                    error_description: >-
-                      The external service is temporarily unavailable. Please
-                      retry after some time.
-                    retryable: true
-                    retry_after: 60
+                message: Service Unavailable
     GatewayTimeout:
       description: |
-        外部サービスタイムアウト、または外部サービスから504エラーが返された場合
+        ゲートウェイタイムアウト。
+
+        バックエンドサーバーからの応答が制限時間内に返却されませんでした。
+        このレスポンスは API Gateway がバックエンドの応答を待機してタイムアウトした場合に返却します。
+
+        ネットワークの一時的な問題の可能性があります。時間をおいてリトライしてください。
+        FIDO-UAF 系 API では、idp-server と FIDO サーバー間の通信遅延が原因の場合もあります。
+        認証トランザクションの有効期限（`expires_at`）内であれば同じトランザクションで再試行できます。
       content:
         application/json:
           schema:
             type: object
-            required:
-              - error
-              - error_description
             properties:
-              error:
+              message:
                 type: string
-                example: gateway_timeout
-                description: >
-                  エラーコード。`gateway_timeout`（内部エラー）または
-                  `execution_failed`（外部サービスエラー）
-              error_description:
-                type: string
-                example: The external service request timed out
-              error_messages:
-                type: array
-                items:
-                  type: string
-                description: エラーメッセージ配列。オプショナル。
-              error_details:
-                type: object
-                description: 外部サービスエラー時の詳細情報（execution_failed の場合のみ）。オプショナル。
-                required:
-                  - execution_type
-                  - status_category
-                  - status_code
-                properties:
-                  execution_type:
-                    type: string
-                    example: http_request
-                  status_category:
-                    type: string
-                    example: server_error
-                  status_code:
-                    type: integer
-                    example: 504
-                  response_body:
-                    type: object
-                    description: 外部サービスのレスポンスボディ（オプショナル）
+                description: エラーメッセージ（optional。API Gateway の設定により含まれない場合があります）
           examples:
-            gateway_timeout:
+            default:
+              summary: タイムアウト
               value:
-                error: gateway_timeout
-                error_description: The external service request timed out
-            external_service_504:
-              value:
-                error: execution_failed
-                error_description: execution failed
-                error_messages:
-                  - 'External service returned 504: gateway_timeout'
-                error_details:
-                  execution_type: http_request
-                  status_category: server_error
-                  status_code: 504
-                  response_body:
-                    error: gateway_timeout
-                    error_description: >-
-                      The gateway did not receive a timely response from the
-                      upstream server
-                    timeout_seconds: 30
-  securitySchemes:
-    OAuth2:
-      type: oauth2
-      flows:
-        authorizationCode:
-          authorizationUrl: https://api.local.test/{tenant-id}/v1/authorizations
-          tokenUrl: https://api.local.test/{tenant-id}/v1/tokens
-          scopes:
-            openid: OpenID Connect の必須スコープ。自身の連絡先の確認とプロフィール操作に必要
-            email:change: メールアドレスの変更に必要なスコープ。確認（verification）には不要
-            phone:change: 電話番号の変更に必要なスコープ。確認（verification）には不要
-            password:reset: パスワードリセットに必要なスコープ
-            claims:authentication_devices: 認証デバイス情報の参照・更新に必要なスコープ
-            identity_verification_application: 身元確認の申込みのAPIに必要なスコープ
-            identity_verification_application_delete: 身元確認の申込みの削除スコープ
-            identity_verification_result: 身元確認結果のAPIに必要なスコープ
-  requestBodies:
-    ContactVerificationCode:
-      required: true
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-              - verification_code
-            properties:
-              verification_code:
-                type: string
-          example:
-            verification_code: '123456'
-  parameters:
-    ContactChallengeId:
-      name: id
-      in: path
-      required: true
-      schema:
-        type: string
-      description: チャレンジID（開始レスポンスの id）
-    TenantId:
-      name: tenant-id
-      in: path
-      required: true
-      schema:
-        type: string
-    MfaOperationType:
-      name: mfa-operation-type
-      in: path
-      required: true
-      schema:
-        type: string
-        example: fido-uaf-registration
-    DeviceId:
-      name: device-id
-      in: path
-      required: true
-      schema:
-        type: string
-        example: 0048607e-9b89-4ad9-a203-976b7f72f5f2
-    VerificationType:
-      name: verification-type
-      in: path
-      required: true
-      schema:
-        type: string
-        example: my_number
-    VerificationProcess:
-      name: verification-process
-      in: path
-      required: true
-      schema:
-        type: string
-        example: capture
-    ApplicationId:
-      name: id
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
+                message: Endpoint request timed out
   schemas:
-    InsufficientScopeError:
+    AuthenticationDeviceLogRequest:
       type: object
-      properties:
-        error:
-          type: string
-          example: insufficient_scope
-        error_description:
-          type: string
-        scope:
-          type: string
-          description: 要求されるスコープ
-    FidoUafRegistrationRequest:
-      description: FIDO-UAF登録用のリクエスト
-      allOf:
-        - $ref: '#/components/schemas/AuthenticationDeviceRequest'
-    FidoUafDeRegistrationRequest:
-      description: FIDO-UAF解除用のリクエスト
-      type: object
+      description: |
+        認証デバイスログのリクエストボディ。
+        `device_id` または `user_id` のいずれかを含めることで、セキュリティイベントがユーザーに紐づけられる。
       properties:
         device_id:
           type: string
-          example: cab44004-c288-4ae4-be88-9b1cbbe79b71
-    AuthenticationDeviceRequest:
-      type: object
-      properties:
-        app_name:
+          description: |
+            認証デバイスの識別子。
+            この値でユーザーを検索し、セキュリティイベントに紐づける。
+          example: device-12345-abcde
+        user_id:
           type: string
-          description: アプリ名（例：◯◯アプリ）。
-        platform:
+          format: uuid
+          description: |
+            ユーザーの識別子（UUID）。
+            `device_id` でユーザーが見つからない場合、この値で検索する。
+          example: 550e8400-e29b-41d4-a716-446655440000
+        event:
           type: string
-          description: デバイスのプラットフォーム名（例："Android", "iOS" など）。
-        os:
-          type: string
-          description: オペレーティングシステムのバージョン情報（例："Android15"）。
-        model:
-          type: string
-          description: デバイスモデル名（例："galaxy z fold 6"）。
-        locale:
-          type: string
-          description: 言語設定。（例：ja, en）
-        notification_channel:
+          description: イベント種別（例：fido2_authentication, fido_uaf_registration）
+          example: fido2_authentication
+        status:
           type: string
           enum:
-            - fcm
-            - apns
-          description: >-
-            通知チャネル（"fcm", "apns"）。Firebase Cloud Messaging（Android）またはApple Push
-            Notification Service（iOS）を指定。
-        notification_token:
+            - success
+            - failure
+            - cancelled
+          description: 実行結果のステータス
+          example: success
+        timestamp:
           type: string
-          description: 通知を送信するためのトークン（例：FCMトークン）。
-        priority:
-          type: integer
-          minimum: 1
-          description: >
-            このデバイスの通知の優先順位（例: 1, 50, 100）。 数値が大きいほど優先度が高く、100が最も高い。
-            省略された場合は、認証デバイスの登録数の連番となる。
-    PasswordChangeRequest:
+          format: date-time
+          description: イベント発生日時（ISO-8601形式）
+          example: '2025-12-26T10:00:00Z'
+        details:
+          type: object
+          description: イベントの詳細情報（任意のキー・バリュー）
+          additionalProperties: true
+          example:
+            authenticator_type: platform
+            user_verification: true
+    AuthenticationTransactionListResponse:
       type: object
-      required:
-        - current_password
-        - new_password
       properties:
-        current_password:
+        list:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuthenticationTransaction'
+    AuthenticationTransaction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: トランザクションの一意識別子
+        flow:
           type: string
           description: |
-            現在のパスワード。
-
-            このパスワードが正しいかどうかを検証してから新しいパスワードへの変更を行います。
-          example: CurrentPassword123
-        new_password:
+            認証フロー種別（例: ciba, oauth）
+        tenant_id:
           type: string
-          description: >
-            新しいパスワード。
+          format: uuid
+          description: テナント識別子
+        tenant_attributes:
+          type: object
+          description: テナントに紐づく任意のメタデータ情報
+        client_id:
+          type: string
+          format: uuid
+          description: クライアント識別子
+        number_matching_required:
+          type: boolean
+          description: |
+            認証デバイスがナンバーマッチングコードの入力画面を表示すべきかを示すフラグ。
+
+            サインイン画面が `authentication-device-number-matching-challenge` を実行して
+            コードが発行されると `true` になります。
+
+            **コード検証に成功した後も `true` のままです**（意図的な挙動）。
+            コードが検証済みかどうかは認証結果側で管理されます。
+        client_attributes:
+          type: object
+          properties:
+            client_name:
+              type: string
+              description: クライアント名（表示用）
+            client_uri:
+              type: string
+              description: クライアントのサービスURL
+            logo_uri:
+              type: string
+              description: クライアントのロゴ画像URL
+            contacts:
+              type: string
+              description: |
+                クライアントの連絡先（例: メールアドレス）
+            tos_uri:
+              type: string
+              description: 利用規約ページURL
+            policy_uri:
+              type: string
+              description: プライバシーポリシーURL
+            custom_properties:
+              type: object
+              additionalProperties: true
+              description: >
+                クライアント設定 `extension.custom_properties` に定義した任意の値。
+
+                デバイスアプリ固有の表示要素（ブランドカラー、問い合わせ先等）を渡すのに使う。
 
 
-            テナントに設定されたパスワードポリシー（`identity_policy_config.password_policy`）に従って検証されます。
+                設定されていない場合はフィールドごと返却されません。
 
 
-            デフォルトポリシー：
+                **セキュリティ注意**: `context` と異なり、デバイス認証の有無にかかわらず返却されます。
 
-            - 最小8文字（NIST SP 800-63B推奨）
+                `authentication_device_rule.authentication_type` が `none`
+                のテナントでは
 
+                このAPIはデバイス識別子だけで到達できるため、**秘匿値を入れないでください**。
+              example:
+                brand_color: '#0075ca'
+                support_phone: 0120-000-000
+        context:
+          type: object
+          description: |
+            認証リクエストのコンテキスト情報。
 
-            設定可能なポリシー：
-
-            - `min_length`: 最小文字数
-
-            - `require_uppercase`: 大文字を含む
-
-            - `require_lowercase`: 小文字を含む
-
-            - `require_digit`: 数字を含む
-
-            - `require_special_char`: 記号を含む
-          example: NewSecurePassword456
+            **セキュリティ注意**: このフィールドはデバイス認証が行われた場合のみ返却されます。
+            `authentication_type: "none"` の場合は、このフィールドはレスポンスに含まれません。
+          properties:
+            acr_values:
+              type: string
+              description: 認証コンテキストクラス
+            binding_message:
+              type: string
+              description: 認証デバイスに表示される確認用メッセージ
+            scopes:
+              type: string
+              description: 要求されたスコープ（スペース区切り）
+            authorization_details:
+              type: array
+              description: Rich Authorization Requests（RAR）の詳細
+              items:
+                type: object
+        user:
+          type: object
+          description: |
+            認証トランザクションに紐づくユーザー情報（最小化された情報のみ）。
+            プライバシー保護のため、`sub`と`status`のみが返却されます。
+          properties:
+            sub:
+              type: string
+              description: ユーザー識別子（Subject）
+            status:
+              type: string
+              enum:
+                - UNREGISTERED
+                - INITIALIZED
+                - FEDERATED
+                - REGISTERED
+                - IDENTITY_VERIFIED
+                - IDENTITY_VERIFICATION_REQUIRED
+                - LOCKED
+                - DISABLED
+                - SUSPENDED
+                - DEACTIVATED
+                - DELETED_PENDING
+                - DELETED
+                - UNKNOWN
+              description: ユーザーステータス
+        authentication_device:
+          type: object
+          description: 認証トランザクションに紐づく認証デバイス情報
+          properties:
+            id:
+              type: string
+              description: デバイス識別子
+            app_name:
+              type: string
+              description: アプリ名
+            platform:
+              type: string
+              description: プラットフォーム（iOS, Android等）
+            os:
+              type: string
+              description: OS情報
+            model:
+              type: string
+              description: デバイスモデル
+            locale:
+              type: string
+              description: 言語設定
+            notification_channel:
+              type: string
+              description: 通知チャネル（fcm等）
+            notification_token:
+              type: string
+              description: 通知トークン
+            available_methods:
+              type: array
+              items:
+                type: string
+              description: 利用可能な認証方式（fido-uaf等）
+            priority:
+              type: integer
+              description: 優先度
+            credential_type:
+              type: string
+              description: クレデンシャルタイプ
+            credential_id:
+              type: string
+              description: クレデンシャルID
+            credential_metadata:
+              type: object
+              description: クレデンシャルメタデータ（発行日時、有効期限等）
+              properties:
+                issued_at:
+                  type: string
+                  format: date-time
+                expires_at:
+                  type: string
+                  format: date-time
+        created_at:
+          type: string
+          format: date-time
+          description: トランザクション作成日時
+        expires_at:
+          type: string
+          format: date-time
+          description: トランザクション有効期限

@@ -1,0 +1,1882 @@
+openapi: 3.0.3
+info:
+  title: 認証・認可画面用API
+  version: 1.0.0
+  description: |
+    認証画面・認可画面からの処理を行うためのAPI群。
+
+    ## 認証インタラクションAPI
+    このAPIを使用することで、以下の認証インタラクションを実行できます：
+    - パスワード認証
+    - SMS認証（チャレンジ・認証）
+    - メール認証（チャレンジ・認証）
+    - FIDO-UAF認証（チャレンジ・認証・登録・登録解除）
+    - WebAuthn認証（チャレンジ・認証・登録・登録解除）
+    - 初期ユーザー登録
+    - 認証キャンセル
+    - 認証デバイス通知
+
+    ## 認可画面データAPI
+    認可画面で表示するためのクライアント情報、スコープ情報などを取得できます。
+
+    各インタラクションタイプに応じたリクエストボディとレスポンス形式を提供します。
+servers:
+  - url: https://idp-server.example.com
+    description: 本番環境
+  - url: http://localhost:8080
+    description: 開発環境
+tags:
+  - name: 認証インタラクション
+    description: |
+      認証画面からの各種認証処理。
+
+      認証フローは以下の通りです：
+      1. 認可エンドポイントから認証トランザクションIDを取得
+      2. 認証インタラクションAPIで認証処理を実行
+      3. 認証完了後、認可コードまたはエラーレスポンスを受信
+  - name: 認可画面データ
+    description: |
+      認可画面で表示するためのデータ取得API。
+
+      認可画面データ取得フローは以下の通りです：
+      1. 認可リクエストから認可リクエストIDを取得
+      2. View Data APIでクライアント情報、スコープ情報を取得
+      3. 認可画面にデータを表示
+  - name: 認可リクエスト
+    description: |
+      OAuth 2.0/OpenID Connect認可リクエスト関連API。
+
+      - 標準的な認可リクエスト処理
+      - 認可承認・拒否処理
+  - name: フェデレーション
+    description: |
+      外部IdPとの連携認証API。
+
+      OIDC、SAMLなどの外部アイデンティティプロバイダーとの
+      フェデレーション認証を行うためのAPI群。
+paths:
+  /{tenant-id}/v1/authorizations/{id}/{interaction-type}:
+    post:
+      tags:
+        - 認証インタラクション
+      summary: 認証インタラクション実行
+      description: >
+        指定された認可リクエストIDと認証インタラクションタイプに基づいて認証処理を実行します。
+
+
+        ## サポートされている認証インタラクションタイプ
+
+
+        ### パスワード認証
+
+        - `password-authentication` - パスワードによる認証
+
+
+        ### SMS認証
+
+        - `sms-authentication-challenge` - SMS認証チャレンジ（認証コード送信）
+
+        - `sms-authentication` - SMS認証（認証コード検証）
+
+
+        ### メール認証
+
+        - `email-authentication-challenge` - メール認証チャレンジ（認証コード送信）
+
+        - `email-authentication` - メール認証（認証コード検証）
+
+
+        ### FIDO-UAF認証
+
+        - `fido-uaf-registration-challenge` - FIDO-UAF登録チャレンジ
+
+        - `fido-uaf-registration` - FIDO-UAF登録
+
+        - `fido-uaf-authentication-challenge` - FIDO-UAF認証チャレンジ
+
+        - `fido-uaf-authentication` - FIDO-UAF認証
+
+        - `fido-uaf-deregistration` - FIDO-UAF登録解除
+
+        - `fido-uaf-cancel` - FIDO-UAF処理キャンセル
+
+
+        ### WebAuthn認証
+
+        - `webauthn-registration-challenge` - WebAuthn登録チャレンジ
+
+        - `webauthn-registration` - WebAuthn登録
+
+        - `webauthn-authentication-challenge` - WebAuthn認証チャレンジ
+
+        - `webauthn-authentication` - WebAuthn認証
+
+        - `webauthn-deregistration` - WebAuthn登録解除
+
+
+        ### その他
+
+        - `initial-registration` - 初期ユーザー登録
+
+        - `authentication-cancel` - 認証キャンセル
+
+        - `authentication-device-notification` - 認証デバイス通知
+
+        - `authentication-device-deny` - 認証デバイス拒否
+
+        - `authentication-device-binding-message` - 認証デバイスバインディングメッセージ検証
+
+
+        ### ナンバーマッチング（認可コードフロー + デバイス認証）
+
+        - `authentication-device-number-matching-challenge` - ナンバーマッチングコード発行
+
+        - `authentication-device-number-matching` - ナンバーマッチングコード検証
+
+
+        ### バインディングメッセージ検証について
+
+
+        `authentication-device-binding-message`は、CIBAフローにおいて消費デバイスと認証デバイス間の
+
+        トランザクション一致を確認するための検証インタラクションです。
+
+
+        **用途**:
+
+        - フィッシング対策: ユーザーが正しいトランザクションを承認しているか確認
+
+        - トランザクション確認: 金融取引等での取引内容確認
+
+        - セッション連動: 複数デバイス間でのセッション一致確認
+
+
+        **OIDC CIBA仕様**: [Section
+        7.1](https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html#rfc.section.7.1)
+
+
+        ### ナンバーマッチングについて
+
+
+        認可コードフローで認証デバイス（FIDO-UAF等）へステップアップする際の、プッシュ疲労（push fatigue）対策です。
+
+
+        **コードは認証デバイスに送信されません。** サインイン画面に表示されたコードを、ユーザーが認証デバイスへ転記します。
+
+        承認者が元の画面を見ないと承認できないため、届いた通知を反射的に承認する攻撃が成立しなくなります。
+
+
+        | インタラクション | 呼び出し元 | 動作 |
+
+        |---|---|---|
+
+        | `authentication-device-number-matching-challenge` | サインイン画面 |
+        コードを生成してサーバー側に保存し、レスポンス `number_matching_code` で画面に返す |
+
+        | `authentication-device-number-matching` | 認証デバイス | 転記されたコードをリクエストボディ
+        `number_matching_code` で、自身の識別子を `device_id` で送る。コードは保存値と、`device_id`
+        は認証トランザクションに紐づく認証デバイスと照合される |
+
+
+        コードは数字のみで、桁数は認証設定 `authentication-device-number-matching` の
+
+        `execution.details.length` で指定します（既定 4 桁）。
+
+
+        コード発行はプッシュ配信とは分離されています。プッシュ（FCM）は CIBA と共通の
+
+        `authentication-device-notification` 側にあり、ナンバーマッチングの利用にプッシュは必須ではありません。
+
+
+        検証エラーは以下のとおりです。
+
+
+        | 状況 | `error` | `error_description` |
+
+        |---|---|---|
+
+        | 認証デバイス未紐付け | `invalid_request` | `authentication device is not bound
+        to this transaction` |
+
+        | `device_id` 不一致 | `invalid_request` | `device_id does not match the
+        authentication device` |
+
+        | チャレンジ未実行 | `invalid_request` | `number_matching_code has not been
+        issued` |
+
+        | コード不一致 | `invalid_request` | `number_matching_code does not match` |
+
+
+        `device_id` は必須です。認証トランザクションに認証デバイスが紐づいていない場合、
+
+        このインタラクションは成立しません（Issue #1869）。
+
+
+        認証デバイス側が番号入力画面の要否を判定するためのフラグは、認証トランザクション取得API
+
+        （`GET
+        /{tenant-id}/v1/authentication-devices/{device-id}/authentications`）の
+
+        `number_matching_required` です。
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/AuthorizationRequestId'
+        - $ref: '#/components/parameters/InteractionType'
+      requestBody:
+        description: |
+          認証インタラクションタイプに応じたリクエストボディ。
+          各インタラクションタイプで必要なパラメータが異なります。
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/PasswordAuthenticationRequest'
+                - $ref: '#/components/schemas/SmsAuthenticationChallengeRequest'
+                - $ref: '#/components/schemas/SmsAuthenticationRequest'
+                - $ref: '#/components/schemas/EmailAuthenticationChallengeRequest'
+                - $ref: '#/components/schemas/EmailAuthenticationRequest'
+                - $ref: '#/components/schemas/FidoUafRegistrationChallengeRequest'
+                - $ref: '#/components/schemas/FidoUafRegistrationRequest'
+                - $ref: '#/components/schemas/FidoUafAuthenticationChallengeRequest'
+                - $ref: '#/components/schemas/FidoUafAuthenticationRequest'
+                - $ref: '#/components/schemas/InitialRegistrationRequest'
+                - $ref: '#/components/schemas/WebAuthnChallengeRequest'
+                - $ref: '#/components/schemas/WebAuthnAuthenticationRequest'
+                - $ref: >-
+                    #/components/schemas/AuthenticationDeviceBindingMessageRequest
+                - $ref: '#/components/schemas/EmptyRequest'
+            examples:
+              password-authentication:
+                summary: パスワード認証の例
+                value:
+                  username: user@example.com
+                  password: securePassword123
+              email-authentication-challenge:
+                summary: メール認証チャレンジの例
+                value:
+                  email: user@example.com
+                  template: authentication
+              email-authentication:
+                summary: メール認証の例
+                value:
+                  verification_code: '123456'
+              initial-registration:
+                summary: 初期ユーザー登録の例
+                value:
+                  email: newuser@example.com
+                  name: 田中太郎
+                  phone_number: 090-1234-5678
+                  locale: ja-JP
+                  zoneinfo: Asia/Tokyo
+              authentication-device-binding-message:
+                summary: バインディングメッセージ検証の例
+                description: |
+                  CIBAフローにおけるバインディングメッセージのバックエンド検証。
+                  消費デバイスに表示されたコードを認証デバイスで入力し、一致を確認します。
+                value:
+                  binding_message: '999'
+      responses:
+        '200':
+          description: |
+            認証インタラクション成功。
+            レスポンス内容はインタラクションタイプによって異なります。
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/AuthenticationSuccessResponse'
+                  - $ref: '#/components/schemas/AuthenticationChallengeResponse'
+                  - $ref: '#/components/schemas/RegistrationChallengeResponse'
+              examples:
+                authentication-success:
+                  summary: 認証成功
+                  value:
+                    status: success
+                    redirect_uri: https://client.example.com/callback?code=xyz123&state=abc
+                challenge-response:
+                  summary: チャレンジレスポンス
+                  value:
+                    status: challenge
+                    challenge: eyJhbGciOiJIUzI1NiJ9...
+                    timeout: 300
+                registration-challenge:
+                  summary: 登録チャレンジ
+                  value:
+                    status: registration_challenge
+                    registration_request: eyJhbGciOiJIUzI1NiJ9...
+        '400':
+          description: リクエストが不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid-credentials:
+                  summary: 認証情報が不正
+                  value:
+                    error: invalid_request
+                    error_description: Invalid username or password
+                missing-parameter:
+                  summary: 必須パラメータが不足
+                  value:
+                    error: invalid_request
+                    error_description: 'Missing required parameter: username'
+        '401':
+          description: 認証に失敗
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                authentication-failed:
+                  summary: 認証失敗
+                  value:
+                    error: access_denied
+                    error_description: Authentication failed
+        '404':
+          description: 認証トランザクションが見つからない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                transaction-not-found:
+                  summary: 認証トランザクションが見つからない
+                  value:
+                    error: invalid_request
+                    error_description: Authentication transaction not found
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                server-error:
+                  summary: サーバーエラー
+                  value:
+                    error: server_error
+                    error_description: Internal server error occurred
+  /{tenant-id}/v1/authorizations/{id}/view-data:
+    get:
+      tags:
+        - 認可画面データ
+      summary: 認可画面データ取得
+      description: >
+        指定された認可リクエストIDに基づいて、認可画面で表示するためのデータを取得します。
+
+
+        ## レスポンスデータ
+
+        - **クライアント情報**: クライアント名、ロゴURI、利用規約URIなど
+
+        - **スコープ情報**: 要求されているスコープの一覧
+
+        - **クレーム情報**: 要求されているクレームの一覧（id_token / userinfo /
+        verified_claims）。クレーム単位の同意表示に使用します
+
+        - **セッション情報**: セッション有効化フラグ
+
+        - **フェデレーション情報**: 利用可能な外部IdP連携情報
+
+        - **カスタムパラメータ**: クライアント固有のカスタムパラメータ
+
+
+        このAPIは認可画面のレンダリング時に使用され、ユーザーに表示する情報を提供します。
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/AuthorizationRequestId'
+      responses:
+        '200':
+          description: |
+            認可画面データ取得成功。
+            クライアント情報、スコープ情報、フェデレーション情報などが含まれます。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationViewDataResponse'
+              examples:
+                basic-view-data:
+                  summary: 基本的な認可画面データ
+                  value:
+                    client_id: client123
+                    client_name: サンプルアプリケーション
+                    client_uri: https://client.example.com
+                    logo_uri: https://client.example.com/logo.png
+                    contacts: support@client.example.com
+                    tos_uri: https://client.example.com/terms
+                    policy_uri: https://client.example.com/privacy
+                    scopes:
+                      - openid
+                      - profile
+                      - email
+                    claims:
+                      id_token:
+                        - given_name
+                        - family_name
+                        - email
+                      userinfo:
+                        - given_name
+                        - family_name
+                        - email
+                      verified_claims: []
+                    claim_values:
+                      accounts:
+                        - acc-1
+                        - acc-2
+                        - acc-3
+                    session_enabled: true
+                    custom_params:
+                      organization_id: org123
+                      organization_name: テスト組織
+                custom-properties-enabled:
+                  summary: カスタムプロパティ設定時の認可画面データ
+                  value:
+                    client_id: client123
+                    client_name: カスタムアプリ
+                    scopes:
+                      - openid
+                      - profile
+                      - email
+                    session_enabled: false
+                    custom_params: {}
+                    client_custom_properties:
+                      app_label: my-custom-app
+                      feature_flags:
+                        dark_mode: true
+                        beta_features: false
+                      max_sessions: 5
+                      tags:
+                        - internal
+                        - pilot
+                federation-enabled:
+                  summary: フェデレーション有効時の認可画面データ
+                  value:
+                    client_id: client123
+                    client_name: サンプルアプリケーション
+                    client_uri: https://client.example.com
+                    scopes:
+                      - openid
+                      - profile
+                      - email
+                    session_enabled: false
+                    available_federations:
+                      - type: oidc
+                        provider_name: google
+                        display_name: Googleでログイン
+                        logo_uri: https://google.com/logo.png
+                      - type: saml
+                        provider_name: azure-ad
+                        display_name: Azure ADでログイン
+                        logo_uri: https://microsoft.com/logo.png
+                    custom_params: {}
+        '400':
+          description: リクエストが不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid-request-id:
+                  summary: 認可リクエストIDが不正
+                  value:
+                    error: invalid_request
+                    error_description: Invalid authorization request ID
+        '401':
+          description: |
+            AUTH_SESSION cookie の欠落または不一致（フロー乗っ取り対策）。
+
+            このエンドポイントは `AUTH_SESSION` cookie を検証します。ブラウザ/SPAの通常フローでは
+            cookie が存在するため正常に処理されますが、cookie 消失時や別ブラウザ・別セッションからの
+            アクセス時には 401 を返却します。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing-cookie:
+                  summary: AUTH_SESSION cookie が存在しない
+                  value:
+                    error: invalid_request
+                    error_description: >-
+                      auth_session_mismatch: Missing AUTH_SESSION cookie. Please
+                      restart the authorization flow.
+                session-mismatch:
+                  summary: AUTH_SESSION cookie が一致しない
+                  value:
+                    error: invalid_request
+                    error_description: >-
+                      auth_session_mismatch: AUTH_SESSION cookie does not match.
+                      This authorization request may have been initiated by a
+                      different browser session.
+        '404':
+          description: 認可リクエストが見つからない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                request-not-found:
+                  summary: 認可リクエストが見つからない
+                  value:
+                    error: invalid_request
+                    error_description: Authorization request not found
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                server-error:
+                  summary: サーバーエラー
+                  value:
+                    error: server_error
+                    error_description: Internal server error occurred
+  /{tenant-id}/v1/authorizations/{id}/authentication-status:
+    get:
+      tags:
+        - 認証インタラクション
+      summary: 認証状態確認
+      description: |
+        指定された認可リクエストIDに紐づく認証トランザクションの全体状態を取得します。
+
+        SPAが「認証フローのどの段階にいるか」（進行中 / 成功 / 失敗 / ロック）を知るための
+        **読み取り専用**エンドポイントです。認証インタラクションAPI（`/password` 等）は
+        ハンドラ固有のレスポンスしか返さないため、フロー全体の状態確認にはこのAPIを使用します。
+
+        - **認証不要**: view-data APIと同様、認可リクエストIDが推測困難なトークンとして機能し、
+          加えて `AUTH_SESSION` cookie を検証します。
+        - **副作用なし**: 読み取り専用でDBは更新しません。
+
+        ## ステータス値
+
+        | status | 意味 |
+        |--------|------|
+        | `in_progress` | 認証フロー進行中（未完了） |
+        | `success` | 認証成功（認証ポリシーの success_conditions 充足） |
+        | `failure` | 認証失敗（failure_conditions 充足） |
+        | `locked` | ロック状態（lock_conditions 充足） |
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/AuthorizationRequestId'
+      responses:
+        '200':
+          description: |
+            認証状態の取得成功。
+            現在のステータス、各インタラクションの実行結果、成功した認証方式の一覧が含まれます。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationStatusResponse'
+              examples:
+                in-progress:
+                  summary: 認証前（フロー開始直後）
+                  value:
+                    status: in_progress
+                    interaction_results: {}
+                    authentication_methods: []
+                success:
+                  summary: パスワード認証成功後
+                  value:
+                    status: success
+                    interaction_results:
+                      password-authentication:
+                        operation_type: AUTHENTICATION
+                        method: password
+                        call_count: 1
+                        success_count: 1
+                        failure_count: 0
+                        interaction_time: '2025-01-15T10:30:00'
+                    authentication_methods:
+                      - password
+        '401':
+          description: |
+            AUTH_SESSION cookie の欠落または不一致（フロー乗っ取り対策）。
+
+            このエンドポイントは `AUTH_SESSION` cookie を検証します。ブラウザ/SPAの通常フローでは
+            cookie が存在するため正常に取得できますが、cookie 消失時や別ブラウザ・別セッションからの
+            アクセス時には 401 を返却します。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing-cookie:
+                  summary: AUTH_SESSION cookie が存在しない
+                  value:
+                    error: invalid_request
+                    error_description: >-
+                      auth_session_mismatch: Missing AUTH_SESSION cookie. Please
+                      restart the authorization flow.
+                session-mismatch:
+                  summary: AUTH_SESSION cookie が一致しない
+                  value:
+                    error: invalid_request
+                    error_description: >-
+                      auth_session_mismatch: AUTH_SESSION cookie does not match.
+                      This authorization request may have been initiated by a
+                      different browser session.
+        '404':
+          description: 認可リクエスト（認証トランザクション）が見つからない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                not-found:
+                  summary: 認証トランザクションが見つからない
+                  value:
+                    error: invalid_request
+                    error_description: Authentication transaction not found
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
+  /{tenant-id}/v1/authorizations/{id}/authorize:
+    post:
+      tags:
+        - 認可リクエスト
+      summary: 認可承認
+      description: |
+        ユーザーが認証完了後、認可画面で「許可」を選択した際に呼び出すAPI。
+
+        認可承認により認可コードが発行され、クライアントのredirect_uriに
+        リダイレクトされます。
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/AuthorizationRequestId'
+      requestBody:
+        required: false
+        description: >
+          任意。consent画面でユーザーが共有を拒否した scope / クレーム（view-data の `scopes` /
+
+          `claims` から選択）。
+
+
+          - `denied_scopes`: 拒否された scope。付与スコープから除外され、その scope 由来のクレームも
+            発行されません（認証ポリシー(LoA)由来の拒否スコープにマージされます）。
+          - `denied_claims`: 拒否されたクレーム名。付与時に id_token / userinfo /
+          verified_claims から
+            除外されます（OIDC4IDA §5.7.3、claim単位の同意）。
+          - `granted_claim_values`: 配列クレームのうち共有を許可した要素（view-data の
+          `claim_values`
+            から選択）。クレーム丸ごとではなく**要素単位**の同意です。
+
+          ボディ無し（従来どおり）の場合は全要求 scope / クレームを許可します。
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                denied_scopes:
+                  type: array
+                  items:
+                    type: string
+                  description: 共有を拒否した scope の一覧
+                  example:
+                    - email
+                denied_claims:
+                  type: array
+                  items:
+                    type: string
+                  description: 共有を拒否したクレーム名の一覧
+                  example:
+                    - family_name
+                granted_claim_values:
+                  type: object
+                  description: |
+                    配列クレームのうち共有を許可した要素。クレーム名をキーとし、値は許可した要素の配列です。
+
+                    **絞る方向にしか働きません。** ユーザーが実際に保有する値との積集合だけが残るため、
+                    ここに保有していない値を書いてもクレームには入りません。
+
+                    **許可リストとして解釈されます。** 列挙した要素はそのグラントに固定され、以降の
+                    トークン発行・UserInfo でも同じリストで絞られます。同意後にユーザーの保有が
+                    増えても、列挙されていない要素は解放されません（新しい要素を解放するには
+                    再同意が必要です）。制限しないつもりであればキー自体を送らないでください。
+                    全要素を列挙することは「制限しない」ではなく「いま保有している要素に限定する」
+                    という意思表示になります。
+
+                    - 指定しなかったクレームは従来どおり全要素を共有します
+                    - 空配列を指定するとそのクレームは省略されます（`null` や空配列ではなくキーごと消えます。
+                      クレームを丸ごと拒否した場合と同じ結果、OIDC Core §5.3.2）
+                    - 一致は**要素まるごと**です。オブジェクト要素はフィールドの集合で比較するため順序は
+                      問いませんが、識別子フィールドだけの部分指定では選択できません
+                    - 配列でないクレームや、ユーザーが持たないクレームを指定した場合は無視されます
+
+                    選択は同意の決定としてグラントに保存され、アクセストークン / ID Token / UserInfo の
+                    すべてに適用されます。
+                  additionalProperties:
+                    type: array
+                    items: {}
+                  example:
+                    accounts:
+                      - acc-2
+            examples:
+              deny-scope:
+                summary: email スコープの共有を拒否
+                value:
+                  denied_scopes:
+                    - email
+              deny-family-name:
+                summary: family_name クレームの共有を拒否
+                value:
+                  denied_claims:
+                    - family_name
+              grant-single-account:
+                summary: accounts クレームのうち acc-2 のみ共有
+                value:
+                  granted_claim_values:
+                    accounts:
+                      - acc-2
+              grant-no-account:
+                summary: accounts クレームの要素を1つも共有しない（クレームごと省略される）
+                value:
+                  granted_claim_values:
+                    accounts: []
+      responses:
+        '200':
+          description: 認可承認成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationResponse'
+              examples:
+                success:
+                  summary: 認可承認成功
+                  value:
+                    status: success
+                    redirect_uri: https://client.example.com/callback?code=abc123&state=xyz
+        '400':
+          description: リクエストが不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: |
+            AUTH_SESSION cookie の欠落または不一致（フロー乗っ取り対策）。
+
+            このエンドポイントは `AUTH_SESSION` cookie を検証します。ブラウザ/SPAの通常フローでは
+            cookie が存在するため正常に処理されますが、cookie 消失時や別ブラウザ・別セッションからの
+            アクセス時には 401 を返却します。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing-cookie:
+                  summary: AUTH_SESSION cookie が存在しない
+                  value:
+                    error: invalid_request
+                    error_description: >-
+                      auth_session_mismatch: Missing AUTH_SESSION cookie. Please
+                      restart the authorization flow.
+                session-mismatch:
+                  summary: AUTH_SESSION cookie が一致しない
+                  value:
+                    error: invalid_request
+                    error_description: >-
+                      auth_session_mismatch: AUTH_SESSION cookie does not match.
+                      This authorization request may have been initiated by a
+                      different browser session.
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /{tenant-id}/v1/authorizations/{id}/deny:
+    post:
+      tags:
+        - 認可リクエスト
+      summary: 認可拒否
+      description: |
+        ユーザーが認可画面で「拒否」を選択した際に呼び出すAPI。
+
+        認可拒否によりaccess_deniedエラーがクライアントのredirect_uriに
+        返却されます。
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/AuthorizationRequestId'
+      responses:
+        '200':
+          description: 認可拒否成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationResponse'
+              examples:
+                denied:
+                  summary: 認可拒否
+                  value:
+                    status: denied
+                    redirect_uri: >-
+                      https://client.example.com/callback?error=access_denied&state=xyz
+        '400':
+          description: リクエストが不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: |
+            AUTH_SESSION cookie の欠落または不一致（フロー乗っ取り対策）。
+
+            このエンドポイントは `AUTH_SESSION` cookie を検証します。ブラウザ/SPAの通常フローでは
+            cookie が存在するため正常に処理されますが、cookie 消失時や別ブラウザ・別セッションからの
+            アクセス時には 401 を返却します。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing-cookie:
+                  summary: AUTH_SESSION cookie が存在しない
+                  value:
+                    error: invalid_request
+                    error_description: >-
+                      auth_session_mismatch: Missing AUTH_SESSION cookie. Please
+                      restart the authorization flow.
+                session-mismatch:
+                  summary: AUTH_SESSION cookie が一致しない
+                  value:
+                    error: invalid_request
+                    error_description: >-
+                      auth_session_mismatch: AUTH_SESSION cookie does not match.
+                      This authorization request may have been initiated by a
+                      different browser session.
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /{tenant-id}/v1/authorizations/{id}/federations/{federation-type}/{sso-provider-name}:
+    post:
+      tags:
+        - フェデレーション
+      summary: フェデレーション認証開始
+      description: |
+        外部IdPとのフェデレーション認証を開始します。
+
+        指定されたSSOプロバイダーに対してリダイレクト先URLを生成し、
+        外部IdPの認証画面に遷移させます。
+
+        ## サポートされるフェデレーションタイプ
+        - `oidc` - OpenID Connect
+        - `saml` - SAML 2.0
+
+        ## 一般的なSSOプロバイダー
+        - Google (OIDC)
+        - Azure AD (OIDC/SAML)
+        - Okta (OIDC/SAML)
+        - Auth0 (OIDC)
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/AuthorizationRequestId'
+        - $ref: '#/components/parameters/FederationType'
+        - $ref: '#/components/parameters/SsoProviderName'
+      responses:
+        '200':
+          description: フェデレーション認証開始成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FederationResponse'
+              examples:
+                oidc-redirect:
+                  summary: OIDC フェデレーション
+                  value:
+                    status: redirect
+                    redirect_uri: >-
+                      https://accounts.google.com/oauth2/auth?client_id=...&redirect_uri=...
+                saml-redirect:
+                  summary: SAML フェデレーション
+                  value:
+                    status: redirect
+                    redirect_uri: https://login.microsoftonline.com/saml2?SAMLRequest=...
+        '400':
+          description: リクエストが不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                unsupported-provider:
+                  summary: サポートされていないプロバイダー
+                  value:
+                    error: invalid_request
+                    error_description: Unsupported SSO provider
+        '401':
+          description: |
+            AUTH_SESSION cookie の欠落または不一致（フロー乗っ取り対策）。
+
+            このエンドポイントは `AUTH_SESSION` cookie を検証します。ブラウザ/SPAの通常フローでは
+            cookie が存在するため正常に処理されますが、cookie 消失時や別ブラウザ・別セッションからの
+            アクセス時には 401 を返却します。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing-cookie:
+                  summary: AUTH_SESSION cookie が存在しない
+                  value:
+                    error: invalid_request
+                    error_description: >-
+                      auth_session_mismatch: Missing AUTH_SESSION cookie. Please
+                      restart the authorization flow.
+                session-mismatch:
+                  summary: AUTH_SESSION cookie が一致しない
+                  value:
+                    error: invalid_request
+                    error_description: >-
+                      auth_session_mismatch: AUTH_SESSION cookie does not match.
+                      This authorization request may have been initiated by a
+                      different browser session.
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /{tenant-id}/v1/authorizations/federations/{federation-type}/callback:
+    post:
+      tags:
+        - フェデレーション
+      summary: フェデレーション認証コールバック
+      description: |
+        外部IdPからのコールバックを処理します。
+
+        外部IdPでの認証完了後、認可コードやSAMLレスポンスを受信し、
+        ユーザー情報を取得して認証を完了させます。
+
+        ## 処理フロー
+        1. 外部IdPからのコールバック受信
+        2. 認可コードまたはSAMLレスポンスの検証
+        3. ユーザー情報取得
+        4. 内部ユーザーとのマッピング
+        5. 認証完了またはユーザー登録画面へリダイレクト
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/FederationType'
+      requestBody:
+        required: true
+        description: |
+          外部IdPからのコールバックパラメータ。
+          フェデレーションタイプによって形式が異なります。
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/FederationCallbackRequest'
+            examples:
+              oidc-callback:
+                summary: OIDC コールバック
+                value:
+                  code: abc123
+                  state: xyz456
+              saml-callback:
+                summary: SAML コールバック
+                value:
+                  SAMLResponse: PHNhbWxwOlJlc3BvbnNl...
+                  RelayState: xyz456
+      responses:
+        '200':
+          description: フェデレーション認証成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FederationCallbackResponse'
+              examples:
+                authentication-success:
+                  summary: 認証完了
+                  value:
+                    status: success
+                    redirect_uri: >-
+                      https://client.example.com/callback?code=def789&state=original_state
+                user-registration:
+                  summary: ユーザー登録が必要
+                  value:
+                    status: user_registration_required
+                    redirect_uri: /signup/index.html?id=auth_req_123&federation_data=...
+        '400':
+          description: コールバックパラメータが不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid-code:
+                  summary: 無効な認可コード
+                  value:
+                    error: invalid_grant
+                    error_description: Invalid authorization code
+        '401':
+          description: |
+            AUTH_SESSION cookie の欠落または不一致（フロー乗っ取り対策）。
+
+            このエンドポイントは `AUTH_SESSION` cookie を検証します。ブラウザ/SPAの通常フローでは
+            cookie が存在するため正常に処理されますが、cookie 消失時や別ブラウザ・別セッションからの
+            アクセス時には 401 を返却します。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing-cookie:
+                  summary: AUTH_SESSION cookie が存在しない
+                  value:
+                    error: invalid_request
+                    error_description: >-
+                      auth_session_mismatch: Missing AUTH_SESSION cookie. Please
+                      restart the authorization flow.
+                session-mismatch:
+                  summary: AUTH_SESSION cookie が一致しない
+                  value:
+                    error: invalid_request
+                    error_description: >-
+                      auth_session_mismatch: AUTH_SESSION cookie does not match.
+                      This authorization request may have been initiated by a
+                      different browser session.
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  parameters:
+    TenantId:
+      name: tenant-id
+      in: path
+      required: true
+      description: テナントID
+      schema:
+        type: string
+        format: uuid
+        example: 67e7eae6-62b0-4500-9eff-87459f63fc66
+    AuthenticationTransactionId:
+      name: id
+      in: path
+      required: true
+      description: 認証トランザクションID
+      schema:
+        type: string
+        example: auth_txn_12345
+    AuthorizationRequestId:
+      name: id
+      in: path
+      required: true
+      description: 認可リクエストID
+      schema:
+        type: string
+        example: authz_req_67890
+    InteractionType:
+      name: interaction-type
+      in: path
+      required: true
+      description: 認証インタラクションタイプ
+      schema:
+        type: string
+        enum:
+          - password-authentication
+          - sms-authentication-challenge
+          - sms-authentication
+          - email-authentication-challenge
+          - email-authentication
+          - fido-uaf-registration-challenge
+          - fido-uaf-registration
+          - fido-uaf-authentication-challenge
+          - fido-uaf-authentication
+          - fido-uaf-deregistration
+          - fido-uaf-cancel
+          - webauthn-registration-challenge
+          - webauthn-registration
+          - webauthn-authentication-challenge
+          - webauthn-authentication
+          - webauthn-deregistration
+          - initial-registration
+          - authentication-cancel
+          - authentication-device-notification
+          - authentication-device-deny
+          - authentication-device-binding-message
+          - authentication-device-number-matching-challenge
+          - authentication-device-number-matching
+        example: password-authentication
+    FederationType:
+      name: federation-type
+      in: path
+      required: true
+      description: フェデレーションタイプ
+      schema:
+        type: string
+        enum:
+          - oidc
+          - saml
+        example: oidc
+    SsoProviderName:
+      name: sso-provider-name
+      in: path
+      required: true
+      description: SSOプロバイダー名
+      schema:
+        type: string
+        example: google
+  schemas:
+    PasswordAuthenticationRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          description: ユーザー名またはメールアドレス
+          example: user@example.com
+        password:
+          type: string
+          description: パスワード
+          example: securePassword123
+          format: password
+    SmsAuthenticationChallengeRequest:
+      type: object
+      required:
+        - phone_number
+      properties:
+        phone_number:
+          type: string
+          description: SMS送信先電話番号
+          example: 090-1234-5678
+        template:
+          type: string
+          description: SMSテンプレート名
+          example: authentication
+    SmsAuthenticationRequest:
+      type: object
+      required:
+        - verification_code
+      properties:
+        verification_code:
+          type: string
+          description: SMS認証コード
+          example: '123456'
+    EmailAuthenticationChallengeRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          description: メール送信先アドレス
+          example: user@example.com
+        template:
+          type: string
+          description: メールテンプレート名
+          example: authentication
+    EmailAuthenticationRequest:
+      type: object
+      required:
+        - verification_code
+      properties:
+        verification_code:
+          type: string
+          description: メール認証コード
+          example: '123456'
+    FidoUafRegistrationChallengeRequest:
+      type: object
+      properties:
+        app_name:
+          type: string
+          description: アプリケーション名
+          example: idp-server-app
+    FidoUafRegistrationRequest:
+      type: object
+      required:
+        - uaf_response
+      properties:
+        uaf_response:
+          type: string
+          description: FIDO-UAF登録レスポンス
+          example: eyJhbGciOiJIUzI1NiJ9...
+    FidoUafAuthenticationChallengeRequest:
+      type: object
+      properties:
+        app_name:
+          type: string
+          description: アプリケーション名
+          example: idp-server-app
+    FidoUafAuthenticationRequest:
+      type: object
+      required:
+        - uaf_response
+      properties:
+        uaf_response:
+          type: string
+          description: FIDO-UAF認証レスポンス
+          example: eyJhbGciOiJIUzI1NiJ9...
+    WebAuthnChallengeRequest:
+      type: object
+      properties:
+        user_verification:
+          type: string
+          enum:
+            - required
+            - preferred
+            - discouraged
+          description: ユーザー検証要求レベル
+          example: preferred
+    WebAuthnAuthenticationRequest:
+      type: object
+      required:
+        - credential
+      properties:
+        credential:
+          type: object
+          description: WebAuthn認証レスポンス
+          properties:
+            id:
+              type: string
+              description: クレデンシャルID
+            rawId:
+              type: string
+              description: 生のクレデンシャルID
+            response:
+              type: object
+              description: 認証レスポンス
+            type:
+              type: string
+              description: クレデンシャルタイプ
+              example: public-key
+    InitialRegistrationRequest:
+      type: object
+      required:
+        - email
+        - name
+      properties:
+        email:
+          type: string
+          format: email
+          description: メールアドレス
+          example: newuser@example.com
+        name:
+          type: string
+          description: 氏名
+          example: 田中太郎
+        phone_number:
+          type: string
+          description: 電話番号
+          example: 090-1234-5678
+        locale:
+          type: string
+          description: ロケール
+          example: ja-JP
+        zoneinfo:
+          type: string
+          description: タイムゾーン
+          example: Asia/Tokyo
+        organization_id:
+          type: string
+          description: 組織ID
+          example: org123
+        organization_name:
+          type: string
+          description: 組織名
+          example: テスト組織
+    AuthenticationDeviceBindingMessageRequest:
+      type: object
+      required:
+        - binding_message
+      properties:
+        binding_message:
+          type: string
+          maxLength: 20
+          description: >
+            ユーザーが認証デバイスで入力したバインディングメッセージ。
+
+            CIBAリクエスト時に指定されたbinding_messageと一致する必要があります。
+
+
+            **用途**:
+
+            - フィッシング対策: 消費デバイスと認証デバイス間のトランザクション一致確認
+
+            - トランザクション確認: 金融取引等での取引内容確認
+
+
+            **OIDC CIBA仕様**: [Section
+            7.1](https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html#rfc.section.7.1)
+          example: '999'
+    EmptyRequest:
+      type: object
+      description: リクエストボディが不要なインタラクション
+    AuthenticationSuccessResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+          description: 認証成功ステータス
+        redirect_uri:
+          type: string
+          format: uri
+          description: リダイレクト先URI（認可コード付き）
+          example: https://client.example.com/callback?code=xyz123&state=abc
+    AuthenticationChallengeResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - challenge
+          description: チャレンジステータス
+        challenge:
+          type: string
+          description: チャレンジデータ
+        timeout:
+          type: integer
+          description: チャレンジタイムアウト（秒）
+          example: 300
+    RegistrationChallengeResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - registration_challenge
+          description: 登録チャレンジステータス
+        registration_request:
+          type: string
+          description: 登録リクエストデータ
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: エラーコード
+          enum:
+            - invalid_request
+            - access_denied
+            - server_error
+          example: invalid_request
+        error_description:
+          type: string
+          description: エラー詳細説明
+          example: Invalid username or password
+    AuthorizationViewDataResponse:
+      type: object
+      required:
+        - client_id
+        - client_name
+        - scopes
+        - session_enabled
+      properties:
+        client_id:
+          type: string
+          description: クライアントID
+          example: client123
+        client_name:
+          type: string
+          description: クライアント名
+          example: サンプルアプリケーション
+        client_uri:
+          type: string
+          format: uri
+          description: クライアントURI
+          example: https://client.example.com
+        logo_uri:
+          type: string
+          format: uri
+          description: ロゴURI
+          example: https://client.example.com/logo.png
+        contacts:
+          type: string
+          description: 連絡先
+          example: support@client.example.com
+        tos_uri:
+          type: string
+          format: uri
+          description: 利用規約URI
+          example: https://client.example.com/terms
+        policy_uri:
+          type: string
+          format: uri
+          description: プライバシーポリシーURI
+          example: https://client.example.com/privacy
+        scopes:
+          type: array
+          items:
+            type: string
+          description: 要求されているスコープ一覧
+          example:
+            - openid
+            - profile
+            - email
+        claims:
+          type: object
+          description: |
+            このリクエストで要求されているクレーム一覧。consent画面でクレーム単位の表示・同意に使用します。
+            id_token / userinfo はスコープおよびclaimsパラメータから解決されたクレーム名、
+            verified_claims はclaimsパラメータ経由で要求された本人確認済みクレーム名です。
+
+            注: `verified_claims:*` スコープ経由で要求された本人確認済みクレームは
+            `claims.verified_claims` には含まれず、`scopes` 側に残ります。
+          properties:
+            id_token:
+              type: array
+              items:
+                type: string
+              description: IDトークンで要求されているクレーム名
+              example:
+                - given_name
+                - family_name
+                - email
+            userinfo:
+              type: array
+              items:
+                type: string
+              description: UserInfoで要求されているクレーム名
+              example:
+                - given_name
+                - family_name
+                - email
+            verified_claims:
+              type: array
+              items:
+                type: string
+              description: claimsパラメータ経由で要求された本人確認済みクレーム名
+              example:
+                - given_name
+                - family_name
+          example:
+            id_token:
+              - given_name
+              - family_name
+              - email
+            userinfo:
+              - given_name
+              - family_name
+              - email
+            verified_claims:
+              - given_name
+              - family_name
+        claim_values:
+          type: object
+          description: >
+            要素単位で同意を選べるクレームの候補値。クレーム名をキーとし、値はユーザーが保有する配列です。
+
+
+            対象は `claims:{key}` スコープが解放するユーザーの `custom_properties` のうち**配列のもの**
+
+            だけです。スカラーは選ぶ余地がないため含まれません（丸ごとの拒否は `denied_scopes` の担当）。
+
+            `roles` / `permissions` / `assigned_tenants` はサーバーが決めるものなので対象外です。
+
+
+            **認証トランザクションがユーザーを解決したあとにのみ返ります。** 認証前の view-data には
+
+            含まれないため、認可リクエストIDを取得しただけの相手にユーザー属性は渡りません。
+
+            `authorization_server.extension.custom_claims_scope_mapping`
+            が無効な場合も返りません。
+
+
+            選んだ要素は `/authorize` の `granted_claim_values` として返します。サーバーは要素まるごとの
+
+            一致で判定するため、**ここで受け取った値をそのまま返す**必要があります。
+          additionalProperties:
+            type: array
+            items: {}
+          example:
+            accounts:
+              - acc-1
+              - acc-2
+              - acc-3
+            cards:
+              - id: card-1
+                brand: visa
+              - id: card-2
+                brand: master
+        session_enabled:
+          type: boolean
+          description: セッション有効化フラグ
+          example: true
+        available_federations:
+          type: array
+          items:
+            $ref: '#/components/schemas/FederationInfo'
+          description: 利用可能なフェデレーション情報
+        custom_params:
+          type: object
+          additionalProperties:
+            type: string
+          description: カスタムパラメータ
+          example:
+            organization_id: org123
+            organization_name: テスト組織
+        client_custom_properties:
+          type: object
+          additionalProperties: true
+          description: |
+            クライアントのextension.custom_propertiesに設定された任意のキー・バリューデータ。
+            管理APIでクライアントに設定されている場合のみ含まれます。
+          example:
+            app_label: my-custom-app
+            feature_flags:
+              dark_mode: true
+              beta_features: false
+            max_sessions: 5
+        login_hint:
+          type: string
+          description: |
+            認可リクエストの `login_hint`。指定された場合のみ含まれます。
+            ユーザー名の事前入力などに使用します。
+          example: sub:3ec055a8-8000-44a2-8677-e70ebff414e2
+        ui_locales:
+          type: array
+          items:
+            type: string
+          description: |
+            認可リクエストの `ui_locales`（BCP47 言語タグ）。指定された場合のみ含まれます。
+
+            **優先順位順**の配列です。仕様上サポート外の locale でもエラーにはしないため、
+            `ui_locales_supported` によるフィルタは行わず、要求された値をそのまま返します。
+            画面側で先頭から順に、表示可能な言語が見つかるまで走査してください。
+
+            **値は検証していません。** BCP47 として妥当かも確認せずクライアントの指定を
+            そのまま返すため、既知の locale 一覧と照合してから使用してください
+            （値をパスやURLに直接埋め込まないこと）。
+          example:
+            - fr-CA
+            - fr
+            - en
+        authentication_policy:
+          type: object
+          additionalProperties: true
+          description: |
+            このリクエストに適用される認証ポリシー。利用可能な認証方式、ステップ定義、
+            成功条件などを含みます。スキーマは管理APIの `AuthenticationPolicy`
+            （`swagger-cp-authentication-ja.yaml`）と同じです。
+    FederationInfo:
+      type: object
+      required:
+        - type
+        - provider_name
+        - display_name
+      properties:
+        type:
+          type: string
+          enum:
+            - oidc
+            - saml
+          description: フェデレーションタイプ
+          example: oidc
+        provider_name:
+          type: string
+          description: プロバイダー名
+          example: google
+        display_name:
+          type: string
+          description: 表示名
+          example: Googleでログイン
+        logo_uri:
+          type: string
+          format: uri
+          description: プロバイダーのロゴURI
+          example: https://google.com/logo.png
+    AuthenticationStatusResponse:
+      type: object
+      required:
+        - status
+        - interaction_results
+        - authentication_methods
+      properties:
+        status:
+          type: string
+          enum:
+            - in_progress
+            - success
+            - failure
+            - locked
+          description: >
+            認証トランザクションの全体ステータス。
+
+            認証ポリシーの条件（success_conditions / failure_conditions /
+            lock_conditions）に基づいて判定されます。
+          example: in_progress
+        interaction_results:
+          type: object
+          description: |
+            実行済みの各認証インタラクションの結果。
+            キーはインタラクションタイプ（例: `password-authentication`）。
+            まだ何も実行していない場合は空オブジェクト。
+          additionalProperties:
+            $ref: '#/components/schemas/AuthenticationInteractionResult'
+          example:
+            password-authentication:
+              operation_type: AUTHENTICATION
+              method: password
+              call_count: 1
+              success_count: 1
+              failure_count: 0
+              interaction_time: '2025-01-15T10:30:00'
+        authentication_methods:
+          type: array
+          items:
+            type: string
+          description: |
+            成功した認証インタラクションの認証方式（method）一覧。
+            ID Tokenの `amr` の元データに相当します。
+          example:
+            - password
+    AuthenticationInteractionResult:
+      type: object
+      properties:
+        operation_type:
+          type: string
+          enum:
+            - AUTHENTICATION
+            - DENY
+          description: オペレーション種別
+          example: AUTHENTICATION
+        method:
+          type: string
+          description: 認証方式
+          example: password
+        call_count:
+          type: integer
+          description: 呼び出し回数（成功・失敗の合計）
+          example: 1
+        success_count:
+          type: integer
+          description: 成功回数
+          example: 1
+        failure_count:
+          type: integer
+          description: 失敗回数
+          example: 0
+        interaction_time:
+          type: string
+          format: date-time
+          description: 最終インタラクション日時
+          example: '2025-01-15T10:30:00'
+    AuthorizationResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+            - denied
+          description: ステータス
+        redirect_uri:
+          type: string
+          format: uri
+          description: リダイレクトURI
+          example: https://client.example.com/callback?code=abc123&state=xyz
+    FederationResponse:
+      type: object
+      required:
+        - status
+        - redirect_uri
+      properties:
+        status:
+          type: string
+          enum:
+            - redirect
+          description: ステータス
+        redirect_uri:
+          type: string
+          format: uri
+          description: 外部IdPへのリダイレクトURI
+          example: >-
+            https://accounts.google.com/oauth2/auth?client_id=...&redirect_uri=...
+    FederationCallbackRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          description: OIDC認可コード
+          example: abc123
+        state:
+          type: string
+          description: 状態パラメータ
+          example: xyz456
+        SAMLResponse:
+          type: string
+          description: SAMLレスポンス
+          example: PHNhbWxwOlJlc3BvbnNl...
+        RelayState:
+          type: string
+          description: SAMLリレー状態
+          example: xyz456
+        error:
+          type: string
+          description: エラーコード
+          example: access_denied
+        error_description:
+          type: string
+          description: エラー詳細
+          example: User denied access
+    FederationCallbackResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+            - user_registration_required
+            - error
+          description: ステータス
+        redirect_uri:
+          type: string
+          format: uri
+          description: リダイレクトURI
+          example: https://client.example.com/callback?code=def789&state=original_state
+        user_info:
+          type: object
+          description: 外部IdPから取得したユーザー情報
+          properties:
+            sub:
+              type: string
+              description: Subject Identifier
+            email:
+              type: string
+              format: email
+              description: メールアドレス
+            name:
+              type: string
+              description: 表示名
+  responses:
+    TooManyRequests:
+      description: |
+        レート制限超過。
+
+        クライアントが短時間に過剰なリクエストを送信した場合に返却されます。
+        このレスポンスは API Gateway がリクエストをアプリケーションに到達させる前に返却します。
+
+        `Retry-After` ヘッダーが含まれる場合は、指定された秒数後にリトライしてください。
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: リトライまでの推奨待機時間（秒）
+          required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                description: エラーメッセージ（optional。API Gateway の設定により含まれない場合があります）
+          examples:
+            throttled:
+              summary: スロットリング（秒間リクエスト制限）
+              value:
+                message: Too Many Requests
+            quota_exceeded:
+              summary: クォータ超過（日次/月次リクエスト制限）
+              value:
+                message: Limit Exceeded
+    InternalServerError:
+      description: |
+        サーバー内部エラー。
+
+        アプリケーションで予期しないエラーが発生した場合、または API Gateway が
+        バックエンドから正常なレスポンスを受信できなかった場合に返却されます。
+
+        アプリケーション起因の場合は OAuth 2.0 ErrorResponse 形式
+        （`{"error": "server_error", "error_description": "..."}`）で
+        返却される場合があります。
+
+        問題が継続する場合は、サーバー管理者にお問い合わせください。
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                description: エラーメッセージ（optional。API Gateway の設定により含まれない場合があります）
+          examples:
+            default:
+              summary: サーバー内部エラー
+              value:
+                message: Internal server error
+    ServiceUnavailable:
+      description: |
+        サービス一時利用不可。
+
+        バックエンドサーバーが利用できない状態です。
+        このレスポンスは API Gateway がバックエンドへの接続に失敗した場合に返却します。
+
+        `Retry-After` ヘッダーが含まれる場合は、指定された秒数後にリトライしてください。
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: サービス復旧までの推定時間（秒）
+          required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                description: エラーメッセージ（optional。API Gateway の設定により含まれない場合があります）
+          examples:
+            default:
+              summary: サービス利用不可
+              value:
+                message: Service Unavailable
+    GatewayTimeout:
+      description: |
+        ゲートウェイタイムアウト。
+
+        バックエンドサーバーからの応答が制限時間内に返却されませんでした。
+        このレスポンスは API Gateway がバックエンドの応答を待機してタイムアウトした場合に返却します。
+
+        ネットワークの一時的な問題の可能性があります。時間をおいてリトライしてください。
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                description: エラーメッセージ（optional。API Gateway の設定により含まれない場合があります）
+          examples:
+            default:
+              summary: タイムアウト
+              value:
+                message: Endpoint request timed out
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        認証トランザクションの管理API呼び出し時に使用するJWTベアラートークン。
+        認証画面からの直接呼び出しでは不要です。
+security: []

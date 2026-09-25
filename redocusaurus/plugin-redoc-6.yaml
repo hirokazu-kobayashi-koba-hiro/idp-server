@@ -1,171 +1,36 @@
 openapi: 3.0.3
 info:
-  title: idp-server コントロールプレーン ユーザー管理 API
-  description: ユーザーの管理API仕様書
+  title: idp-server コントロールプレーン クライアント管理 API
+  description: クライアントの管理API仕様書
   version: 1.0.0
   contact:
     name: idp-server OSS
 servers:
   - url: http://localhost:8080
 tags:
-  - name: organization-contact-verification-challenge
-    description: 組織レベル 連絡先確認チャレンジ参照（セルフサービスの Email/電話番号 確認・変更）
-  - name: organization-user
-    description: 組織レベルユーザー管理
+  - name: organization-client
+    description: 組織レベルクライアント管理
 paths:
-  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/contact-verification-challenges:
-    parameters:
-      - $ref: '#/components/parameters/OrganizationId'
-      - $ref: '#/components/parameters/TenantId'
-    get:
-      summary: 組織内 連絡先確認チャレンジ一覧取得
-      description: >
-        セルフサービスの Email / 電話番号 確認・変更（`POST
-        /{tenant-id}/v1/me/{email|phone}/{verification|change}`）で
-
-        発行された確認チャレンジの一覧を取得します（読み取り専用）。
-
-
-        「確認コードのメール／SMS が届かない」という問い合わせに対して、**どの宛先に送ったか**（`target_value`）と
-
-        **どのコードを発行したか**（`verification_code`）をオペレーターが確認するためのAPIです。
-
-
-        `verification_code` を返すのは意図的です。チャレンジの消費には本人のアクセストークンが必要なため、
-
-        コードだけを入手したオペレーターが単独で確定させることはできません。
-
-
-        外部サービスにコード生成・検証を委譲しているテナントでは、コードは idp-server にありません
-
-        （`delivery: external`）。その場合は `external_reference` で外部サービスの記録を引きます。
-
-
-        アクセスには `idp:contact-verification-challenge:read` 権限が必要で、参照は監査ログに記録されます。
-
-        ただし監査ログには `verification_code` も `external_reference` も残りません。
-      tags:
-        - organization-contact-verification-challenge
-      parameters:
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Offset'
-        - name: user_id
-          in: query
-          required: false
-          schema:
-            type: string
-            format: uuid
-          description: ユーザーIDでフィルタリング
-        - name: operation
-          in: query
-          required: false
-          schema:
-            type: string
-            enum:
-              - email_verify
-              - email_change
-              - phone_verify
-              - phone_change
-          description: 操作種別でフィルタリング
-      responses:
-        '200':
-          description: 連絡先確認チャレンジ一覧取得成功
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  list:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/ContactVerificationChallenge'
-                  total_count:
-                    type: integer
-                    example: 1
-                  limit:
-                    type: integer
-                    example: 20
-                  offset:
-                    type: integer
-                    example: 0
-        '400':
-          description: クエリパラメータが不正
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          description: 組織アクセス権限不足、テナントアクセス拒否、または権限不足
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: 組織またはテナントが見つかりません
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/contact-verification-challenges/{id}:
-    parameters:
-      - $ref: '#/components/parameters/OrganizationId'
-      - $ref: '#/components/parameters/TenantId'
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: 連絡先確認チャレンジID
-        example: f47ac10b-58cc-4372-a567-0e02b2c3d479
-    get:
-      summary: 組織内 連絡先確認チャレンジ詳細取得
-      description: 指定した組織・テナント内の特定の連絡先確認チャレンジの詳細を取得します
-      tags:
-        - organization-contact-verification-challenge
-      responses:
-        '200':
-          description: 連絡先確認チャレンジ詳細取得成功
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ContactVerificationChallenge'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          description: 組織アクセス権限不足、テナントアクセス拒否、または権限不足
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: 組織、テナント、または連絡先確認チャレンジが見つかりません
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users:
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/clients:
     parameters:
       - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/TenantId'
     post:
-      summary: Create user within organization tenant
-      description: 組織内の特定のテナントに新しいユーザーを作成します
+      summary: Create client within organization tenant
+      description: 組織内の特定のテナントに新しいOAuth/OIDCクライアントを作成します
       tags:
-        - organization-user
+        - organization-client
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OrganizationUserCreateRequest'
-      parameters:
-        - $ref: '#/components/parameters/DryRun'
+              $ref: '#/components/schemas/ClientCreateRequest'
       responses:
         '201':
-          description: ユーザーを正常に作成しました
+          description: クライアントの作成が成功しました
           content:
             application/json:
               schema:
@@ -173,17 +38,17 @@ paths:
                 properties:
                   dry_run:
                     type: boolean
-                    description: これがドライラン操作であったかを示します
+                    description: ドライランかどうか
                   result:
-                    $ref: '#/components/schemas/OrganizationUser'
+                    $ref: '#/components/schemas/Client'
         '400':
-          description: 無効なリクエストボディまたは検証エラー
+          description: 無効なリクエストデータまたはバリデーションエラー
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserValidationErrorResponse'
+                $ref: '#/components/schemas/ErrorResponse'
         '403':
-          description: 権限不足または無効な組織アクセス
+          description: 権限不足または無効な組織・テナントアクセス
           content:
             application/json:
               schema:
@@ -195,101 +60,84 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
     get:
-      summary: List users within organization tenant
-      description: 組織内の特定のテナントのユーザー一覧を取得します。結果は作成日時の降順（新しいユーザーが先頭）でソートされます。
+      summary: List clients within organization tenant
+      description: 組織内の特定のテナントのOAuth/OIDCクライアント一覧を取得します
       tags:
-        - organization-user
+        - organization-client
       parameters:
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/Offset'
-        - name: user_id
+        - name: client_id
           in: query
           required: false
           schema:
             type: string
-          description: 特定のユーザーIDでフィルタリング
-        - name: preferred_username
+          description: 特定のクライアントIDでフィルタリング
+        - name: client_name
           in: query
           required: false
           schema:
             type: string
-          description: 優先ユーザー名でフィルタリング
-        - name: email
+          description: クライアント名でフィルタリング
+        - name: client_id_alias
           in: query
           required: false
           schema:
             type: string
-          description: メールアドレスでフィルタリング
-        - name: external_user_id
+          description: クライアントID別名でフィルタリング
+        - name: client_uri
           in: query
           required: false
           schema:
             type: string
-          description: 外部ユーザーIDでフィルタリング
-        - name: status
+          description: クライアントURIでフィルタリング
+        - name: application_type
           in: query
           required: false
           schema:
             type: string
             enum:
-              - active
-              - inactive
-              - locked
-          description: ユーザーステータスでフィルタリング
-        - name: provider_id
+              - web
+              - native
+          description: アプリケーションタイプでフィルタリング
+        - name: grant_types
           in: query
           required: false
           schema:
             type: string
-          description: プロバイダーIDでフィルタリング
-        - name: phone_number
+          description: グラントタイプでフィルタリング（カンマ区切り）
+        - name: response_types
           in: query
           required: false
           schema:
             type: string
-          description: 電話番号でフィルタリング
-        - name: name
+          description: レスポンスタイプでフィルタリング（カンマ区切り）
+        - name: token_endpoint_auth_method
           in: query
           required: false
           schema:
             type: string
-          description: 名前で部分一致検索（大文字小文字区別なし）
-        - name: given_name
+            enum:
+              - client_secret_basic
+              - client_secret_post
+              - client_secret_jwt
+              - private_key_jwt
+              - tls_client_auth
+              - self_signed_tls_client_auth
+              - none
+          description: トークンエンドポイント認証方式でフィルタリング
+        - name: scope
           in: query
           required: false
           schema:
             type: string
-          description: 名で部分一致検索（大文字小文字区別なし）
-        - name: family_name
+          description: スコープでフィルタリング（スペース区切り）
+        - name: enabled
           in: query
           required: false
           schema:
-            type: string
-          description: 姓で部分一致検索（大文字小文字区別なし）
-        - name: middle_name
-          in: query
-          required: false
-          schema:
-            type: string
-          description: ミドルネームで部分一致検索（大文字小文字区別なし）
-        - name: nickname
-          in: query
-          required: false
-          schema:
-            type: string
-          description: ニックネームで部分一致検索（大文字小文字区別なし）
-        - name: role
-          in: query
-          required: false
-          schema:
-            type: string
-          description: ロール名で部分一致検索
-        - name: permission
-          in: query
-          required: false
-          schema:
-            type: string
-          description: 権限名で部分一致検索
+            type: boolean
+          description: 有効/無効ステータスでフィルタリング
         - name: from
           in: query
           required: false
@@ -306,7 +154,7 @@ paths:
           description: 作成日時の終了（ISO 8601形式）
       responses:
         '200':
-          description: ユーザーを正常に取得しました
+          description: クライアント一覧を正常に取得しました
           content:
             application/json:
               schema:
@@ -315,18 +163,18 @@ paths:
                   list:
                     type: array
                     items:
-                      $ref: '#/components/schemas/OrganizationUser'
+                      $ref: '#/components/schemas/Client'
                   total_count:
                     type: integer
-                    description: ユーザーの総数
+                    description: クライアントの総数
                   limit:
                     type: integer
-                    description: 1ページあたりのアイテム数
+                    description: 返される結果の最大数
                   offset:
                     type: integer
-                    description: 開始位置
+                    description: スキップされた結果の数
         '403':
-          description: 権限不足または無効な組織アクセス
+          description: 権限不足または無効な組織・テナントアクセス
           content:
             application/json:
               schema:
@@ -337,51 +185,51 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users/{user-id}:
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/clients/{client-id}:
     parameters:
       - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/TenantId'
-      - $ref: '#/components/parameters/UserId'
+      - $ref: '#/components/parameters/ClientId'
     get:
-      summary: Get user within organization tenant
-      description: 組織内のテナントの特定のユーザーを取得します
+      summary: Get client within organization tenant
+      description: 組織内のテナントの特定のOAuth/OIDCクライアントを取得します
       tags:
-        - organization-user
+        - organization-client
       responses:
         '200':
-          description: ユーザーを正常に取得しました
+          description: クライアントを正常に取得しました
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OrganizationUser'
+                $ref: '#/components/schemas/Client'
         '403':
-          description: 権限不足または無効な組織アクセス
+          description: 権限不足または無効な組織・テナントアクセス
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
-          description: ユーザー、組織、またはテナントが見つかりません
+          description: 組織、テナント、またはクライアントが見つかりません
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
     put:
-      summary: Update user within organization tenant
-      description: 組織内のテナントの特定のユーザーを更新します
+      summary: Update client within organization tenant
+      description: 組織内のテナントの特定のOAuth/OIDCクライアントを更新します
       tags:
-        - organization-user
+        - organization-client
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OrganizationUserUpdateRequest'
-      parameters:
-        - $ref: '#/components/parameters/DryRun'
+              $ref: '#/components/schemas/ClientUpdateRequest'
       responses:
         '200':
-          description: ユーザーを正常に更新しました
+          description: クライアントを正常に更新しました
           content:
             application/json:
               schema:
@@ -389,405 +237,63 @@ paths:
                 properties:
                   dry_run:
                     type: boolean
-                    description: これがドライラン操作であったかを示します
+                    description: ドライランかどうか
                   result:
-                    $ref: '#/components/schemas/OrganizationUser'
+                    $ref: '#/components/schemas/Client'
         '400':
-          description: 無効なリクエストボディまたは検証エラー
+          description: 無効なリクエストデータまたはバリデーションエラー
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserValidationErrorResponse'
+                $ref: '#/components/schemas/ErrorResponse'
         '403':
-          description: 権限不足または無効な組織アクセス
+          description: 権限不足または無効な組織・テナントアクセス
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
-          description: ユーザー、組織、またはテナントが見つかりません
+          description: 組織、テナント、またはクライアントが見つかりません
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
     delete:
-      summary: Delete user within organization tenant
-      description: 組織内のテナントの特定のユーザーを削除します
+      summary: Delete client within organization tenant
+      description: 組織内のテナントの特定のOAuth/OIDCクライアントを削除します
       tags:
-        - organization-user
+        - organization-client
       parameters:
         - $ref: '#/components/parameters/DryRun'
       responses:
+        '200':
+          description: ドライラン削除を正常に完了しました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: 確認メッセージ
+                  client_id:
+                    type: string
+                    description: 削除予定のクライアントのID
         '204':
-          description: ユーザーを正常に削除しました
+          description: クライアントを正常に削除しました
         '403':
-          description: 権限不足または無効な組織アクセス
+          description: 権限不足または無効な組織・テナントアクセス
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
-          description: ユーザー、組織、またはテナントが見つかりません
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-    patch:
-      summary: Partially update user within organization tenant
-      description: 組織内のテナントの特定のユーザーを部分更新します
-      tags:
-        - organization-user
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/OrganizationUserUpdateRequest'
-      parameters:
-        - $ref: '#/components/parameters/DryRun'
-      responses:
-        '200':
-          description: ユーザーを正常に更新しました
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  dry_run:
-                    type: boolean
-                    description: これがドライラン操作であったかを示します
-                  result:
-                    $ref: '#/components/schemas/OrganizationUser'
-        '400':
-          description: 無効なリクエストボディまたは検証エラー
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserValidationErrorResponse'
-        '403':
-          description: 権限不足または無効な組織アクセス
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: ユーザー、組織、またはテナントが見つかりません
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users/{user-id}/password:
-    parameters:
-      - $ref: '#/components/parameters/OrganizationId'
-      - $ref: '#/components/parameters/TenantId'
-      - $ref: '#/components/parameters/UserId'
-    put:
-      summary: Update user password within organization tenant
-      description: Updates a specific user's password for a tenant within an organization
-      tags:
-        - organization-user
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/OrganizationUserPasswordUpdateRequest'
-      parameters:
-        - $ref: '#/components/parameters/DryRun'
-      responses:
-        '200':
-          description: ユーザーのパスワードを正常に更新しました
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  dry_run:
-                    type: boolean
-                    description: これがドライラン操作であったかを示します
-                  result:
-                    $ref: '#/components/schemas/OrganizationUser'
-        '400':
-          description: 無効なリクエストボディまたは検証エラー
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserValidationErrorResponse'
-        '403':
-          description: 権限不足または無効な組織アクセス
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: ユーザー、組織、またはテナントが見つかりません
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users/{user-id}/roles:
-    parameters:
-      - $ref: '#/components/parameters/OrganizationId'
-      - $ref: '#/components/parameters/TenantId'
-      - $ref: '#/components/parameters/UserId'
-    patch:
-      summary: Update user roles within organization tenant
-      description: Updates a specific user's roles for a tenant within an organization
-      tags:
-        - organization-user
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/OrganizationUserRolesUpdateRequest'
-      parameters:
-        - $ref: '#/components/parameters/DryRun'
-      responses:
-        '200':
-          description: ユーザーのロールを正常に更新しました
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  dry_run:
-                    type: boolean
-                    description: これがドライラン操作であったかを示します
-                  result:
-                    $ref: '#/components/schemas/OrganizationUser'
-        '400':
-          description: 無効なリクエストボディまたは検証エラー
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserValidationErrorResponse'
-        '403':
-          description: 権限不足または無効な組織アクセス
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: ユーザー、組織、またはテナントが見つかりません
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users/{user-id}/tenant-assignments:
-    parameters:
-      - $ref: '#/components/parameters/OrganizationId'
-      - $ref: '#/components/parameters/TenantId'
-      - $ref: '#/components/parameters/UserId'
-    patch:
-      summary: Update user tenant assignments within organization
-      description: Updates a specific user's tenant assignments within an organization
-      tags:
-        - organization-user
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: >-
-                #/components/schemas/OrganizationUserTenantAssignmentsUpdateRequest
-      parameters:
-        - $ref: '#/components/parameters/DryRun'
-      responses:
-        '200':
-          description: ユーザーのテナント割り当てを正常に更新しました
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  dry_run:
-                    type: boolean
-                    description: これがドライラン操作であったかを示します
-                  result:
-                    $ref: '#/components/schemas/OrganizationUser'
-        '400':
-          description: 無効なリクエストボディまたは検証エラー
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserValidationErrorResponse'
-        '403':
-          description: 権限不足または無効な組織アクセス
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: ユーザー、組織、またはテナントが見つかりません
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users/{user-id}/organization-assignments:
-    parameters:
-      - $ref: '#/components/parameters/OrganizationId'
-      - $ref: '#/components/parameters/TenantId'
-      - $ref: '#/components/parameters/UserId'
-    patch:
-      summary: Update user organization assignments
-      description: Updates a specific user's organization assignments
-      tags:
-        - organization-user
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: >-
-                #/components/schemas/OrganizationUserOrganizationAssignmentsUpdateRequest
-      parameters:
-        - $ref: '#/components/parameters/DryRun'
-      responses:
-        '200':
-          description: ユーザーの組織割り当てを正常に更新しました
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  dry_run:
-                    type: boolean
-                    description: これがドライラン操作であったかを示します
-                  result:
-                    $ref: '#/components/schemas/OrganizationUser'
-        '400':
-          description: 無効なリクエストボディまたは検証エラー
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserValidationErrorResponse'
-        '403':
-          description: 権限不足または無効な組織アクセス
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: ユーザー、組織、またはテナントが見つかりません
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users/{user-id}/sessions:
-    parameters:
-      - $ref: '#/components/parameters/OrganizationId'
-      - $ref: '#/components/parameters/TenantId'
-      - $ref: '#/components/parameters/UserId'
-    get:
-      summary: List user sessions
-      description: |
-        指定されたユーザーのアクティブなセッション一覧を取得します。
-
-        このエンドポイントは、ユーザーが現在持っているOPセッション（OpenID Provider Session）の情報を返します。
-        セッション情報には、セッションID、認証時刻、有効期限、最終アクセス時刻などが含まれます。
-
-        **ユースケース:**
-        - ユーザーのログイン状況の確認
-        - 不正アクセスの検出（予期しないセッションの発見）
-        - セッション管理画面の構築
-      tags:
-        - organization-user
-      responses:
-        '200':
-          description: ユーザーのセッション一覧を正常に取得しました
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserSessionListResponse'
-        '403':
-          description: 権限不足または無効な組織アクセス
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: ユーザー、組織、またはテナントが見つかりません
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-    delete:
-      summary: Delete all user sessions
-      description: |
-        指定されたユーザーのすべてのセッションを一括削除（ログアウト）します。
-
-        このエンドポイントは、ユーザーが持つすべてのOPセッションを無効化します。
-        パスワード変更後の全デバイスからのログアウトや、アカウント侵害時の緊急対応に使用します。
-
-        **ユースケース:**
-        - パスワード変更後の全セッション無効化
-        - アカウント侵害時の緊急対応
-        - ユーザー退職時のセッションクリア
-      tags:
-        - organization-user
-      parameters:
-        - $ref: '#/components/parameters/DryRun'
-      responses:
-        '204':
-          description: すべてのセッションを正常に削除しました
-        '403':
-          description: 権限不足または無効な組織アクセス
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: ユーザー、組織、またはテナントが見つかりません
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users/{user-id}/sessions/{session-id}:
-    parameters:
-      - $ref: '#/components/parameters/OrganizationId'
-      - $ref: '#/components/parameters/TenantId'
-      - $ref: '#/components/parameters/UserId'
-      - $ref: '#/components/parameters/SessionId'
-    delete:
-      summary: Delete user session
-      description: |
-        指定されたユーザーの特定のセッションを削除（ログアウト）します。
-
-        このエンドポイントは、ユーザーの特定のOPセッションを無効化します。
-        セッション削除により、そのセッションに関連するすべてのトークンも無効化されます。
-
-        **ユースケース:**
-        - 不正アクセスが疑われるセッションの強制終了
-        - ユーザーからの要請によるリモートログアウト
-        - セキュリティインシデント対応
-      tags:
-        - organization-user
-      parameters:
-        - $ref: '#/components/parameters/DryRun'
-      responses:
-        '204':
-          description: セッションを正常に削除しました
-        '403':
-          description: 権限不足または無効な組織アクセス
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: セッション、ユーザー、組織、またはテナントが見つかりません
+          description: 組織、テナント、またはクライアントが見つかりません
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 components:
-  responses:
-    Unauthorized:
-      description: 認証されていません（アクセストークンが無効または未指定）
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
   parameters:
     TenantId:
       name: tenant-id
@@ -804,22 +310,13 @@ components:
         type: string
         format: uuid
       description: 組織の識別子
-    UserId:
-      name: user-id
+    ClientId:
+      name: client-id
       in: path
       required: true
       schema:
         type: string
-        format: uuid
-      description: ユーザーの識別子
-    SessionId:
-      name: session-id
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-      description: セッションの識別子
+      description: OAuth/OIDCクライアントの識別子
     DryRun:
       name: dry_run
       in: query
@@ -848,72 +345,489 @@ components:
         default: 0
       description: アイテムを返す開始インデックス
   schemas:
-    ContactVerificationChallenge:
+    Client:
       type: object
-      description: セルフサービス 連絡先確認チャレンジ（Email / 電話番号）
+      required:
+        - redirect_uris
       properties:
-        id:
+        client_id:
           type: string
           format: uuid
-          description: チャレンジID
-          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
-        user_id:
+          description: 一意クライアント識別子。他の登録済みクライアントで現在有効であってはいけない。
+        client_id_alias:
           type: string
-          format: uuid
-          description: チャレンジを発行したユーザーのID
-        operation:
+          maxLength: 255
+          description: 一意クライアントIDエイリアス
+        client_secret:
+          type: string
+          description: >-
+            OPTIONAL. Client Secret. The same Client Secret value MUST NOT be
+            assigned to multiple Clients. This value is used by Confidential
+            Clients to authenticate to the Token Endpoint, as described in
+            Section 2.3.1 of OAuth 2.0, and for the derivation of symmetric
+            encryption key values, as described in Section 10.2 of OpenID
+            Connect Core 1.0 [OpenID.Core]. It is not needed for Clients
+            selecting a token_endpoint_auth_method of private_key_jwt unless
+            symmetric encryption will be used.
+        redirect_uris:
+          type: array
+          items:
+            type: string
+          description: >-
+            REQUIRED. Array of Redirection URI values used by the Client. One of
+            these registered Redirection URI values MUST exactly match the
+            redirect_uri parameter value used in each Authorization Request,
+            with the matching performed as described in Section 6.2.1 of
+            [RFC3986] (Simple String Comparison).
+        response_types:
+          type: array
+          items:
+            type: string
+            enum:
+              - code
+              - token
+              - id_token
+              - code token
+              - code token id_token
+              - token id_token
+              - code id_token
+              - none
+          default:
+            - code
+          description: >-
+            OPTIONAL. JSON [RFC8259] array containing a list of the OAuth 2.0
+            response_type values that the Client is declaring that it will
+            restrict itself to using. If omitted, the default is that the Client
+            will use only the code Response Type.
+        grant_types:
+          type: array
+          items:
+            type: string
+            enum:
+              - authorization_code
+              - implicit
+              - refresh_token
+              - password
+              - client_credentials
+              - urn:openid:params:grant-type:ciba
+          default:
+            - authorization_code
+          description: >-
+            OPTIONAL. JSON array containing a list of the OAuth 2.0 Grant Types
+            that the Client is declaring that it will restrict itself to using.
+            The Grant Type values used by OpenID Connect are:
+            authorization_code: The Authorization Code Grant Type described in
+            OAuth 2.0 Section 4.1. implicit: The Implicit Grant Type described
+            in OAuth 2.0 Section 4.2. refresh_token: The Refresh Token Grant
+            Type described in OAuth 2.0 Section 6. The following table lists the
+            correspondence between response_type values that the Client will use
+            and grant_type values that MUST be included in the registered
+            grant_types list: code: authorization_code id_token: implicit
+            id_token token: implicit code id_token: authorization_code, implicit
+            code token: authorization_code, implicit code id_token token:
+            authorization_code, implicit If omitted, the default is that the
+            Client will use only the authorization_code Grant Type.
+        application_type:
           type: string
           enum:
-            - email_verify
-            - email_change
-            - phone_verify
-            - phone_change
-          description: 操作種別。発行時に確定し、確定処理まで変わりません
-          example: email_change
-        target_value:
+            - native
+            - web
+          default: web
+          description: >-
+            OPTIONAL. Kind of the application. The default, if omitted, is web.
+            The defined values are native or web. Web Clients using the OAuth
+            Implicit Grant Type MUST only register URLs using the https scheme
+            as redirect_uris; they MUST NOT use localhost as the hostname.
+            Native Clients MUST only register redirect_uris using custom URI
+            schemes or loopback URLs using the http scheme; loopback URLs use
+            localhost or the IP loopback literals 127.0.0.1 or [::1] as the
+            hostname. Authorization Servers MAY place additional constraints on
+            Native Clients. Authorization Servers MAY reject Redirection URI
+            values using the http scheme, other than the loopback case for
+            Native Clients. The Authorization Server MUST verify that all the
+            registered redirect_uris conform to these constraints. This prevents
+            sharing a Client ID across different types of Clients.
+        contacts:
+          type: array
+          items:
+            type: string
+          description: >-
+            オプション。このクライアントの負責者のメールアドレスの配列。一部のプロバイダーでは、Webユーザーインターフェースでクライアント情報を変更できるようにするために使用される可能性がある。
+        client_name:
           type: string
-          description: |
-            確認コードの実際の送信先。`*_verify` はアカウントの現在値、`*_change` は変更先の値。
-            「届かない」の問い合わせでまず確認する項目で、`delivery` によらず記録されます
-          example: new@example.com
-        delivery:
+          description: >-
+            オプション。エンドユーザーに提示されるクライアントの名前。必要に応じて、このクレームの異なる言語とスクリプトでの表現はセクション2.1で説明されたとおり表現される。
+        logo_uri:
+          type: string
+          format: uri
+          description: >-
+            オプション。クライアントアプリケーションのロゴを参照するURL。存在する場合、サーバーは承認時にこの画像をエンドユーザーに表示すべきである。このフィールドの値は有効な画像ファイルを指さなければならない。
+        client_uri:
+          type: string
+          format: uri
+          description: >-
+            オプション。クライアントのホームページのURL。このフィールドの値は有効なWebページを指さなければならない。存在する場合、サーバーはこのURLをエンドユーザーにフォロー可能な方式で表示すべきである。
+        policy_uri:
+          type: string
+          format: uri
+          description: >-
+            オプション。リライイングパーティクライアントがエンドユーザーに提供する、プロファイルデータの使用方法について読むためのURL。このフィールドの値は有効なWebページを指さなければならない。提供された場合、OpenIDプロバイダーはこのURLをエンドユーザーに表示すべきである。
+        tos_uri:
+          type: string
+          format: uri
+          description: >-
+            オプション。リライイングパーティクライアントがエンドユーザーに提供する、リライイングパーティの利用規約を読むためのURL。このフィールドの値は有効なWebページを指さなければならない。提供された場合、OpenIDプロバイダーはこのURLをエンドユーザーに表示すべきである。
+        jwks_uri:
+          type: string
+          format: uri
+          description: >-
+            OPTIONAL. URL for the Client's JWK Set [JWK] document, which MUST
+            use the https scheme. If the Client signs requests to the Server, it
+            contains the signing key(s) the Server uses to validate signatures
+            from the Client. The JWK Set MAY also contain the Client's
+            encryption keys(s), which are used by the Server to encrypt
+            responses to the Client. When both signing and encryption keys are
+            made available, a use (public key use) parameter value is REQUIRED
+            for all keys in the referenced JWK Set to indicate each key's
+            intended usage. Although some algorithms allow the same key to be
+            used for both signatures and encryption, doing so is NOT
+            RECOMMENDED, as it is less secure. The JWK x5c parameter MAY be used
+            to provide X.509 representations of keys provided. When used, the
+            bare key values MUST still be present and MUST match those in the
+            certificate. Th
+        jwks:
+          type: string
+          format: jwks
+          description: >-
+            OPTIONAL. Client's JWK Set [JWK] document, passed by value. The
+            semantics of the jwks parameter are the same as the jwks_uri
+            parameter, other than that the JWK Set is passed by value, rather
+            than by reference. This parameter is intended only to be used by
+            Clients that, for some reason, are unable to use the jwks_uri
+            parameter, for instance, by native applications that might not have
+            a location to host the contents of the JWK Set. If a Client can use
+            jwks_uri, it MUST NOT use jwks. One significant downside of jwks is
+            that it does not enable key rotation (which jwks_uri does, as
+            described in Section 10 of OpenID Connect Core 1.0 [OpenID.Core]).
+            The jwks_uri and jwks parameters MUST NOT be used together. The JWK
+            Set MUST NOT contain private or symmetric key values.
+        sector_identifier_uri:
+          type: string
+          format: uri
+          description: >-
+            OPTIONAL. URL using the https scheme to be used in calculating
+            Pseudonymous Identifiers by the OP. The URL references a file with a
+            single JSON array of redirect_uri values. Please see Section 5.
+            Providers that use pairwise sub (subject) values SHOULD utilize the
+            sector_identifier_uri value provided in the Subject Identifier
+            calculation for pairwise identifiers.
+        subject_type:
           type: string
           enum:
-            - internal
-            - external
-          description: >
-            コードの在処。`internal` は idp-server が生成・照合するモードで `verification_code` が入る。
-
-            `external` は外部サービスに委譲したモードで、コードは idp-server に無く `external_reference`
-            が入る
-          example: internal
-        verification_code:
+            - pairwise
+            - public
+          description: >-
+            オプション。このクライアントへのレスポンスに要求されるsubject_type。subject_types_supportedディスカバリーパラメータには、OPのサポートされるsubject_type値のリストが含まれる。有効なタイプにはpairwiseとpublicが含まれる。
+        id_token_signed_response_alg:
           type: string
-          description: |
-            発行した確認コード。`delivery: internal` のときのみ返る。
-            確定には本人のアクセストークンが別途必要なため、コードだけでは確定できません
-          example: '123456'
-        external_reference:
-          type: object
-          additionalProperties: true
-          description: |
-            外部サービスの記録に突き合わせるための識別子。`delivery: external` のときのみ返る。
-            中身はテナントが `http_request_store` のマッピングで選んだ項目（典型は `transaction_id`）
-          example:
-            transaction_id: ext-3fa85f64-5717-4562-b3fc-2c963f66afa6
-        attempts:
+          enum:
+            - none
+            - RS256
+            - ES256
+            - HS256
+          description: >-
+            OPTIONAL. JWS alg algorithm [JWA] REQUIRED for signing the ID Token
+            issued to this Client. The value none MUST NOT be used as the ID
+            Token alg value unless the Client uses only Response Types that
+            return no ID Token from the Authorization Endpoint (such as when
+            only using the Authorization Code Flow). The default, if omitted, is
+            RS256. The public key for validating the signature is provided by
+            retrieving the JWK Set referenced by the jwks_uri element from
+            OpenID Connect Discovery 1.0 [OpenID.Discovery].
+        id_token_encrypted_response_alg:
+          type: string
+          enum:
+            - RSA1_5
+            - A128KW
+          description: >-
+            OPTIONAL. JWE alg algorithm [JWA] REQUIRED for encrypting the ID
+            Token issued to this Client. If this is requested, the response will
+            be signed then encrypted, with the result being a Nested JWT, as
+            defined in [JWT]. The default, if omitted, is that no encryption is
+            performed.
+        id_token_encrypted_response_enc:
+          type: string
+          enum:
+            - A128CBC-HS256
+            - A128GCM
+            - A256GCM
+          description: >-
+            OPTIONAL. JWE enc algorithm [JWA] REQUIRED for encrypting the ID
+            Token issued to this Client. If id_token_encrypted_response_alg is
+            specified, the default id_token_encrypted_response_enc value is
+            A128CBC-HS256. When id_token_encrypted_response_enc is included,
+            id_token_encrypted_response_alg MUST also be provided.
+        userinfo_signed_response_alg:
+          type: string
+          enum:
+            - none
+            - RS256
+            - ES256
+            - HS256
+          description: >-
+            OPTIONAL. JWS alg algorithm [JWA] REQUIRED for signing UserInfo
+            Responses. If this is specified, the response will be JWT [JWT]
+            serialized, and signed using JWS. The default, if omitted, is for
+            the UserInfo Response to return the Claims as a UTF-8 [RFC3629]
+            encoded JSON object using the application/json content-type.
+        userinfo_encrypted_response_alg:
+          type: string
+          enum:
+            - RSA1_5
+            - A128KW
+          description: >-
+            OPTIONAL. JWE [JWE] alg algorithm [JWA] REQUIRED for encrypting
+            UserInfo Responses. If both signing and encryption are requested,
+            the response will be signed then encrypted, with the result being a
+            Nested JWT, as defined in [JWT]. The default, if omitted, is that no
+            encryption is performed.
+        userinfo_encrypted_response_enc:
+          type: string
+          enum:
+            - A128CBC-HS256
+            - A128GCM
+            - A256GCM
+          description: >-
+            OPTIONAL. JWE enc algorithm [JWA] REQUIRED for encrypting UserInfo
+            Responses. If userinfo_encrypted_response_alg is specified, the
+            default userinfo_encrypted_response_enc value is A128CBC-HS256. When
+            userinfo_encrypted_response_enc is included,
+            userinfo_encrypted_response_alg MUST also be provided.
+        request_object_signing_alg:
+          type: string
+          enum:
+            - none
+            - RS256
+            - ES256
+            - HS256
+          description: >-
+            OPTIONAL. JWS [JWS] alg algorithm [JWA] that MUST be used for
+            signing Request Objects sent to the OP. All Request Objects from
+            this Client MUST be rejected, if not signed with this algorithm.
+            Request Objects are described in Section 6.1 of OpenID Connect Core
+            1.0 [OpenID.Core]. This algorithm MUST be used both when the Request
+            Object is passed by value (using the request parameter) and when it
+            is passed by reference (using the request_uri parameter). Servers
+            SHOULD support RS256. The value none MAY be used. The default, if
+            omitted, is that any algorithm supported by the OP and the RP MAY be
+            used.
+        request_object_encryption_alg:
+          type: string
+          enum:
+            - RSA1_5
+            - A128KW
+          description: >-
+            OPTIONAL. JWE [JWE] alg algorithm [JWA] the RP is declaring that it
+            may use for encrypting Request Objects sent to the OP. This
+            parameter SHOULD be included when symmetric encryption will be used,
+            since this signals to the OP that a client_secret value needs to be
+            returned from which the symmetric key will be derived, that might
+            not otherwise be returned. The RP MAY still use other supported
+            encryption algorithms or send unencrypted Request Objects, even when
+            this parameter is present. If both signing and encryption are
+            requested, the Request Object will be signed then encrypted, with
+            the result being a Nested JWT, as defined in [JWT]. The default, if
+            omitted, is that the RP is not declaring whether it might encrypt
+            any Request Objects.
+        request_object_encryption_enc:
+          type: string
+          enum:
+            - A128CBC-HS256
+            - A128GCM
+            - A256GCM
+          description: >-
+            OPTIONAL. JWE enc algorithm [JWA] the RP is declaring that it may
+            use for encrypting Request Objects sent to the OP. If
+            request_object_encryption_alg is specified, the default
+            request_object_encryption_enc value is A128CBC-HS256. When
+            request_object_encryption_enc is included,
+            request_object_encryption_alg MUST also be provided.
+        token_endpoint_auth_method:
+          type: string
+          enum:
+            - client_secret_post
+            - client_secret_basic
+            - client_secret_jwt
+            - private_key_jwt
+            - tls_client_auth
+            - self_signed_tls_client_auth
+            - attest_jwt_client_auth
+            - none
+          description: >-
+            OPTIONAL. Requested Client Authentication method for the Token
+            Endpoint. The options are client_secret_post, client_secret_basic,
+            client_secret_jwt, private_key_jwt, and none, as described in
+            Section 9 of OpenID Connect Core 1.0 [OpenID.Core]. Other
+            authentication methods MAY be defined by extensions. If omitted, the
+            default is client_secret_basic -- the HTTP Basic Authentication
+            Scheme specified in Section 2.3.1 of OAuth 2.0 [RFC6749].
+        token_endpoint_auth_signing_alg:
+          type: string
+          enum:
+            - none
+            - RS256
+            - ES256
+            - HS256
+          description: >-
+            OPTIONAL. JWS [JWS] alg algorithm [JWA] that MUST be used for
+            signing the JWT [JWT] used to authenticate the Client at the Token
+            Endpoint for the private_key_jwt and client_secret_jwt
+            authentication methods. All Token Requests using these
+            authentication methods from this Client MUST be rejected, if the JWT
+            is not signed with this algorithm. Servers SHOULD support RS256. The
+            value none MUST NOT be used. The default, if omitted, is that any
+            algorithm supported by the OP and the RP MAY be used.
+        default_max_age:
           type: integer
-          description: 検証失敗の試行回数。上限に達したチャレンジは使用できません
-          example: 0
-        expires_at:
-          type: string
-          format: date-time
-          description: 有効期限
-          example: '2026-09-10T02:01:53.367123'
-        expired:
+          description: >-
+            OPTIONAL. Default Maximum Authentication Age. Specifies that the
+            End-User MUST be actively authenticated if the End-User was
+            authenticated longer ago than the specified number of seconds. The
+            max_age request parameter overrides this default value. If omitted,
+            no default Maximum Authentication Age is specified.
+        require_pkce:
           type: boolean
-          description: 参照時点で期限切れかどうか
-          example: false
+          default: false
+          description: >-
+            OPTIONAL. If true, this client MUST use PKCE. The authorization
+            request MUST include code_challenge with code_challenge_method=S256,
+            and the token request MUST include code_verifier. Default false
+            (backward compatible).
+        require_auth_time:
+          type: boolean
+          default: false
+          description: >-
+            OPTIONAL. Boolean value specifying whether the auth_time Claim in
+            the ID Token is REQUIRED. It is REQUIRED when the value is true. (If
+            this is false, the auth_time Claim can still be dynamically
+            requested as an individual Claim for the ID Token using the claims
+            request parameter described in Section 5.5.1 of OpenID Connect Core
+            1.0 [OpenID.Core].) If omitted, the default value is false.
+        default_acr_values:
+          type: array
+          items:
+            type: string
+          description: >-
+            OPTIONAL. Default requested Authentication Context Class Reference
+            values. Array of strings that specifies the default acr values that
+            the OP is being requested to use for processing requests from this
+            Client, with the values appearing in order of preference. The
+            Authentication Context Class satisfied by the authentication
+            performed is returned as the acr Claim Value in the issued ID Token.
+            The acr Claim is requested as a Voluntary Claim by this parameter.
+            The acr_values_supported discovery element contains a list of the
+            supported acr values supported by the OP. Values specified in the
+            acr_values request parameter or an individual acr Claim request
+            override these default values.
+        initiate_login_uri:
+          type: string
+          format: uri
+          description: >-
+            OPTIONAL. URI using the https scheme that a third party can use to
+            initiate a login by the RP, as specified in Section 4 of OpenID
+            Connect Core 1.0 [OpenID.Core]. The URI MUST accept requests via
+            both GET and POST. The Client MUST understand the login_hint and iss
+            parameters and SHOULD support the target_link_uri parameter.
+        request_uris:
+          type: array
+          items:
+            type: string
+            format: uri
+          description: >-
+            OPTIONAL. Array of request_uri values that are pre-registered by the
+            RP for use at the OP. These URLs MUST use the https scheme unless
+            the target Request Object is signed in a way that is verifiable by
+            the OP. Servers MAY cache the contents of the files referenced by
+            these URIs and not retrieve them at the time they are used in a
+            request. OPs can require that request_uri values used be
+            pre-registered with the require_request_uri_registration discovery
+            parameter.
+
+            If the contents of the request file could ever change, these URI
+            values SHOULD include the base64url-encoded SHA-256 hash value of
+            the file contents referenced by the URI as the value of the URI
+            fragment. If the fragment value used for a URI changes, that signals
+            the server that its cached value for that URI with the old fragment
+            value is no longer valid.
+        software_id:
+          type: string
+          format: uuid
+          description: ''
+        software_version:
+          type: string
+          description: ''
+        extension:
+          type: object
+          description: OPTIONAL. Extension properties for client configuration
+          properties:
+            access_token_duration:
+              type: integer
+              minimum: 1
+              description: OPTIONAL. Duration of access tokens in seconds
+            refresh_token_duration:
+              type: integer
+              minimum: 1
+              description: OPTIONAL. Duration of refresh tokens in seconds
+            supported_jar:
+              type: boolean
+              default: false
+              description: OPTIONAL. JWT Authorization Request (JAR) support flag
+            available_federations:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: フェデレーション識別子
+                  type:
+                    type: string
+                    enum:
+                      - oauth2
+                      - saml2
+                      - oidc
+                    description: フェデレーションタイプ
+                  sso_provider:
+                    type: string
+                    description: SSOプロバイダー名
+                  auto_selected:
+                    type: boolean
+                    default: false
+                    description: Auto-selection flag for federation
+                required:
+                  - id
+                  - type
+              description: OPTIONAL. List of available federation configurations
+            default_ciba_authentication_interaction_type:
+              type: string
+              enum:
+                - authentication-device-notification-no-action
+                - authentication-device-notification
+              default: authentication-device-notification
+              description: OPTIONAL. Default CIBA authentication interaction type
+            custom_properties:
+              type: object
+              additionalProperties: true
+              description: |
+                OPTIONAL. 任意のキー・バリューデータ。
+                認可画面のview-data APIレスポンスにclient_custom_propertiesとして反映されます。
+                アプリ固有のUI設定、フィーチャーフラグ、ブランディング情報などに利用できます。
+              example:
+                app_label: my-custom-app
+                feature_flags:
+                  dark_mode: true
+                  beta_features: false
+                max_sessions: 5
     ErrorResponse:
       type: object
       properties:
@@ -932,704 +846,609 @@ components:
           type: object
           additionalProperties: true
           description: Additional error details
-    OrganizationUser:
+    ClientCreateRequest:
       type: object
       required:
-        - sub
-        - provider_id
-        - name
-        - email
-        - status
+        - redirect_uris
       properties:
-        sub:
+        client_id:
           type: string
           format: uuid
-          description: Unique subject identifier for the user
-        provider_id:
+          description: 一意クライアント識別子。他の登録済みクライアントで現在有効であってはいけない。
+        client_id_alias:
           type: string
           maxLength: 255
-          description: Identity provider identifier
-        external_user_id:
+          description: 一意クライアントIDエイリアス
+        client_secret:
           type: string
-          maxLength: 255
-          description: External user identifier from identity provider
-        username:
+          description: >-
+            OPTIONAL. Client Secret. The same Client Secret value MUST NOT be
+            assigned to multiple Clients.
+        client_name:
           type: string
-          maxLength: 255
-          description: Username for authentication
-        name:
-          type: string
-          maxLength: 255
-          description: Full display name of the user
-        given_name:
-          type: string
-          maxLength: 255
-          description: Given name (first name) of the user
-        family_name:
-          type: string
-          maxLength: 255
-          description: Family name (last name) of the user
-        middle_name:
-          type: string
-          maxLength: 255
-          description: Middle name of the user
-        nickname:
-          type: string
-          maxLength: 255
-          description: Casual name of the user
-        preferred_username:
-          type: string
-          maxLength: 255
-          description: Preferred username for display
-        profile:
+          description: OPTIONAL. Name of the Client to be presented to the End-User.
+        client_uri:
           type: string
           format: uri
-          maxLength: 255
-          description: URL of the user's profile page
-        picture:
+          description: OPTIONAL. URL of the home page of the Client.
+        logo_uri:
           type: string
           format: uri
-          maxLength: 255
-          description: URL of the user's profile picture
-        website:
+          description: OPTIONAL. URL that references a logo for the Client application.
+        contacts:
+          type: array
+          items:
+            type: string
+          description: >-
+            OPTIONAL. Array of e-mail addresses of people responsible for this
+            Client.
+        policy_uri:
           type: string
           format: uri
-          maxLength: 255
-          description: URL of the user's website
-        email:
+          description: >-
+            OPTIONAL. URL that the Relying Party Client provides to the End-User
+            to read about how the profile data will be used.
+        tos_uri:
           type: string
-          format: email
-          maxLength: 255
-          description: Email address of the user
-        email_verified:
-          type: boolean
-          description: Whether the email address has been verified
-        gender:
+          format: uri
+          description: >-
+            OPTIONAL. URL that the Relying Party Client provides to the End-User
+            to read about the Relying Party's terms of service.
+        jwks_uri:
           type: string
-          description: Gender identity of the user
-        birthdate:
+          format: uri
+          description: >-
+            OPTIONAL. URL for the Client's JWK Set document, which MUST use the
+            https scheme.
+        jwks:
           type: string
-          format: date
-          description: Date of birth (YYYY-MM-DD format)
-        zoneinfo:
-          type: string
-          maxLength: 255
-          description: Time zone information
-        locale:
-          type: string
-          description: Locale preference
-        phone_number:
-          type: string
-          pattern: ^\+?[0-9\- ]{7,20}$
-          description: Phone number in E.164 format
-        phone_number_verified:
-          type: boolean
-          description: Whether the phone number has been verified
-        address:
-          type: object
-          properties:
-            street_address:
-              type: string
-              maxLength: 255
-              description: Street address
-            locality:
-              type: string
-              maxLength: 255
-              description: City or locality
-            region:
-              type: string
-              maxLength: 255
-              description: State or region
-            postal_code:
-              type: string
-              maxLength: 255
-              description: Postal or ZIP code
-            country:
-              type: string
-              maxLength: 255
-              description: Country
-          description: Physical address of the user
-        updated_at:
-          type: string
-          format: date-time
-          description: Last update timestamp
-        status:
+          description: OPTIONAL. Client's JWK Set document, passed by value.
+        application_type:
           type: string
           enum:
-            - REGISTERED
-            - IDENTITY_VERIFIED
-            - SUSPENDED
-            - DELETED
-          description: User account status
-        hashed_password:
+            - native
+            - web
+          default: web
+          description: OPTIONAL. Kind of the application. The default, if omitted, is web.
+        grant_types:
+          type: array
+          items:
+            type: string
+            enum:
+              - authorization_code
+              - implicit
+              - refresh_token
+              - password
+              - client_credentials
+              - urn:openid:params:grant-type:ciba
+          description: List of OAuth 2.0 grant types the client can use
+        redirect_uris:
+          type: array
+          items:
+            type: string
+            format: uri
+          description: List of valid redirect URIs for the client
+        response_types:
+          type: array
+          items:
+            type: string
+            enum:
+              - code
+              - token
+              - id_token
+              - code token
+              - code id_token
+              - token id_token
+              - code token id_token
+              - none
+          description: List of OAuth 2.0 response types the client can use
+        scope:
           type: string
-          description: Masked password field (always shows ****)
-        verified_claims:
-          type: object
-          additionalProperties: true
-          description: Verified identity claims
-        custom_properties:
-          type: object
-          additionalProperties: true
-          description: Custom user properties
-        authentication_devices:
-          type: array
-          items:
-            type: object
-            properties:
-              id:
-                type: string
-                format: uuid
-              type:
-                type: string
-              enabled:
-                type: boolean
-          description: Registered authentication devices
-        roles:
-          type: array
-          items:
-            type: object
-            properties:
-              id:
-                type: string
-                format: uuid
-              name:
-                type: string
-          description: Assigned roles
-        permissions:
+          description: Space-separated list of OAuth 2.0 scopes
+        token_endpoint_auth_method:
+          type: string
+          enum:
+            - client_secret_post
+            - client_secret_basic
+            - client_secret_jwt
+            - private_key_jwt
+            - tls_client_auth
+            - self_signed_tls_client_auth
+            - attest_jwt_client_auth
+            - none
+          description: Authentication method for the token endpoint
+        subject_type:
+          type: string
+          enum:
+            - pairwise
+            - public
+          description: OPTIONAL. subject_type requested for responses to this Client.
+        sector_identifier_uri:
+          type: string
+          format: uri
+          description: >-
+            OPTIONAL. URL using the https scheme to be used in calculating
+            Pseudonymous Identifiers by the OP.
+        id_token_signed_response_alg:
+          type: string
+          enum:
+            - none
+            - RS256
+            - ES256
+            - HS256
+          description: >-
+            OPTIONAL. JWS alg algorithm REQUIRED for signing the ID Token issued
+            to this Client.
+        id_token_encrypted_response_alg:
+          type: string
+          enum:
+            - RSA1_5
+            - A128KW
+          description: >-
+            OPTIONAL. JWE alg algorithm REQUIRED for encrypting the ID Token
+            issued to this Client.
+        id_token_encrypted_response_enc:
+          type: string
+          enum:
+            - A128CBC-HS256
+            - A128GCM
+            - A256GCM
+          description: >-
+            OPTIONAL. JWE enc algorithm REQUIRED for encrypting the ID Token
+            issued to this Client.
+        userinfo_signed_response_alg:
+          type: string
+          enum:
+            - none
+            - RS256
+            - ES256
+            - HS256
+          description: OPTIONAL. JWS alg algorithm REQUIRED for signing UserInfo Responses.
+        userinfo_encrypted_response_alg:
+          type: string
+          enum:
+            - RSA1_5
+            - A128KW
+          description: >-
+            OPTIONAL. JWE alg algorithm REQUIRED for encrypting UserInfo
+            Responses.
+        userinfo_encrypted_response_enc:
+          type: string
+          enum:
+            - A128CBC-HS256
+            - A128GCM
+            - A256GCM
+          description: >-
+            OPTIONAL. JWE enc algorithm REQUIRED for encrypting UserInfo
+            Responses.
+        request_object_signing_alg:
+          type: string
+          enum:
+            - none
+            - RS256
+            - ES256
+            - HS256
+          description: >-
+            OPTIONAL. JWS alg algorithm that MUST be used for signing Request
+            Objects sent to the OP.
+        request_object_encryption_alg:
+          type: string
+          enum:
+            - RSA1_5
+            - A128KW
+          description: >-
+            OPTIONAL. JWE alg algorithm the RP is declaring that it may use for
+            encrypting Request Objects sent to the OP.
+        request_object_encryption_enc:
+          type: string
+          enum:
+            - A128CBC-HS256
+            - A128GCM
+            - A256GCM
+          description: >-
+            OPTIONAL. JWE enc algorithm the RP is declaring that it may use for
+            encrypting Request Objects sent to the OP.
+        token_endpoint_auth_signing_alg:
+          type: string
+          enum:
+            - none
+            - RS256
+            - ES256
+            - HS256
+          description: >-
+            OPTIONAL. JWS alg algorithm that MUST be used for signing the JWT
+            used to authenticate the Client at the Token Endpoint.
+        default_max_age:
+          type: integer
+          description: OPTIONAL. Default Maximum Authentication Age.
+        require_pkce:
+          type: boolean
+          default: false
+          description: >-
+            OPTIONAL. If true, this client MUST use PKCE. The authorization
+            request MUST include code_challenge with code_challenge_method=S256,
+            and the token request MUST include code_verifier. Default false
+            (backward compatible).
+        require_auth_time:
+          type: boolean
+          default: false
+          description: >-
+            OPTIONAL. Boolean value specifying whether the auth_time Claim in
+            the ID Token is REQUIRED.
+        default_acr_values:
           type: array
           items:
             type: string
-          description: User permissions
-        assigned_tenants:
+          description: >-
+            OPTIONAL. Default requested Authentication Context Class Reference
+            values.
+        initiate_login_uri:
+          type: string
+          format: uri
+          description: >-
+            OPTIONAL. URI using the https scheme that a third party can use to
+            initiate a login by the RP.
+        request_uris:
           type: array
           items:
             type: string
-            format: uuid
-          description: List of assigned tenant IDs
-        assigned_organizations:
-          type: array
-          items:
-            type: string
-            format: uuid
-          description: List of assigned organization IDs
-    OrganizationUserCreateRequest:
-      type: object
-      required:
-        - provider_id
-        - name
-        - email
-        - raw_password
-      properties:
-        sub:
+            format: uri
+          description: >-
+            OPTIONAL. Array of request_uri values that are pre-registered by the
+            RP for use at the OP.
+        software_id:
           type: string
           format: uuid
-          description: Unique subject identifier (optional, auto-generated if not provided)
-        provider_id:
+          description: OPTIONAL. Software identifier
+        software_version:
           type: string
-          maxLength: 255
-          description: Identity provider identifier
-          example: idp-server
-        external_user_id:
-          type: string
-          maxLength: 255
-          description: External user identifier from identity provider
-        username:
-          type: string
-          maxLength: 255
-          description: Username for authentication
-        name:
-          type: string
-          maxLength: 255
-          description: Full display name of the user
-        given_name:
-          type: string
-          maxLength: 255
-          description: Given name (first name) of the user
-        family_name:
-          type: string
-          maxLength: 255
-          description: Family name (last name) of the user
-        middle_name:
-          type: string
-          maxLength: 255
-          description: Middle name of the user
-        nickname:
-          type: string
-          maxLength: 255
-          description: Casual name of the user
-        preferred_username:
-          type: string
-          maxLength: 255
-          description: Preferred username for display
-        profile:
-          type: string
-          format: uri
-          maxLength: 255
-          description: URL of the user's profile page
-        picture:
-          type: string
-          format: uri
-          maxLength: 255
-          description: URL of the user's profile picture
-        website:
-          type: string
-          format: uri
-          maxLength: 255
-          description: URL of the user's website
-        email:
-          type: string
-          format: email
-          maxLength: 255
-          description: Email address of the user
-        email_verified:
-          type: boolean
-          description: Whether the email address has been verified
-        gender:
-          type: string
-          description: Gender identity of the user
-        birthdate:
-          type: string
-          format: date
-          description: Date of birth (YYYY-MM-DD format)
-        zoneinfo:
-          type: string
-          maxLength: 255
-          description: Time zone information
-        locale:
-          type: string
-          description: Locale preference
-        phone_number:
-          type: string
-          pattern: ^\+?[0-9\- ]{7,20}$
-          description: Phone number in E.164 format
-        phone_number_verified:
-          type: boolean
-          description: Whether the phone number has been verified
-        address:
+          description: OPTIONAL. Software version
+        extension:
           type: object
+          description: OPTIONAL. Extension properties for client configuration
           properties:
-            street_address:
-              type: string
-              maxLength: 255
-              description: Street address
-            locality:
-              type: string
-              maxLength: 255
-              description: City or locality
-            region:
-              type: string
-              maxLength: 255
-              description: State or region
-            postal_code:
-              type: string
-              maxLength: 255
-              description: Postal or ZIP code
-            country:
-              type: string
-              maxLength: 255
-              description: Country
-          description: Physical address of the user
-        raw_password:
-          type: string
-          minLength: 8
-          maxLength: 255
-          description: Plain text password (will be hashed on server)
-        verified_claims:
-          type: object
-          additionalProperties: true
-          description: Verified identity claims (OpenID for Identity Assurance)
-        custom_properties:
-          type: object
-          additionalProperties: true
-          description: Custom user properties
-        roles:
-          type: array
-          items:
-            type: object
-            required:
-              - role_id
-              - role_name
-            properties:
-              role_id:
-                type: string
-                format: uuid
-                description: Unique role identifier
-              role_name:
-                type: string
-                maxLength: 255
-                description: Role name
-          description: User roles
-        assigned_tenants:
-          type: array
-          items:
-            type: string
-            format: uuid
-          description: List of tenant IDs the user is assigned to
-        current_tenant:
-          type: string
-          format: uuid
-          description: Current primary tenant ID
-        assigned_organizations:
-          type: array
-          items:
-            type: string
-            format: uuid
-          description: List of organization IDs the user is assigned to
-        current_organization:
-          type: string
-          format: uuid
-          description: Current primary organization ID
-    OrganizationUserUpdateRequest:
-      type: object
-      required:
-        - provider_id
-        - name
-        - email
-      properties:
-        provider_id:
-          type: string
-          maxLength: 255
-          description: Identity provider identifier
-        external_user_id:
-          type: string
-          maxLength: 255
-          description: External user identifier from identity provider
-        username:
-          type: string
-          maxLength: 255
-          description: Username for authentication
-        name:
-          type: string
-          maxLength: 255
-          description: Full display name of the user
-        given_name:
-          type: string
-          maxLength: 255
-          description: Given name (first name) of the user
-        family_name:
-          type: string
-          maxLength: 255
-          description: Family name (last name) of the user
-        middle_name:
-          type: string
-          maxLength: 255
-          description: Middle name of the user
-        nickname:
-          type: string
-          maxLength: 255
-          description: Casual name of the user
-        preferred_username:
-          type: string
-          maxLength: 255
-          description: Preferred username for display
-        profile:
-          type: string
-          format: uri
-          maxLength: 255
-          description: URL of the user's profile page
-        picture:
-          type: string
-          format: uri
-          maxLength: 255
-          description: URL of the user's profile picture
-        website:
-          type: string
-          format: uri
-          maxLength: 255
-          description: URL of the user's website
-        email:
-          type: string
-          format: email
-          maxLength: 255
-          description: Email address of the user
-        email_verified:
-          type: boolean
-          description: Whether the email address has been verified
-        gender:
-          type: string
-          description: Gender identity of the user
-        birthdate:
-          type: string
-          format: date
-          description: Date of birth (YYYY-MM-DD format)
-        zoneinfo:
-          type: string
-          maxLength: 255
-          description: Time zone information
-        locale:
-          type: string
-          description: Locale preference
-        phone_number:
-          type: string
-          pattern: ^\+?[0-9\- ]{7,20}$
-          description: Phone number in E.164 format
-        phone_number_verified:
-          type: boolean
-          description: Whether the phone number has been verified
-        address:
-          type: object
-          properties:
-            street_address:
-              type: string
-              maxLength: 255
-              description: Street address
-            locality:
-              type: string
-              maxLength: 255
-              description: City or locality
-            region:
-              type: string
-              maxLength: 255
-              description: State or region
-            postal_code:
-              type: string
-              maxLength: 255
-              description: Postal or ZIP code
-            country:
-              type: string
-              maxLength: 255
-              description: Country
-          description: Physical address of the user
-        verified_claims:
-          type: object
-          additionalProperties: true
-          description: Verified identity claims (OpenID for Identity Assurance)
-        custom_properties:
-          type: object
-          additionalProperties: true
-          description: Custom user properties
-        roles:
-          type: array
-          items:
-            type: object
-            required:
-              - role_id
-              - role_name
-            properties:
-              role_id:
-                type: string
-                format: uuid
-                description: Unique role identifier
-              role_name:
-                type: string
-                maxLength: 255
-                description: Role name
-          description: User roles
-        assigned_tenants:
-          type: array
-          items:
-            type: string
-            format: uuid
-          description: List of tenant IDs the user is assigned to
-        current_tenant:
-          type: string
-          format: uuid
-          description: Current primary tenant ID
-        assigned_organizations:
-          type: array
-          items:
-            type: string
-            format: uuid
-          description: List of organization IDs the user is assigned to
-        current_organization:
-          type: string
-          format: uuid
-          description: Current primary organization ID
-    UserValidationErrorResponse:
-      type: object
-      required:
-        - error
-        - error_description
-      properties:
-        error:
-          type: string
-          description: Error code
-          example: invalid_request
-        error_description:
-          type: string
-          description: Human-readable error description
-          example: user registration validation is failed
-        dry_run:
-          type: boolean
-          description: Indicates if this was a dry run operation
-        details:
-          type: object
-          properties:
-            user:
+            access_token_duration:
+              type: integer
+              minimum: 1
+              description: OPTIONAL. Duration of access tokens in seconds
+            refresh_token_duration:
+              type: integer
+              minimum: 1
+              description: OPTIONAL. Duration of refresh tokens in seconds
+            supported_jar:
+              type: boolean
+              default: false
+              description: OPTIONAL. JWT Authorization Request (JAR) support flag
+            available_federations:
               type: array
               items:
-                type: string
-              description: List of user validation error messages
-          description: Detailed validation error information
-          example:
-            user:
-              - provider_id is missing
-              - email format is invalid
-    OrganizationUserPasswordUpdateRequest:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: フェデレーション識別子
+                  type:
+                    type: string
+                    enum:
+                      - oauth2
+                      - saml2
+                      - oidc
+                    description: フェデレーションタイプ
+                  sso_provider:
+                    type: string
+                    description: SSOプロバイダー名
+                  auto_selected:
+                    type: boolean
+                    default: false
+                    description: Auto-selection flag for federation
+                required:
+                  - id
+                  - type
+              description: OPTIONAL. List of available federation configurations
+            default_ciba_authentication_interaction_type:
+              type: string
+              enum:
+                - authentication-device-notification-no-action
+                - authentication-device-notification
+              default: authentication-device-notification-no-action
+              description: OPTIONAL. Default CIBA authentication interaction type
+    ClientUpdateRequest:
       type: object
-      required:
-        - raw_password
       properties:
-        raw_password:
+        client_name:
           type: string
-          minLength: 8
-          pattern: ^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d!@#$%^&*()_+=-]{8,}$
-          description: Plain text password (will be hashed on server)
-    OrganizationUserRolesUpdateRequest:
-      type: object
-      properties:
-        roles:
-          type: array
-          maxItems: 50
-          items:
-            type: object
-            required:
-              - role_id
-              - role_name
-            properties:
-              role_id:
-                type: string
-                format: uuid
-                description: Unique role identifier
-              role_name:
-                type: string
-                maxLength: 255
-                description: Role name
-            additionalProperties: false
-          description: User roles
-        permissions:
-          type: array
-          maxItems: 100
-          items:
-            type: string
-            maxLength: 255
-          description: Direct permissions assigned to user
-      additionalProperties: false
-    OrganizationUserTenantAssignmentsUpdateRequest:
-      type: object
-      required:
-        - assigned_tenants
-      properties:
-        current_tenant_id:
+          description: OPTIONAL. Name of the Client to be presented to the End-User.
+        client_id_alias:
           type: string
-          format: uuid
-          description: Current primary tenant ID
-        assigned_tenants:
-          type: array
-          maxItems: 20
-          items:
-            type: string
-            format: uuid
-          description: List of tenant IDs the user is assigned to
-    OrganizationUserOrganizationAssignmentsUpdateRequest:
-      type: object
-      required:
-        - assigned_organizations
-      properties:
-        current_organization_id:
+          maxLength: 255
+          description: 一意クライアントIDエイリアス
+        client_secret:
           type: string
-          format: uuid
-          description: Current primary organization ID
-        assigned_organizations:
-          type: array
-          maxItems: 20
-          items:
-            type: string
-            format: uuid
-          description: List of organization IDs the user is assigned to
-    UserSession:
-      type: object
-      description: ユーザーのOPセッション（OpenID Provider Session）情報
-      properties:
-        id:
+          description: >-
+            OPTIONAL. Client Secret. The same Client Secret value MUST NOT be
+            assigned to multiple Clients.
+        client_uri:
           type: string
-          description: セッションID
-          example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
-        tenant_id:
+          format: uri
+          description: OPTIONAL. URL of the home page of the Client.
+        logo_uri:
           type: string
-          description: テナントID
-          example: 952f6906-3e95-4ed3-86b2-981f90f785f9
-        sub:
-          type: string
-          description: ユーザーの一意識別子（subject）
-          example: 3ec055a8-8000-44a2-8677-e70ebff414e2
-        auth_time:
-          type: string
-          format: date-time
-          description: 認証が行われた時刻（ISO 8601形式）
-          example: '2025-01-05T10:30:00Z'
-        acr:
-          type: string
-          nullable: true
-          description: 認証コンテキストクラス参照（Authentication Context Class Reference）
-          example: urn:mace:incommon:iap:silver
-        amr:
+          format: uri
+          description: OPTIONAL. URL that references a logo for the Client application.
+        contacts:
           type: array
           items:
             type: string
-          nullable: true
-          description: 認証方法参照（Authentication Methods References）
-          example:
-            - pwd
-            - otp
-        created_at:
+          description: >-
+            OPTIONAL. Array of e-mail addresses of people responsible for this
+            Client.
+        policy_uri:
           type: string
-          format: date-time
-          description: セッション作成時刻（ISO 8601形式）
-          example: '2025-01-05T10:30:00Z'
-        expires_at:
+          format: uri
+          description: >-
+            OPTIONAL. URL that the Relying Party Client provides to the End-User
+            to read about how the profile data will be used.
+        tos_uri:
           type: string
-          format: date-time
-          description: セッション有効期限（ISO 8601形式）
-          example: '2025-01-05T11:30:00Z'
-        last_accessed_at:
+          format: uri
+          description: >-
+            OPTIONAL. URL that the Relying Party Client provides to the End-User
+            to read about the Relying Party's terms of service.
+        jwks_uri:
           type: string
-          format: date-time
-          nullable: true
-          description: 最終アクセス時刻（ISO 8601形式）
-          example: '2025-01-05T10:45:00Z'
-        status:
+          format: uri
+          description: >-
+            OPTIONAL. URL for the Client's JWK Set document, which MUST use the
+            https scheme.
+        jwks:
+          type: string
+          description: OPTIONAL. Client's JWK Set document, passed by value.
+        application_type:
           type: string
           enum:
-            - ACTIVE
-            - TERMINATED
-          description: セッションステータス
-          example: ACTIVE
-        terminated_at:
-          type: string
-          format: date-time
-          nullable: true
-          description: セッション終了時刻（終了している場合のみ）
-          example: null
-        termination_reason:
-          type: string
-          nullable: true
-          enum:
-            - USER_LOGOUT
-            - ADMIN_REVOCATION
-            - TIMEOUT
-            - SESSION_LIMIT_EXCEEDED
-          description: セッション終了理由（終了している場合のみ）
-          example: null
-        ip_address:
-          type: string
-          nullable: true
-          description: 認証時のIPアドレス
-          example: 192.168.1.100
-        user_agent:
-          type: string
-          nullable: true
-          description: 認証時のUser-Agent
-          example: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36
-    UserSessionListResponse:
-      type: object
-      description: ユーザーセッション一覧のレスポンス
-      properties:
-        list:
+            - native
+            - web
+          default: web
+          description: OPTIONAL. Kind of the application. The default, if omitted, is web.
+        grant_types:
           type: array
           items:
-            $ref: '#/components/schemas/UserSession'
-          description: セッションの配列
-      required:
-        - list
+            type: string
+            enum:
+              - authorization_code
+              - implicit
+              - refresh_token
+              - password
+              - client_credentials
+              - urn:openid:params:grant-type:ciba
+          description: List of OAuth 2.0 grant types the client can use
+        redirect_uris:
+          type: array
+          items:
+            type: string
+            format: uri
+          description: List of valid redirect URIs for the client
+        response_types:
+          type: array
+          items:
+            type: string
+            enum:
+              - code
+              - token
+              - id_token
+              - code token
+              - code id_token
+              - token id_token
+              - code token id_token
+              - none
+          description: List of OAuth 2.0 response types the client can use
+        scope:
+          type: string
+          description: Space-separated list of OAuth 2.0 scopes
+        token_endpoint_auth_method:
+          type: string
+          enum:
+            - client_secret_post
+            - client_secret_basic
+            - client_secret_jwt
+            - private_key_jwt
+            - tls_client_auth
+            - self_signed_tls_client_auth
+            - attest_jwt_client_auth
+            - none
+          description: Authentication method for the token endpoint
+        subject_type:
+          type: string
+          enum:
+            - pairwise
+            - public
+          description: OPTIONAL. subject_type requested for responses to this Client.
+        sector_identifier_uri:
+          type: string
+          format: uri
+          description: >-
+            OPTIONAL. URL using the https scheme to be used in calculating
+            Pseudonymous Identifiers by the OP.
+        id_token_signed_response_alg:
+          type: string
+          enum:
+            - none
+            - RS256
+            - ES256
+            - HS256
+          description: >-
+            OPTIONAL. JWS alg algorithm REQUIRED for signing the ID Token issued
+            to this Client.
+        id_token_encrypted_response_alg:
+          type: string
+          enum:
+            - RSA1_5
+            - A128KW
+          description: >-
+            OPTIONAL. JWE alg algorithm REQUIRED for encrypting the ID Token
+            issued to this Client.
+        id_token_encrypted_response_enc:
+          type: string
+          enum:
+            - A128CBC-HS256
+            - A128GCM
+            - A256GCM
+          description: >-
+            OPTIONAL. JWE enc algorithm REQUIRED for encrypting the ID Token
+            issued to this Client.
+        userinfo_signed_response_alg:
+          type: string
+          enum:
+            - none
+            - RS256
+            - ES256
+            - HS256
+          description: OPTIONAL. JWS alg algorithm REQUIRED for signing UserInfo Responses.
+        userinfo_encrypted_response_alg:
+          type: string
+          enum:
+            - RSA1_5
+            - A128KW
+          description: >-
+            OPTIONAL. JWE alg algorithm REQUIRED for encrypting UserInfo
+            Responses.
+        userinfo_encrypted_response_enc:
+          type: string
+          enum:
+            - A128CBC-HS256
+            - A128GCM
+            - A256GCM
+          description: >-
+            OPTIONAL. JWE enc algorithm REQUIRED for encrypting UserInfo
+            Responses.
+        request_object_signing_alg:
+          type: string
+          enum:
+            - none
+            - RS256
+            - ES256
+            - HS256
+          description: >-
+            OPTIONAL. JWS alg algorithm that MUST be used for signing Request
+            Objects sent to the OP.
+        request_object_encryption_alg:
+          type: string
+          enum:
+            - RSA1_5
+            - A128KW
+          description: >-
+            OPTIONAL. JWE alg algorithm the RP is declaring that it may use for
+            encrypting Request Objects sent to the OP.
+        request_object_encryption_enc:
+          type: string
+          enum:
+            - A128CBC-HS256
+            - A128GCM
+            - A256GCM
+          description: >-
+            OPTIONAL. JWE enc algorithm the RP is declaring that it may use for
+            encrypting Request Objects sent to the OP.
+        token_endpoint_auth_signing_alg:
+          type: string
+          enum:
+            - none
+            - RS256
+            - ES256
+            - HS256
+          description: >-
+            OPTIONAL. JWS alg algorithm that MUST be used for signing the JWT
+            used to authenticate the Client at the Token Endpoint.
+        default_max_age:
+          type: integer
+          description: OPTIONAL. Default Maximum Authentication Age.
+        require_pkce:
+          type: boolean
+          default: false
+          description: >-
+            OPTIONAL. If true, this client MUST use PKCE. The authorization
+            request MUST include code_challenge with code_challenge_method=S256,
+            and the token request MUST include code_verifier. Default false
+            (backward compatible).
+        require_auth_time:
+          type: boolean
+          default: false
+          description: >-
+            OPTIONAL. Boolean value specifying whether the auth_time Claim in
+            the ID Token is REQUIRED.
+        default_acr_values:
+          type: array
+          items:
+            type: string
+          description: >-
+            OPTIONAL. Default requested Authentication Context Class Reference
+            values.
+        initiate_login_uri:
+          type: string
+          format: uri
+          description: >-
+            OPTIONAL. URI using the https scheme that a third party can use to
+            initiate a login by the RP.
+        request_uris:
+          type: array
+          items:
+            type: string
+            format: uri
+          description: >-
+            OPTIONAL. Array of request_uri values that are pre-registered by the
+            RP for use at the OP.
+        software_id:
+          type: string
+          format: uuid
+          description: OPTIONAL. Software identifier
+        software_version:
+          type: string
+          description: OPTIONAL. Software version
+        extension:
+          type: object
+          description: OPTIONAL. Extension properties for client configuration
+          properties:
+            access_token_duration:
+              type: integer
+              minimum: 1
+              description: OPTIONAL. Duration of access tokens in seconds
+            refresh_token_duration:
+              type: integer
+              minimum: 1
+              description: OPTIONAL. Duration of refresh tokens in seconds
+            supported_jar:
+              type: boolean
+              default: false
+              description: OPTIONAL. JWT Authorization Request (JAR) support flag
+            available_federations:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: フェデレーション識別子
+                  type:
+                    type: string
+                    enum:
+                      - oauth2
+                      - saml2
+                      - oidc
+                    description: フェデレーションタイプ
+                  sso_provider:
+                    type: string
+                    description: SSOプロバイダー名
+                  auto_selected:
+                    type: boolean
+                    default: false
+                    description: Auto-selection flag for federation
+                required:
+                  - id
+                  - type
+              description: OPTIONAL. List of available federation configurations
+            default_ciba_authentication_interaction_type:
+              type: string
+              enum:
+                - authentication-device-notification-no-action
+                - authentication-device-notification
+              default: authentication-device-notification-no-action
+              description: OPTIONAL. Default CIBA authentication interaction type

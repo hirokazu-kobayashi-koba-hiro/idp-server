@@ -1,77 +1,75 @@
 openapi: 3.0.3
 info:
-  title: idp-server コントロールプレーン 認証設定管理 API
-  description: 認証設定、認証ポリシー、認証インタラクション、認証トランザクションの管理API仕様書
+  title: idp-server コントロールプレーン ユーザー管理 API
+  description: ユーザーの管理API仕様書
   version: 1.0.0
   contact:
     name: idp-server OSS
 servers:
   - url: http://localhost:8080
 tags:
-  - name: organization-authentication-interaction
-    description: 組織レベル認証インタラクション管理
-  - name: organization-authentication-transaction
-    description: 組織レベル認証トランザクション管理
+  - name: organization-contact-verification-challenge
+    description: 組織レベル 連絡先確認チャレンジ参照（セルフサービスの Email/電話番号 確認・変更）
+  - name: organization-user
+    description: 組織レベルユーザー管理
 paths:
-  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-configurations:
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/contact-verification-challenges:
     parameters:
       - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/TenantId'
-    post:
-      summary: Create authentication configuration within organization
-      description: 組織内の特定のテナントに対して新しい認証設定を作成します
-      tags:
-        - organization-authentication-config
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AuthenticationConfigurationRequest'
-      parameters:
-        - $ref: '#/components/parameters/DryRun'
-      responses:
-        '200':
-          description: 認証設定が正常に作成されました
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  dry_run:
-                    type: boolean
-                    description: ドライランかどうか
-                  result:
-                    $ref: '#/components/schemas/AuthenticationConfig'
-        '400':
-          description: 無効なリクエストデータまたはバリデーションエラー
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '403':
-          description: 権限不足または無効な組織・テナントアクセス
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: 組織またはテナントが見つかりません
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
     get:
-      summary: List authentication configurations within organization
-      description: 組織内の特定のテナントの認証設定一覧を取得します
+      summary: 組織内 連絡先確認チャレンジ一覧取得
+      description: >
+        セルフサービスの Email / 電話番号 確認・変更（`POST
+        /{tenant-id}/v1/me/{email|phone}/{verification|change}`）で
+
+        発行された確認チャレンジの一覧を取得します（読み取り専用）。
+
+
+        「確認コードのメール／SMS が届かない」という問い合わせに対して、**どの宛先に送ったか**（`target_value`）と
+
+        **どのコードを発行したか**（`verification_code`）をオペレーターが確認するためのAPIです。
+
+
+        `verification_code` を返すのは意図的です。チャレンジの消費には本人のアクセストークンが必要なため、
+
+        コードだけを入手したオペレーターが単独で確定させることはできません。
+
+
+        外部サービスにコード生成・検証を委譲しているテナントでは、コードは idp-server にありません
+
+        （`delivery: external`）。その場合は `external_reference` で外部サービスの記録を引きます。
+
+
+        アクセスには `idp:contact-verification-challenge:read` 権限が必要で、参照は監査ログに記録されます。
+
+        ただし監査ログには `verification_code` も `external_reference` も残りません。
       tags:
-        - organization-authentication-config
+        - organization-contact-verification-challenge
       parameters:
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/Offset'
+        - name: user_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: ユーザーIDでフィルタリング
+        - name: operation
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - email_verify
+              - email_change
+              - phone_verify
+              - phone_change
+          description: 操作種別でフィルタリング
       responses:
         '200':
-          description: 認証設定一覧の取得が成功しました
+          description: 連絡先確認チャレンジ一覧取得成功
           content:
             application/json:
               schema:
@@ -80,18 +78,26 @@ paths:
                   list:
                     type: array
                     items:
-                      $ref: '#/components/schemas/AuthenticationConfig'
+                      $ref: '#/components/schemas/ContactVerificationChallenge'
                   total_count:
                     type: integer
-                    description: 認証設定の総数
+                    example: 1
                   limit:
                     type: integer
-                    description: 返される結果の最大数
+                    example: 20
                   offset:
                     type: integer
-                    description: スキップされた結果の数
+                    example: 0
+        '400':
+          description: クエリパラメータが不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '403':
-          description: 権限不足または無効な組織・テナントアクセス
+          description: 組織アクセス権限不足、テナントアクセス拒否、または権限不足
           content:
             application/json:
               schema:
@@ -102,138 +108,64 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-configurations/{config-id}:
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/contact-verification-challenges/{id}:
     parameters:
       - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/TenantId'
-      - $ref: '#/components/parameters/AuthenticationConfigId'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: 連絡先確認チャレンジID
+        example: f47ac10b-58cc-4372-a567-0e02b2c3d479
     get:
-      summary: Get authentication configuration by ID within organization
-      description: 組織内の特定のテナントの認証設定詳細を取得します
+      summary: 組織内 連絡先確認チャレンジ詳細取得
+      description: 指定した組織・テナント内の特定の連絡先確認チャレンジの詳細を取得します
       tags:
-        - organization-authentication-config
+        - organization-contact-verification-challenge
       responses:
         '200':
-          description: 認証設定の取得が成功しました
+          description: 連絡先確認チャレンジ詳細取得成功
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthenticationConfig'
+                $ref: '#/components/schemas/ContactVerificationChallenge'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '403':
-          description: 権限不足または無効な組織・テナントアクセス
+          description: 組織アクセス権限不足、テナントアクセス拒否、または権限不足
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
-          description: 組織、テナント、または認証設定が見つかりません
+          description: 組織、テナント、または連絡先確認チャレンジが見つかりません
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-    put:
-      summary: Update authentication configuration by ID within organization
-      description: 組織内の特定のテナントの認証設定を更新します
-      tags:
-        - organization-authentication-config
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AuthenticationConfigurationRequest'
-      parameters:
-        - $ref: '#/components/parameters/DryRun'
-      responses:
-        '200':
-          description: 認証設定の更新が成功しました
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  dry_run:
-                    type: boolean
-                    description: ドライランかどうか
-                  result:
-                    $ref: '#/components/schemas/AuthenticationConfig'
-        '400':
-          description: 無効なリクエストデータまたはバリデーションエラー
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '403':
-          description: 権限不足または無効な組織・テナントアクセス
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: 組織、テナント、または認証設定が見つかりません
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-    delete:
-      summary: Delete authentication configuration by ID within organization
-      description: 組織内の特定のテナントの認証設定を削除します
-      tags:
-        - organization-authentication-config
-      parameters:
-        - $ref: '#/components/parameters/DryRun'
-      responses:
-        '200':
-          description: ドライラン削除成功（dry_run=trueの場合）
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    description: 削除シミュレーション成功メッセージ
-                  config_id:
-                    type: string
-                    format: uuid
-                    description: 削除対象の設定ID
-                  dry_run:
-                    type: boolean
-                    description: ドライランフラグ（常にtrue）
-        '204':
-          description: 認証設定の削除が成功しました（実際の削除）
-        '403':
-          description: 権限不足または無効な組織・テナントアクセス
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: 組織、テナント、または認証設定が見つかりません
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-policies:
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users:
     parameters:
       - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/TenantId'
     post:
-      summary: Create authentication policy configuration within organization
-      description: 組織内の特定のテナントに対して新しい認証ポリシー設定を作成します
+      summary: Create user within organization tenant
+      description: 組織内の特定のテナントに新しいユーザーを作成します
       tags:
-        - organization-authentication-policy-config
+        - organization-user
       requestBody:
-        required: false
+        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AuthenticationPolicyConfigurationRequest'
+              $ref: '#/components/schemas/OrganizationUserCreateRequest'
       parameters:
         - $ref: '#/components/parameters/DryRun'
       responses:
         '201':
-          description: 認証ポリシー設定の作成が成功しました
+          description: ユーザーを正常に作成しました
           content:
             application/json:
               schema:
@@ -241,17 +173,17 @@ paths:
                 properties:
                   dry_run:
                     type: boolean
-                    example: false
+                    description: これがドライラン操作であったかを示します
                   result:
-                    $ref: '#/components/schemas/AuthenticationPolicyConfig'
+                    $ref: '#/components/schemas/OrganizationUser'
         '400':
-          description: 無効なリクエストパラメータまたはボディ
+          description: 無効なリクエストボディまたは検証エラー
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/UserValidationErrorResponse'
         '403':
-          description: 権限不足または無効な組織・テナントアクセス
+          description: 権限不足または無効な組織アクセス
           content:
             application/json:
               schema:
@@ -263,16 +195,118 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
     get:
-      summary: List authentication policy configurations within organization
-      description: 組織内の特定のテナントの認証ポリシー設定一覧を取得します
+      summary: List users within organization tenant
+      description: 組織内の特定のテナントのユーザー一覧を取得します。結果は作成日時の降順（新しいユーザーが先頭）でソートされます。
       tags:
-        - organization-authentication-policy-config
+        - organization-user
       parameters:
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/Offset'
+        - name: user_id
+          in: query
+          required: false
+          schema:
+            type: string
+          description: 特定のユーザーIDでフィルタリング
+        - name: preferred_username
+          in: query
+          required: false
+          schema:
+            type: string
+          description: 優先ユーザー名でフィルタリング
+        - name: email
+          in: query
+          required: false
+          schema:
+            type: string
+          description: メールアドレスでフィルタリング
+        - name: external_user_id
+          in: query
+          required: false
+          schema:
+            type: string
+          description: 外部ユーザーIDでフィルタリング
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - active
+              - inactive
+              - locked
+          description: ユーザーステータスでフィルタリング
+        - name: provider_id
+          in: query
+          required: false
+          schema:
+            type: string
+          description: プロバイダーIDでフィルタリング
+        - name: phone_number
+          in: query
+          required: false
+          schema:
+            type: string
+          description: 電話番号でフィルタリング
+        - name: name
+          in: query
+          required: false
+          schema:
+            type: string
+          description: 名前で部分一致検索（大文字小文字区別なし）
+        - name: given_name
+          in: query
+          required: false
+          schema:
+            type: string
+          description: 名で部分一致検索（大文字小文字区別なし）
+        - name: family_name
+          in: query
+          required: false
+          schema:
+            type: string
+          description: 姓で部分一致検索（大文字小文字区別なし）
+        - name: middle_name
+          in: query
+          required: false
+          schema:
+            type: string
+          description: ミドルネームで部分一致検索（大文字小文字区別なし）
+        - name: nickname
+          in: query
+          required: false
+          schema:
+            type: string
+          description: ニックネームで部分一致検索（大文字小文字区別なし）
+        - name: role
+          in: query
+          required: false
+          schema:
+            type: string
+          description: ロール名で部分一致検索
+        - name: permission
+          in: query
+          required: false
+          schema:
+            type: string
+          description: 権限名で部分一致検索
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: 作成日時の開始（ISO 8601形式）
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: 作成日時の終了（ISO 8601形式）
       responses:
         '200':
-          description: 認証ポリシー設定一覧の取得が成功しました
+          description: ユーザーを正常に取得しました
           content:
             application/json:
               schema:
@@ -281,18 +315,18 @@ paths:
                   list:
                     type: array
                     items:
-                      $ref: '#/components/schemas/AuthenticationPolicyConfig'
+                      $ref: '#/components/schemas/OrganizationUser'
                   total_count:
                     type: integer
-                    description: 認証ポリシー設定の総数
+                    description: ユーザーの総数
                   limit:
                     type: integer
-                    description: ページあたりの最大結果数
+                    description: 1ページあたりのアイテム数
                   offset:
                     type: integer
-                    description: スキップされた結果の数
+                    description: 開始位置
         '403':
-          description: 権限不足または無効な組織・テナントアクセス
+          description: 権限不足または無効な組織アクセス
           content:
             application/json:
               schema:
@@ -303,51 +337,51 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-policies/{config-id}:
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users/{user-id}:
     parameters:
       - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/TenantId'
-      - $ref: '#/components/parameters/AuthenticationPolicyConfigId'
+      - $ref: '#/components/parameters/UserId'
     get:
-      summary: Get authentication policy configuration by ID within organization
-      description: 組織内の特定のテナントの認証ポリシー設定詳細を取得します
+      summary: Get user within organization tenant
+      description: 組織内のテナントの特定のユーザーを取得します
       tags:
-        - organization-authentication-policy-config
+        - organization-user
       responses:
         '200':
-          description: 認証ポリシー設定の取得が成功しました
+          description: ユーザーを正常に取得しました
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthenticationPolicyConfig'
+                $ref: '#/components/schemas/OrganizationUser'
         '403':
-          description: 権限不足または無効な組織・テナントアクセス
+          description: 権限不足または無効な組織アクセス
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
-          description: 組織、テナント、または認証ポリシー設定が見つかりません
+          description: ユーザー、組織、またはテナントが見つかりません
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
     put:
-      summary: Update authentication policy configuration by ID within organization
-      description: 組織内の特定のテナントの認証ポリシー設定を更新します
+      summary: Update user within organization tenant
+      description: 組織内のテナントの特定のユーザーを更新します
       tags:
-        - organization-authentication-policy-config
+        - organization-user
       requestBody:
-        required: false
+        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AuthenticationPolicyConfigurationRequest'
+              $ref: '#/components/schemas/OrganizationUserUpdateRequest'
       parameters:
         - $ref: '#/components/parameters/DryRun'
       responses:
         '200':
-          description: 認証ポリシー設定の更新が成功しました
+          description: ユーザーを正常に更新しました
           content:
             application/json:
               schema:
@@ -355,336 +389,405 @@ paths:
                 properties:
                   dry_run:
                     type: boolean
+                    description: これがドライラン操作であったかを示します
                   result:
-                    $ref: '#/components/schemas/AuthenticationPolicyConfig'
+                    $ref: '#/components/schemas/OrganizationUser'
         '400':
-          description: 無効なリクエストパラメータまたはボディ
+          description: 無効なリクエストボディまたは検証エラー
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/UserValidationErrorResponse'
         '403':
-          description: 権限不足または無効な組織・テナントアクセス
+          description: 権限不足または無効な組織アクセス
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
-          description: 組織、テナント、または認証ポリシー設定が見つかりません
+          description: ユーザー、組織、またはテナントが見つかりません
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
     delete:
-      summary: Delete authentication policy configuration by ID within organization
-      description: 組織内の特定のテナントの認証ポリシー設定を削除します
+      summary: Delete user within organization tenant
+      description: 組織内のテナントの特定のユーザーを削除します
       tags:
-        - organization-authentication-policy-config
+        - organization-user
       parameters:
         - $ref: '#/components/parameters/DryRun'
       responses:
         '204':
-          description: 認証ポリシー設定の削除が成功しました
+          description: ユーザーを正常に削除しました
         '403':
-          description: 権限不足または無効な組織・テナントアクセス
+          description: 権限不足または無効な組織アクセス
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
-          description: 組織、テナント、または認証ポリシー設定が見つかりません
+          description: ユーザー、組織、またはテナントが見つかりません
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-interactions:
-    parameters:
-      - $ref: '#/components/parameters/OrganizationId'
-      - $ref: '#/components/parameters/TenantId'
-    get:
-      summary: 組織内認証インタラクション一覧取得
-      description: 指定した組織・テナント内の認証インタラクション一覧を取得します（読み取り専用）
+    patch:
+      summary: Partially update user within organization tenant
+      description: 組織内のテナントの特定のユーザーを部分更新します
       tags:
-        - organization-authentication-interaction
+        - organization-user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationUserUpdateRequest'
       parameters:
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Offset'
-        - name: type
-          in: query
-          required: false
-          schema:
-            type: string
-          description: インタラクションタイプでフィルタリング
-        - name: from
-          in: query
-          required: false
-          schema:
-            type: string
-            format: date-time
-            example: '2025-07-01T00:00:00'
-          description: 作成日時の範囲指定開始（ISO-8601形式）。未指定時は 7 日前
-        - name: to
-          in: query
-          required: false
-          schema:
-            type: string
-            format: date-time
-            example: '2025-07-15T23:59:59'
-          description: 作成日時の範囲指定終了（ISO-8601形式）。未指定時は 1 日後
+        - $ref: '#/components/parameters/DryRun'
       responses:
         '200':
-          description: 認証インタラクション一覧取得成功
+          description: ユーザーを正常に更新しました
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  list:
-                    type: array
-                    items:
-                      $ref: >-
-                        #/components/schemas/OrganizationAuthenticationInteraction
-                    description: 認証インタラクション一覧
-                  total_count:
-                    type: integer
-                    description: 総件数
-                    example: 25
-                  limit:
-                    type: integer
-                    description: 取得件数制限
-                    example: 10
-                  offset:
-                    type: integer
-                    description: 取得開始位置
-                    example: 0
+                  dry_run:
+                    type: boolean
+                    description: これがドライラン操作であったかを示します
+                  result:
+                    $ref: '#/components/schemas/OrganizationUser'
         '400':
-          description: クエリパラメータが不正（from / to が ISO-8601 形式でない場合など）
+          description: 無効なリクエストボディまたは検証エラー
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: '#/components/schemas/UserValidationErrorResponse'
         '403':
-          description: 組織アクセス権限不足またはテナントアクセス拒否
+          description: 権限不足または無効な組織アクセス
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
-          description: 組織またはテナントが見つかりません
+          description: ユーザー、組織、またはテナントが見つかりません
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-interactions/{transaction-id}/{type}:
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users/{user-id}/password:
     parameters:
       - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/TenantId'
-      - name: transaction-id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: 認証トランザクションID
-        example: f47ac10b-58cc-4372-a567-0e02b2c3d479
-      - name: type
-        in: path
-        required: true
-        schema:
-          type: string
-        description: インタラクションタイプ
-        example: password
-    get:
-      summary: 組織内認証インタラクション詳細取得
-      description: 指定した組織・テナント内の特定の認証インタラクションの詳細を取得します
+      - $ref: '#/components/parameters/UserId'
+    put:
+      summary: Update user password within organization tenant
+      description: Updates a specific user's password for a tenant within an organization
       tags:
-        - organization-authentication-interaction
-      responses:
-        '200':
-          description: 認証インタラクション詳細取得成功
-          content:
-            application/json:
-              schema:
-                $ref: >-
-                  #/components/schemas/OrganizationAuthenticationInteractionDetail
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          description: 組織アクセス権限不足またはテナントアクセス拒否
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: 組織、テナント、または認証インタラクションが見つかりません
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-transactions:
-    parameters:
-      - $ref: '#/components/parameters/OrganizationId'
-      - $ref: '#/components/parameters/TenantId'
-    get:
-      summary: 組織内認証トランザクション一覧取得
-      description: 指定した組織・テナント内の認証トランザクション一覧を取得します（読み取り専用）
-      tags:
-        - organization-authentication-transaction
+        - organization-user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationUserPasswordUpdateRequest'
       parameters:
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Offset'
-        - name: id
-          in: query
-          required: false
-          schema:
-            type: string
-            format: uuid
-          description: 認証トランザクションIDでフィルタリング
-        - name: flow
-          in: query
-          required: false
-          schema:
-            type: string
-          description: 認証フロー種別でフィルタリング
-        - name: authorization_id
-          in: query
-          required: false
-          schema:
-            type: string
-            format: uuid
-          description: 認可リクエストIDでフィルタリング
-        - name: client_id
-          in: query
-          required: false
-          schema:
-            type: string
-          description: クライアントIDでフィルタリング
-        - name: device_id
-          in: query
-          required: false
-          schema:
-            type: string
-            format: uuid
-          description: 認証デバイスIDでフィルタリング
-        - name: from
-          in: query
-          required: false
-          schema:
-            type: string
-            format: date-time
-            example: '2025-07-01T00:00:00'
-          description: 作成日時の範囲指定開始（ISO-8601形式）
-        - name: to
-          in: query
-          required: false
-          schema:
-            type: string
-            format: date-time
-            example: '2025-07-15T23:59:59'
-          description: 作成日時の範囲指定終了（ISO-8601形式）
-        - name: exclude_expired
-          in: query
-          required: false
-          schema:
-            type: boolean
-            default: true
-          description: 有効期限切れを除外するか
-        - name: attributes.key
-          in: query
-          required: false
-          schema:
-            type: string
-          description: 属性情報のオブジェクトのkeyに対する検索（keyは具体的な値に変更が必要）
+        - $ref: '#/components/parameters/DryRun'
       responses:
         '200':
-          description: 認証トランザクション一覧取得成功
+          description: ユーザーのパスワードを正常に更新しました
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  list:
-                    type: array
-                    items:
-                      $ref: >-
-                        #/components/schemas/OrganizationAuthenticationTransaction
-                    description: 認証トランザクション一覧
-                  total_count:
-                    type: integer
-                    description: 総件数
-                    example: 15
-                  limit:
-                    type: integer
-                    description: 取得件数制限
-                    example: 10
-                  offset:
-                    type: integer
-                    description: 取得開始位置
-                    example: 0
+                  dry_run:
+                    type: boolean
+                    description: これがドライラン操作であったかを示します
+                  result:
+                    $ref: '#/components/schemas/OrganizationUser'
         '400':
-          description: >-
-            クエリパラメータが不正（id / authorization_id / device_id が UUID 形式でない、from / to
-            が ISO-8601 形式でない場合など）
+          description: 無効なリクエストボディまたは検証エラー
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: '#/components/schemas/UserValidationErrorResponse'
         '403':
-          description: 組織アクセス権限不足またはテナントアクセス拒否
+          description: 権限不足または無効な組織アクセス
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
-          description: 組織またはテナントが見つかりません
+          description: ユーザー、組織、またはテナントが見つかりません
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-transactions/{transaction-id}:
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users/{user-id}/roles:
     parameters:
       - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/TenantId'
-      - name: transaction-id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: 認証トランザクションID
-        example: f47ac10b-58cc-4372-a567-0e02b2c3d479
-    get:
-      summary: 組織内認証トランザクション詳細取得
-      description: 指定した組織・テナント内の特定の認証トランザクションの詳細を取得します
+      - $ref: '#/components/parameters/UserId'
+    patch:
+      summary: Update user roles within organization tenant
+      description: Updates a specific user's roles for a tenant within an organization
       tags:
-        - organization-authentication-transaction
+        - organization-user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationUserRolesUpdateRequest'
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
       responses:
         '200':
-          description: 認証トランザクション詳細取得成功
+          description: ユーザーのロールを正常に更新しました
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/OrganizationAuthenticationTransactionDetail
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: これがドライラン操作であったかを示します
+                  result:
+                    $ref: '#/components/schemas/OrganizationUser'
+        '400':
+          description: 無効なリクエストボディまたは検証エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserValidationErrorResponse'
         '403':
-          description: 組織アクセス権限不足またはテナントアクセス拒否
+          description: 権限不足または無効な組織アクセス
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
-          description: 組織、テナント、または認証トランザクションが見つかりません
+          description: ユーザー、組織、またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users/{user-id}/tenant-assignments:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/UserId'
+    patch:
+      summary: Update user tenant assignments within organization
+      description: Updates a specific user's tenant assignments within an organization
+      tags:
+        - organization-user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: >-
+                #/components/schemas/OrganizationUserTenantAssignmentsUpdateRequest
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: ユーザーのテナント割り当てを正常に更新しました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: これがドライラン操作であったかを示します
+                  result:
+                    $ref: '#/components/schemas/OrganizationUser'
+        '400':
+          description: 無効なリクエストボディまたは検証エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserValidationErrorResponse'
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: ユーザー、組織、またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users/{user-id}/organization-assignments:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/UserId'
+    patch:
+      summary: Update user organization assignments
+      description: Updates a specific user's organization assignments
+      tags:
+        - organization-user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: >-
+                #/components/schemas/OrganizationUserOrganizationAssignmentsUpdateRequest
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: ユーザーの組織割り当てを正常に更新しました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: これがドライラン操作であったかを示します
+                  result:
+                    $ref: '#/components/schemas/OrganizationUser'
+        '400':
+          description: 無効なリクエストボディまたは検証エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserValidationErrorResponse'
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: ユーザー、組織、またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users/{user-id}/sessions:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/UserId'
+    get:
+      summary: List user sessions
+      description: |
+        指定されたユーザーのアクティブなセッション一覧を取得します。
+
+        このエンドポイントは、ユーザーが現在持っているOPセッション（OpenID Provider Session）の情報を返します。
+        セッション情報には、セッションID、認証時刻、有効期限、最終アクセス時刻などが含まれます。
+
+        **ユースケース:**
+        - ユーザーのログイン状況の確認
+        - 不正アクセスの検出（予期しないセッションの発見）
+        - セッション管理画面の構築
+      tags:
+        - organization-user
+      responses:
+        '200':
+          description: ユーザーのセッション一覧を正常に取得しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSessionListResponse'
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: ユーザー、組織、またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Delete all user sessions
+      description: |
+        指定されたユーザーのすべてのセッションを一括削除（ログアウト）します。
+
+        このエンドポイントは、ユーザーが持つすべてのOPセッションを無効化します。
+        パスワード変更後の全デバイスからのログアウトや、アカウント侵害時の緊急対応に使用します。
+
+        **ユースケース:**
+        - パスワード変更後の全セッション無効化
+        - アカウント侵害時の緊急対応
+        - ユーザー退職時のセッションクリア
+      tags:
+        - organization-user
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '204':
+          description: すべてのセッションを正常に削除しました
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: ユーザー、組織、またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users/{user-id}/sessions/{session-id}:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/UserId'
+      - $ref: '#/components/parameters/SessionId'
+    delete:
+      summary: Delete user session
+      description: |
+        指定されたユーザーの特定のセッションを削除（ログアウト）します。
+
+        このエンドポイントは、ユーザーの特定のOPセッションを無効化します。
+        セッション削除により、そのセッションに関連するすべてのトークンも無効化されます。
+
+        **ユースケース:**
+        - 不正アクセスが疑われるセッションの強制終了
+        - ユーザーからの要請によるリモートログアウト
+        - セキュリティインシデント対応
+      tags:
+        - organization-user
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '204':
+          description: セッションを正常に削除しました
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: セッション、ユーザー、組織、またはテナントが見つかりません
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 components:
+  responses:
+    Unauthorized:
+      description: 認証されていません（アクセストークンが無効または未指定）
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
   parameters:
     TenantId:
       name: tenant-id
@@ -701,22 +804,22 @@ components:
         type: string
         format: uuid
       description: 組織の識別子
-    AuthenticationConfigId:
-      name: config-id
+    UserId:
+      name: user-id
       in: path
       required: true
       schema:
         type: string
         format: uuid
-      description: 認証設定の識別子
-    AuthenticationPolicyConfigId:
-      name: config-id
+      description: ユーザーの識別子
+    SessionId:
+      name: session-id
       in: path
       required: true
       schema:
         type: string
         format: uuid
-      description: 認証ポリシー設定の識別子
+      description: セッションの識別子
     DryRun:
       name: dry_run
       in: query
@@ -745,170 +848,72 @@ components:
         default: 0
       description: アイテムを返す開始インデックス
   schemas:
-    AuthenticationConfig:
+    ContactVerificationChallenge:
       type: object
-      description: >-
-        Authentication configuration response based on
-        AuthenticationConfigurationRequest Java class
-      required:
-        - id
-        - type
+      description: セルフサービス 連絡先確認チャレンジ（Email / 電話番号）
       properties:
         id:
           type: string
           format: uuid
-          description: 設定識別子
-        type:
-          type: string
-          description: 認証設定タイプ
-        tenant_id:
+          description: チャレンジID
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        user_id:
           type: string
           format: uuid
-          description: Tenant identifier
-        attributes:
+          description: チャレンジを発行したユーザーのID
+        operation:
+          type: string
+          enum:
+            - email_verify
+            - email_change
+            - phone_verify
+            - phone_change
+          description: 操作種別。発行時に確定し、確定処理まで変わりません
+          example: email_change
+        target_value:
+          type: string
+          description: |
+            確認コードの実際の送信先。`*_verify` はアカウントの現在値、`*_change` は変更先の値。
+            「届かない」の問い合わせでまず確認する項目で、`delivery` によらず記録されます
+          example: new@example.com
+        delivery:
+          type: string
+          enum:
+            - internal
+            - external
+          description: >
+            コードの在処。`internal` は idp-server が生成・照合するモードで `verification_code` が入る。
+
+            `external` は外部サービスに委譲したモードで、コードは idp-server に無く `external_reference`
+            が入る
+          example: internal
+        verification_code:
+          type: string
+          description: |
+            発行した確認コード。`delivery: internal` のときのみ返る。
+            確定には本人のアクセストークンが別途必要なため、コードだけでは確定できません
+          example: '123456'
+        external_reference:
           type: object
-          description: 設定属性
           additionalProperties: true
-        metadata:
-          type: object
-          description: 設定メタデータ
-          additionalProperties: true
-        interactions:
-          type: object
-          description: 認証インタラクション設定
-          additionalProperties:
-            $ref: '#/components/schemas/AuthenticationInteractionConfig'
-        created_at:
+          description: |
+            外部サービスの記録に突き合わせるための識別子。`delivery: external` のときのみ返る。
+            中身はテナントが `http_request_store` のマッピングで選んだ項目（典型は `transaction_id`）
+          example:
+            transaction_id: ext-3fa85f64-5717-4562-b3fc-2c963f66afa6
+        attempts:
+          type: integer
+          description: 検証失敗の試行回数。上限に達したチャレンジは使用できません
+          example: 0
+        expires_at:
           type: string
           format: date-time
-          description: 設定作成タイムスタンプ
-        updated_at:
-          type: string
-          format: date-time
-          description: 設定最終更新タイムスタンプ
-      additionalProperties: false
-    AuthenticationConfigurationRequest:
-      type: object
-      description: >-
-        Authentication configuration request based on
-        AuthenticationConfigurationRequest Java class
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: 設定識別子
-        type:
-          type: string
-          description: 認証設定タイプ
-        attributes:
-          type: object
-          description: Configuration-specific attributes
-          additionalProperties: true
-        metadata:
-          type: object
-          description: 設定メタデータ
-          additionalProperties: true
-        interactions:
-          type: object
-          description: 認証インタラクション設定 mapping
-          additionalProperties:
-            $ref: '#/components/schemas/AuthenticationInteractionConfig'
-      additionalProperties: true
-    AuthenticationInteractionConfig:
-      type: object
-      description: >-
-        Authentication interaction configuration based on
-        AuthenticationInteractionConfig Java class
-      properties:
-        request:
-          type: object
-          description: Request configuration settings (AuthenticationRequestConfig)
-          properties:
-            schema:
-              type: object
-              description: リクエスト検証用JSONスキーマ定義
-              additionalProperties: true
-          additionalProperties: true
-        preHook:
-          type: object
-          description: Pre-processing hook configuration (AuthenticationPreHookConfig)
-          properties:
-            additional_parameters:
-              type: array
-              description: 追加パラメータ設定
-              items:
-                type: object
-                additionalProperties: true
-          additionalProperties: true
-        execution:
-          type: object
-          description: Execution configuration settings (AuthenticationExecutionConfig)
-          properties:
-            function:
-              type: string
-              description: 実行関数名
-            previous_interaction:
-              type: object
-              description: 前のインタラクション解決設定
-              additionalProperties: true
-            http_request:
-              type: object
-              description: HTTPリクエスト実行設定
-              additionalProperties: true
-            http_requests:
-              type: array
-              description: Multiple HTTP request configurations
-              items:
-                type: object
-                additionalProperties: true
-            mock:
-              type: object
-              description: Mock configuration for testing
-              additionalProperties: true
-            details:
-              type: object
-              description: Additional execution details
-              additionalProperties: true
-            http_request_store:
-              type: object
-              description: HTTP request store configuration
-              additionalProperties: true
-            http_requests_store:
-              type: object
-              description: Multiple HTTP requests store configuration
-              additionalProperties: true
-          additionalProperties: true
-        userResolve:
-          type: object
-          description: User resolution configuration (AuthenticationResultConfig)
-          properties:
-            user_mapping_rules:
-              type: array
-              description: ユーザーマッピングルール
-              items:
-                $ref: '#/components/schemas/MappingRule'
-          additionalProperties: true
-        postHook:
-          type: object
-          description: Post-processing hook configuration (AuthenticationPostHookConfig)
-          properties:
-            additional_parameters:
-              type: array
-              description: 追加パラメータ設定
-              items:
-                $ref: '#/components/schemas/AuthenticationAdditionalParameterConfig'
-          additionalProperties: true
-        response:
-          type: object
-          description: Response configuration settings (AuthenticationResponseConfig)
-          properties:
-            body_mapping_rules:
-              type: array
-              description: ボディマッピングルール
-              items:
-                $ref: '#/components/schemas/MappingRule'
-          additionalProperties: true
-      additionalProperties: true
+          description: 有効期限
+          example: '2026-09-10T02:01:53.367123'
+        expired:
+          type: boolean
+          description: 参照時点で期限切れかどうか
+          example: false
     ErrorResponse:
       type: object
       properties:
@@ -927,379 +932,704 @@ components:
           type: object
           additionalProperties: true
           description: Additional error details
-    MappingRule:
+    OrganizationUser:
       type: object
-      description: Mapping rule configuration based on MappingRule Java class
-      properties:
-        from:
-          type: string
-          description: Source field path for mapping
-        static_value:
-          description: Static value to use instead of mapping from source
-        to:
-          type: string
-          description: Target field path for mapping
-        convert_type:
-          type: string
-          description: Data conversion type
-        functions:
-          type: array
-          description: List of transformation functions
-          items:
-            type: object
-            additionalProperties: true
-      additionalProperties: false
-    AuthenticationAdditionalParameterConfig:
-      type: object
-      description: >-
-        Additional parameter configuration based on
-        AuthenticationAdditionalParameterConfig Java class
-      properties:
-        function:
-          type: string
-          description: Function name for parameter processing
-        http_request:
-          type: object
-          description: HTTP request configuration for parameter retrieval
-          additionalProperties: true
-        http_requests:
-          type: array
-          description: Multiple HTTP requests configuration
-          items:
-            type: object
-            additionalProperties: true
-        mock:
-          type: object
-          description: Mock configuration for testing
-          additionalProperties: true
-        details:
-          type: object
-          description: Additional configuration details
-          additionalProperties: true
-      additionalProperties: false
-    AuthenticationPolicyConfig:
-      type: object
-      description: >-
-        Authentication policy configuration based on
-        AuthenticationPolicyConfiguration Java class
       required:
-        - id
-        - flow
+        - sub
+        - provider_id
+        - name
+        - email
+        - status
       properties:
-        id:
+        sub:
           type: string
           format: uuid
-          description: Authentication policy configuration identifier
-        flow:
+          description: Unique subject identifier for the user
+        provider_id:
           type: string
-          description: Authentication flow type
-        policies:
-          type: array
-          description: List of authentication policies
-          items:
-            $ref: '#/components/schemas/AuthenticationPolicy'
-        enabled:
+          maxLength: 255
+          description: Identity provider identifier
+        external_user_id:
+          type: string
+          maxLength: 255
+          description: External user identifier from identity provider
+        username:
+          type: string
+          maxLength: 255
+          description: Username for authentication
+        name:
+          type: string
+          maxLength: 255
+          description: Full display name of the user
+        given_name:
+          type: string
+          maxLength: 255
+          description: Given name (first name) of the user
+        family_name:
+          type: string
+          maxLength: 255
+          description: Family name (last name) of the user
+        middle_name:
+          type: string
+          maxLength: 255
+          description: Middle name of the user
+        nickname:
+          type: string
+          maxLength: 255
+          description: Casual name of the user
+        preferred_username:
+          type: string
+          maxLength: 255
+          description: Preferred username for display
+        profile:
+          type: string
+          format: uri
+          maxLength: 255
+          description: URL of the user's profile page
+        picture:
+          type: string
+          format: uri
+          maxLength: 255
+          description: URL of the user's profile picture
+        website:
+          type: string
+          format: uri
+          maxLength: 255
+          description: URL of the user's website
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          description: Email address of the user
+        email_verified:
           type: boolean
-          description: Whether the policy configuration is enabled
-          default: true
-        tenant_id:
+          description: Whether the email address has been verified
+        gender:
           type: string
-          format: uuid
-          description: Tenant identifier
-        created_at:
+          description: Gender identity of the user
+        birthdate:
           type: string
-          format: date-time
-          description: 設定作成タイムスタンプ
+          format: date
+          description: Date of birth (YYYY-MM-DD format)
+        zoneinfo:
+          type: string
+          maxLength: 255
+          description: Time zone information
+        locale:
+          type: string
+          description: Locale preference
+        phone_number:
+          type: string
+          pattern: ^\+?[0-9\- ]{7,20}$
+          description: Phone number in E.164 format
+        phone_number_verified:
+          type: boolean
+          description: Whether the phone number has been verified
+        address:
+          type: object
+          properties:
+            street_address:
+              type: string
+              maxLength: 255
+              description: Street address
+            locality:
+              type: string
+              maxLength: 255
+              description: City or locality
+            region:
+              type: string
+              maxLength: 255
+              description: State or region
+            postal_code:
+              type: string
+              maxLength: 255
+              description: Postal or ZIP code
+            country:
+              type: string
+              maxLength: 255
+              description: Country
+          description: Physical address of the user
         updated_at:
           type: string
           format: date-time
-          description: 設定最終更新タイムスタンプ
-      additionalProperties: false
-    AuthenticationPolicyConfigurationRequest:
-      type: object
-      description: >-
-        Authentication policy configuration request based on
-        AuthenticationPolicyConfigRequest Java class
-      properties:
-        id:
+          description: Last update timestamp
+        status:
           type: string
-          format: uuid
-          description: Authentication policy configuration identifier
-        flow:
-          type: string
-          description: Authentication flow type
-        policies:
-          type: array
-          description: List of authentication policies
-          items:
-            $ref: '#/components/schemas/AuthenticationPolicy'
-        enabled:
-          type: boolean
-          description: Whether the policy configuration is enabled
-          default: true
-      additionalProperties: true
-    AuthenticationPolicy:
-      type: object
-      description: Authentication policy based on AuthenticationPolicy Java class
-      properties:
-        priority:
-          type: integer
-          description: Policy priority (higher values take precedence)
-        conditions:
-          $ref: '#/components/schemas/AuthenticationPolicyCondition'
-        available_methods:
-          type: array
-          description: List of available authentication methods
-          items:
-            type: string
-        acr_mapping_rules:
-          type: object
-          description: ACR (Authentication Context Class Reference) mapping rules
-          additionalProperties:
-            type: array
-            items:
-              type: string
-        level_of_authentication_scopes:
-          type: object
-          description: Level of authentication scope mappings
-          additionalProperties:
-            type: array
-            items:
-              type: string
-        success_conditions:
-          $ref: '#/components/schemas/AuthenticationResultConditionConfig'
-        failure_conditions:
-          $ref: '#/components/schemas/AuthenticationResultConditionConfig'
-        lock_conditions:
-          $ref: '#/components/schemas/AuthenticationResultConditionConfig'
-        device_registration_conditions:
-          description: |
-            認証デバイス（FIDO2/FIDO-UAF）登録時に必要な認証レベル（ACR）を定義します。
-            この条件が設定されている場合、ユーザーは指定された認証方式を完了しないと
-            新しいFIDOデバイスを登録できません。
-            条件を満たさない場合は403 Forbidden、未認証の場合は401 Unauthorizedを返します。
-          allOf:
-            - $ref: '#/components/schemas/AuthenticationResultConditionConfig'
-        step_definitions:
-          type: array
-          description: List of authentication step definitions
-          items:
-            $ref: '#/components/schemas/AuthenticationStepDefinition'
-        auth_session_binding_required:
-          type: boolean
-          default: true
-          description: |
-            AUTH_SESSION Cookie検証の有効/無効を制御します。
-
-            trueの場合、認可フロー中にAUTH_SESSION Cookieの検証を行い、
-            認可フローハイジャック攻撃（攻撃者が認可URLを被害者に送信し、
-            被害者の認証を自分のセッションに紐づける攻撃）を防止します。
-
-            セキュリティ上の理由から、本番環境ではtrueを推奨します。
-      additionalProperties: false
-    AuthenticationPolicyCondition:
-      type: object
-      description: Authentication policy conditions
-      properties:
-        client_ids:
-          type: array
-          description: List of client IDs this policy applies to
-          items:
-            type: string
-        acr_values:
-          type: array
-          description: List of ACR values this policy applies to
-          items:
-            type: string
-        scopes:
-          type: array
-          description: List of scopes this policy applies to
-          items:
-            type: string
-      additionalProperties: true
-    AuthenticationResultConditionConfig:
-      type: object
-      description: Authentication result condition configuration
-      properties:
-        conditions:
-          type: array
-          description: List of result conditions
-          items:
-            type: object
-            additionalProperties: true
-      additionalProperties: true
-    AuthenticationStepDefinition:
-      type: object
-      description: >
-        多段階認証の1ステップの定義。
-
-
-        実装は `AuthenticationStepDefinition`（`libs/idp-server-core`）。
-
-        設定方法は
-        [認証ポリシー設定ガイド](../docs/content_06_developer-guide/05-configuration/authentication-policy.md#step-definitions多段階認証)
-        を参照。
-      required:
-        - method
-      properties:
-        method:
-          type: string
-          description: 認証方式。
-          example: password
-        interaction:
-          type: string
-          description: |
-            オプション。`method` 内の特定の interaction にこの定義を限定する。
-
-            `external-api-authentication` は複数の interaction を1つの設定に持ち、
-            どれを実行しても method は `external-api` となる。指定しない場合、この
-            定義は当該 method の全 interaction に適用される。
-
-            解決順は「method + interaction 一致」→「method のみ一致（interaction 未指定）」→
-            「該当なし」。
-          example: identify
-        order:
-          type: integer
-          description: |
-            実行順序（小さい値が先）。
-
-            注: 現時点では評価に使用されていない。
-          example: 1
-        requires_user:
-          type: boolean
-          default: true
-          description: |
-            ユーザーが事前に識別されている必要があるか。
-
-            `false` は 1st factor（ユーザー識別フェーズ）、`true` は 2nd factor
-            （認証検証フェーズ）を表す。
-          example: false
-        allow_registration:
-          type: boolean
-          default: false
-          description: |
-            このステップで新規ユーザー登録を許可するか。`requires_user` が false の
-            ときのみ有効。
-        registration_mode:
-          type: string
-          default: allowed
           enum:
-            - allowed
-            - required
-            - disabled
-          description: |
-            登録の可否。`allowed` は既存・新規の両方、`required` は新規のみ、
-            `disabled` は既存のみ。
-
-            注: 現時点では評価に使用されていない。
-        user_identity_source:
+            - REGISTERED
+            - IDENTITY_VERIFIED
+            - SUSPENDED
+            - DELETED
+          description: User account status
+        hashed_password:
           type: string
-          description: |
-            ユーザー識別に使用する属性。
-
-            注: 現時点では評価に使用されていない。
-          example: email
-        verification_source:
-          type: string
-          description: |
-            2nd factor の検証に使用する属性。
-
-            注: 現時点では評価に使用されていない。
-      additionalProperties: false
-    OrganizationAuthenticationInteraction:
-      type: object
-      required:
-        - transaction_id
-        - type
-        - payload
-      properties:
-        transaction_id:
-          type: string
-          description: 認証トランザクションID
-          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
-        type:
-          type: string
-          description: インタラクションタイプ（password, mfa, biometric等）
-          example: password
-        payload:
+          description: Masked password field (always shows ****)
+        verified_claims:
           type: object
-          description: インタラクション固有のペイロードデータ
           additionalProperties: true
-          example:
-            status: completed
-            created_at: '2025-09-18T10:30:00Z'
-            metadata: {}
-      additionalProperties: false
-    OrganizationAuthenticationInteractionDetail:
-      allOf:
-        - $ref: '#/components/schemas/OrganizationAuthenticationInteraction'
-        - type: object
-          description: 詳細取得APIのレスポンスは基本スキーマと同じ構造
-    OrganizationAuthenticationTransaction:
-      type: object
-      required:
-        - id
-      properties:
-        id:
-          type: string
-          description: 認証トランザクションID
-          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
-        client_id:
-          type: string
-          description: クライアントID
-          example: example-client-001
-        redirect_uri:
-          type: string
-          format: uri
-          description: リダイレクトURI
-          example: https://example.com/callback
-        scope:
-          type: string
-          description: 要求されたスコープ
-          example: openid profile email
-        state:
-          type: string
-          description: ステート値
-          example: random-state-value
-        nonce:
-          type: string
-          description: ナンス値
-          example: random-nonce-value
-        response_type:
-          type: string
-          description: レスポンスタイプ
-          example: code
-        code_challenge:
-          type: string
-          description: PKCEコードチャレンジ
-          example: dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
-        code_challenge_method:
-          type: string
-          description: PKCEコードチャレンジメソッド
-          example: S256
-      additionalProperties: true
-    OrganizationAuthenticationTransactionDetail:
-      allOf:
-        - $ref: '#/components/schemas/OrganizationAuthenticationTransaction'
-        - type: object
-          description: 詳細取得APIのレスポンスは基本スキーマと同じ構造
-  responses:
-    Unauthorized:
-      description: Unauthorized - Authentication required or invalid
-      content:
-        application/json:
-          schema:
+          description: Verified identity claims
+        custom_properties:
+          type: object
+          additionalProperties: true
+          description: Custom user properties
+        authentication_devices:
+          type: array
+          items:
             type: object
             properties:
-              error:
+              id:
                 type: string
-                description: Error type
-                example: unauthorized
-              error_description:
+                format: uuid
+              type:
                 type: string
-                description: Human-readable description of the error
-                example: Authentication required
+              enabled:
+                type: boolean
+          description: Registered authentication devices
+        roles:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              name:
+                type: string
+          description: Assigned roles
+        permissions:
+          type: array
+          items:
+            type: string
+          description: User permissions
+        assigned_tenants:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: List of assigned tenant IDs
+        assigned_organizations:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: List of assigned organization IDs
+    OrganizationUserCreateRequest:
+      type: object
+      required:
+        - provider_id
+        - name
+        - email
+        - raw_password
+      properties:
+        sub:
+          type: string
+          format: uuid
+          description: Unique subject identifier (optional, auto-generated if not provided)
+        provider_id:
+          type: string
+          maxLength: 255
+          description: Identity provider identifier
+          example: idp-server
+        external_user_id:
+          type: string
+          maxLength: 255
+          description: External user identifier from identity provider
+        username:
+          type: string
+          maxLength: 255
+          description: Username for authentication
+        name:
+          type: string
+          maxLength: 255
+          description: Full display name of the user
+        given_name:
+          type: string
+          maxLength: 255
+          description: Given name (first name) of the user
+        family_name:
+          type: string
+          maxLength: 255
+          description: Family name (last name) of the user
+        middle_name:
+          type: string
+          maxLength: 255
+          description: Middle name of the user
+        nickname:
+          type: string
+          maxLength: 255
+          description: Casual name of the user
+        preferred_username:
+          type: string
+          maxLength: 255
+          description: Preferred username for display
+        profile:
+          type: string
+          format: uri
+          maxLength: 255
+          description: URL of the user's profile page
+        picture:
+          type: string
+          format: uri
+          maxLength: 255
+          description: URL of the user's profile picture
+        website:
+          type: string
+          format: uri
+          maxLength: 255
+          description: URL of the user's website
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          description: Email address of the user
+        email_verified:
+          type: boolean
+          description: Whether the email address has been verified
+        gender:
+          type: string
+          description: Gender identity of the user
+        birthdate:
+          type: string
+          format: date
+          description: Date of birth (YYYY-MM-DD format)
+        zoneinfo:
+          type: string
+          maxLength: 255
+          description: Time zone information
+        locale:
+          type: string
+          description: Locale preference
+        phone_number:
+          type: string
+          pattern: ^\+?[0-9\- ]{7,20}$
+          description: Phone number in E.164 format
+        phone_number_verified:
+          type: boolean
+          description: Whether the phone number has been verified
+        address:
+          type: object
+          properties:
+            street_address:
+              type: string
+              maxLength: 255
+              description: Street address
+            locality:
+              type: string
+              maxLength: 255
+              description: City or locality
+            region:
+              type: string
+              maxLength: 255
+              description: State or region
+            postal_code:
+              type: string
+              maxLength: 255
+              description: Postal or ZIP code
+            country:
+              type: string
+              maxLength: 255
+              description: Country
+          description: Physical address of the user
+        raw_password:
+          type: string
+          minLength: 8
+          maxLength: 255
+          description: Plain text password (will be hashed on server)
+        verified_claims:
+          type: object
+          additionalProperties: true
+          description: Verified identity claims (OpenID for Identity Assurance)
+        custom_properties:
+          type: object
+          additionalProperties: true
+          description: Custom user properties
+        roles:
+          type: array
+          items:
+            type: object
             required:
-              - error
-              - error_description
+              - role_id
+              - role_name
+            properties:
+              role_id:
+                type: string
+                format: uuid
+                description: Unique role identifier
+              role_name:
+                type: string
+                maxLength: 255
+                description: Role name
+          description: User roles
+        assigned_tenants:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: List of tenant IDs the user is assigned to
+        current_tenant:
+          type: string
+          format: uuid
+          description: Current primary tenant ID
+        assigned_organizations:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: List of organization IDs the user is assigned to
+        current_organization:
+          type: string
+          format: uuid
+          description: Current primary organization ID
+    OrganizationUserUpdateRequest:
+      type: object
+      required:
+        - provider_id
+        - name
+        - email
+      properties:
+        provider_id:
+          type: string
+          maxLength: 255
+          description: Identity provider identifier
+        external_user_id:
+          type: string
+          maxLength: 255
+          description: External user identifier from identity provider
+        username:
+          type: string
+          maxLength: 255
+          description: Username for authentication
+        name:
+          type: string
+          maxLength: 255
+          description: Full display name of the user
+        given_name:
+          type: string
+          maxLength: 255
+          description: Given name (first name) of the user
+        family_name:
+          type: string
+          maxLength: 255
+          description: Family name (last name) of the user
+        middle_name:
+          type: string
+          maxLength: 255
+          description: Middle name of the user
+        nickname:
+          type: string
+          maxLength: 255
+          description: Casual name of the user
+        preferred_username:
+          type: string
+          maxLength: 255
+          description: Preferred username for display
+        profile:
+          type: string
+          format: uri
+          maxLength: 255
+          description: URL of the user's profile page
+        picture:
+          type: string
+          format: uri
+          maxLength: 255
+          description: URL of the user's profile picture
+        website:
+          type: string
+          format: uri
+          maxLength: 255
+          description: URL of the user's website
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          description: Email address of the user
+        email_verified:
+          type: boolean
+          description: Whether the email address has been verified
+        gender:
+          type: string
+          description: Gender identity of the user
+        birthdate:
+          type: string
+          format: date
+          description: Date of birth (YYYY-MM-DD format)
+        zoneinfo:
+          type: string
+          maxLength: 255
+          description: Time zone information
+        locale:
+          type: string
+          description: Locale preference
+        phone_number:
+          type: string
+          pattern: ^\+?[0-9\- ]{7,20}$
+          description: Phone number in E.164 format
+        phone_number_verified:
+          type: boolean
+          description: Whether the phone number has been verified
+        address:
+          type: object
+          properties:
+            street_address:
+              type: string
+              maxLength: 255
+              description: Street address
+            locality:
+              type: string
+              maxLength: 255
+              description: City or locality
+            region:
+              type: string
+              maxLength: 255
+              description: State or region
+            postal_code:
+              type: string
+              maxLength: 255
+              description: Postal or ZIP code
+            country:
+              type: string
+              maxLength: 255
+              description: Country
+          description: Physical address of the user
+        verified_claims:
+          type: object
+          additionalProperties: true
+          description: Verified identity claims (OpenID for Identity Assurance)
+        custom_properties:
+          type: object
+          additionalProperties: true
+          description: Custom user properties
+        roles:
+          type: array
+          items:
+            type: object
+            required:
+              - role_id
+              - role_name
+            properties:
+              role_id:
+                type: string
+                format: uuid
+                description: Unique role identifier
+              role_name:
+                type: string
+                maxLength: 255
+                description: Role name
+          description: User roles
+        assigned_tenants:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: List of tenant IDs the user is assigned to
+        current_tenant:
+          type: string
+          format: uuid
+          description: Current primary tenant ID
+        assigned_organizations:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: List of organization IDs the user is assigned to
+        current_organization:
+          type: string
+          format: uuid
+          description: Current primary organization ID
+    UserValidationErrorResponse:
+      type: object
+      required:
+        - error
+        - error_description
+      properties:
+        error:
+          type: string
+          description: Error code
+          example: invalid_request
+        error_description:
+          type: string
+          description: Human-readable error description
+          example: user registration validation is failed
+        dry_run:
+          type: boolean
+          description: Indicates if this was a dry run operation
+        details:
+          type: object
+          properties:
+            user:
+              type: array
+              items:
+                type: string
+              description: List of user validation error messages
+          description: Detailed validation error information
+          example:
+            user:
+              - provider_id is missing
+              - email format is invalid
+    OrganizationUserPasswordUpdateRequest:
+      type: object
+      required:
+        - raw_password
+      properties:
+        raw_password:
+          type: string
+          minLength: 8
+          pattern: ^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d!@#$%^&*()_+=-]{8,}$
+          description: Plain text password (will be hashed on server)
+    OrganizationUserRolesUpdateRequest:
+      type: object
+      properties:
+        roles:
+          type: array
+          maxItems: 50
+          items:
+            type: object
+            required:
+              - role_id
+              - role_name
+            properties:
+              role_id:
+                type: string
+                format: uuid
+                description: Unique role identifier
+              role_name:
+                type: string
+                maxLength: 255
+                description: Role name
             additionalProperties: false
+          description: User roles
+        permissions:
+          type: array
+          maxItems: 100
+          items:
+            type: string
+            maxLength: 255
+          description: Direct permissions assigned to user
+      additionalProperties: false
+    OrganizationUserTenantAssignmentsUpdateRequest:
+      type: object
+      required:
+        - assigned_tenants
+      properties:
+        current_tenant_id:
+          type: string
+          format: uuid
+          description: Current primary tenant ID
+        assigned_tenants:
+          type: array
+          maxItems: 20
+          items:
+            type: string
+            format: uuid
+          description: List of tenant IDs the user is assigned to
+    OrganizationUserOrganizationAssignmentsUpdateRequest:
+      type: object
+      required:
+        - assigned_organizations
+      properties:
+        current_organization_id:
+          type: string
+          format: uuid
+          description: Current primary organization ID
+        assigned_organizations:
+          type: array
+          maxItems: 20
+          items:
+            type: string
+            format: uuid
+          description: List of organization IDs the user is assigned to
+    UserSession:
+      type: object
+      description: ユーザーのOPセッション（OpenID Provider Session）情報
+      properties:
+        id:
+          type: string
+          description: セッションID
+          example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+        tenant_id:
+          type: string
+          description: テナントID
+          example: 952f6906-3e95-4ed3-86b2-981f90f785f9
+        sub:
+          type: string
+          description: ユーザーの一意識別子（subject）
+          example: 3ec055a8-8000-44a2-8677-e70ebff414e2
+        auth_time:
+          type: string
+          format: date-time
+          description: 認証が行われた時刻（ISO 8601形式）
+          example: '2025-01-05T10:30:00Z'
+        acr:
+          type: string
+          nullable: true
+          description: 認証コンテキストクラス参照（Authentication Context Class Reference）
+          example: urn:mace:incommon:iap:silver
+        amr:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: 認証方法参照（Authentication Methods References）
+          example:
+            - pwd
+            - otp
+        created_at:
+          type: string
+          format: date-time
+          description: セッション作成時刻（ISO 8601形式）
+          example: '2025-01-05T10:30:00Z'
+        expires_at:
+          type: string
+          format: date-time
+          description: セッション有効期限（ISO 8601形式）
+          example: '2025-01-05T11:30:00Z'
+        last_accessed_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: 最終アクセス時刻（ISO 8601形式）
+          example: '2025-01-05T10:45:00Z'
+        status:
+          type: string
+          enum:
+            - ACTIVE
+            - TERMINATED
+          description: セッションステータス
+          example: ACTIVE
+        terminated_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: セッション終了時刻（終了している場合のみ）
+          example: null
+        termination_reason:
+          type: string
+          nullable: true
+          enum:
+            - USER_LOGOUT
+            - ADMIN_REVOCATION
+            - TIMEOUT
+            - SESSION_LIMIT_EXCEEDED
+          description: セッション終了理由（終了している場合のみ）
+          example: null
+        ip_address:
+          type: string
+          nullable: true
+          description: 認証時のIPアドレス
+          example: 192.168.1.100
+        user_agent:
+          type: string
+          nullable: true
+          description: 認証時のUser-Agent
+          example: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36
+    UserSessionListResponse:
+      type: object
+      description: ユーザーセッション一覧のレスポンス
+      properties:
+        list:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserSession'
+          description: セッションの配列
+      required:
+        - list

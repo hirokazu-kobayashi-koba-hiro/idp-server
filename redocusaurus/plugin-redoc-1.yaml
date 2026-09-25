@@ -1,630 +1,121 @@
 openapi: 3.0.3
 info:
-  title: Authentication Device API
+  title: Client Instance 登録API
+  description: >
+    ネイティブアプリのインスタンスが、端末内で生成した鍵（Client Instance Key）を認可サーバーに登録するためのエンドポイント仕様。
+
+    Attestation-Based Client Authentication（`attest_jwt_client_auth`）で
+    `client_attestation_trust_source: registered_instance_key` を使う構成で必要になります。
   version: 1.0.0
-  description: |
-    認証デバイスに関連する認証トランザクションの取得および、FIDO-UAF認証連携に関するAPI群。
-    CIBAやOAuthフローを含む認証トランザクションの一覧取得、FIDOサーバーとのチャレンジや認証処理を提供する。
+  contact:
+    name: idp-server OSS
+servers:
+  - url: https://api.local.test
+    description: IdP Server API エンドポイント(ローカル)
 tags:
-  - name: 認証
-  - name: FIDO-UAF
+  - name: Client Instance
+    description: >
+      アプリのインスタンスごとに端末内で生成した鍵を、認可サーバーに登録するAPI群。
+
+
+      登録が済むと、そのインスタンスは自分の鍵で Client Attestation JWT を自己署名し、
+
+      トークンエンドポイント等で `attest_jwt_client_auth` として認証できるようになります。
+
+      認証フェーズの仕様は [RP用API](/docs/content_07_reference/api-rp-ja/) を参照してください。
+
+
+      ## インスタンスは利用者に束縛されます
+
+
+      登録されたインスタンスは、登録時にログインした利用者に束縛されます
+
+      （`client_instance_registration_policy: user_bound`）。
+
+
+      ## 流れ
+
+
+      ```
+
+      1. POST /v1/client-instances/challenges  → challenge / instance_id
+
+      2. 端末内で鍵を生成し、request_hash を計算
+           request_hash = base64url_nopad( SHA-256( challenge_bytes || canonical_jwk_utf8 ) )
+      3. 認可リクエスト（nonce = request_hash）で利用者がログイン → ID トークン
+
+      4. challenge を埋め込んだプラットフォーム証明を取得
+
+      5. POST /v1/client-instances（ID トークン + 公開鍵 + 証明） → 登録完了
+
+      ```
+
+
+      チャレンジを先に発行するのは、プラットフォーム証明と ID トークンを
+
+      **この登録のために作られたもの**に縛るためです。
+
+
+      ## 認証
+
+
+      登録はクライアント認証より前に行う必要があるため、どちらのエンドポイントも
+
+      クライアント認証を要求しません。
+
+
+      - `POST /v1/client-instances/challenges` は無認証です
+
+      - `POST /v1/client-instances` は **ID トークン**（誰か）と **プラットフォーム証明**（どの端末・鍵か）で
+        認証されます。ID トークンの `nonce` が `request_hash` なので、ID トークンはその鍵の登録にしか使えません
+
+      ID トークンは、クライアント認証なしで取得します。
+
+
+      | 経路 | 取得のしかた | 使いどころ |
+
+      |---|---|---|
+
+      | 同じクライアント | ハイブリッドフロー（`response_type=code id_token`）。同じ応答のコードは、登録した鍵の
+      `attest_jwt_client_auth` で交換する | 基本 |
+
+      | 登録用クライアント | 登録先クライアントの `extension.client_instance_registration_clients`
+      に載せたパブリッククライアント | PAR 必須のテナント |
+
+
+      検証の中身は
+
+      [Attestation-Based Client
+      Authentication](/docs/content_04_protocols/protocol-08-attestation-based-client-authentication)
+
+      を参照してください。
+
+
+      検証器（`PlatformAttestationVerifier`）が1つも登録されていない場合、**すべての登録が拒否されます**。
+
+      無認証エンドポイントに対する安全側の既定です。
 paths:
-  /{tenant-id}/v1/authentication-devices/{device-id}/authentications:
-    get:
+  /{tenant-id}/v1/client-instances/challenges:
+    post:
       tags:
-        - 認証
-      summary: 認証トランザクションの取得
+        - Client Instance
+      summary: 登録チャレンジの発行
       description: >
-        認証デバイスに紐づく認証トランザクション情報（フロー、スコープ、ユーザー情報など）を取得する。
+        登録に使う一回限りのチャレンジと、予約された `instance_id` を発行します。
 
 
-        **デバイス認証によるレスポンス制御**:
+        発行できるのは、`token_endpoint_auth_method` が `attest_jwt_client_auth` で、
+
+        `extension.client_instance_registration_policy` が `user_bound`
+        のクライアントだけです。
+
+        未設定・未知の値のクライアントには発行しません。
 
 
-        テナントの
-        `identity_policy_config.authentication_device_rule.authentication_type`
-        設定により、
-
-        レスポンスに含まれる情報が制御されます。
-
-
-        | 認証設定 | `context`フィールド | 説明 |
-
-        |---------|-------------------|------|
-
-        | `none` | 含まれない | 認証なしでアクセス可能。機密情報は除外 |
-
-        | `access_token` | 含まれる | アクセストークン認証成功後のみ詳細情報を返却 |
-
-        | `device_secret_jwt` | 含まれる | 対称鍵JWT（HMAC）認証成功後のみ詳細情報を返却 |
-
-        | `private_key_jwt` | 含まれる | 非対称鍵JWT（RSA/EC）認証成功後のみ詳細情報を返却 |
-
-
-        `context`フィールドには
-        `scopes`、`acr_values`、`binding_message`、`authorization_details` などの
-
-        認証リクエストの詳細情報が含まれるため、認証されていないデバイスには返却されません。
+        レスポンスは `Cache-Control: no-store` を伴います。
       parameters:
-        - in: path
-          name: tenant-id
-          required: true
-          schema:
-            type: string
-        - in: path
-          name: device-id
-          required: true
-          schema:
-            type: string
-        - in: query
-          name: id
-          schema:
-            type: string
-          description: トランザクションID（UUID）
-        - in: query
-          name: flow
-          schema:
-            type: string
-          description: 認証フロー種別
-        - in: query
-          name: authorization_id
-          schema:
-            type: string
-          description: 認可リクエストID（UUID）
-        - in: query
-          name: client_id
-          schema:
-            type: string
-          description: クライアントID
-        - in: query
-          name: from
-          schema:
-            type: string
-            format: date-time
-            example: '2025-07-01T00:00:00'
-          description: 開始日時（ISO-8601形式）
-        - in: query
-          name: to
-          schema:
-            type: string
-            format: date-time
-            example: '2025-07-15T23:59:59'
-          description: 終了日時（ISO-8601形式）
-        - in: query
-          name: limit
-          schema:
-            type: integer
-            default: 20
-          description: 最大取得件数
-        - in: query
-          name: offset
-          schema:
-            type: integer
-            default: 0
-          description: ページネーション用オフセット
-        - in: query
-          name: exclude_expired
-          schema:
-            type: boolean
-            default: true
-          description: 有効期限切れを除外するか
-        - in: query
-          name: attributes.key
-          schema:
-            type: string
-          description: 属性情報のオブジェクトのkeyに対する検索（keyは具体的な値に変更が必要）
-      responses:
-        '200':
-          description: 認証トランザクション一覧レスポンス
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthenticationTransactionListResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
-        '504':
-          $ref: '#/components/responses/GatewayTimeout'
-  /{tenant-id}/v1/authentication-devices/logs:
-    post:
-      tags:
-        - 認証
-      summary: 認証デバイスのログ
-      description: |
-        認証デバイス（モバイルアプリ等）からのFIDO認証などの実行結果ログを受信し、アプリケーションログとして出力する。
-
-        **セキュリティイベント連携**:
-        - リクエストに `device_id` または `user_id` が含まれる場合、該当ユーザーを検索
-        - ユーザーが見つかった場合、セキュリティイベント `authentication_device_log` を発行
-        - ユーザーが見つからない場合、セキュリティイベントは発行されない（ノイズ防止）
-        - リクエストボディ全体が `execution_result` としてセキュリティイベントの詳細に保存される
-      parameters:
-        - in: path
-          name: tenant-id
-          required: true
-          schema:
-            type: string
-          description: テナント識別子
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AuthenticationDeviceLogRequest'
-            examples:
-              fido2_success:
-                summary: FIDO2認証成功
-                value:
-                  device_id: device-12345-abcde
-                  event: fido2_authentication
-                  status: success
-                  timestamp: '2025-12-26T10:00:00Z'
-                  details:
-                    authenticator_type: platform
-                    user_verification: true
-              fido_uaf_failure:
-                summary: FIDO-UAF認証失敗
-                value:
-                  user_id: 550e8400-e29b-41d4-a716-446655440000
-                  event: fido_uaf_authentication
-                  status: failure
-                  timestamp: '2025-12-26T10:05:00Z'
-                  details:
-                    error_code: USER_CANCELLED
-                    error_message: User cancelled the authentication
-      responses:
-        '200':
-          description: |
-            ログ受信成功。
-            セキュリティイベントの発行有無に関わらず200を返却する。
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
-        '504':
-          $ref: '#/components/responses/GatewayTimeout'
-  /{tenant-id}/.well-known/fido-uaf/facets:
-    get:
-      tags:
-        - FIDO-UAF
-      summary: FIDO-UAF Facet情報の取得
-      description: FIDOクライアントが信頼できるアプリとして動作するためのFacet IDリストを取得する。
-      parameters:
-        - in: path
-          name: tenant-id
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: FIDOサーバーからのFacetレスポンス
-          content:
-            application/json:
-              schema:
-                type: object
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
-        '504':
-          $ref: '#/components/responses/GatewayTimeout'
-  /{tenant-id}/v1/authentications/{id}/fido-uaf-registration-challenge:
-    post:
-      tags:
-        - FIDO-UAF
-      summary: FIDO-UAF 登録チャレンジ
-      description: |
-        FIDOサーバーから取得したチャレンジ情報をそのまま返却する。
-
-        **セキュリティ制約**:
-        - ユーザーが認証済みである必要があります（未認証の場合は401 Unauthorized）
-        - 認証ポリシーに`device_registration_conditions`が設定されている場合、
-          その条件を満たす必要があります（満たさない場合は403 Forbidden）
-      parameters:
-        - in: path
-          name: tenant-id
-          required: true
-          schema:
-            type: string
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              description: FIDOサーバーの仕様に沿った任意のリクエストボディ
-      responses:
-        '200':
-          description: FIDOサーバーからのチャレンジレスポンス
-          content:
-            application/json:
-              schema:
-                type: object
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
-        '504':
-          $ref: '#/components/responses/GatewayTimeout'
-  /{tenant-id}/v1/authentications/{id}/fido-uaf-registration:
-    post:
-      tags:
-        - FIDO-UAF
-      summary: FIDO-UAF 登録
-      description: |
-        クライアントから送信されたFIDO応答を受け取り、登録を完了させる。
-
-        **セキュリティ制約**:
-        - ユーザーが認証済みである必要があります（未認証の場合は401 Unauthorized）
-        - 認証ポリシーに`device_registration_conditions`が設定されている場合、
-          その条件を満たす必要があります（満たさない場合は403 Forbidden）
-      parameters:
-        - in: path
-          name: tenant-id
-          required: true
-          schema:
-            type: string
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              description: FIDOサーバーの仕様に沿った任意のリクエストボディ
-      responses:
-        '200':
-          description: FIDO登録成功
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  device_id:
-                    type: string
-                    description: |
-                      デバイスID。認証デバイスの識別子。認証デバイス側に保存し、認証トランザクションの取得時などで利用します。
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
-        '504':
-          $ref: '#/components/responses/GatewayTimeout'
-  /{tenant-id}/v1/authentications/{id}/fido-uaf-authentication-challenge:
-    post:
-      tags:
-        - FIDO-UAF
-      summary: FIDO-UAF 認証チャレンジ
-      description: FIDOサーバーから取得したチャレンジ情報をそのまま返却する。
-      parameters:
-        - in: path
-          name: tenant-id
-          required: true
-          schema:
-            type: string
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              description: FIDOサーバーの仕様に沿った任意のリクエストボディ
-      responses:
-        '200':
-          description: FIDOサーバーからのチャレンジレスポンス
-          content:
-            application/json:
-              schema:
-                type: object
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
-        '504':
-          $ref: '#/components/responses/GatewayTimeout'
-  /{tenant-id}/v1/authentications/{id}/fido-uaf-authentication:
-    post:
-      tags:
-        - FIDO-UAF
-      summary: FIDO-UAF 認証
-      description: クライアントから送信されたFIDO応答を受け取り、認証を完了させる。
-      parameters:
-        - in: path
-          name: tenant-id
-          required: true
-          schema:
-            type: string
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              description: FIDOサーバーの仕様に沿った任意のリクエストボディ
-      responses:
-        '200':
-          description: FIDO認証成功
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
-        '504':
-          $ref: '#/components/responses/GatewayTimeout'
-  /{tenant-id}/v1/authentications/{id}/fido-uaf-deregistration:
-    post:
-      tags:
-        - FIDO-UAF
-      summary: FIDO-UAF 解除
-      description: |
-        クライアントから送信されたFIDO応答を受け取り解除を完了させる。
-
-        **セキュリティ制約**:
-        - ユーザーが認証済みである必要があります（未認証の場合は401 Unauthorized）
-        - 認証ポリシーに`device_registration_conditions`が設定されている場合、
-          その条件を満たす必要があります（満たさない場合は403 Forbidden）
-      parameters:
-        - in: path
-          name: tenant-id
-          required: true
-          schema:
-            type: string
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              description: FIDOサーバーの仕様に沿った任意のリクエストボディ
-      responses:
-        '200':
-          description: FIDO解除成功
-          content:
-            application/json:
-              schema:
-                type: object
-                description: FIDOサーバーの仕様に沿った任意のレスポンスボディ
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
-        '504':
-          $ref: '#/components/responses/GatewayTimeout'
-  /{tenant-id}/v1/authentications/{id}/authentication-cancel:
-    post:
-      tags:
-        - 認証
-      summary: 認証トランザクションのキャンセル
-      description: |
-        進行中の認証トランザクションをユーザーがキャンセルする。
-        キャンセル後、トランザクションは無効化され、認証フローは中断される。
-
-        - OAuth/CIBAフローでの認証拒否
-        - ユーザーによる明示的なキャンセル操作
-        - セキュリティイベント `authentication_cancel_success` が生成される
-      parameters:
-        - in: path
-          name: tenant-id
-          required: true
-          schema:
-            type: string
-          description: テナント識別子
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: 認証トランザクションID
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              type: object
-              properties: {}
-              example: {}
-      responses:
-        '200':
-          description: キャンセル成功。レスポンスボディは空のJSONオブジェクト。
-          content:
-            application/json:
-              schema:
-                type: object
-                properties: {}
-                example: {}
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
-        '504':
-          $ref: '#/components/responses/GatewayTimeout'
-  /{tenant-id}/v1/authentications/{id}/fido-uaf-cancel:
-    post:
-      tags:
-        - FIDO-UAF
-      summary: FIDO-UAF認証のキャンセル
-      description: |
-        FIDO-UAF認証処理をユーザーがキャンセルする。
-        デバイス側での認証処理を中断し、トランザクションを無効化する。
-
-        - FIDO-UAF認証フローでの明示的なキャンセル
-        - デバイス認証の中断
-        - セキュリティイベント `authentication_cancel_success` が生成される
-      parameters:
-        - in: path
-          name: tenant-id
-          required: true
-          schema:
-            type: string
-          description: テナント識別子
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: 認証トランザクションID
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              type: object
-              properties: {}
-              example: {}
-      responses:
-        '200':
-          description: FIDO-UAFキャンセル成功。レスポンスボディは空のJSONオブジェクト。
-          content:
-            application/json:
-              schema:
-                type: object
-                properties: {}
-                example: {}
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
-        '504':
-          $ref: '#/components/responses/GatewayTimeout'
-  /{tenant-id}/v1/authentications/{id}/authentication-device-number-matching:
-    post:
-      tags:
-        - 認証
-      summary: ナンバーマッチングコードの検証
-      description: >
-        認可コードフローのデバイス認証（FIDO-UAF step-up）で、サインイン画面に表示された
-
-        ナンバーマッチングコードをユーザーが認証デバイスに転記し、その値を検証する（push fatigue 対策）。
-
-
-        - コードはサインイン画面側の `authentication-device-number-matching-challenge` で発行され、
-          サーバーに保存される。**認証デバイス向けの API・プッシュ通知には含まれない**
-        - 認証デバイスは、認証トランザクション取得APIのレスポンスの `number_matching_required` が
-          `true` のときに入力画面を表示し、この API で検証する
-        - 検証成功後に FIDO-UAF 認証（`fido-uaf-authentication-challenge` →
-        `fido-uaf-authentication`）へ進む
-
-        - 不一致は `$.authentication-device-number-matching.failure_count` に積算される。
-          この API は認証なしで到達できるため、認証ポリシーの `failure_conditions` / `lock_conditions`
-          で試行回数の上限を設けること（同梱テンプレートは 5 回）。残り試行回数はこの API からは取得できない
-        - セキュリティイベント `authentication_device_number_matching_success` /
-          `authentication_device_number_matching_failure` が生成される
-
-        認可リクエストのIDを持つサインイン画面側からは
-
-        `POST
-        /{tenant-id}/v1/authorizations/{id}/authentication-device-number-matching`
-        でも同じ検証に到達するが、
-
-        認証デバイスは認可リクエストのIDを取得できないため、デバイス実装ではこの API を使う。
-      parameters:
-        - in: path
-          name: tenant-id
-          required: true
-          schema:
-            type: string
-          description: テナント識別子
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: 認証トランザクションID（認証トランザクション取得APIの `list[].id`）
+        - $ref: '#/components/parameters/TenantId'
+      security: []
       requestBody:
         required: true
         content:
@@ -632,543 +123,297 @@ paths:
             schema:
               type: object
               required:
-                - device_id
-                - number_matching_code
+                - client_id
               properties:
-                device_id:
+                client_id:
                   type: string
-                  format: uuid
-                  description: |
-                    提出元の認証デバイスID。認証トランザクション取得APIのパスに用いるものと同じ値。
-                    認証トランザクションに紐づく認証デバイスと照合され、一致しない場合は 400 になる（#1869）
-                  example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
-                number_matching_code:
-                  type: string
-                  description: >
-                    ユーザーがサインイン画面から転記したコード。数字のみ。
-
-                    桁数は認証設定 `authentication-device-number-matching` の
-                    `execution.details.length`
-
-                    に従う（既定 4 桁）。桁数はこの API のレスポンスや認証トランザクション取得APIには含まれない
-                  example: '4821'
+                  description: >-
+                    登録先のクライアント。`token_endpoint_auth_method` が
+                    `attest_jwt_client_auth` であること
+                  example: de2f6a1c-8f29-4a1f-9a2b-1c0d5f7e3b44
       responses:
         '200':
-          description: 一致。レスポンスボディは空のJSONオブジェクト。
+          description: チャレンジ発行成功
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: no-store
           content:
             application/json:
               schema:
                 type: object
-                properties: {}
-                example: {}
-        '400':
-          description: |
-            デバイス未紐付け、`device_id` 不一致、コード未発行、コード不一致、またはリクエスト不正。
-            `error_description` で区別する。`device_id` の照合はコードの照合より先に行われる。
-          content:
-            application/json:
-              schema:
-                type: object
+                required:
+                  - challenge
+                  - instance_id
+                  - expires_in
                 properties:
-                  error:
+                  challenge:
                     type: string
-                    example: invalid_request
-                  error_description:
+                    description: >-
+                      プラットフォーム証明に埋め込む値。`request_hash` の計算にも使う（base64url
+                      をデコードしたバイト列を連結する）
+                  instance_id:
                     type: string
-                    example: number_matching_code does not match
-              examples:
-                device_id_missing:
-                  summary: device_id 未指定
-                  value:
-                    error: invalid_request
-                    error_description: Field 'device_id' is required
-                device_not_bound:
-                  summary: 認証トランザクションに認証デバイスが紐づいていない
-                  value:
-                    error: invalid_request
-                    error_description: authentication device is not bound to this transaction
-                device_mismatch:
-                  summary: 紐づく認証デバイス以外からの提出
-                  value:
-                    error: invalid_request
-                    error_description: device_id does not match the authentication device
-                not_issued:
-                  summary: サインイン画面側でチャレンジが未実行
-                  value:
-                    error: invalid_request
-                    error_description: number_matching_code has not been issued
-                mismatch:
-                  summary: コード不一致
-                  value:
-                    error: invalid_request
-                    error_description: number_matching_code does not match
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
+                    description: この登録のために予約された Client Instance の識別子
+                  expires_in:
+                    type: integer
+                    description: チャレンジの有効期間（秒）
+                    example: 300
+        '400':
+          $ref: '#/components/responses/ClientInstanceInvalidRequest'
         '500':
-          $ref: '#/components/responses/InternalServerError'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
-        '504':
-          $ref: '#/components/responses/GatewayTimeout'
-  /{tenant-id}/v1/authentications/{id}/authentication-device-deny:
+          $ref: '#/components/responses/ClientInstanceServerError'
+  /{tenant-id}/v1/client-instances:
     post:
       tags:
-        - 認証
-      summary: 認証デバイスによる認証の拒否
-      description: |
-        認証デバイス上でユーザーが認証要求を明示的に拒否する（「これは自分の操作ではない」）。
+        - Client Instance
+      summary: Client Instance の登録
+      description: >
+        発行済みのチャレンジ・ID トークン・登録したい公開鍵・プラットフォーム証明を提示して、
 
-        - `authentication-cancel` と同じく DENY 種別のインタラクションとして記録され、
-          認証ポリシーに `failure_conditions` が定義されていれば認証ステータスは `failure` になる
-        - `authentication-cancel`（操作の中断）との違いは監査上の意味とセキュリティイベント名のみ
-        - セキュリティイベント `authentication_device_deny_success` が生成される
+        Client Instance を登録し、ID トークンの利用者に束縛します。
+
+
+        **ID トークン**について、サーバーは次を確認します。
+
+
+        1. この認可サーバーが署名した JWS であること（暗号化された ID トークンは受け付けません）
+
+        2. `iss` がこの認可サーバーで、`exp` を過ぎていないこと
+
+        3. `aud` が登録先のクライアント、またはその `client_instance_registration_clients`
+        に載ったクライアントであること
+
+        4. `nonce` が、チャレンジと `client_instance_public_key` から計算した `request_hash`
+        と一致すること
+
+        5. `iat` がチャレンジの発行より後であること（この登録のためのログインであること）
+
+        6. `sub` の利用者が存在し、有効であること
+
+
+        **プラットフォーム証明**について、次の3つがすべて成立することを確認します（詳細は
+
+        [Attestation-Based Client
+        Authentication](/docs/content_04_protocols/protocol-08-attestation-based-client-authentication)）。
+
+
+        1. **チャレンジの束縛** — 証明がこの登録のために作られたこと
+
+        2. **インスタンス鍵の束縛** — 証明が `client_instance_public_key` を対象にしていること
+
+        3. **アプリ同一性の束縛** — 証明されたアプリがこのクライアントのアプリであること
+
+
+        加えて証明書チェーンをピン留めしたルートまで検証し、鍵がセキュアハードウェアで
+
+        **生成された**署名可能な鍵であることを確認します。
+
+
+        同じテナントの中で、すでにいずれかのインスタンス（失効したものを含む）に登録されている鍵は登録できません。
+
+
+        **利用者 1 人につき、クライアントごとに有効なインスタンスは 1 つです。** 登録が成功すると、
+
+        同じ利用者の同じクライアントの他の有効なインスタンスは失効します（`revocation_reason: superseded`）。
+
+        失効したインスタンスは次のクライアント認証（リフレッシュを含む）で拒否されます。トークンは削除しないため、
+
+        発行済みのアクセストークンは有効期限まで使えます。失効したインスタンスごとにセキュリティイベント
+
+        `client_instance_revoked` を出します。同じ利用者の登録が同時に 2 件走った場合、後の方は失敗します。
+
+
+        登録が済むと、このインスタンスは自分の鍵で Client Attestation JWT を自己署名できます。
+
+
+        レスポンスは `Cache-Control: no-store` を伴います。
       parameters:
-        - in: path
-          name: tenant-id
-          required: true
-          schema:
-            type: string
-          description: テナント識別子
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: 認証トランザクションID
+        - $ref: '#/components/parameters/TenantId'
+      security: []
       requestBody:
-        required: false
+        required: true
         content:
           application/json:
             schema:
               type: object
-              properties: {}
-              example: {}
+              required:
+                - challenge
+                - id_token
+                - client_instance_public_key
+                - platform_evidence
+              properties:
+                challenge:
+                  type: string
+                  description: '`POST /v1/client-instances/challenges` で得た値'
+                id_token:
+                  type: string
+                  description: >
+                    登録を認証する ID トークン。`nonce` に `request_hash`
+                    を指定した認可リクエストで取得したもの。
+
+                    `aud` は登録先のクライアント、またはその
+                    `client_instance_registration_clients` に載ったクライアント
+                client_instance_public_key:
+                  type: object
+                  description: |
+                    登録する公開鍵（JWK）。プラットフォーム証明が対象にしている鍵と一致すること。
+                    以降の Client Attestation JWT はこの鍵の秘密鍵で署名します
+                  example:
+                    kty: EC
+                    crv: P-256
+                    x: f83OJ3D2xF1Bg8vub9tLe1gHMzV76e8Tus9uPHvRVEU
+                    'y': x_FEzRu9m36HLN_tue659LNpXW6pCyStikYjKIWI5a0
+                platform_evidence:
+                  $ref: '#/components/schemas/PlatformEvidence'
+            examples:
+              android:
+                summary: Android Key Attestation
+                value:
+                  challenge: Zm9vYmFyLWNoYWxsZW5nZS0wMQ
+                  id_token: <nonce に request_hash を指定して取得した ID トークン>
+                  client_instance_public_key:
+                    kty: EC
+                    crv: P-256
+                    x: f83OJ3D2xF1Bg8vub9tLe1gHMzV76e8Tus9uPHvRVEU
+                    'y': x_FEzRu9m36HLN_tue659LNpXW6pCyStikYjKIWI5a0
+                  platform_evidence:
+                    platform: android-key-attestation
+                    x5c:
+                      - <リーフ証明書 DER の base64>
+                      - <中間証明書>
+                      - <ルート証明書>
+              ios:
+                summary: Apple App Attest
+                value:
+                  challenge: Zm9vYmFyLWNoYWxsZW5nZS0wMQ
+                  id_token: <nonce に request_hash を指定して取得した ID トークン>
+                  client_instance_public_key:
+                    kty: EC
+                    crv: P-256
+                    x: f83OJ3D2xF1Bg8vub9tLe1gHMzV76e8Tus9uPHvRVEU
+                    'y': x_FEzRu9m36HLN_tue659LNpXW6pCyStikYjKIWI5a0
+                  platform_evidence:
+                    platform: ios-app-attest
+                    attestation_object: <CBOR の attestation object を base64 したもの>
       responses:
-        '200':
-          description: 拒否を記録。レスポンスボディは空のJSONオブジェクト。
+        '201':
+          description: 登録成功
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: no-store
           content:
             application/json:
               schema:
                 type: object
-                properties: {}
-                example: {}
+                required:
+                  - instance_id
+                properties:
+                  instance_id:
+                    type: string
+                    description: |
+                      登録された Client Instance の識別子。チャレンジ発行時に返したものと同じ値です
+                      （ボディに新しい秘密は含まれません）
         '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
+          $ref: '#/components/responses/ClientInstanceInvalidRequest'
         '500':
-          $ref: '#/components/responses/InternalServerError'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
-        '504':
-          $ref: '#/components/responses/GatewayTimeout'
+          $ref: '#/components/responses/ClientInstanceServerError'
 components:
+  parameters:
+    TenantId:
+      name: tenant-id
+      in: path
+      required: true
+      description: テナント識別子
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    PlatformEvidence:
+      type: object
+      description: |
+        プラットフォームが発行した、鍵とアプリに関する証明。`platform` の値で構造が決まります。
+
+        対応プラットフォームは `PlatformAttestationVerifier` の実装として登録されたものだけです。
+        未知の `platform` は拒否されます。
+      required:
+        - platform
+      properties:
+        platform:
+          type: string
+          description: 証明の種類
+          enum:
+            - android-key-attestation
+            - ios-app-attest
+      oneOf:
+        - title: Android Key Attestation
+          type: object
+          required:
+            - platform
+            - x5c
+          properties:
+            platform:
+              type: string
+              enum:
+                - android-key-attestation
+            x5c:
+              type: array
+              description: |
+                Android が鍵に対して発行する証明書チェーン。リーフが先頭で、末尾が
+                Google のハードウェア証明ルート（クライアント設定で上書き可）。
+                リーフの拡張 `1.3.6.1.4.1.11129.2.1.17` を読みます
+              items:
+                type: string
+                description: 証明書 DER の base64
+        - title: Apple App Attest
+          type: object
+          required:
+            - platform
+            - attestation_object
+          properties:
+            platform:
+              type: string
+              enum:
+                - ios-app-attest
+            attestation_object:
+              type: string
+              description: |
+                App Attest の attestation object（CBOR）を base64 したもの。
+                `fmt` が `apple-appattest` であること
   responses:
-    BadRequest:
+    ClientInstanceInvalidRequest:
       description: |
-        リクエストパラメータが不正、認証失敗、検証エラー
+        リクエストが受け付けられなかった。
+
+        **理由は区別されません。** 詳細な理由を返すと、どのクライアントが登録に参加しているか、
+        偽造したリクエストがどの検証まで通ったかを外から探れてしまうためです。
+
+        チャレンジの不一致・期限切れ・使用済み、ID トークンの検証失敗、
+        プラットフォーム証明の検証失敗、登録ポリシー違反は、いずれも同じ応答になります。
       content:
         application/json:
           schema:
             type: object
+            required:
+              - error
             properties:
               error:
                 type: string
                 example: invalid_request
-              error_description:
-                type: string
-                example: user is not found or invalid password
-          examples:
-            authentication_failure:
-              value:
-                error: invalid_request
-                error_description: user is not found or invalid password
-            validation_error:
-              value:
-                error: invalid_request
-                error_description: validation error details
-            fido2_user_resolution_error:
-              value:
-                error: invalid_request
-                error_description: FIDO2 authentication succeeded but user could not be resolved
-    Unauthorized:
+    ClientInstanceServerError:
       description: |
-        認証エラー。ユーザーが未認証、またはアクセストークンが無効・期限切れ
+        サーバー側の障害。呼び出し側の誤りとは区別して返します（すべてを
+        `invalid_request` にすると、リトライで直るものが直らないものに見えるため）。
       content:
         application/json:
           schema:
             type: object
-            properties:
-              error:
-                type: string
-                example: unauthorized
-              error_description:
-                type: string
-                example: >-
-                  User must be authenticated before registering a FIDO-UAF
-                  device.
-    Forbidden:
-      description: |
-        認可エラー。認証レベル（ACR）がデバイス登録ポリシーの要件を満たしていない
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              error:
-                type: string
-                example: forbidden
-              error_description:
-                type: string
-                example: >-
-                  Current authentication level does not meet device registration
-                  requirements.
-    NotFound:
-      description: |
-        認証トランザクションが存在しない、または有効期限切れ
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              error:
-                type: string
-                example: invalid_request
-              error_description:
-                type: string
-                example: 'Authentication transaction not found for identifier: {id}'
-    InternalServerError:
-      description: |
-        サーバー内部エラー、外部サービス連携エラー
-      content:
-        application/json:
-          schema:
-            type: object
+            required:
+              - error
             properties:
               error:
                 type: string
                 example: server_error
-              error_description:
-                type: string
-                example: internal server error
-    TooManyRequests:
-      description: |
-        レート制限超過。
-
-        クライアントが短時間に過剰なリクエストを送信した場合に返却されます。
-        このレスポンスは API Gateway がリクエストをアプリケーションに到達させる前に返却します。
-
-        `Retry-After` ヘッダーが含まれる場合は、指定された秒数後にリトライしてください。
-        認証デバイスがトランザクションをポーリングする場合は、ポーリング間隔を広げてください。
-      headers:
-        Retry-After:
-          schema:
-            type: integer
-          description: リトライまでの推奨待機時間（秒）
-          required: false
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              message:
-                type: string
-                description: エラーメッセージ（optional。API Gateway の設定により含まれない場合があります）
-          examples:
-            throttled:
-              summary: スロットリング（秒間リクエスト制限）
-              value:
-                message: Too Many Requests
-            quota_exceeded:
-              summary: クォータ超過（日次/月次リクエスト制限）
-              value:
-                message: Limit Exceeded
-    ServiceUnavailable:
-      description: |
-        サービス一時利用不可。
-
-        バックエンドサーバーが利用できない状態です（メンテナンス中を含む）。
-        このレスポンスは API Gateway がバックエンドへの接続に失敗した場合に返却します。
-
-        `Retry-After` ヘッダーが含まれる場合は、指定された秒数後にリトライしてください。
-      headers:
-        Retry-After:
-          schema:
-            type: integer
-          description: サービス復旧までの推定時間（秒）
-          required: false
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              message:
-                type: string
-                description: エラーメッセージ（optional。API Gateway の設定により含まれない場合があります）
-          examples:
-            default:
-              summary: サービス利用不可
-              value:
-                message: Service Unavailable
-    GatewayTimeout:
-      description: |
-        ゲートウェイタイムアウト。
-
-        バックエンドサーバーからの応答が制限時間内に返却されませんでした。
-        このレスポンスは API Gateway がバックエンドの応答を待機してタイムアウトした場合に返却します。
-
-        ネットワークの一時的な問題の可能性があります。時間をおいてリトライしてください。
-        FIDO-UAF 系 API では、idp-server と FIDO サーバー間の通信遅延が原因の場合もあります。
-        認証トランザクションの有効期限（`expires_at`）内であれば同じトランザクションで再試行できます。
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              message:
-                type: string
-                description: エラーメッセージ（optional。API Gateway の設定により含まれない場合があります）
-          examples:
-            default:
-              summary: タイムアウト
-              value:
-                message: Endpoint request timed out
-  schemas:
-    AuthenticationDeviceLogRequest:
-      type: object
-      description: |
-        認証デバイスログのリクエストボディ。
-        `device_id` または `user_id` のいずれかを含めることで、セキュリティイベントがユーザーに紐づけられる。
-      properties:
-        device_id:
-          type: string
-          description: |
-            認証デバイスの識別子。
-            この値でユーザーを検索し、セキュリティイベントに紐づける。
-          example: device-12345-abcde
-        user_id:
-          type: string
-          format: uuid
-          description: |
-            ユーザーの識別子（UUID）。
-            `device_id` でユーザーが見つからない場合、この値で検索する。
-          example: 550e8400-e29b-41d4-a716-446655440000
-        event:
-          type: string
-          description: イベント種別（例：fido2_authentication, fido_uaf_registration）
-          example: fido2_authentication
-        status:
-          type: string
-          enum:
-            - success
-            - failure
-            - cancelled
-          description: 実行結果のステータス
-          example: success
-        timestamp:
-          type: string
-          format: date-time
-          description: イベント発生日時（ISO-8601形式）
-          example: '2025-12-26T10:00:00Z'
-        details:
-          type: object
-          description: イベントの詳細情報（任意のキー・バリュー）
-          additionalProperties: true
-          example:
-            authenticator_type: platform
-            user_verification: true
-    AuthenticationTransactionListResponse:
-      type: object
-      properties:
-        list:
-          type: array
-          items:
-            $ref: '#/components/schemas/AuthenticationTransaction'
-    AuthenticationTransaction:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: トランザクションの一意識別子
-        flow:
-          type: string
-          description: |
-            認証フロー種別（例: ciba, oauth）
-        tenant_id:
-          type: string
-          format: uuid
-          description: テナント識別子
-        tenant_attributes:
-          type: object
-          description: テナントに紐づく任意のメタデータ情報
-        client_id:
-          type: string
-          format: uuid
-          description: クライアント識別子
-        number_matching_required:
-          type: boolean
-          description: |
-            認証デバイスがナンバーマッチングコードの入力画面を表示すべきかを示すフラグ。
-
-            サインイン画面が `authentication-device-number-matching-challenge` を実行して
-            コードが発行されると `true` になります。
-
-            **コード検証に成功した後も `true` のままです**（意図的な挙動）。
-            コードが検証済みかどうかは認証結果側で管理されます。
-        client_attributes:
-          type: object
-          properties:
-            client_name:
-              type: string
-              description: クライアント名（表示用）
-            client_uri:
-              type: string
-              description: クライアントのサービスURL
-            logo_uri:
-              type: string
-              description: クライアントのロゴ画像URL
-            contacts:
-              type: string
-              description: |
-                クライアントの連絡先（例: メールアドレス）
-            tos_uri:
-              type: string
-              description: 利用規約ページURL
-            policy_uri:
-              type: string
-              description: プライバシーポリシーURL
-            custom_properties:
-              type: object
-              additionalProperties: true
-              description: >
-                クライアント設定 `extension.custom_properties` に定義した任意の値。
-
-                デバイスアプリ固有の表示要素（ブランドカラー、問い合わせ先等）を渡すのに使う。
-
-
-                設定されていない場合はフィールドごと返却されません。
-
-
-                **セキュリティ注意**: `context` と異なり、デバイス認証の有無にかかわらず返却されます。
-
-                `authentication_device_rule.authentication_type` が `none`
-                のテナントでは
-
-                このAPIはデバイス識別子だけで到達できるため、**秘匿値を入れないでください**。
-              example:
-                brand_color: '#0075ca'
-                support_phone: 0120-000-000
-        context:
-          type: object
-          description: |
-            認証リクエストのコンテキスト情報。
-
-            **セキュリティ注意**: このフィールドはデバイス認証が行われた場合のみ返却されます。
-            `authentication_type: "none"` の場合は、このフィールドはレスポンスに含まれません。
-          properties:
-            acr_values:
-              type: string
-              description: 認証コンテキストクラス
-            binding_message:
-              type: string
-              description: 認証デバイスに表示される確認用メッセージ
-            scopes:
-              type: string
-              description: 要求されたスコープ（スペース区切り）
-            authorization_details:
-              type: array
-              description: Rich Authorization Requests（RAR）の詳細
-              items:
-                type: object
-        user:
-          type: object
-          description: |
-            認証トランザクションに紐づくユーザー情報（最小化された情報のみ）。
-            プライバシー保護のため、`sub`と`status`のみが返却されます。
-          properties:
-            sub:
-              type: string
-              description: ユーザー識別子（Subject）
-            status:
-              type: string
-              enum:
-                - UNREGISTERED
-                - INITIALIZED
-                - FEDERATED
-                - REGISTERED
-                - IDENTITY_VERIFIED
-                - IDENTITY_VERIFICATION_REQUIRED
-                - LOCKED
-                - DISABLED
-                - SUSPENDED
-                - DEACTIVATED
-                - DELETED_PENDING
-                - DELETED
-                - UNKNOWN
-              description: ユーザーステータス
-        authentication_device:
-          type: object
-          description: 認証トランザクションに紐づく認証デバイス情報
-          properties:
-            id:
-              type: string
-              description: デバイス識別子
-            app_name:
-              type: string
-              description: アプリ名
-            platform:
-              type: string
-              description: プラットフォーム（iOS, Android等）
-            os:
-              type: string
-              description: OS情報
-            model:
-              type: string
-              description: デバイスモデル
-            locale:
-              type: string
-              description: 言語設定
-            notification_channel:
-              type: string
-              description: 通知チャネル（fcm等）
-            notification_token:
-              type: string
-              description: 通知トークン
-            available_methods:
-              type: array
-              items:
-                type: string
-              description: 利用可能な認証方式（fido-uaf等）
-            priority:
-              type: integer
-              description: 優先度
-            credential_type:
-              type: string
-              description: クレデンシャルタイプ
-            credential_id:
-              type: string
-              description: クレデンシャルID
-            credential_metadata:
-              type: object
-              description: クレデンシャルメタデータ（発行日時、有効期限等）
-              properties:
-                issued_at:
-                  type: string
-                  format: date-time
-                expires_at:
-                  type: string
-                  format: date-time
-        created_at:
-          type: string
-          format: date-time
-          description: トランザクション作成日時
-        expires_at:
-          type: string
-          format: date-time
-          description: トランザクション有効期限
