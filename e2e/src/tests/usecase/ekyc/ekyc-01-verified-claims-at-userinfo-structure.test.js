@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeAll, afterAll } from "@jest/globals";
 import { onboarding } from "../../../api/managementClient";
-import { deletion, postWithJson, get } from "../../../lib/http";
+import { deletion, postWithJson, putWithJson, get } from "../../../lib/http";
 import {
   requestToken,
   getAuthorizations,
@@ -29,7 +29,6 @@ import crypto from "crypto";
  * 直接登録し、verified_claims 登録「後」に認可コードフロー（password 認証）でトークンを取り直す。
  */
 describe("eKYC Use Case: verified_claims structure in AT and UserInfo", () => {
-
   // verified_claims に登録する値（assert の期待値）
   const GIVEN_NAME = "Taro";
   const FAMILY_NAME = "Yamada";
@@ -53,7 +52,8 @@ describe("eKYC Use Case: verified_claims structure in AT and UserInfo", () => {
   const tenantId = uuidv4();
   const clientId = uuidv4();
   const clientSecret = `cs-${crypto.randomBytes(16).toString("hex")}`;
-  const redirectUri = "https://www.certification.openid.net/test/a/idp_oidc_basic/callback";
+  const redirectUri =
+    "https://www.certification.openid.net/test/a/idp_oidc_basic/callback";
   const ivType = uuidv4(); // identity verification configuration type
 
   const endUserEmail = `vc-user-${ts}@example.com`;
@@ -63,6 +63,7 @@ describe("eKYC Use Case: verified_claims structure in AT and UserInfo", () => {
   const mgmtBase = `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}`;
 
   let systemAccessToken;
+  let mgmtHeaders;
   let jwks;
   let positiveAccessToken;
   let negativeAccessToken;
@@ -88,7 +89,9 @@ describe("eKYC Use Case: verified_claims structure in AT and UserInfo", () => {
       id: authId,
       body: {},
     });
-    const { code } = convertToAuthorizationResponse(authorizeResp.data.redirect_uri);
+    const { code } = convertToAuthorizationResponse(
+      authorizeResp.data.redirect_uri
+    );
     expect(code).toBeTruthy();
 
     const tokenResp = await requestToken({
@@ -110,9 +113,14 @@ describe("eKYC Use Case: verified_claims structure in AT and UserInfo", () => {
       interaction: async (authId) => {
         const reg = await postWithJson({
           url: `${tenantBase}/v1/authorizations/${authId}/initial-registration`,
-          body: { email: endUserEmail, password: endUserPassword, name: "VC User" },
+          body: {
+            email: endUserEmail,
+            password: endUserPassword,
+            name: "VC User",
+          },
         });
-        if (reg.status >= 400) console.error("initial-registration failed:", reg.data);
+        if (reg.status >= 400)
+          console.error("initial-registration failed:", reg.data);
         expect(reg.status).toBe(200);
       },
     });
@@ -127,7 +135,8 @@ describe("eKYC Use Case: verified_claims structure in AT and UserInfo", () => {
           url: `${tenantBase}/v1/authorizations/${authId}/password-authentication`,
           body: { username: endUserEmail, password: endUserPassword },
         });
-        if (login.status >= 400) console.error("password-authentication failed:", login.data);
+        if (login.status >= 400)
+          console.error("password-authentication failed:", login.data);
         expect(login.status).toBe(200);
       },
     });
@@ -155,7 +164,8 @@ describe("eKYC Use Case: verified_claims structure in AT and UserInfo", () => {
       headers: { Authorization: `Bearer ${token}` },
       body: { approved: true, rejected: false },
     });
-    if (evalResp.status >= 400) console.error("evaluate-result failed:", evalResp.data);
+    if (evalResp.status >= 400)
+      console.error("evaluate-result failed:", evalResp.data);
     expect(evalResp.status).toBe(200);
   }
 
@@ -184,14 +194,21 @@ describe("eKYC Use Case: verified_claims structure in AT and UserInfo", () => {
 
     const onboardingResp = await onboarding({
       body: {
-        organization: { id: organizationId, name: `eKYC VC Test ${ts}`, description: "verified_claims AT/UserInfo structure" },
+        organization: {
+          id: organizationId,
+          name: `eKYC VC Test ${ts}`,
+          description: "verified_claims AT/UserInfo structure",
+        },
         tenant: {
           id: tenantId,
           name: `eKYC VC Tenant ${ts}`,
           domain: backendUrl,
           authorization_provider: "idp-server",
           identity_policy_config: { identity_unique_key_type: "EMAIL" },
-          session_config: { cookie_name: `VC_${tenantId.substring(0, 8)}`, use_secure_cookie: false },
+          session_config: {
+            cookie_name: `VC_${tenantId.substring(0, 8)}`,
+            use_secure_cookie: false,
+          },
           cors_config: { allow_origins: [backendUrl] },
         },
         authorization_server: {
@@ -206,12 +223,33 @@ describe("eKYC Use Case: verified_claims structure in AT and UserInfo", () => {
           token_signed_key_id: "signing_key_1",
           id_token_signed_key_id: "signing_key_1",
           scopes_supported: [
-            "openid", "profile", "email", "management", "org-management",
-            "identity_verification_application", "identity_verification_application_delete", "identity_verification_result",
-            "verified_claims:given_name", "verified_claims:family_name", "verified_claims:nonexistent_claim",
-            "verified_claims:verification:trust_framework", "verified_claims:verification:evidence",
+            "openid",
+            "profile",
+            "email",
+            "management",
+            "org-management",
+            "identity_verification_application",
+            "identity_verification_application_delete",
+            "identity_verification_result",
+            "verified_claims:given_name",
+            "verified_claims:family_name",
+            "verified_claims:nonexistent_claim",
+            "verified_claims:verification:trust_framework",
+            "verified_claims:verification:evidence",
           ],
-          claims_supported: ["sub", "iss", "auth_time", "acr", "name", "email", "email_verified", "given_name", "family_name", "birthdate", "address"],
+          claims_supported: [
+            "sub",
+            "iss",
+            "auth_time",
+            "acr",
+            "name",
+            "email",
+            "email_verified",
+            "given_name",
+            "family_name",
+            "birthdate",
+            "address",
+          ],
           response_types_supported: ["code"],
           response_modes_supported: ["query"],
           subject_types_supported: ["public"],
@@ -224,7 +262,14 @@ describe("eKYC Use Case: verified_claims structure in AT and UserInfo", () => {
             access_token_selective_verified_claims: true,
           },
         },
-        user: { sub: uuidv4(), provider_id: "idp-server", name: "Admin", email: adminEmail, email_verified: true, raw_password: adminPassword },
+        user: {
+          sub: uuidv4(),
+          provider_id: "idp-server",
+          name: "Admin",
+          email: adminEmail,
+          email_verified: true,
+          raw_password: adminPassword,
+        },
         client: {
           client_id: clientId,
           client_secret: clientSecret,
@@ -239,7 +284,11 @@ describe("eKYC Use Case: verified_claims structure in AT and UserInfo", () => {
       },
       headers: { Authorization: `Bearer ${systemAccessToken}` },
     });
-    if (onboardingResp.status !== 201) console.error("Onboarding failed:", JSON.stringify(onboardingResp.data, null, 2));
+    if (onboardingResp.status !== 201)
+      console.error(
+        "Onboarding failed:",
+        JSON.stringify(onboardingResp.data, null, 2)
+      );
     expect(onboardingResp.status).toBe(201);
 
     // tenant 管理トークン（admin user / password grant）
@@ -254,23 +303,68 @@ describe("eKYC Use Case: verified_claims structure in AT and UserInfo", () => {
     });
     expect(mgmtResp.status).toBe(200);
     const mgmtToken = mgmtResp.data.access_token;
-    const mgmtHeaders = { Authorization: `Bearer ${mgmtToken}`, "Content-Type": "application/json" };
+    mgmtHeaders = {
+      Authorization: `Bearer ${mgmtToken}`,
+      "Content-Type": "application/json",
+    };
 
     // 認証設定: password / initial-registration
     await postWithJson({
       url: `${mgmtBase}/authentication-configurations`,
       headers: mgmtHeaders,
       body: {
-        id: uuidv4(), type: "password", attributes: {}, metadata: { type: "password" },
-        interactions: { "password-authentication": { request: { schema: { type: "object", properties: { username: { type: "string" }, password: { type: "string" } }, required: ["username", "password"] } }, pre_hook: {}, execution: { function: "password_verification" }, post_hook: {}, response: { body_mapping_rules: [{ from: "$.user_id", to: "user_id" }, { from: "$.error", to: "error" }] } } },
+        id: uuidv4(),
+        type: "password",
+        attributes: {},
+        metadata: { type: "password" },
+        interactions: {
+          "password-authentication": {
+            request: {
+              schema: {
+                type: "object",
+                properties: {
+                  username: { type: "string" },
+                  password: { type: "string" },
+                },
+                required: ["username", "password"],
+              },
+            },
+            pre_hook: {},
+            execution: { function: "password_verification" },
+            post_hook: {},
+            response: {
+              body_mapping_rules: [
+                { from: "$.user_id", to: "user_id" },
+                { from: "$.error", to: "error" },
+              ],
+            },
+          },
+        },
       },
     });
     await postWithJson({
       url: `${mgmtBase}/authentication-configurations`,
       headers: mgmtHeaders,
       body: {
-        id: uuidv4(), type: "initial-registration", attributes: {}, metadata: {},
-        interactions: { "initial-registration": { request: { schema: { type: "object", required: ["email", "password", "name"], properties: { name: { type: "string" }, email: { type: "string", format: "email" }, password: { type: "string", minLength: 8 } } } } } },
+        id: uuidv4(),
+        type: "initial-registration",
+        attributes: {},
+        metadata: {},
+        interactions: {
+          "initial-registration": {
+            request: {
+              schema: {
+                type: "object",
+                required: ["email", "password", "name"],
+                properties: {
+                  name: { type: "string" },
+                  email: { type: "string", format: "email" },
+                  password: { type: "string", minLength: 8 },
+                },
+              },
+            },
+          },
+        },
       },
     });
 
@@ -279,15 +373,37 @@ describe("eKYC Use Case: verified_claims structure in AT and UserInfo", () => {
       url: `${mgmtBase}/authentication-policies`,
       headers: mgmtHeaders,
       body: {
-        id: uuidv4(), flow: "oauth", enabled: true,
-        policies: [{
-          description: "password_and_registration", priority: 1, conditions: {},
-          available_methods: ["password", "initial-registration"],
-          success_conditions: { any_of: [
-            [{ path: "$.password-authentication.success_count", type: "integer", operation: "gte", value: 1 }],
-            [{ path: "$.initial-registration.success_count", type: "integer", operation: "gte", value: 1 }],
-          ] },
-        }],
+        id: uuidv4(),
+        flow: "oauth",
+        enabled: true,
+        policies: [
+          {
+            description: "password_and_registration",
+            priority: 1,
+            conditions: {},
+            available_methods: ["password", "initial-registration"],
+            success_conditions: {
+              any_of: [
+                [
+                  {
+                    path: "$.password-authentication.success_count",
+                    type: "integer",
+                    operation: "gte",
+                    value: 1,
+                  },
+                ],
+                [
+                  {
+                    path: "$.initial-registration.success_count",
+                    type: "integer",
+                    operation: "gte",
+                    value: 1,
+                  },
+                ],
+              ],
+            },
+          },
+        ],
       },
     });
 
@@ -296,31 +412,91 @@ describe("eKYC Use Case: verified_claims structure in AT and UserInfo", () => {
       url: `${mgmtBase}/identity-verification-configurations`,
       headers: mgmtHeaders,
       body: {
-        id: uuidv4(), type: ivType, attributes: { enabled: true }, common: { auth_type: "none" },
+        id: uuidv4(),
+        type: ivType,
+        attributes: { enabled: true },
+        common: { auth_type: "none" },
         processes: {
           apply: {
-            request: { schema: { type: "object", required: ["given_name", "family_name", "birthdate"], properties: { given_name: { type: "string" }, family_name: { type: "string" }, birthdate: { type: "string" }, trust_framework: { type: "string" }, evidence_type: { type: "string" } } } },
+            request: {
+              schema: {
+                type: "object",
+                required: ["given_name", "family_name", "birthdate"],
+                properties: {
+                  given_name: { type: "string" },
+                  family_name: { type: "string" },
+                  birthdate: { type: "string" },
+                  trust_framework: { type: "string" },
+                  evidence_type: { type: "string" },
+                },
+              },
+            },
             execution: { type: "no_action" },
-            store: { application_details_mapping_rules: [{ from: "$.request_body", to: "*" }] },
-            response: { body_mapping_rules: [{ from: "$.response_body", to: "*" }] },
+            store: {
+              application_details_mapping_rules: [
+                { from: "$.request_body", to: "*" },
+              ],
+            },
+            response: {
+              body_mapping_rules: [{ from: "$.response_body", to: "*" }],
+            },
           },
           "evaluate-result": {
             execution: { type: "no_action" },
             transition: {
-              approved: { any_of: [[{ path: "$.request_body.approved", type: "boolean", operation: "eq", value: true }]] },
-              rejected: { any_of: [[{ path: "$.request_body.rejected", type: "boolean", operation: "eq", value: true }]] },
+              approved: {
+                any_of: [
+                  [
+                    {
+                      path: "$.request_body.approved",
+                      type: "boolean",
+                      operation: "eq",
+                      value: true,
+                    },
+                  ],
+                ],
+              },
+              rejected: {
+                any_of: [
+                  [
+                    {
+                      path: "$.request_body.rejected",
+                      type: "boolean",
+                      operation: "eq",
+                      value: true,
+                    },
+                  ],
+                ],
+              },
             },
           },
         },
         result: {
           verified_claims_mapping_rules: [
-            { from: "$.application.application_details.given_name", to: "claims.given_name" },
-            { from: "$.application.application_details.family_name", to: "claims.family_name" },
-            { from: "$.application.application_details.birthdate", to: "claims.birthdate" },
-            { from: "$.application.application_details.trust_framework", to: "verification.trust_framework" },
-            { from: "$.application.application_details.evidence_type", to: "verification.evidence.0.type" },
+            {
+              from: "$.application.application_details.given_name",
+              to: "claims.given_name",
+            },
+            {
+              from: "$.application.application_details.family_name",
+              to: "claims.family_name",
+            },
+            {
+              from: "$.application.application_details.birthdate",
+              to: "claims.birthdate",
+            },
+            {
+              from: "$.application.application_details.trust_framework",
+              to: "verification.trust_framework",
+            },
+            {
+              from: "$.application.application_details.evidence_type",
+              to: "verification.evidence.0.type",
+            },
           ],
-          source_details_mapping_rules: [{ from: "$.application.application_details", to: "*" }],
+          source_details_mapping_rules: [
+            { from: "$.application.application_details", to: "*" },
+          ],
         },
       },
     });
@@ -328,7 +504,9 @@ describe("eKYC Use Case: verified_claims structure in AT and UserInfo", () => {
     // 0 ベースのユーザー登録 → 身元確認で verified_claims を本人へ登録
     const registerToken = await registerEndUser(verificationScope);
     await applyAndApprove(registerToken);
-    console.log("Identity verification completed - user now has verified_claims");
+    console.log(
+      "Identity verification completed - user now has verified_claims"
+    );
 
     // 登録「後」に、要求スコープ別のトークンを認可コードフロー(password)で取り直す
     jwks = (await getJwks({ endpoint: `${tenantBase}/v1/jwks` })).data;
@@ -337,8 +515,150 @@ describe("eKYC Use Case: verified_claims structure in AT and UserInfo", () => {
   });
 
   afterAll(async () => {
-    await deletion({ url: `${mgmtBase}`, headers: { Authorization: `Bearer ${systemAccessToken}` } }).catch(() => {});
-    await deletion({ url: `${backendUrl}/v1/management/orgs/${organizationId}`, headers: { Authorization: `Bearer ${systemAccessToken}` } }).catch(() => {});
+    await deletion({
+      url: `${mgmtBase}`,
+      headers: { Authorization: `Bearer ${systemAccessToken}` },
+    }).catch(() => {});
+    await deletion({
+      url: `${backendUrl}/v1/management/orgs/${organizationId}`,
+      headers: { Authorization: `Bearer ${systemAccessToken}` },
+    }).catch(() => {});
+  });
+
+  describe("enabled gates the runtime lookup (#1900)", () => {
+    // The payload's `enabled` was never written to the column, and the runtime lookup filters on
+    // the column (`AND enabled = true`), so `enabled: false` disabled nothing. Asserted through
+    // apply because that is the only place the flag is read - the management GET by id does not
+    // filter on it, so a config registered as disabled still reads back fine.
+    const sharedType = uuidv4();
+
+    const configBody = (type, enabled) => ({
+      id: uuidv4(),
+      type,
+      enabled,
+      common: { auth_type: "none" },
+      processes: {
+        apply: {
+          request: {
+            schema: {
+              type: "object",
+              properties: { given_name: { type: "string" } },
+            },
+          },
+          execution: { type: "no_action" },
+          store: {
+            application_details_mapping_rules: [
+              { from: "$.request_body", to: "*" },
+            ],
+          },
+          response: {
+            body_mapping_rules: [{ from: "$.response_body", to: "*" }],
+          },
+        },
+      },
+    });
+
+    const applyWith = async (type) =>
+      postWithJson({
+        url: `${tenantBase}/v1/me/identity-verification/applications/${type}/apply`,
+        headers: { Authorization: `Bearer ${token}` },
+        body: { given_name: GIVEN_NAME },
+      });
+
+    /** The refusal has to be the one that means "no such configuration", not any 4xx. */
+    const expectNotServed = (response) => {
+      expect(response.status).toBe(404);
+      expect(response.data.error).toBe("invalid_request");
+      expect(response.data.error_description).toContain(
+        "IdentityVerification Configuration is Not Found"
+      );
+    };
+
+    const register = async (type, enabled) => {
+      const created = await postWithJson({
+        url: `${mgmtBase}/identity-verification-configurations`,
+        headers: mgmtHeaders,
+        body: configBody(type, enabled),
+      });
+      expect(created.status).toBe(201);
+      return created.data.result.id;
+    };
+
+    let configId;
+    let token;
+
+    beforeAll(async () => {
+      // The end user is already registered by the outer beforeAll, so sign in rather than
+      // register again.
+      token = await loginEndUser(verificationScope);
+      configId = await register(sharedType, false);
+    });
+
+    afterAll(async () => {
+      await deletion({
+        url: `${mgmtBase}/identity-verification-configurations/${configId}`,
+        headers: mgmtHeaders,
+      }).catch(() => {});
+    });
+
+    it("a configuration registered with enabled false is not served", async () => {
+      // Its own configuration, never updated, so this reads the INSERT path no matter what order
+      // the cases run in.
+      const freshType = uuidv4();
+      const freshId = await register(freshType, false);
+
+      const response = await applyWith(freshType);
+      console.log(
+        "apply on a disabled configuration:",
+        response.status,
+        JSON.stringify(response.data)
+      );
+      expectNotServed(response);
+
+      await deletion({
+        url: `${mgmtBase}/identity-verification-configurations/${freshId}`,
+        headers: mgmtHeaders,
+      }).catch(() => {});
+    });
+
+    it("the management API still reads it back", async () => {
+      const response = await get({
+        url: `${mgmtBase}/identity-verification-configurations/${configId}`,
+        headers: mgmtHeaders,
+      });
+      expect(response.status).toBe(200);
+      expect(response.data).toHaveProperty("enabled", false);
+    });
+
+    it("updating it to enabled true makes it servable", async () => {
+      const updated = await putWithJson({
+        url: `${mgmtBase}/identity-verification-configurations/${configId}`,
+        headers: mgmtHeaders,
+        body: { ...configBody(sharedType, true), id: configId },
+      });
+      expect(updated.status).toBe(200);
+
+      const response = await applyWith(sharedType);
+      console.log("apply after enabling:", response.status);
+      expect(response.status).toBe(200);
+    });
+
+    it("updating it back to enabled false stops it again", async () => {
+      const updated = await putWithJson({
+        url: `${mgmtBase}/identity-verification-configurations/${configId}`,
+        headers: mgmtHeaders,
+        body: { ...configBody(sharedType, false), id: configId },
+      });
+      expect(updated.status).toBe(200);
+
+      const response = await applyWith(sharedType);
+      console.log(
+        "apply after disabling again:",
+        response.status,
+        JSON.stringify(response.data)
+      );
+      expectNotServed(response);
+    });
   });
 
   describe("Access Token verified_claims structure", () => {
@@ -356,7 +676,9 @@ describe("eKYC Use Case: verified_claims structure in AT and UserInfo", () => {
       expect(claims.family_name).toBe(FAMILY_NAME);
       // データ最小化: ユーザーは birthdate を持つが要求していないので返らない
       expect(claims).not.toHaveProperty("birthdate");
-      Object.keys(claims).forEach((key) => expect(["given_name", "family_name"]).toContain(key));
+      Object.keys(claims).forEach((key) =>
+        expect(["given_name", "family_name"]).toContain(key)
+      );
 
       // trust_framework は scope 未要求でも常時返る（verification の必須の床）
       expect(verifiedClaims.verification.trust_framework).toBe(TRUST_FRAMEWORK);
@@ -371,7 +693,10 @@ describe("eKYC Use Case: verified_claims structure in AT and UserInfo", () => {
         endpoint: `${tenantBase}/v1/userinfo`,
         authorizationHeader: createBearerHeader(positiveAccessToken),
       });
-      console.log("UserInfo response:", JSON.stringify(userinfoResp.data, null, 2));
+      console.log(
+        "UserInfo response:",
+        JSON.stringify(userinfoResp.data, null, 2)
+      );
       expect(userinfoResp.status).toBe(200);
       expect(userinfoResp.data.sub).toBeDefined();
 
@@ -384,7 +709,9 @@ describe("eKYC Use Case: verified_claims structure in AT and UserInfo", () => {
       expect(claims.given_name).toBe(GIVEN_NAME);
       expect(claims.family_name).toBe(FAMILY_NAME);
       expect(claims).not.toHaveProperty("birthdate");
-      Object.keys(claims).forEach((key) => expect(["given_name", "family_name"]).toContain(key));
+      Object.keys(claims).forEach((key) =>
+        expect(["given_name", "family_name"]).toContain(key)
+      );
 
       expect(verifiedClaims.verification.trust_framework).toBe(TRUST_FRAMEWORK);
       expect(verifiedClaims.verification).not.toHaveProperty("evidence");
@@ -396,7 +723,10 @@ describe("eKYC Use Case: verified_claims structure in AT and UserInfo", () => {
     // どの claim にもマッチしない場合、claims を空にして verification だけ漏らさず、verified_claims 自体を返さない。
     it("AT must not contain verified_claims when no requested claim matches", async () => {
       const decodedAt = verifyAndDecodeJwt({ jwt: negativeAccessToken, jwks });
-      console.log("Decoded AT (no-match):", JSON.stringify(decodedAt.payload, null, 2));
+      console.log(
+        "Decoded AT (no-match):",
+        JSON.stringify(decodedAt.payload, null, 2)
+      );
       expect(decodedAt.payload).not.toHaveProperty("verified_claims");
     });
 
@@ -405,11 +735,13 @@ describe("eKYC Use Case: verified_claims structure in AT and UserInfo", () => {
         endpoint: `${tenantBase}/v1/userinfo`,
         authorizationHeader: createBearerHeader(negativeAccessToken),
       });
-      console.log("UserInfo response (no-match):", JSON.stringify(userinfoResp.data, null, 2));
+      console.log(
+        "UserInfo response (no-match):",
+        JSON.stringify(userinfoResp.data, null, 2)
+      );
       expect(userinfoResp.status).toBe(200);
       expect(userinfoResp.data.sub).toBeDefined();
       expect(userinfoResp.data).not.toHaveProperty("verified_claims");
     });
   });
-
 });

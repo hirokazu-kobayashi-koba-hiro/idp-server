@@ -160,7 +160,14 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
     return result;
   }
 
-  public boolean hasVerifiedClaims() {
+  /**
+   * Whether this configuration carries a {@code result} block worth returning (Issue #1900).
+   *
+   * <p>Named for what it answers. It was {@code hasVerifiedClaims}, which read as a question about
+   * verified claims and was implemented as one, while its only caller — {@code toMap} — needed to
+   * know whether the whole block existed.
+   */
+  public boolean hasResult() {
     return result != null && result.exists();
   }
 
@@ -181,7 +188,7 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
     if (hasCommon()) map.put("common", common.toMap());
     if (hasProcesses()) map.put("processes", processesAsMap());
     if (hasRegistration()) map.put("registration", registration.toMap());
-    if (hasVerifiedClaims()) map.put("result", result.toMap());
+    if (hasResult()) map.put("result", result.toMap());
 
     return map;
   }

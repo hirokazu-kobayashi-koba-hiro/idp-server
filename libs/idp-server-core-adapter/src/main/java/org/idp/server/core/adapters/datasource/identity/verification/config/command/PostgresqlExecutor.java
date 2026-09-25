@@ -41,13 +41,15 @@ public class PostgresqlExecutor implements IdentityVerificationConfigCommandSqlE
             id,
             tenant_id,
             type,
-            payload
+            payload,
+            enabled
             )
             VALUES (
             ?::uuid,
             ?::uuid,
             ?,
-            ?::jsonb
+            ?::jsonb,
+            ?
             );
             """;
 
@@ -56,6 +58,9 @@ public class PostgresqlExecutor implements IdentityVerificationConfigCommandSqlE
     params.add(tenant.identifierUUID());
     params.add(type.name());
     params.add(jsonConverter.write(configuration));
+    // Issue #1900: the column is what the runtime lookup filters on. Leaving it to the DDL default
+    // meant a configuration registered with enabled=false was still served.
+    params.add(configuration.enabled());
 
     sqlExecutor.execute(sqlTemplate, params);
   }
@@ -70,7 +75,8 @@ public class PostgresqlExecutor implements IdentityVerificationConfigCommandSqlE
     String sqlTemplate =
         """
             UPDATE identity_verification_configuration
-            SET payload = ?::jsonb
+            SET payload = ?::jsonb,
+            enabled = ?
             WHERE id = ?::uuid
             AND type = ?
             AND tenant_id = ?::uuid;
@@ -78,6 +84,7 @@ public class PostgresqlExecutor implements IdentityVerificationConfigCommandSqlE
 
     List<Object> params = new ArrayList<>();
     params.add(jsonConverter.write(configuration));
+    params.add(configuration.enabled());
     params.add(configuration.idAsUuid());
     params.add(type.name());
     params.add(tenant.identifierUUID());

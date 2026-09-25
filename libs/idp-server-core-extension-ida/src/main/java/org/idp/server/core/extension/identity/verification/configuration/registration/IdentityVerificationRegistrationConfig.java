@@ -34,6 +34,9 @@ public class IdentityVerificationRegistrationConfig implements JsonReadable {
   public IdentityVerificationRegistrationConfig() {}
 
   public IdentityVerificationBasicAuthConfig basicAuthConfiguration() {
+    if (basicAuth == null) {
+      return new IdentityVerificationBasicAuthConfig();
+    }
     return basicAuth;
   }
 
@@ -57,11 +60,19 @@ public class IdentityVerificationRegistrationConfig implements JsonReadable {
     return new JsonSchemaDefinition(JsonNodeWrapper.fromMap(requestValidationSchema));
   }
 
+  /**
+   * Every field, so that reading a configuration and writing it back preserves it (Issue #1900).
+   *
+   * <p>{@code response} was missing entirely, and {@code basic_auth} was the configuration object
+   * rather than its map, which serialized to {@code {}}. Both were stored and neither came back, so
+   * a read-edit-write round trip through the management API dropped them.
+   */
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
-    map.put("basic_auth", basicAuth);
+    map.put("basic_auth", basicAuthConfiguration().toMap());
     map.put("request_validation_schema", requestValidationSchema);
     map.put("request_verification_schema", requestVerificationSchema);
+    map.put("response", response().toMap());
     return map;
   }
 
