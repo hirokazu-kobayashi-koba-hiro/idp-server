@@ -530,11 +530,11 @@ describe("eKYC Use Case: verified_claims structure in AT and UserInfo", () => {
     // the column (`AND enabled = true`), so `enabled: false` disabled nothing. Asserted through
     // apply because that is the only place the flag is read - the management GET by id does not
     // filter on it, so a config registered as disabled still reads back fine.
-    const disabledType = uuidv4();
+    const sharedType = uuidv4();
 
-    const configBody = (enabled) => ({
+    const configBody = (type, enabled) => ({
       id: uuidv4(),
-      type: disabledType,
+      type,
       enabled,
       common: { auth_type: "none" },
       processes: {
@@ -558,27 +558,40 @@ describe("eKYC Use Case: verified_claims structure in AT and UserInfo", () => {
       },
     });
 
-    const applyWith = async (token) =>
+    const applyWith = async (type) =>
       postWithJson({
-        url: `${tenantBase}/v1/me/identity-verification/applications/${disabledType}/apply`,
+        url: `${tenantBase}/v1/me/identity-verification/applications/${type}/apply`,
         headers: { Authorization: `Bearer ${token}` },
         body: { given_name: GIVEN_NAME },
       });
+
+    /** The refusal has to be the one that means "no such configuration", not any 4xx. */
+    const expectNotServed = (response) => {
+      expect(response.status).toBe(404);
+      expect(response.data.error).toBe("invalid_request");
+      expect(response.data.error_description).toContain(
+        "IdentityVerification Configuration is Not Found"
+      );
+    };
+
+    const register = async (type, enabled) => {
+      const created = await postWithJson({
+        url: `${mgmtBase}/identity-verification-configurations`,
+        headers: mgmtHeaders,
+        body: configBody(type, enabled),
+      });
+      expect(created.status).toBe(201);
+      return created.data.result.id;
+    };
 
     let configId;
     let token;
 
     beforeAll(async () => {
-      const created = await postWithJson({
-        url: `${mgmtBase}/identity-verification-configurations`,
-        headers: mgmtHeaders,
-        body: configBody(false),
-      });
-      expect(created.status).toBe(201);
-      configId = created.data.result.id;
       // The end user is already registered by the outer beforeAll, so sign in rather than
       // register again.
       token = await loginEndUser(verificationScope);
+      configId = await register(sharedType, false);
     });
 
     afterAll(async () => {
@@ -589,13 +602,23 @@ describe("eKYC Use Case: verified_claims structure in AT and UserInfo", () => {
     });
 
     it("a configuration registered with enabled false is not served", async () => {
-      const response = await applyWith(token);
+      // Its own configuration, never updated, so this reads the INSERT path no matter what order
+      // the cases run in.
+      const freshType = uuidv4();
+      const freshId = await register(freshType, false);
+
+      const response = await applyWith(freshType);
       console.log(
         "apply on a disabled configuration:",
         response.status,
         JSON.stringify(response.data)
       );
-      expect(response.status).toBeGreaterThanOrEqual(400);
+      expectNotServed(response);
+
+      await deletion({
+        url: `${mgmtBase}/identity-verification-configurations/${freshId}`,
+        headers: mgmtHeaders,
+      }).catch(() => {});
     });
 
     it("the management API still reads it back", async () => {
@@ -611,11 +634,11 @@ describe("eKYC Use Case: verified_claims structure in AT and UserInfo", () => {
       const updated = await putWithJson({
         url: `${mgmtBase}/identity-verification-configurations/${configId}`,
         headers: mgmtHeaders,
-        body: { ...configBody(true), id: configId },
+        body: { ...configBody(sharedType, true), id: configId },
       });
       expect(updated.status).toBe(200);
 
-      const response = await applyWith(token);
+      const response = await applyWith(sharedType);
       console.log("apply after enabling:", response.status);
       expect(response.status).toBe(200);
     });
@@ -624,13 +647,17 @@ describe("eKYC Use Case: verified_claims structure in AT and UserInfo", () => {
       const updated = await putWithJson({
         url: `${mgmtBase}/identity-verification-configurations/${configId}`,
         headers: mgmtHeaders,
-        body: { ...configBody(false), id: configId },
+        body: { ...configBody(sharedType, false), id: configId },
       });
       expect(updated.status).toBe(200);
 
-      const response = await applyWith(token);
-      console.log("apply after disabling again:", response.status);
-      expect(response.status).toBeGreaterThanOrEqual(400);
+      const response = await applyWith(sharedType);
+      console.log(
+        "apply after disabling again:",
+        response.status,
+        JSON.stringify(response.data)
+      );
+      expectNotServed(response);
     });
   });
 
