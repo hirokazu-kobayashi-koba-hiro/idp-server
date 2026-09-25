@@ -152,6 +152,51 @@ class ContactChangePolicyVerifierTest {
   }
 
   @Test
+  @DisplayName("verify が読むのは常に attribute_only 側。identifier_move の条件は掛からない")
+  void verifyIsAlwaysEvaluatedAgainstAttributeOnly() {
+    // A verification moves nothing, so it never resolves to identifier_move - not even on the
+    // channel that owns the login identifier. A tenant that wants a condition on email
+    // verification has to write it under attribute_only.
+    Tenant tenant =
+        emailTenant(
+            Map.of(
+                "identifier_move",
+                Map.of(
+                    "authentication_conditions",
+                    Map.of(
+                        "any_of",
+                        List.of(
+                            List.of(
+                                Map.of(
+                                    "path",
+                                    "$.amr",
+                                    "operation",
+                                    "contains",
+                                    "value",
+                                    "fido-uaf")))))));
+
+    // password-authenticated: the identifier_move condition is not met, but verify never sees it
+    assertNull(
+        ContactChangePolicyVerifier.verify(
+            tenant,
+            new User(),
+            ContactVerificationOperation.EMAIL_VERIFY,
+            passwordAuthenticatedNow()));
+
+    ContactVerificationResponse response =
+        ContactChangePolicyVerifier.verify(
+            tenant,
+            new User(),
+            ContactVerificationOperation.EMAIL_CHANGE,
+            passwordAuthenticatedNow());
+
+    assertNotNull(response);
+    assertEquals(
+        "this change requires a stronger authentication than the one behind this token.",
+        errorDescription(response));
+  }
+
+  @Test
   @DisplayName("authentication_conditions は verify にも掛かる")
   void authenticationConditionsStillApplyToVerify() {
     Tenant tenant =
