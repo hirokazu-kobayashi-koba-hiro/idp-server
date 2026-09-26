@@ -21,7 +21,6 @@ import java.util.List;
 import org.idp.server.core.openid.clientinstance.registration.ClientInstanceRegistrationDependencyContainer;
 import org.idp.server.core.openid.clientinstance.registration.PlatformAttestationVerifier;
 import org.idp.server.core.openid.clientinstance.registration.PlatformAttestationVerifierFactory;
-import org.idp.server.core.openid.clientinstance.registration.RequestHashBindingVerifier;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.plugin.PluginLoader;
 
@@ -30,7 +29,8 @@ import org.idp.server.platform.plugin.PluginLoader;
  *
  * <p>Nothing is registered by default: with no verifier every registration is rejected, which is
  * the safe direction for an unauthenticated endpoint. Platform verifiers are contributed by their
- * own modules, and the development bypass has to be added deliberately.
+ * own modules. There is no bypass: tests attest with chains leading to a root they generate, which
+ * the client under test trusts through {@code client_instance_platform_config}.
  *
  * <p>What the SPI registers is {@link PlatformAttestationVerifierFactory} rather than the verifier,
  * so that a verifier can be built with collaborators. See that interface for why.
@@ -39,13 +39,6 @@ public class PlatformAttestationVerifierPluginLoader extends PluginLoader {
 
   private static final LoggerWrapper log =
       LoggerWrapper.getLogger(PlatformAttestationVerifierPluginLoader.class);
-
-  /**
-   * Environment variable enabling the development verifier. It is read here rather than registered
-   * through the SPI so that the bypass cannot be pulled in merely by having a module on the
-   * classpath.
-   */
-  static final String DEVELOPMENT_VERIFIER_ENV = "IDP_SERVER_CLIENT_INSTANCE_DEVELOPMENT_VERIFIER";
 
   public static List<PlatformAttestationVerifier> load(
       ClientInstanceRegistrationDependencyContainer container) {
@@ -58,14 +51,6 @@ public class PlatformAttestationVerifierPluginLoader extends PluginLoader {
     for (PlatformAttestationVerifierFactory factory :
         loadFromExternalModule(PlatformAttestationVerifierFactory.class)) {
       verifiers.add(factory.create(container));
-    }
-
-    if (Boolean.parseBoolean(System.getenv(DEVELOPMENT_VERIFIER_ENV))) {
-      verifiers.add(new RequestHashBindingVerifier());
-      log.warn(
-          "{} is enabled: client instances can be registered without application or device attestation."
-              + " This must never be set in production.",
-          DEVELOPMENT_VERIFIER_ENV);
     }
 
     verifiers.forEach(

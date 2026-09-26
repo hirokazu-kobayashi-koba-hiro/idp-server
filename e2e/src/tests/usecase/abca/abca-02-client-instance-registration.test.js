@@ -12,9 +12,9 @@
  * registered: one login covers registration and the first token. The client cannot authenticate
  * before that, so the ID token is obtained without client authentication.
  *
- * These tests run against the development verifier, which checks the challenge-to-key binding of
- * the evidence but performs no real device attestation
- * (IDP_SERVER_CLIENT_INSTANCE_DEVELOPMENT_VERIFIER).
+ * The platform attestation is Apple App Attest, built the way a device's Secure Enclave would build
+ * it but leading to a root the test generates, which the client trusts through
+ * client_instance_platform_config. The verification itself is the production one.
  *
  * What this covers beyond the spec-level tests, which check one request at a time:
  * 1. First launch: log in, register the key, and exchange the code of the same login with it
@@ -47,8 +47,13 @@ import {
 } from "../../../lib/clientInstance";
 import { createJwtWithPrivateKey, generateECP256JWKS, generateJti } from "../../../lib/jose";
 import { toEpocTime } from "../../../lib/util";
+import {
+  generateAttestation,
+  generateAttestationAuthority,
+  platformEvidence,
+} from "../../../lib/ios/appAttest";
 
-const DEV_PLATFORM = "request-hash-binding-development-only";
+const APP_ID = "TEAMID1234.com.example.abca";
 const ATTESTATION_TYP = "oauth-client-attestation+jwt";
 const POP_TYP = "oauth-client-attestation-pop+jwt";
 const ATTESTATION_HEADER = "OAuth-Client-Attestation";
@@ -68,6 +73,7 @@ let introspectionEndpoint;
 let userSub;
 let username;
 let password;
+let authority;
 
 const REDIRECT_URI = "http://localhost:3000/callback";
 
@@ -77,6 +83,9 @@ const generateInstanceJwk = async () => {
 };
 
 const publicJwkOf = (jwk) => ({ kty: jwk.kty, crv: jwk.crv, x: jwk.x, y: jwk.y });
+
+const publicKeyPemOf = (jwk) =>
+  crypto.createPublicKey({ key: publicJwkOf(jwk), format: "jwk" }).export({ type: "spki", format: "pem" });
 
 const clientsUrl = () => `${backendUrl}/v1/management/tenants/${tenantId}/clients`;
 const instancesUrl = () => `${backendUrl}/v1/management/tenants/${tenantId}/client-instances`;
@@ -151,10 +160,15 @@ const enrollInstance = async ({
       challenge,
       id_token: idToken,
       client_instance_public_key: publicJwkOf(jwk),
-      platform_evidence: {
-        platform: DEV_PLATFORM,
-        request_hash: requestHash,
-      },
+      platform_evidence: platformEvidence(
+        generateAttestation({
+          authority,
+          challenge,
+          appId: APP_ID,
+          publicKeyPem: publicKeyPemOf(jwk),
+          publicJwk: publicJwkOf(jwk),
+        })
+      ),
     },
   });
   expect(registerResponse.status).toBe(expectedStatus);
@@ -298,6 +312,7 @@ beforeAll(async () => {
   });
   expect(tokenResponse.status).toBe(200);
   managementHeaders = { Authorization: `Bearer ${tokenResponse.data.access_token}` };
+  authority = generateAttestationAuthority();
 
   // A tenant of its own, which lets this use case run with the Challenge enforced. Turning that on
   // for the shared test tenant would break every client there that does not send one yet.
@@ -392,6 +407,13 @@ beforeAll(async () => {
       extension: {
         client_attestation_trust_source: "registered_instance_key",
         client_instance_registration_policy: "user_bound",
+        client_instance_platform_config: {
+          ios_app_attest: {
+            app_ids: [APP_ID],
+            environment: "production",
+            trusted_root_certificates: [authority.rootBase64],
+          },
+        },
       },
       grant_types: ["authorization_code", "client_credentials", "refresh_token"],
       redirect_uris: [REDIRECT_URI],

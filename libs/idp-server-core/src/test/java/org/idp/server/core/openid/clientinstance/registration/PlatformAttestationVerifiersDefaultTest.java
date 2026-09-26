@@ -33,11 +33,7 @@ import org.junit.jupiter.api.Test;
 class PlatformAttestationVerifiersDefaultTest {
 
   @Test
-  void loadsNothingWithoutAVerifierModuleOrTheDevelopmentVariable() {
-    assertNull(
-        System.getenv("IDP_SERVER_CLIENT_INSTANCE_DEVELOPMENT_VERIFIER"),
-        "the test environment sets the bypass variable, so this test cannot check the default");
-
+  void loadsNothingWithoutAVerifierModule() {
     List<PlatformAttestationVerifier> loaded =
         PlatformAttestationVerifierPluginLoader.load(
             new ClientInstanceRegistrationDependencyContainer());
@@ -49,38 +45,11 @@ class PlatformAttestationVerifiersDefaultTest {
   void rejectsEveryPlatformWhenNoVerifierIsLoaded() {
     PlatformAttestationVerifiers verifiers = new PlatformAttestationVerifiers(List.of());
 
-    for (String platform :
-        List.of("android-key-attestation", "ios-app-attest", RequestHashBindingVerifier.PLATFORM)) {
+    for (String platform : List.of("android-key-attestation", "ios-app-attest")) {
       assertThrows(
           PlatformAttestationVerificationException.class,
           () -> verifiers.get(platform),
           "a registration naming " + platform + " was not rejected");
     }
-  }
-
-  @Test
-  void rejectsTheDevelopmentPlatformUnlessItsVerifierWasAdded() {
-    // A request can name the development platform whatever the server runs; naming it must not be
-    // enough, only the verifier the environment variable adds.
-    PlatformAttestationVerifiers withoutBypass =
-        new PlatformAttestationVerifiers(List.of(stub("android-key-attestation")));
-
-    assertThrows(
-        PlatformAttestationVerificationException.class,
-        () -> withoutBypass.get(RequestHashBindingVerifier.PLATFORM));
-  }
-
-  private static PlatformAttestationVerifier stub(String platform) {
-    return new PlatformAttestationVerifier() {
-      @Override
-      public String platform() {
-        return platform;
-      }
-
-      @Override
-      public PlatformAttestationEvidence verify(PlatformAttestationVerificationRequest request) {
-        throw new UnsupportedOperationException();
-      }
-    };
   }
 }

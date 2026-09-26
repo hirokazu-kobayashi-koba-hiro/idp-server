@@ -34,8 +34,7 @@ import org.idp.server.platform.json.JsonConverter;
  *   canonical_jwk = RFC 7638 thumbprint input (required members, lexicographic, no whitespace)
  * </pre>
  *
- * <p>The same value appears twice in a registration: as the {@code nonce} of the ID token that
- * authenticates it, and — for the development verifier — as the evidence itself. Because it covers
+ * <p>It is the {@code nonce} of the ID token that authenticates the registration. Because it covers
  * the key and not only the challenge, a stolen ID token only authenticates the registration of the
  * key it was obtained for.
  */

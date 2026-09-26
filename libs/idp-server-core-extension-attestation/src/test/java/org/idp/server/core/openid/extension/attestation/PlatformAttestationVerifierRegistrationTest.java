@@ -55,18 +55,9 @@ class PlatformAttestationVerifierRegistrationTest {
         "ios verifier was not loaded: " + platforms);
   }
 
-  /**
-   * The development bypass is not in the service file, so a jar on the classpath cannot pull it in
-   * — it is added only when the environment variable says so.
-   */
+  /** Only the platform verifiers are registered: there is no bypass to pull in. */
   @Test
-  void doesNotRegisterTheDevelopmentBypassByDefault() {
-    // Spelled out rather than widening the loader's constant to public: the name is what an
-    // operator sets, so a test that reads it from the code would not notice it being renamed.
-    assertNull(
-        System.getenv("IDP_SERVER_CLIENT_INSTANCE_DEVELOPMENT_VERIFIER"),
-        "the test environment sets the bypass variable, so this test cannot check the default");
-
+  void registersOnlyThePlatformVerifiers() {
     List<PlatformAttestationVerifier> verifiers =
         PlatformAttestationVerifierPluginLoader.load(
             new ClientInstanceRegistrationDependencyContainer());

@@ -107,10 +107,7 @@ public interface PlatformAttestationVerifier {
 
 `verify` は、検証で確かめたことを `PlatformAttestationEvidence` として返します。登録サービスはこれを `client_instance.attestation_evidence` に保存します（中身は [Attestation-Based Client Authentication](../../content_04_protocols/protocol-08-attestation-based-client-authentication.md#登録時に残す証跡)）。
 
-| 返し方 | 使いどころ |
-|---|---|
-| `PlatformAttestationEvidence.of(platform, key, app, chain)` | 証明を検証した実装。`key` は鍵について確かめたこと、`app` は一致したアプリの識別子、`chain` は提示された証明書チェーン |
-| `PlatformAttestationEvidence.bindingOnly(platform)` | `request_hash` の束縛しか確かめない実装（開発用の `RequestHashBindingVerifier`）。何も証明していないことが記録に残る |
+返すのは `PlatformAttestationEvidence.of(platform, key, app, chain)` です。`key` は鍵について確かめたこと、`app` は一致したアプリの識別子、`chain` は提示された証明書チェーンです。
 
 登録は ID トークンでも認証されますが、ID トークンが示すのは「誰か」だけです。**どの端末の、どのアプリの、どの鍵か**は、この検証だけが示します。ID トークンは `nonce = request_hash` で鍵に束縛されるので（`ClientInstanceRegistrationIdTokenVerifier`）、この検証が鍵を確かめて初めて、利用者と端末の鍵がつながります。
 
@@ -138,7 +135,7 @@ public interface PlatformAttestationVerifier {
 
 `PlatformAttestationVerifierPluginLoader` は既定で何も登録しません。verifier が1つも無ければ未知 platform として例外になり、**登録はすべて拒否**されます。端末を確かめられないなら登録させない、という安全側の既定です。
 
-開発用の `RequestHashBindingVerifier` は環境変数 `IDP_SERVER_CLIENT_INSTANCE_DEVELOPMENT_VERIFIER` を明示したときだけ読み込まれ、有効時は WARN ログを出します。**アプリとデバイスについて何も検証しない**ので本番では使えません。
+検証を迂回する開発用の仕組みはありません。E2E は、端末と同じ形の証明をテスト用に生成したルートで作り、クライアント設定の `trusted_root_certificates` でそのルートを信頼させて、本番と同じ検証を通します（`e2e/src/lib/android/keyAttestation.js` / `e2e/src/lib/ios/appAttest.js`）。
 
 ---
 

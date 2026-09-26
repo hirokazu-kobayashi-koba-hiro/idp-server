@@ -503,7 +503,6 @@ describe("Android key attestation (Issue #1521)", () => {
 
       expect(evidence.platform).toBe("android-key-attestation");
       expect(evidence.verified_at).toBeDefined();
-      expect(evidence).not.toHaveProperty("binding_only");
       expect(evidence.key).toEqual({
         attestation_security_level: "trusted_environment",
         keymint_security_level: "trusted_environment",

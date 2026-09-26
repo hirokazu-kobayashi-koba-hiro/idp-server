@@ -662,9 +662,6 @@ components:
         verified_at:
           type: string
           format: date-time
-        binding_only:
-          type: boolean
-          description: 開発用検証器で登録したとき `true`（アプリや端末については何も確かめていない）
         key:
           type: object
           description: 鍵の性質（Android）

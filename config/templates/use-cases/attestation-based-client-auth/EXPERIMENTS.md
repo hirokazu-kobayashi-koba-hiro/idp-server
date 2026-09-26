@@ -309,6 +309,26 @@ request_token "$ATTESTER_CLIENT" | jq '.'
 5. 手順3の code を、登録した鍵で交換
 ```
 
+### 0. 設定変更：テスト用の App Attest のルートを信頼させる
+
+プラットフォーム証明は実機でしか作れないため、`mint-app-attest.mjs` で Apple App Attest と同じ形の証明を作ります。違いは、チェーンの先が Apple のルートではなく、ここで生成したルートになることだけです。そのルートをクライアントに信頼させます。サーバー側の検証は実機の証明と同じです。
+
+```bash
+APP_ID="TEAMID1234.com.example.selfattested"
+TEST_ROOT=$(node $TPL/mint-app-attest.mjs --init-authority --out-dir "$OUT")
+
+curl -sk "${CLIENTS_URL}/${SELF_SIGNED_CLIENT}" -H "Authorization: Bearer ${ADMIN_TOKEN}" \
+  | jq --arg app "$APP_ID" --arg root "$TEST_ROOT" \
+      '.extension.client_instance_platform_config = {ios_app_attest: {app_ids: [$app], environment: "production", trusted_root_certificates: [$root]}}' \
+  > /tmp/s.json
+
+curl -sk -X PUT "${CLIENTS_URL}/${SELF_SIGNED_CLIENT}" \
+  -H "Authorization: Bearer ${ADMIN_TOKEN}" -H "Content-Type: application/json" -d @/tmp/s.json \
+  | jq '{diff}'
+```
+
+`trusted_root_certificates` を設定すると、サーバーのログに WARN が出ます。そのルートの持ち主を信頼することになるためで、本番のクライアントには設定しません。
+
 ### 1. チャレンジを取得
 
 ```bash
@@ -369,20 +389,20 @@ AUTHORIZATION_CODE=$(echo "$AUTHZ_REDIRECT" | sed -n 's/.*[#&]code=\([^&]*\).*/\
 ### 4. ID トークンと鍵と証明で登録
 
 ```bash
+PLATFORM_EVIDENCE=$(node $TPL/mint-app-attest.mjs --evidence \
+  --challenge "$REGISTRATION_CHALLENGE" --app-id "$APP_ID" --out-dir "$OUT")
+
 curl -sk -X POST "${ISSUER}/v1/client-instances" \
   -H "Content-Type: application/json" \
   -d "{\"challenge\":\"${REGISTRATION_CHALLENGE}\",
        \"id_token\":\"${ID_TOKEN}\",
        \"client_instance_public_key\":${INSTANCE_JWK},
-       \"platform_evidence\":{\"platform\":\"request-hash-binding-development-only\",
-                              \"request_hash\":\"${REQUEST_HASH}\"}}" -w "\n%{http_code}\n"
+       \"platform_evidence\":${PLATFORM_EVIDENCE}}" -w "\n%{http_code}\n"
 ```
 
 → `201`
 
-実機では、チャレンジを App Attest の `clientDataHash` や Android Key Attestation の challenge に埋め込んだ証明を送ります。
-
-> `platform` に `request-hash-binding-development-only` を指定しているのは開発用の検証器です。この検証器は request_hash の束縛しか見ておらず、**アプリの正当性もデバイスの正当性も検証しません**。本番では App Attest / Play Integrity の検証器が必要で、検証器が1つも登録されていない場合は登録が全拒否されます。
+証明に埋め込まれるのはチャレンジ（`clientDataHash` = チャレンジのバイト列の SHA-256）で、`request_hash` ではありません。`request_hash` は ID トークンの `nonce` にだけ使います。
 
 試しに、手順2で作った鍵とは**別の鍵**を `client_instance_public_key` にして送ると `400` になります。ID トークンの `nonce` が元の鍵を指しているためです。漏れた ID トークンを別の鍵と組み合わせても登録できない、ということです。
 

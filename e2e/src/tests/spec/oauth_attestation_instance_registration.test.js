@@ -21,9 +21,10 @@
  *   - N2: a public client the registering client lists in client_instance_registration_clients,
  *     for tenants that require PAR.
  *
- * These tests run against the development verifier, which checks the request_hash binding of the
- * evidence but performs no application or device attestation
- * (IDP_SERVER_CLIENT_INSTANCE_DEVELOPMENT_VERIFIER).
+ * The platform attestation is Apple App Attest, built the way a device's Secure Enclave would build
+ * it but leading to a root the test generates, which the client under test trusts through
+ * client_instance_platform_config. The verification itself is the production one; the App Attest
+ * cases of their own are in oauth_attestation_ios_app_attest.test.js.
  */
 import { beforeAll, describe, expect, it } from "@jest/globals";
 import { v4 as uuidv4 } from "uuid";
@@ -36,8 +37,14 @@ import { adminServerConfig, backendUrl, clientSecretPostClient, serverConfig } f
 import { createJwtWithPrivateKey, generateJti } from "../../lib/jose";
 import { toEpocTime } from "../../lib/util";
 import { deriveRequestHash } from "../../lib/clientInstance";
+import {
+  PLATFORM as APP_ATTEST_PLATFORM,
+  generateAttestation,
+  generateAttestationAuthority,
+  platformEvidence,
+} from "../../lib/ios/appAttest";
 
-const DEV_PLATFORM = "request-hash-binding-development-only";
+const APP_ID = "TEAMID1234.com.example.registration";
 const ATTESTATION_TYP = "oauth-client-attestation+jwt";
 const POP_TYP = "oauth-client-attestation-pop+jwt";
 
@@ -47,6 +54,7 @@ let managementHeaders;
 let clientId;
 let registrationClientId;
 let policylessClientId;
+let authority;
 
 const base64url = (buffer) =>
   buffer.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
@@ -57,6 +65,21 @@ const generateInstanceJwk = async () => {
 };
 
 const publicJwkOf = (jwk) => ({ kty: jwk.kty, crv: jwk.crv, x: jwk.x, y: jwk.y });
+
+const publicKeyPemOf = (jwk) =>
+  crypto.createPublicKey({ key: publicJwkOf(jwk), format: "jwk" }).export({ type: "spki", format: "pem" });
+
+/** App Attest evidence certifying `jwk` for `challenge`, as the device would send it. */
+const evidenceFor = ({ challenge, jwk }) =>
+  platformEvidence(
+    generateAttestation({
+      authority,
+      challenge,
+      appId: APP_ID,
+      publicKeyPem: publicKeyPemOf(jwk),
+      publicJwk: publicJwkOf(jwk),
+    })
+  );
 
 const requestChallenge = async ({ client = () => clientId } = {}) =>
   await postWithJson({
@@ -89,17 +112,17 @@ const loginForRegistration = async ({
   return authorizationResponse;
 };
 
-const registerInstance = async ({ challenge, jwk, idToken, requestHash }) =>
+/**
+ * Registers `jwk`. The evidence certifies `attestedJwk` when given, and `jwk` otherwise.
+ */
+const registerInstance = async ({ challenge, jwk, idToken, attestedJwk }) =>
   await postWithJson({
     url: `${backendUrl}/${serverConfig.tenantId}/v1/client-instances`,
     body: {
       challenge,
       id_token: idToken,
       client_instance_public_key: publicJwkOf(jwk),
-      platform_evidence: {
-        platform: DEV_PLATFORM,
-        request_hash: requestHash ?? deriveRequestHash(challenge, jwk),
-      },
+      platform_evidence: evidenceFor({ challenge, jwk: attestedJwk ?? jwk }),
     },
   });
 
@@ -164,6 +187,7 @@ beforeAll(async () => {
   });
   expect(tokenResponse.status).toBe(200);
   managementHeaders = { Authorization: `Bearer ${tokenResponse.data.access_token}` };
+  authority = generateAttestationAuthority();
 
   const registerClient = async (body) =>
     await postWithJson({
@@ -200,6 +224,13 @@ beforeAll(async () => {
       client_attestation_trust_source: "registered_instance_key",
       client_instance_registration_policy: "user_bound",
       client_instance_registration_clients: [registrationClientId],
+      client_instance_platform_config: {
+        ios_app_attest: {
+          app_ids: [APP_ID],
+          environment: "production",
+          trusted_root_certificates: [authority.rootBase64],
+        },
+      },
     },
   });
   expect(clientResponse.status).toBe(201);
@@ -287,11 +318,10 @@ describe("Client Instance registration (application plane, user bound)", () => {
       expect(registered).toBeDefined();
       expect(registered.user_id).toBe(sub);
       expect(registered).not.toHaveProperty("device_id");
-      // The development verifier establishes the request hash binding and nothing about the app or
-      // the device, and the instance records it as such.
+      // What the platform attestation established is kept with the instance.
       expect(registered.attestation_evidence).toMatchObject({
-        platform: DEV_PLATFORM,
-        binding_only: true,
+        platform: APP_ATTEST_PLATFORM,
+        app: { app_id: APP_ID, environment: "production" },
       });
       expect(registered.attestation_evidence.verified_at).toBeDefined();
     });
@@ -380,7 +410,7 @@ describe("Client Instance registration (application plane, user bound)", () => {
       expect(response.status).toBe(400);
     });
 
-    it("rejects evidence whose request_hash does not bind the challenge to the key", async () => {
+    it("rejects evidence that certifies a different key than the one registered", async () => {
       const jwk = await generateInstanceJwk();
       const otherJwk = await generateInstanceJwk();
       const { challenge } = (await requestChallenge()).data;
@@ -390,8 +420,8 @@ describe("Client Instance registration (application plane, user bound)", () => {
         challenge,
         jwk,
         idToken,
-        // hash computed over a different key: the evidence does not cover the key being registered
-        requestHash: deriveRequestHash(challenge, otherJwk),
+        // the evidence is genuine, but for another key: it does not cover the key being registered
+        attestedJwk: otherJwk,
       });
 
       expect(response.status).toBe(400);
@@ -459,10 +489,7 @@ describe("Client Instance registration (application plane, user bound)", () => {
           id_token: idToken,
           // the full JWK still holds the private component d
           client_instance_public_key: jwk,
-          platform_evidence: {
-            platform: DEV_PLATFORM,
-            request_hash: deriveRequestHash(challenge, jwk),
-          },
+          platform_evidence: evidenceFor({ challenge, jwk }),
         },
       });
 

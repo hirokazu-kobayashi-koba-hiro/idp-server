@@ -358,7 +358,6 @@ describe("Apple App Attest (Issue #1521)", () => {
 
       expect(evidence.platform).toBe("ios-app-attest");
       expect(evidence.verified_at).toBeDefined();
-      expect(evidence).not.toHaveProperty("binding_only");
       expect(evidence.app).toEqual({ app_id: APP_ID, environment: "production" });
       // Serial numbers are what a revocation list is keyed on: lowercase hex.
       expect(evidence.chain.certificates.length).toBeGreaterThan(0);

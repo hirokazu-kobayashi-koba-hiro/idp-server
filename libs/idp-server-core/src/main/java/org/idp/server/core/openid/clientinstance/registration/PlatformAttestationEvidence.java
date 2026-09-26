@@ -54,19 +54,16 @@ public class PlatformAttestationEvidence {
   Map<String, Object> key;
   Map<String, Object> app;
   List<Map<String, Object>> certificates;
-  boolean bindingOnly;
 
   PlatformAttestationEvidence(
       String platform,
       Map<String, Object> key,
       Map<String, Object> app,
-      List<Map<String, Object>> certificates,
-      boolean bindingOnly) {
+      List<Map<String, Object>> certificates) {
     this.platform = platform;
     this.key = key;
     this.app = app;
     this.certificates = certificates;
-    this.bindingOnly = bindingOnly;
   }
 
   /**
@@ -82,24 +79,11 @@ public class PlatformAttestationEvidence {
       Map<String, Object> app,
       X509CertificateChain chain) {
     return new PlatformAttestationEvidence(
-        platform, Map.copyOf(key), Map.copyOf(app), certificatesOf(chain), false);
-  }
-
-  /**
-   * Evidence of a verifier that establishes the request hash binding only, and nothing about the
-   * application or the device. Recorded as such, so that an instance registered this way can be
-   * told apart from an attested one.
-   */
-  public static PlatformAttestationEvidence bindingOnly(String platform) {
-    return new PlatformAttestationEvidence(platform, Map.of(), Map.of(), List.of(), true);
+        platform, Map.copyOf(key), Map.copyOf(app), certificatesOf(chain));
   }
 
   public String platform() {
     return platform;
-  }
-
-  public boolean isBindingOnly() {
-    return bindingOnly;
   }
 
   public List<Map<String, Object>> certificates() {
@@ -111,10 +95,6 @@ public class PlatformAttestationEvidence {
     Map<String, Object> map = new LinkedHashMap<>();
     map.put("platform", platform);
     map.put("verified_at", verifiedAt.toString());
-    if (bindingOnly) {
-      map.put("binding_only", true);
-      return map;
-    }
     if (!key.isEmpty()) map.put("key", key);
     if (!app.isEmpty()) map.put("app", app);
     map.put("chain", Map.of("certificates", certificates));

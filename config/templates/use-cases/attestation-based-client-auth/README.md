@@ -41,6 +41,7 @@
 | `attester-jwks-client-template.json` | ABCA クライアント（`attester_jwks`） | `POST .../clients` |
 | `self-signed-client-template.json` | ABCA クライアント（`registered_instance_key`） | 同上 |
 | `mint-attestation.mjs` | 2つの JWT を生成する CLI（Node 組み込みのみ、依存なし） | - |
+| `mint-app-attest.mjs` | インスタンス登録に使う Apple App Attest の証明を、テスト用のルートで生成する CLI（Node 組み込みのみ、依存なし） | - |
 | `setup.sh` | 上記を順番に実行する | - |
 | `verify.sh` | 公開メタデータと Challenge エンドポイントを確認する | - |
 | `update.sh` / `delete.sh` | 設定更新 / 削除 | - |
