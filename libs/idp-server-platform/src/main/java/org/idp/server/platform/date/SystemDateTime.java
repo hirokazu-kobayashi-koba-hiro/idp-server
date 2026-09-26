@@ -99,6 +99,11 @@ public class SystemDateTime {
     return localDateTime.atZone(clock.getZone()).toEpochSecond();
   }
 
+  /** The inverse of {@link #toEpochSecond(LocalDateTime)}, in the configured zone. */
+  public static LocalDateTime fromEpochSecond(long epochSecond) {
+    return LocalDateTime.ofInstant(java.time.Instant.ofEpochSecond(epochSecond), clock.getZone());
+  }
+
   public static long toEpochMilli(LocalDateTime localDateTime) {
     return localDateTime.atZone(clock.getZone()).toInstant().toEpochMilli();
   }

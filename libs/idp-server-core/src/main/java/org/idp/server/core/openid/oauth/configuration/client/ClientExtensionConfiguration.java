@@ -16,10 +16,13 @@
 
 package org.idp.server.core.openid.oauth.configuration.client;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionType;
+import org.idp.server.core.openid.clientinstance.ClientAttestationTrustSource;
+import org.idp.server.core.openid.clientinstance.ClientInstanceRegistrationPolicy;
 import org.idp.server.core.openid.oauth.configuration.RefreshTokenStrategy;
 import org.idp.server.platform.json.JsonReadable;
 
@@ -35,9 +38,117 @@ public class ClientExtensionConfiguration implements JsonReadable {
   List<AvailableFederation> availableFederations;
   String defaultCibaAuthenticationInteractionType = "authentication-device-notification-no-action";
   boolean cibaRequireRar = false;
+  String clientAttestationTrustSource;
+  String clientInstanceRegistrationPolicy;
+  List<String> clientInstanceRegistrationClients = new ArrayList<>();
+  Long clientInstanceLifetimeSeconds;
+  String clientAttestationAttesterJwks;
+  List<String> clientAttestationTrustedRootCertificates = new ArrayList<>();
+  Map<String, Object> clientInstancePlatformConfig = new HashMap<>();
   Map<String, Object> customProperties = new HashMap<>();
 
   public ClientExtensionConfiguration() {}
+
+  /**
+   * Where the Authorization Server takes its trust from when verifying a Client Attestation JWT
+   * ({@code attest_jwt_client_auth}). idp-server specific: the specification leaves trust
+   * management and key resolution out of scope.
+   *
+   * <p>An unset or unknown value resolves to {@code undefined}, which callers reject rather than
+   * falling back to a trust source the operator did not choose.
+   */
+  public ClientAttestationTrustSource clientAttestationTrustSource() {
+    return ClientAttestationTrustSource.of(clientAttestationTrustSource);
+  }
+
+  /**
+   * How a client instance registration must be backed ({@code user_bound}). idp-server specific.
+   */
+  public ClientInstanceRegistrationPolicy clientInstanceRegistrationPolicy() {
+    return ClientInstanceRegistrationPolicy.of(clientInstanceRegistrationPolicy);
+  }
+
+  /**
+   * Other clients whose ID tokens may authenticate the registration of this client's instances.
+   * idp-server specific.
+   *
+   * <p>The client's own ID tokens are always accepted. This list is for tenants that require PAR,
+   * where the client cannot obtain an ID token before it has an instance: a public client listed
+   * here obtains it instead.
+   */
+  public List<String> clientInstanceRegistrationClients() {
+    return clientInstanceRegistrationClients != null
+        ? clientInstanceRegistrationClients
+        : new ArrayList<>();
+  }
+
+  public boolean hasClientInstanceRegistrationClients() {
+    return clientInstanceRegistrationClients != null
+        && !clientInstanceRegistrationClients.isEmpty();
+  }
+
+  /**
+   * How long an instance the app registers stays usable, in seconds. idp-server specific.
+   *
+   * <p>Unset or 0: no expiry, an instance lasts until it is revoked or replaced. When it expires
+   * the app registers again, which takes a login and a new key with fresh platform attestation; set
+   * it no shorter than the refresh token's lifetime so that the two coincide.
+   */
+  public long clientInstanceLifetimeSeconds() {
+    return clientInstanceLifetimeSeconds != null ? clientInstanceLifetimeSeconds : 0;
+  }
+
+  public boolean hasClientInstanceLifetime() {
+    return clientInstanceLifetimeSeconds != null && clientInstanceLifetimeSeconds > 0;
+  }
+
+  /**
+   * JWKS of the trusted Client Attester, used when the trust source is {@code attester_jwks}.
+   * idp-server specific.
+   */
+  public String clientAttestationAttesterJwks() {
+    return clientAttestationAttesterJwks;
+  }
+
+  /**
+   * Per-platform settings a {@link
+   * org.idp.server.core.openid.clientinstance.registration.PlatformAttestationVerifier} reads at
+   * Client Instance registration, keyed by platform.
+   *
+   * <p>Kept as the raw structure rather than a typed model: each platform brings its own shape
+   * (Android wants package names and signing digests, iOS a team and bundle id), and the verifiers
+   * live in their own modules. A typed model here would have to know all of them.
+   */
+  public Map<String, Object> clientInstancePlatformConfig() {
+    return clientInstancePlatformConfig != null ? clientInstancePlatformConfig : new HashMap<>();
+  }
+
+  public boolean hasClientInstancePlatformConfig() {
+    return clientInstancePlatformConfig != null && !clientInstancePlatformConfig.isEmpty();
+  }
+
+  public boolean hasClientAttestationAttesterJwks() {
+    return clientAttestationAttesterJwks != null && !clientAttestationAttesterJwks.isEmpty();
+  }
+
+  /**
+   * Roots the {@code x5c} chain of a Client Attestation JWT must lead to, base64 encoded DER.
+   * idp-server specific.
+   *
+   * <p>Roots rather than the attester's own certificate: the point of this trust source is that the
+   * attester can replace its signing key without the client being reconfigured, which only holds
+   * while what is pinned outlives that key.
+   */
+  public List<String> clientAttestationTrustedRootCertificates() {
+    return clientAttestationTrustedRootCertificates != null
+        ? clientAttestationTrustedRootCertificates
+        : new ArrayList<>();
+  }
+
+  public boolean hasClientAttestationTrustedRootCertificates() {
+    return clientAttestationTrustedRootCertificates != null
+        && !clientAttestationTrustedRootCertificates.isEmpty();
+  }
 
   public Map<String, Object> customProperties() {
     return customProperties;
@@ -155,6 +266,24 @@ public class ClientExtensionConfiguration implements JsonReadable {
       map.put(
           "default_ciba_authentication_interaction_type", defaultCibaAuthenticationInteractionType);
     map.put("ciba_require_rar", cibaRequireRar);
+    // The raw strings are exposed, not the enums: the management update replaces the whole client,
+    // so a value this representation omits is deleted by a GET -> modify -> PUT round trip, and an
+    // unknown value has to survive the round trip rather than be normalized away.
+    if (clientAttestationTrustSource != null && !clientAttestationTrustSource.isEmpty())
+      map.put("client_attestation_trust_source", clientAttestationTrustSource);
+    if (hasClientInstancePlatformConfig())
+      map.put("client_instance_platform_config", clientInstancePlatformConfig);
+    if (clientInstanceRegistrationPolicy != null && !clientInstanceRegistrationPolicy.isEmpty())
+      map.put("client_instance_registration_policy", clientInstanceRegistrationPolicy);
+    if (hasClientInstanceRegistrationClients())
+      map.put("client_instance_registration_clients", clientInstanceRegistrationClients);
+    if (clientInstanceLifetimeSeconds != null)
+      map.put("client_instance_lifetime_seconds", clientInstanceLifetimeSeconds);
+    if (hasClientAttestationAttesterJwks())
+      map.put("client_attestation_attester_jwks", clientAttestationAttesterJwks);
+    if (hasClientAttestationTrustedRootCertificates())
+      map.put(
+          "client_attestation_trusted_root_certificates", clientAttestationTrustedRootCertificates);
     if (hasCustomProperties()) map.put("custom_properties", customProperties);
     return map;
   }

@@ -18,6 +18,7 @@ package org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials;
 
 import java.util.Objects;
 import org.idp.server.platform.jose.JsonWebKey;
+import org.idp.server.platform.jose.JsonWebKeyInvalidException;
 import org.idp.server.platform.jose.JsonWebKeyType;
 
 /**
@@ -40,6 +41,15 @@ public class ClientAuthenticationPublicKey {
 
   public boolean exists() {
     return Objects.nonNull(jsonWebKey);
+  }
+
+  /**
+   * RFC 7638 thumbprint of this key, which is how a token records the instance it was issued to.
+   *
+   * @throws JsonWebKeyInvalidException when the key cannot be canonicalised
+   */
+  public String thumbprintSha256() throws JsonWebKeyInvalidException {
+    return jsonWebKey.thumbprintSha256();
   }
 
   public boolean isRsa() {

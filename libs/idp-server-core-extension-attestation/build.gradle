@@ -1,0 +1,43 @@
+plugins {
+	id 'java'
+	id "com.diffplug.spotless" version "6.24.0"
+}
+
+group = 'org.idp.server'
+version = project.hasProperty('releaseVersion') ? project.releaseVersion : '0.9.0-SNAPSHOT'
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation project(':libs:idp-server-platform')
+	implementation project(':libs:idp-server-core')
+
+	testImplementation platform('org.junit:junit-bom:5.10.0')
+	testImplementation 'org.junit.jupiter:junit-jupiter'
+	testImplementation 'com.nimbusds:nimbus-jose-jwt:10.9.1'
+	// Test only: builds attestation chains so the verifier can run without a device.
+	testImplementation 'org.bouncycastle:bcprov-jdk18on:1.84'
+	testImplementation 'org.bouncycastle:bcpkix-jdk18on:1.84'
+	// Test only: encodes App Attest attestation objects, which arrive as CBOR from a device.
+	testImplementation 'tools.jackson.dataformat:jackson-dataformat-cbor:3.1.2'
+}
+
+test {
+	useJUnitPlatform()
+}
+
+spotless {
+	java {
+		target 'src/*/java/**/*.java'
+		importOrder()
+		removeUnusedImports()
+		googleJavaFormat()
+		toggleOffOn()
+	}
+	groovyGradle {
+		target '*.gradle'
+		greclipse()
+	}
+}

@@ -20,9 +20,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Map;
 import java.util.Set;
+import org.idp.server.core.openid.clientinstance.ClientInstanceRegistrationPolicy;
 import org.idp.server.core.openid.oauth.clientauthenticator.exception.ClientUnAuthorizedException;
 import org.idp.server.core.openid.oauth.type.oauth.ClientAuthenticationType;
 import org.idp.server.core.openid.oauth.type.oauth.Scopes;
+import org.idp.server.core.openid.token.exception.TokenBadRequestException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -59,5 +61,29 @@ class ClientCredentialsGrantVerifierTest {
         new ClientCredentialsGrantVerifier(
             new Scopes(Set.of()), Map.of(), ClientAuthenticationType.none);
     assertThrows(ClientUnAuthorizedException.class, verifier::verify);
+  }
+
+  private ClientCredentialsGrantVerifier clientWith(ClientInstanceRegistrationPolicy policy) {
+    return new ClientCredentialsGrantVerifier(
+        new Scopes(Set.of("account")),
+        Map.of(),
+        ClientAuthenticationType.attest_jwt_client_auth,
+        policy);
+  }
+
+  @Test
+  void rejectsAClientWhoseInstancesAreBoundToUsers() {
+    // Issue #1521: the client is an application its users install; this grant carries no user.
+    TokenBadRequestException exception =
+        assertThrows(
+            TokenBadRequestException.class,
+            clientWith(ClientInstanceRegistrationPolicy.user_bound)::verify);
+    assertEquals("unauthorized_client", exception.error().value());
+  }
+
+  @Test
+  void allowsAClientWithoutARegistrationPolicy() {
+    // A Client Attester's client, or instances registered by the operator only.
+    assertDoesNotThrow(clientWith(ClientInstanceRegistrationPolicy.undefined)::verify);
   }
 }

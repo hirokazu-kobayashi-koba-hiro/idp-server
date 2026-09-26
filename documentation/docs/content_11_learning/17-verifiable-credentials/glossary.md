@@ -439,6 +439,16 @@ Status List:
 
 ---
 
+### Wallet Attestation
+
+**読み方:** ウォレット・アテステーション
+
+**意味:** ウォレットアプリ自身が正規のものであることを、Wallet Provider が署名して証明したもの。
+
+**目的:** Issuer が「改造されていないウォレットにだけ発行する」を判断できるようにする（[詳細](./wallet-attestation.md)）
+
+---
+
 ## 規格・標準
 
 ### W3C
@@ -489,6 +499,48 @@ Status List:
 
 ---
 
+### Trusted List
+
+**読み方:** トラステッド・リスト
+
+**意味:** 適格トラストサービス事業者を各加盟国が一覧として公開する仕組み（ETSI TS 119 612）。eIDAS 1 からの継承。EUDI Wallet の生態系では QEAA の発行者だけが載る。
+
+---
+
+### LoTE（List of Trusted Entities）
+
+**読み方:** エル・オー・ティー・イー
+
+**意味:** 欧州委員会が署名・公開する信頼済み主体の一覧（ETSI TS 119 602）。Wallet Provider、PID Provider、PuB-EAA Provider、アクセス証明書の発行機関などが載る。加盟国からの通知で登録される。Relying Party の一覧は無い（[全体像](./eu-wallet-ecosystem.md)）
+
+---
+
+### OpenID Federation
+
+**読み方:** オープンアイディー・フェデレーション
+
+**意味:** 階層構造で信頼を辿る仕組み。Trust Anchor から Subordinate Statement を連ねた **Trust Chain** で参加者の正当性を検証する。鍵だけでなくメタデータやポリシーも配る。
+
+**注意:** EU ARF の本文には登場しない。IT-Wallet は国内の信頼基盤として採用している（[流派](./wallet-ecosystem-lineages.md)）
+
+---
+
+### IACA
+
+**読み方:** アイ・エー・シー・エー
+
+**意味:** Issuing Authority Certificate Authority。ISO mDL における信頼の起点となるルート認証局。
+
+---
+
+### AnonCreds
+
+**読み方:** アノン・クレッズ
+
+**意味:** ゼロ知識証明ベースのクレデンシャル形式。属性の値を見せずに「条件を満たす」ことだけを証明できる。
+
+---
+
 ### SSI（Self-Sovereign Identity）
 
 **読み方:** エス・エス・アイ、自己主権型アイデンティティ
@@ -529,3 +581,8 @@ Status List:
 | KYC | Know Your Customer | 本人確認 |
 | CBOR | Concise Binary Object Representation | バイナリ形式 |
 | COSE | CBOR Object Signing and Encryption | CBOR 署名/暗号化 |
+| ARF | Architecture and Reference Framework | EU Digital Identity Wallet の枠組み |
+| HAIP | High Assurance Interoperability Profile | OID4VC の相互運用プロファイル |
+| IACA | Issuing Authority Certificate Authority | mDL のルート認証局 |
+| WIA | Wallet Instance Attestation | ウォレットインスタンスの真正性証明 |
+| KA | Key Attestation | 鍵保管領域（WSCD）の真正性証明 |

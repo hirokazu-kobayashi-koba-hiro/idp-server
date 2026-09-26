@@ -19,12 +19,14 @@ package org.idp.server.core.openid.token.handler.tokenintrospection;
 import java.util.Map;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserStatus;
+import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationHeaderValidator;
 import org.idp.server.core.openid.oauth.clientauthenticator.ClientAuthenticationHandler;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.type.oauth.AccessTokenEntity;
+import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.core.openid.token.TokenUserFindingDelegate;
 import org.idp.server.core.openid.token.handler.tokenintrospection.io.TokenIntrospectionExtensionRequest;
@@ -51,12 +53,13 @@ public class TokenIntrospectionExtensionHandler {
       OAuthTokenQueryRepository oAuthTokenQueryRepository,
       AuthorizationServerConfigurationQueryRepository
           authorizationServerConfigurationQueryRepository,
-      ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
+      ClientConfigurationQueryRepository clientConfigurationQueryRepository,
+      ClientAuthenticationHandler clientAuthenticationHandler) {
     this.oAuthTokenQueryRepository = oAuthTokenQueryRepository;
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
-    this.clientAuthenticationHandler = new ClientAuthenticationHandler();
+    this.clientAuthenticationHandler = clientAuthenticationHandler;
   }
 
   public TokenIntrospectionResponse handle(
@@ -65,17 +68,26 @@ public class TokenIntrospectionExtensionHandler {
     validator.validate();
     // RS forwarding pattern: DPoP proof は body の `dpop_proof` で受け取るため、リクエスト header の
     // DPoP は consume しない (ここで複数ヘッダ検証もしない)。
+    // Client Attestation は転送物ではなく Resource Server 自身の資格情報なので header から読む。
+    new ClientAttestationHeaderValidator(
+            request.clientAttestationHeaders(), request.clientAttestationPopHeaders())
+        .validate();
 
     Tenant tenant = request.tenant();
     AuthorizationServerConfiguration authorizationServerConfiguration =
         authorizationServerConfigurationQueryRepository.get(tenant);
+    RequestedClientId requestedClientId = request.clientId();
     ClientConfiguration clientConfiguration =
-        clientConfigurationQueryRepository.get(tenant, request.clientId());
+        clientConfigurationQueryRepository.get(tenant, requestedClientId);
 
     TokenIntrospectionRequestContext introspectionRequestContext =
         new TokenIntrospectionRequestContext(
+            tenant,
+            requestedClientId,
             request.clientSecretBasic(),
             request.clientCertFormMtls(),
+            request.toClientAttestationJwt(),
+            request.toClientAttestationPopJwt(),
             request.toParameters(),
             authorizationServerConfiguration,
             clientConfiguration);

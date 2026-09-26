@@ -19,6 +19,8 @@ package org.idp.server.core.adapters.datasource.token.query;
 import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.openid.authentication.Authentication;
+import org.idp.server.core.openid.clientinstance.ClientInstanceIdentifier;
+import org.idp.server.core.openid.clientinstance.ClientInstanceThumbprint;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
 import org.idp.server.core.openid.grant_management.grant.GrantIdTokenClaims;
 import org.idp.server.core.openid.grant_management.grant.GrantUserinfoClaims;
@@ -97,6 +99,10 @@ class ModelConverter {
     ClientCertificationThumbprint thumbprint =
         new ClientCertificationThumbprint(stringMap.get("client_certification_thumbprint"));
     JwkThumbprint jwkThumbprint = new JwkThumbprint(stringMap.get("jwk_thumbprint"));
+    ClientInstanceThumbprint clientInstanceThumbprint =
+        new ClientInstanceThumbprint(stringMap.get("client_instance_thumbprint"));
+    ClientInstanceIdentifier clientInstanceIdentifier =
+        new ClientInstanceIdentifier(stringMap.get("client_instance_id"));
     ExpiresIn expiresIn = new ExpiresIn(stringMap.get("expires_in"));
     ExpiresAt accessTokenExpiresAt = new ExpiresAt(stringMap.get("access_token_expires_at"));
     CreatedAt accessTokenCreatedAt = new CreatedAt(stringMap.get("access_token_created_at"));
@@ -112,6 +118,8 @@ class ModelConverter {
             authorizationGrant,
             thumbprint,
             jwkThumbprint,
+            clientInstanceThumbprint,
+            clientInstanceIdentifier,
             accessTokenCustomClaims,
             accessTokenCreatedAt,
             expiresIn,

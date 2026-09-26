@@ -346,6 +346,7 @@ echo $ENCRYPTION_KEY | base64 -d | wc -c
 
 **用途:**
 - **OAuthトークン暗号化**: アクセストークン・リフレッシュトークンのDB保存時の暗号化
+- **Attestation Challenge の HMAC 鍵**: 用途ごとに派生した鍵で Challenge に署名する（Challenge は DB に保存しない）。キーを変更すると発行済みの Challenge は通らなくなるが、クライアントは `use_attestation_challenge` のエラーに同梱される新しい Challenge で再送できる
 
 #### 暗号化キーローテーション
 

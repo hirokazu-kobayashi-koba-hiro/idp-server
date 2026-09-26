@@ -18,6 +18,7 @@ package org.idp.server.platform.jose;
 
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.KeyType;
 import com.nimbusds.jose.jwk.ThumbprintUtils;
 import com.nimbusds.jose.util.Base64;
@@ -26,6 +27,8 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.List;
 import java.util.Objects;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 /** JsonWebKey */
 public class JsonWebKey {
@@ -131,6 +134,39 @@ public class JsonWebKey {
       return new JsonWebKey();
     }
     return new JsonWebKey(value.toPublicJWK());
+  }
+
+  /**
+   * Returns the canonical JSON of this key as defined by RFC 7638 Section 3.2: the required members
+   * only, in lexicographic order, without whitespace.
+   *
+   * <p>This is the exact byte sequence hashed by {@link #thumbprintSha256()}. It is exposed because
+   * platform attestation binds a key by hashing it together with other data (Android {@code
+   * request_hash}, iOS {@code client_data_hash}), which the thumbprint alone cannot express.
+   */
+  public String canonicalJson() throws JsonWebKeyInvalidException {
+    try {
+      return new TreeMap<>(value.getRequiredParams())
+          .entrySet().stream()
+              .map(entry -> "\"" + entry.getKey() + "\":\"" + entry.getValue() + "\"")
+              .collect(Collectors.joining(",", "{", "}"));
+    } catch (Exception e) {
+      throw new JsonWebKeyInvalidException("Failed to build canonical JWK: " + e.getMessage(), e);
+    }
+  }
+
+  /**
+   * This key alone, rendered as a JWKS document.
+   *
+   * <p>Key resolvers hand back a JWKS whatever the trust source was, so that the JOSE layer has one
+   * shape to verify against. A resolver that arrives at a single key — from a certificate, say —
+   * needs this to meet that contract.
+   *
+   * <p>Only the public half is emitted: a resolver returns candidate keys for verification, and a
+   * document that carried private material would put it somewhere it is never needed.
+   */
+  public String toJwks() {
+    return new JWKSet(value.toPublicJWK()).toString();
   }
 
   public String thumbprintSha256() throws JsonWebKeyInvalidException {

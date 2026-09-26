@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.core.adapters.datasource.token.OAuthTokenCacheKeyBuilder;
 import org.idp.server.core.adapters.datasource.token.query.OAuthTokenCacheEntry;
+import org.idp.server.core.openid.clientinstance.ClientInstanceIdentifier;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.type.oauth.AccessTokenEntity;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
@@ -90,6 +91,24 @@ public class OAuthTokenCommandDataSource implements OAuthTokenCommandRepository 
     }
 
     executor.deleteByUserAndClient(tenant.identifierValue(), user.sub(), clientId.value());
+  }
+
+  @Override
+  public void deleteByClientInstance(
+      Tenant tenant,
+      RequestedClientId clientId,
+      ClientInstanceIdentifier clientInstanceIdentifier) {
+    List<String> hashedAccessTokens =
+        executor.selectHashedAccessTokensByClientInstance(
+            tenant.identifierValue(), clientId.value(), clientInstanceIdentifier.value());
+
+    for (String hashedAccessToken : hashedAccessTokens) {
+      cacheStore.delete(
+          OAuthTokenCacheKeyBuilder.build(tenant.identifierValue(), hashedAccessToken));
+    }
+
+    executor.deleteByClientInstance(
+        tenant.identifierValue(), clientId.value(), clientInstanceIdentifier.value());
   }
 
   private void evictCache(Tenant tenant, AccessTokenEntity accessTokenEntity) {

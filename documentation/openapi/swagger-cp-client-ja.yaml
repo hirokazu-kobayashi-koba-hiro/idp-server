@@ -582,6 +582,7 @@ components:
           - private_key_jwt
           - tls_client_auth
           - self_signed_tls_client_auth
+          - attest_jwt_client_auth
           - none
           description: OPTIONAL. Requested Client Authentication method for the Token Endpoint. The options are client_secret_post,
             client_secret_basic, client_secret_jwt, private_key_jwt, and none, as described in Section 9 of OpenID Connect
@@ -659,6 +660,33 @@ components:
           type: object
           description: OPTIONAL. Extension properties for client configuration
           properties:
+            client_attestation_trust_source:
+              type: string
+              enum: [attester_jwks, x5c, registered_instance_key]
+              description: OPTIONAL. idp-server 独自。attest_jwt_client_auth で Client Attestation JWT の署名をどこから信頼するか
+            client_attestation_attester_jwks:
+              type: string
+              description: OPTIONAL. trust_source が attester_jwks のとき、信頼する Client Attester の公開鍵（JWK Set の JSON 文字列）
+            client_attestation_trusted_root_certificates:
+              type: array
+              items:
+                type: string
+              description: OPTIONAL. trust_source が x5c のとき、ピン留めする Attester のルート証明書（DER の base64）
+            client_instance_registration_policy:
+              type: string
+              enum: [user_bound]
+              description: OPTIONAL. アプリからの Client Instance 登録を受け付ける方針。未設定なら登録は拒否
+            client_instance_registration_clients:
+              type: array
+              items:
+                type: string
+              description: OPTIONAL. 登録を認証する ID トークンを受け付ける、ほかのクライアントの client_id（PAR 必須のテナント向けの登録用クライアント）。登録用クライアントには登録までに必要なスコープだけ（通常は openid）を与える
+            client_instance_lifetime_seconds:
+              type: integer
+              minimum: 0
+              description: OPTIONAL. アプリが登録したインスタンスの有効期間（秒）。未設定または 0 なら期限なし。期限切れのインスタンスは認証できず、アプリはログインと新しい鍵で登録し直す。リフレッシュトークンの寿命以上に揃える
+            client_instance_platform_config:
+              $ref: '#/components/schemas/ClientInstancePlatformConfig'
             access_token_duration:
               type: integer
               minimum: 1
@@ -738,6 +766,80 @@ components:
           type: object
           additionalProperties: true
           description: Additional error details
+    ClientInstancePlatformConfig:
+      type: object
+      description: |
+        OPTIONAL. idp-server 独自。Client Instance 登録で受け付けるプラットフォーム証明と、その検証条件。
+        キーは証明の種類（android_key_attestation / ios_app_attest）。
+      properties:
+        android_key_attestation:
+          type: object
+          required: [package_names, signature_digests]
+          properties:
+            package_names:
+              type: array
+              items:
+                type: string
+              description: 許可するパッケージ名
+            signature_digests:
+              type: array
+              items:
+                type: string
+              description: 署名証明書の SHA-256（base64url）。提示された値がすべてここに含まれること
+            min_security_level:
+              type: string
+              enum: [trusted_environment, strong_box]
+              default: trusted_environment
+            verified_boot_states:
+              type: array
+              items:
+                type: string
+                enum: [verified, self_signed, unverified]
+              default: [verified]
+              description: 受け入れる起動状態。failed は指定できない
+            require_device_locked:
+              type: boolean
+              default: true
+              description: ブートローダーのロックを要求する
+            min_os_patch_level:
+              type: integer
+              description: OS のセキュリティパッチの下限（YYYYMM）。未設定なら下限なし
+            challenge_binding:
+              $ref: '#/components/schemas/ChallengeBinding'
+            override_root_certificates:
+              type: array
+              items:
+                type: string
+              description: テスト用。同梱の Google ルートを置き換えるルート証明書（DER の base64）。設定すると WARN ログが出る。本番では設定しない
+        ios_app_attest:
+          type: object
+          required: [app_ids]
+          properties:
+            app_ids:
+              type: array
+              items:
+                type: string
+              description: 許可する App ID（Team ID.Bundle ID）
+            environment:
+              type: string
+              enum: [production, development]
+              default: production
+            challenge_binding:
+              $ref: '#/components/schemas/ChallengeBinding'
+            override_root_certificates:
+              type: array
+              items:
+                type: string
+              description: テスト用。同梱の Apple ルートを置き換えるルート証明書（DER の base64）。設定すると WARN ログが出る。本番では設定しない
+    ChallengeBinding:
+      type: string
+      enum: [challenge, challenge_text, request_hash]
+      default: challenge
+      description: |
+        プラットフォーム証明に埋め込む値（Android の attestationChallenge / iOS の clientDataHash）。
+        challenge = チャレンジを base64url デコードしたバイト列（iOS はその SHA-256）、
+        challenge_text = チャレンジの文字列の UTF-8（iOS はその SHA-256）、
+        request_hash = request_hash の 32 バイト（iOS も再ハッシュしない）
     ClientCreateRequest:
       type: object
       required:
@@ -836,6 +938,9 @@ components:
           - client_secret_basic
           - client_secret_jwt
           - private_key_jwt
+          - tls_client_auth
+          - self_signed_tls_client_auth
+          - attest_jwt_client_auth
           - none
           description: Authentication method for the token endpoint
         subject_type:
@@ -960,6 +1065,33 @@ components:
           type: object
           description: OPTIONAL. Extension properties for client configuration
           properties:
+            client_attestation_trust_source:
+              type: string
+              enum: [attester_jwks, x5c, registered_instance_key]
+              description: OPTIONAL. idp-server 独自。attest_jwt_client_auth で Client Attestation JWT の署名をどこから信頼するか
+            client_attestation_attester_jwks:
+              type: string
+              description: OPTIONAL. trust_source が attester_jwks のとき、信頼する Client Attester の公開鍵（JWK Set の JSON 文字列）
+            client_attestation_trusted_root_certificates:
+              type: array
+              items:
+                type: string
+              description: OPTIONAL. trust_source が x5c のとき、ピン留めする Attester のルート証明書（DER の base64）
+            client_instance_registration_policy:
+              type: string
+              enum: [user_bound]
+              description: OPTIONAL. アプリからの Client Instance 登録を受け付ける方針。未設定なら登録は拒否
+            client_instance_registration_clients:
+              type: array
+              items:
+                type: string
+              description: OPTIONAL. 登録を認証する ID トークンを受け付ける、ほかのクライアントの client_id（PAR 必須のテナント向けの登録用クライアント）。登録用クライアントには登録までに必要なスコープだけ（通常は openid）を与える
+            client_instance_lifetime_seconds:
+              type: integer
+              minimum: 0
+              description: OPTIONAL. アプリが登録したインスタンスの有効期間（秒）。未設定または 0 なら期限なし。期限切れのインスタンスは認証できず、アプリはログインと新しい鍵で登録し直す。リフレッシュトークンの寿命以上に揃える
+            client_instance_platform_config:
+              $ref: '#/components/schemas/ClientInstancePlatformConfig'
             access_token_duration:
               type: integer
               minimum: 1
@@ -1097,6 +1229,9 @@ components:
           - client_secret_basic
           - client_secret_jwt
           - private_key_jwt
+          - tls_client_auth
+          - self_signed_tls_client_auth
+          - attest_jwt_client_auth
           - none
           description: Authentication method for the token endpoint
         subject_type:
@@ -1221,6 +1356,33 @@ components:
           type: object
           description: OPTIONAL. Extension properties for client configuration
           properties:
+            client_attestation_trust_source:
+              type: string
+              enum: [attester_jwks, x5c, registered_instance_key]
+              description: OPTIONAL. idp-server 独自。attest_jwt_client_auth で Client Attestation JWT の署名をどこから信頼するか
+            client_attestation_attester_jwks:
+              type: string
+              description: OPTIONAL. trust_source が attester_jwks のとき、信頼する Client Attester の公開鍵（JWK Set の JSON 文字列）
+            client_attestation_trusted_root_certificates:
+              type: array
+              items:
+                type: string
+              description: OPTIONAL. trust_source が x5c のとき、ピン留めする Attester のルート証明書（DER の base64）
+            client_instance_registration_policy:
+              type: string
+              enum: [user_bound]
+              description: OPTIONAL. アプリからの Client Instance 登録を受け付ける方針。未設定なら登録は拒否
+            client_instance_registration_clients:
+              type: array
+              items:
+                type: string
+              description: OPTIONAL. 登録を認証する ID トークンを受け付ける、ほかのクライアントの client_id（PAR 必須のテナント向けの登録用クライアント）。登録用クライアントには登録までに必要なスコープだけ（通常は openid）を与える
+            client_instance_lifetime_seconds:
+              type: integer
+              minimum: 0
+              description: OPTIONAL. アプリが登録したインスタンスの有効期間（秒）。未設定または 0 なら期限なし。期限切れのインスタンスは認証できず、アプリはログインと新しい鍵で登録し直す。リフレッシュトークンの寿命以上に揃える
+            client_instance_platform_config:
+              $ref: '#/components/schemas/ClientInstancePlatformConfig'
             access_token_duration:
               type: integer
               minimum: 1

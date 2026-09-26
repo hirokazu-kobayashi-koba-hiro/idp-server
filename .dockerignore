@@ -1,0 +1,29 @@
+# ルートをコンテキストにするビルド (idp-server / app-view / sample-web) が
+# 必要とするのは libs, app, app-view, sample-web, docker, gradle 関連だけ。
+# 除外しないとコンテキストが 13GB を超えてビルドが事実上停止する。
+
+.git
+.github
+.idea
+
+# テスト・ドキュメント資産（性能テストデータだけで 4GB 超）
+performance-test
+documentation
+e2e
+verifiable-credentials
+oidc-conformance-suite
+secret
+logs
+
+# 依存とビルド成果物（各 Dockerfile 内で install / build する）
+**/node_modules
+**/build
+**/.gradle
+**/.next
+**/dist
+**/target
+
+# ローカル設定
+**/.env.local
+**/.DS_Store
+config/generated

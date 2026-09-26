@@ -64,6 +64,8 @@ import org.idp.server.control_plane.management.oidc.authorization.AuthorizationS
 import org.idp.server.control_plane.management.oidc.authorization.OrgAuthorizationServerManagementApi;
 import org.idp.server.control_plane.management.oidc.client.ClientManagementApi;
 import org.idp.server.control_plane.management.oidc.client.OrgClientManagementApi;
+import org.idp.server.control_plane.management.oidc.clientinstance.ClientInstanceManagementApi;
+import org.idp.server.control_plane.management.oidc.clientinstance.OrgClientInstanceManagementApi;
 import org.idp.server.control_plane.management.oidc.grant.OrgGrantManagementApi;
 import org.idp.server.control_plane.management.onboarding.OnboardingApi;
 import org.idp.server.control_plane.management.organization.OrganizationManagementApi;
@@ -108,6 +110,13 @@ import org.idp.server.core.openid.authentication.AuthenticationTransactionApi;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutors;
 import org.idp.server.core.openid.authentication.plugin.AuthenticationDependencyContainer;
 import org.idp.server.core.openid.authentication.repository.*;
+import org.idp.server.core.openid.clientinstance.ClientInstanceCommandRepository;
+import org.idp.server.core.openid.clientinstance.ClientInstanceQueryRepository;
+import org.idp.server.core.openid.clientinstance.registration.*;
+import org.idp.server.core.openid.clientinstance.registration.ClientInstanceRegistrationChallengeOperationCommandRepository;
+import org.idp.server.core.openid.clientinstance.registration.ClientInstanceRegistrationEventPublisher;
+import org.idp.server.core.openid.clientinstance.registration.ClientInstanceRegistrationProtocol;
+import org.idp.server.core.openid.clientinstance.registration.ClientInstanceRegistrationProtocols;
 import org.idp.server.core.openid.discovery.*;
 import org.idp.server.core.openid.federation.FederationInteractors;
 import org.idp.server.core.openid.federation.plugin.FederationDependencyContainer;
@@ -141,6 +150,11 @@ import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.identity.role.RoleCommandRepository;
 import org.idp.server.core.openid.identity.role.RoleQueryRepository;
 import org.idp.server.core.openid.oauth.*;
+import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallengeApi;
+import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallengeProtocol;
+import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallengeProtocols;
+import org.idp.server.core.openid.oauth.clientauthenticator.ClientAuthenticationHandler;
+import org.idp.server.core.openid.oauth.clientauthenticator.ClientAuthenticators;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationCommandRepository;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationCommandRepository;
@@ -176,6 +190,7 @@ import org.idp.server.platform.audit.AuditLogQueryRepository;
 import org.idp.server.platform.audit.AuditLogWriters;
 import org.idp.server.platform.crypto.AesCipher;
 import org.idp.server.platform.crypto.HmacHasher;
+import org.idp.server.platform.crypto.ServerNonceCodec;
 import org.idp.server.platform.datasource.*;
 import org.idp.server.platform.datasource.DatabaseTypeConfiguration;
 import org.idp.server.platform.datasource.cache.CacheStore;
@@ -263,6 +278,9 @@ public class IdpServerApplication {
   TenantInvitationManagementApi tenantInvitationManagementApi;
   AuthorizationServerManagementApi authorizationServerManagementApi;
   ClientManagementApi clientManagementApi;
+  ClientInstanceManagementApi clientInstanceManagementApi;
+  ClientInstanceRegistrationApi clientInstanceRegistrationApi;
+  ClientAttestationChallengeApi clientAttestationChallengeApi;
   UserManagementApi userManagementApi;
   AuthenticationConfigurationManagementApi authenticationConfigurationManagementApi;
   AuthenticationPolicyConfigurationManagementApi authenticationPolicyConfigurationManagementApi;
@@ -288,6 +306,7 @@ public class IdpServerApplication {
   OrgTenantManagementApi orgTenantManagementApi;
   OrgTenantStatisticsApi orgTenantStatisticsApi;
   OrgClientManagementApi orgClientManagementApi;
+  OrgClientInstanceManagementApi orgClientInstanceManagementApi;
   OrgUserManagementApi orgUserManagementApi;
   OrgAuthenticationConfigManagementApi orgAuthenticationConfigManagementApi;
   OrgAuthenticationPolicyConfigManagementApi orgAuthenticationPolicyConfigManagementApi;
@@ -399,6 +418,8 @@ public class IdpServerApplication {
     ApplicationComponentContainer applicationComponentContainer =
         ApplicationComponentContainerPluginLoader.load(dependencyContainer);
     applicationComponentContainer.register(SessionCookieDelegate.class, sessionCookieDelegate);
+    applicationComponentContainer.register(
+        ServerNonceCodec.class, new ServerNonceCodec(encryptionKey));
     applicationComponentContainer.register(
         AuthSessionCookieDelegate.class, authSessionCookieDelegate);
 
@@ -513,6 +534,10 @@ public class IdpServerApplication {
         contactVerificationChallengeOperationCommandRepository =
             applicationComponentContainer.resolve(
                 ContactVerificationChallengeOperationCommandRepository.class);
+    ClientInstanceRegistrationChallengeOperationCommandRepository
+        clientInstanceRegistrationChallengeOperationCommandRepository =
+            applicationComponentContainer.resolve(
+                ClientInstanceRegistrationChallengeOperationCommandRepository.class);
     SecurityEventQueryRepository securityEventQueryRepository =
         applicationComponentContainer.resolve(SecurityEventQueryRepository.class);
     SecurityEventHookResultQueryRepository securityEventHookResultQueryRepository =
@@ -569,6 +594,9 @@ public class IdpServerApplication {
         new HttpRequestExecutor(ssrfProtectedHttpClient, oAuthAuthorizationResolvers);
     applicationComponentContainer.register(HttpRequestExecutor.class, httpRequestExecutor);
     dependencyContainer.register(HttpRequestExecutor.class, httpRequestExecutor);
+    // Protocol providers assemble plugins of their own and need it there too, not only in the
+    // datasource container: see DefaultClientInstanceRegistrationProtocolProvider.
+    applicationComponentContainer.register(CacheStore.class, cacheStore);
 
     SmsSenders smsSenders = SmsSenderPluginLoader.load(dependencyContainer);
     applicationComponentContainer.register(SmsSenders.class, smsSenders);
@@ -595,6 +623,15 @@ public class IdpServerApplication {
         new OIDCSessionService(opSessionRepository, clientSessionRepository);
     OIDCSessionHandler oidcSessionHandler = new OIDCSessionHandler(sessionService);
     applicationComponentContainer.register(OIDCSessionHandler.class, oidcSessionHandler);
+
+    // Client authentication
+    // Must be registered before ProtocolContainerPluginLoader.load() as the token / OAuth / CIBA
+    // protocol providers resolve it. Assembled once so the authenticator SPI is scanned at startup
+    // only.
+    ClientAuthenticationHandler clientAuthenticationHandler =
+        new ClientAuthenticationHandler(new ClientAuthenticators(applicationComponentContainer));
+    applicationComponentContainer.register(
+        ClientAuthenticationHandler.class, clientAuthenticationHandler);
 
     ProtocolContainer protocolContainer =
         ProtocolContainerPluginLoader.load(applicationComponentContainer);
@@ -680,7 +717,8 @@ public class IdpServerApplication {
                 backchannelAuthenticationRequestOperationCommandRepository,
                 cibaGrantOperationCommandRepository,
                 ssoSessionOperationCommandRepository,
-                contactVerificationChallengeOperationCommandRepository),
+                contactVerificationChallengeOperationCommandRepository,
+                clientInstanceRegistrationChallengeOperationCommandRepository),
             IdpServerOperationApi.class,
             databaseTypeProvider);
 
@@ -1045,6 +1083,37 @@ public class IdpServerApplication {
             ClientManagementApi.class,
             databaseTypeProvider);
 
+    this.clientInstanceManagementApi =
+        ManagementTypeEntryServiceProxy.createProxy(
+            new ClientInstanceManagementEntryService(
+                tenantQueryRepository,
+                applicationComponentContainer.resolve(ClientInstanceCommandRepository.class),
+                applicationComponentContainer.resolve(ClientInstanceQueryRepository.class),
+                clientConfigurationQueryRepository,
+                oAuthTokenCommandRepository,
+                auditLogPublisher),
+            ClientInstanceManagementApi.class,
+            databaseTypeProvider);
+
+    this.clientInstanceRegistrationApi =
+        TenantAwareEntryServiceProxy.createProxy(
+            new ClientInstanceRegistrationEntryService(
+                tenantQueryRepository,
+                new ClientInstanceRegistrationProtocols(
+                    protocolContainer.resolveAll(ClientInstanceRegistrationProtocol.class)),
+                new ClientInstanceRegistrationEventPublisher(securityEventPublisher)),
+            ClientInstanceRegistrationApi.class,
+            databaseTypeProvider);
+
+    this.clientAttestationChallengeApi =
+        TenantAwareEntryServiceProxy.createProxy(
+            new ClientAttestationChallengeEntryService(
+                tenantQueryRepository,
+                new ClientAttestationChallengeProtocols(
+                    protocolContainer.resolveAll(ClientAttestationChallengeProtocol.class))),
+            ClientAttestationChallengeApi.class,
+            databaseTypeProvider);
+
     this.userManagementApi =
         ManagementTypeEntryServiceProxy.createProxy(
             new UserManagementEntryService(
@@ -1248,6 +1317,18 @@ public class IdpServerApplication {
                 clientConfigurationQueryRepository,
                 auditLogPublisher),
             OrgClientManagementApi.class,
+            databaseTypeProvider);
+
+    this.orgClientInstanceManagementApi =
+        ManagementTypeEntryServiceProxy.createProxy(
+            new OrgClientInstanceManagementEntryService(
+                tenantQueryRepository,
+                applicationComponentContainer.resolve(ClientInstanceCommandRepository.class),
+                applicationComponentContainer.resolve(ClientInstanceQueryRepository.class),
+                clientConfigurationQueryRepository,
+                oAuthTokenCommandRepository,
+                auditLogPublisher),
+            OrgClientInstanceManagementApi.class,
             databaseTypeProvider);
 
     this.orgGrantManagementApi =
@@ -1561,8 +1642,20 @@ public class IdpServerApplication {
     return authorizationServerManagementApi;
   }
 
+  public ClientInstanceManagementApi clientInstanceManagementApi() {
+    return clientInstanceManagementApi;
+  }
+
+  public ClientInstanceRegistrationApi clientInstanceRegistrationApi() {
+    return clientInstanceRegistrationApi;
+  }
+
   public ClientManagementApi clientManagementApi() {
     return clientManagementApi;
+  }
+
+  public ClientAttestationChallengeApi clientAttestationChallengeApi() {
+    return clientAttestationChallengeApi;
   }
 
   public UserManagementApi userManagementAPi() {
@@ -1661,6 +1754,10 @@ public class IdpServerApplication {
 
   public OrgClientManagementApi orgClientManagementApi() {
     return orgClientManagementApi;
+  }
+
+  public OrgClientInstanceManagementApi orgClientInstanceManagementApi() {
+    return orgClientInstanceManagementApi;
   }
 
   public OrgGrantManagementApi orgGrantManagementApi() {

@@ -90,6 +90,10 @@ const config = {
             route: '/docs/content_07_reference/api-rp-ja/',
           },
           {
+            spec: 'openapi/swagger-client-instance-ja.yaml',
+            route: '/docs/content_07_reference/api-client-instance-ja/',
+          },
+          {
             spec: 'openapi/swagger-authentication-device-ja.yaml',
             route: '/docs/content_07_reference/api-authentication-device-ja/',
           },
@@ -108,6 +112,10 @@ const config = {
           {
             spec: 'openapi/swagger-cp-client-ja.yaml',
             route: '/docs/content_07_reference/cp-client-api-ja/',
+          },
+          {
+            spec: 'openapi/swagger-cp-client-instance-ja.yaml',
+            route: '/docs/content_07_reference/cp-client-instance-api-ja/',
           },
           {
             spec: 'openapi/swagger-cp-user-ja.yaml',

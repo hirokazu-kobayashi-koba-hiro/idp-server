@@ -21,6 +21,8 @@ import java.util.*;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionType;
+import org.idp.server.core.openid.clientinstance.ClientAttestationTrustSource;
+import org.idp.server.core.openid.clientinstance.ClientInstanceRegistrationPolicy;
 import org.idp.server.core.openid.oauth.type.ciba.BackchannelTokenDeliveryMode;
 import org.idp.server.core.openid.oauth.type.extension.RegisteredRedirectUris;
 import org.idp.server.core.openid.oauth.type.oauth.*;
@@ -401,6 +403,10 @@ public class ClientConfiguration implements JsonReadable, Configurable {
     return hasBackchannelLogoutUri() || hasFrontchannelLogoutUri();
   }
 
+  public ClientExtensionConfiguration extensionConfiguration() {
+    return extension;
+  }
+
   public ClientAttributes clientAttributes() {
     return new ClientAttributes(
         clientId,
@@ -552,6 +558,55 @@ public class ClientConfiguration implements JsonReadable, Configurable {
 
   public boolean hasDefaultCibaAuthenticationInteractionType() {
     return extension.hasDefaultCibaAuthenticationInteractionType();
+  }
+
+  /**
+   * Where the Authorization Server takes its trust from when verifying this client's Client
+   * Attestation JWT. draft-ietf-oauth-attestation-based-client-auth-11 Section 10.8 leaves trust
+   * management out of scope, so it is a per-client deployment choice.
+   */
+  public ClientAttestationTrustSource clientAttestationTrustSource() {
+    return extension.clientAttestationTrustSource();
+  }
+
+  /** JWKS of the Client Attester trusted for this client. */
+  public String clientAttestationAttesterJwks() {
+    return extension.clientAttestationAttesterJwks();
+  }
+
+  public boolean hasClientAttestationAttesterJwks() {
+    return extension.hasClientAttestationAttesterJwks();
+  }
+
+  /** Roots an {@code x5c} chain on a Client Attestation JWT must lead to. */
+  public List<String> clientAttestationTrustedRootCertificates() {
+    return extension.clientAttestationTrustedRootCertificates();
+  }
+
+  public boolean hasClientAttestationTrustedRootCertificates() {
+    return extension.hasClientAttestationTrustedRootCertificates();
+  }
+
+  public ClientInstanceRegistrationPolicy clientInstanceRegistrationPolicy() {
+    return extension.clientInstanceRegistrationPolicy();
+  }
+
+  /** Other clients whose ID tokens may authenticate this client's instance registration. */
+  public List<String> clientInstanceRegistrationClients() {
+    return extension.clientInstanceRegistrationClients();
+  }
+
+  public long clientInstanceLifetimeSeconds() {
+    return extension.clientInstanceLifetimeSeconds();
+  }
+
+  public boolean hasClientInstanceLifetime() {
+    return extension.hasClientInstanceLifetime();
+  }
+
+  /** Per-platform settings read by the platform attestation verifiers at instance registration. */
+  public Map<String, Object> clientInstancePlatformConfig() {
+    return extension.clientInstancePlatformConfig();
   }
 
   public boolean isCibaRequireRar() {

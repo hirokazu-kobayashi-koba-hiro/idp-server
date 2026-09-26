@@ -39,4 +39,9 @@ public interface OAuthTokenSqlExecutor {
       String tenantId, String userId, String clientId);
 
   void deleteByUserAndClient(String tenantId, String userId, String clientId);
+
+  List<String> selectHashedAccessTokensByClientInstance(
+      String tenantId, String clientId, String clientInstanceId);
+
+  void deleteByClientInstance(String tenantId, String clientId, String clientInstanceId);
 }

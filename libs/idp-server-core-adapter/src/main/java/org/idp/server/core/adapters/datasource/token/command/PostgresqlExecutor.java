@@ -32,12 +32,9 @@ public class PostgresqlExecutor implements OAuthTokenSqlExecutor {
 
   JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
-  @Override
-  public Map<String, String> insert(
-      OAuthToken oAuthToken, AesCipher aesCipher, HmacHasher hmacHasher) {
-    SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqlTemplate =
-        """
+  /** Exposed so the column list and the placeholder list can be checked against each other. */
+  static final String INSERT_SQL =
+      """
                          INSERT INTO oauth_token (
                             id,
                             tenant_id,
@@ -67,6 +64,8 @@ public class PostgresqlExecutor implements OAuthTokenSqlExecutor {
                             id_token,
                             client_certification_thumbprint,
                             jwk_thumbprint,
+                            client_instance_thumbprint,
+                            client_instance_id,
                             c_nonce,
                             c_nonce_expires_in,
                             expires_at
@@ -101,10 +100,18 @@ public class PostgresqlExecutor implements OAuthTokenSqlExecutor {
                             ?,
                             ?,
                             ?,
+                            ?::uuid,
+                            ?,
                             ?,
                             ?
                             );
                           """;
+
+  @Override
+  public Map<String, String> insert(
+      OAuthToken oAuthToken, AesCipher aesCipher, HmacHasher hmacHasher) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String sqlTemplate = INSERT_SQL;
 
     List<Object> params = new ArrayList<>();
     Map<String, String> row = buildParamsAndRow(oAuthToken, aesCipher, hmacHasher, params);
@@ -257,6 +264,23 @@ public class PostgresqlExecutor implements OAuthTokenSqlExecutor {
       OAuthTokenRowBuilder.add(params, row, "jwk_thumbprint", null);
     }
 
+    // Independent of DPoP: an attestation client binds its refresh token to the Client Instance
+    // whether or not it also presents DPoP proofs.
+    OAuthTokenRowBuilder.add(
+        params,
+        row,
+        "client_instance_thumbprint",
+        oAuthToken.accessToken().hasClientInstanceBinding()
+            ? oAuthToken.accessToken().clientInstanceThumbprint().value()
+            : null);
+    OAuthTokenRowBuilder.add(
+        params,
+        row,
+        "client_instance_id",
+        oAuthToken.accessToken().hasClientInstanceIdentifier()
+            ? oAuthToken.accessToken().clientInstanceIdentifier().value()
+            : null);
+
     if (oAuthToken.hasCNonce()) {
       OAuthTokenRowBuilder.add(params, row, "c_nonce", oAuthToken.cNonce().value());
     } else {
@@ -323,6 +347,37 @@ public class PostgresqlExecutor implements OAuthTokenSqlExecutor {
               AND client_id = ?;
             """;
     List<Object> params = List.of(tenantId, userId, clientId);
+
+    sqlExecutor.execute(sqlTemplate, params);
+  }
+
+  @Override
+  public List<String> selectHashedAccessTokensByClientInstance(
+      String tenantId, String clientId, String clientInstanceId) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String sqlTemplate =
+        """
+            SELECT hashed_access_token FROM oauth_token
+            WHERE tenant_id = ?::uuid
+              AND client_id = ?
+              AND client_instance_id = ?::uuid;
+            """;
+    List<Object> params = List.of(tenantId, clientId, clientInstanceId);
+    List<Map<String, String>> results = sqlExecutor.selectList(sqlTemplate, params);
+    return results.stream().map(row -> row.get("hashed_access_token")).toList();
+  }
+
+  @Override
+  public void deleteByClientInstance(String tenantId, String clientId, String clientInstanceId) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String sqlTemplate =
+        """
+            DELETE FROM oauth_token
+            WHERE tenant_id = ?::uuid
+              AND client_id = ?
+              AND client_instance_id = ?::uuid;
+            """;
+    List<Object> params = List.of(tenantId, clientId, clientInstanceId);
 
     sqlExecutor.execute(sqlTemplate, params);
   }

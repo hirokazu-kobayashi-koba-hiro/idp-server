@@ -66,6 +66,51 @@ class OAuthTokenInsertRowParityTest {
   AesCipher aesCipher = new AesCipher(Base64.getEncoder().encodeToString(new byte[32]));
   HmacHasher hmacHasher = new HmacHasher("test-secret");
 
+  /**
+   * The INSERT statement names as many columns as it has placeholders.
+   *
+   * <p>The row parity test above compares the map of values against the SELECT columns, which says
+   * nothing about the statement itself: adding a column name without a {@code ?} leaves both sides
+   * of that comparison correct and fails at the database instead. It is loud when it happens —
+   * every token issuance errors — but it fails in an environment with a database rather than here.
+   */
+  @Test
+  void insertStatementColumnsMatchPlaceholders() {
+    assertColumnsMatchPlaceholders(
+        "postgresql",
+        org.idp.server.core.adapters.datasource.token.command.PostgresqlExecutor.INSERT_SQL);
+    assertColumnsMatchPlaceholders(
+        "mysql", org.idp.server.core.adapters.datasource.token.command.MysqlExecutor.INSERT_SQL);
+  }
+
+  private void assertColumnsMatchPlaceholders(String dialect, String sql) {
+    // Neither list contains a nested parenthesis, so the bounds are the first pair after the table
+    // name and the first pair after VALUES.
+    int columnsOpen = sql.indexOf('(');
+    int columnsClose = sql.indexOf(')', columnsOpen);
+    int valuesAt = sql.indexOf("VALUES", columnsClose);
+    int valuesOpen = sql.indexOf('(', valuesAt);
+    int valuesClose = sql.indexOf(')', valuesOpen);
+
+    List<String> columns = splitNonBlank(sql.substring(columnsOpen + 1, columnsClose));
+    List<String> placeholders = splitNonBlank(sql.substring(valuesOpen + 1, valuesClose));
+
+    assertEquals(
+        columns.size(),
+        placeholders.size(),
+        dialect + ": column count and placeholder count differ. columns=" + columns);
+  }
+
+  private List<String> splitNonBlank(String value) {
+    List<String> result = new ArrayList<>();
+    for (String part : value.split(",")) {
+      if (!part.trim().isEmpty()) {
+        result.add(part.trim());
+      }
+    }
+    return result;
+  }
+
   @Test
   void postgresqlInsertRowMatchesSelectColumns() {
     List<Object> params = new ArrayList<>();

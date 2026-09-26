@@ -1,4 +1,4 @@
-import { describe, expect, it } from "@jest/globals";
+import { describe, expect, it, xit } from "@jest/globals";
 
 import { getJwks, inspectToken, requestToken } from "../../api/oauthClient";
 import {
@@ -410,5 +410,27 @@ describe("OAuth 2.0 Token Introspection", () => {
       expect(typeof introspectionResponse.data.username).toBe("string");
       expect(introspectionResponse.data.username.length).toBeGreaterThan(0);
     });
+  });
+
+  /**
+   * Not implemented (#1891). The section was missing from this file entirely rather than
+   * listed as unsupported, which is why the deviation went unnoticed until the OpenAPI for
+   * #1521 was written against the handler.
+   *
+   * What the endpoint does today, for all three: 400 with
+   * `{"active": false, "error": "invalid_client"}` and no WWW-Authenticate
+   * (`TokenIntrospectionErrorHandler:113-125`). The token endpoint and revocation answer 401.
+   *
+   * Fixing it is a breaking change for Resource Servers, so it is tracked rather than done
+   * here. These stay xit until #1891 lands.
+   *
+   * The ledger page that would surface this class of gap is #1892.
+   */
+  describe("2.3.  Error Response", () => {
+    xit("If the protected resource uses OAuth 2.0 client credentials to authenticate to the introspection endpoint and its credentials are invalid, the authorization server responds with an HTTP 401 (Unauthorized) as described in Section 5.2 of OAuth 2.0 [RFC6749]. - RFC 7662 Section 2.3 (#1891)", async () => {});
+
+    xit('If the client attempted to authenticate via the "Authorization" request header field, the authorization server MUST respond with an HTTP 401 (Unauthorized) status code and include the "WWW-Authenticate" response header field matching the authentication scheme used by the client. - RFC 6749 Section 5.2, via RFC 7662 Section 2.3 (#1891)', async () => {});
+
+    xit('Note that a properly formed and authorized query for an inactive or otherwise invalid token (or a token the protected resource is not allowed to know about) is not considered an error response by this specification. In these cases, the authorization server MUST instead respond with an introspection response with the "active" field set to "false" - RFC 7662 Section 2.3 (#1891)', async () => {});
   });
 });
