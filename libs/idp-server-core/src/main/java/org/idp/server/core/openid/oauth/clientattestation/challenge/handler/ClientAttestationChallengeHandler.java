@@ -17,8 +17,7 @@
 package org.idp.server.core.openid.oauth.clientattestation.challenge.handler;
 
 import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallenge;
-import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallengeIssuer;
-import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallengeRepository;
+import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallenges;
 import org.idp.server.core.openid.oauth.clientattestation.challenge.handler.io.ClientAttestationChallengeResponse;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
@@ -33,18 +32,15 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 public class ClientAttestationChallengeHandler {
 
   AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
-  ClientAttestationChallengeRepository challengeRepository;
-  ClientAttestationChallengeIssuer challengeIssuer;
+  ClientAttestationChallenges challenges;
 
   public ClientAttestationChallengeHandler(
       AuthorizationServerConfigurationQueryRepository
           authorizationServerConfigurationQueryRepository,
-      ClientAttestationChallengeRepository challengeRepository,
-      ClientAttestationChallengeIssuer challengeIssuer) {
+      ClientAttestationChallenges challenges) {
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
-    this.challengeRepository = challengeRepository;
-    this.challengeIssuer = challengeIssuer;
+    this.challenges = challenges;
   }
 
   public ClientAttestationChallengeResponse handle(Tenant tenant) {
@@ -53,9 +49,8 @@ public class ClientAttestationChallengeHandler {
         authorizationServerConfigurationQueryRepository.get(tenant);
 
     ClientAttestationChallenge challenge =
-        challengeIssuer.issue(
-            authorizationServerConfiguration.clientAttestationChallengeDuration());
-    challengeRepository.register(tenant, challenge);
+        challenges.issue(
+            tenant, authorizationServerConfiguration.clientAttestationChallengeDuration());
 
     return ClientAttestationChallengeResponse.ok(challenge);
   }

@@ -19,8 +19,7 @@ package org.idp.server.core.openid.extension.attestation;
 import org.idp.server.core.openid.clientinstance.ClientAttestationTrustSource;
 import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationJwt;
 import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationPopJwt;
-import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallengeIssuer;
-import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallengeRepository;
+import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallenges;
 import org.idp.server.core.openid.oauth.clientauthenticator.BackchannelRequestContext;
 import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientAssertionJwt;
 import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientAuthenticationPublicKey;
@@ -56,15 +55,12 @@ public class AttestJwtClientAuthAuthenticator implements ClientAuthenticator {
 
   LoggerWrapper log = LoggerWrapper.getLogger(AttestJwtClientAuthAuthenticator.class);
   ClientAttestationKeyResolvers keyResolvers;
-  ClientAttestationChallengeRepository challengeRepository;
-  ClientAttestationChallengeIssuer challengeIssuer;
+  ClientAttestationChallenges challenges;
 
   public AttestJwtClientAuthAuthenticator(
-      ClientAttestationKeyResolvers keyResolvers,
-      ClientAttestationChallengeRepository challengeRepository) {
+      ClientAttestationKeyResolvers keyResolvers, ClientAttestationChallenges challenges) {
     this.keyResolvers = keyResolvers;
-    this.challengeRepository = challengeRepository;
-    this.challengeIssuer = new ClientAttestationChallengeIssuer();
+    this.challenges = challenges;
   }
 
   @Override
@@ -92,9 +88,7 @@ public class AttestJwtClientAuthAuthenticator implements ClientAuthenticator {
         new ClientAttestationJwtVerifier(context, keyResolver, trustSource).verify();
     JsonWebKey clientInstanceKey = attestation.clientInstanceKey();
     JsonWebSignature popJws =
-        new ClientAttestationPopJwtVerifier(
-                context, clientInstanceKey, challengeRepository, challengeIssuer)
-            .verify();
+        new ClientAttestationPopJwtVerifier(context, clientInstanceKey, challenges).verify();
 
     log.debug(
         "Client authentication succeeded: method={}, client_id={}",

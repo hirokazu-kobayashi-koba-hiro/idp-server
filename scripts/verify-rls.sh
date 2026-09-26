@@ -56,7 +56,7 @@ RLS_TABLES=(
   authentication_interactions identity_verification_configuration
   identity_verification_application identity_verification_result
   idp_user_lifecycle_event_result audit_log
-  client_instance client_instance_registration_challenge client_attestation_challenge
+  client_instance client_instance_registration_challenge
 )
 
 # 見やすい色

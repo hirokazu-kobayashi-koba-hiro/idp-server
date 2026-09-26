@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationJwt;
 import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationPopJwt;
+import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallenges;
 import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
 import org.idp.server.core.openid.oauth.clientauthenticator.exception.ClientUnAuthorizedException;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
@@ -42,6 +43,7 @@ import org.idp.server.core.openid.oauth.type.oauth.ClientSecretBasic;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.token.TokenRequestContext;
 import org.idp.server.core.openid.token.TokenRequestParameters;
+import org.idp.server.platform.crypto.ServerNonceCodec;
 import org.idp.server.platform.json.JsonConverter;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -66,7 +68,7 @@ class AttestJwtClientAuthAuthenticatorTest {
   AttestJwtClientAuthAuthenticator authenticator =
       new AttestJwtClientAuthAuthenticator(
           new ClientAttestationKeyResolvers(new StubClientInstanceQueryRepository()),
-          new StubClientAttestationChallengeRepository());
+          new ClientAttestationChallenges(new ServerNonceCodec("server-secret-for-tests")));
 
   @BeforeAll
   static void setup() throws Exception {

@@ -20,8 +20,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallenge;
-import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallengeIssuer;
-import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallengeRepository;
+import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallenges;
 import org.idp.server.core.openid.oauth.clientauthenticator.BackchannelRequestContext;
 import org.idp.server.core.openid.oauth.clientauthenticator.exception.InvalidClientAttestationException;
 import org.idp.server.core.openid.oauth.clientauthenticator.exception.UseAttestationChallengeException;
@@ -68,18 +67,15 @@ class ClientAttestationPopJwtVerifier {
 
   BackchannelRequestContext context;
   JsonWebKey clientInstanceKey;
-  ClientAttestationChallengeRepository challengeRepository;
-  ClientAttestationChallengeIssuer challengeIssuer;
+  ClientAttestationChallenges challenges;
 
   ClientAttestationPopJwtVerifier(
       BackchannelRequestContext context,
       JsonWebKey clientInstanceKey,
-      ClientAttestationChallengeRepository challengeRepository,
-      ClientAttestationChallengeIssuer challengeIssuer) {
+      ClientAttestationChallenges challenges) {
     this.context = context;
     this.clientInstanceKey = clientInstanceKey;
-    this.challengeRepository = challengeRepository;
-    this.challengeIssuer = challengeIssuer;
+    this.challenges = challenges;
   }
 
   /** Verifies the Client Attestation PoP JWT and returns the verified JWS. */
@@ -203,7 +199,7 @@ class ClientAttestationPopJwtVerifier {
           "client attestation pop jwt must contain challenge claim");
     }
 
-    ClientAttestationChallenge stored = challengeRepository.find(context.tenant(), presented);
+    ClientAttestationChallenge stored = challenges.find(context.tenant(), presented);
     if (!stored.isValid()) {
       throw useAttestationChallengeException(
           "client attestation pop jwt challenge claim is unknown or expired");
@@ -217,8 +213,8 @@ class ClientAttestationPopJwtVerifier {
    */
   private UseAttestationChallengeException useAttestationChallengeException(String message) {
     ClientAttestationChallenge fresh =
-        challengeIssuer.issue(context.serverConfiguration().clientAttestationChallengeDuration());
-    challengeRepository.register(context.tenant(), fresh);
+        challenges.issue(
+            context.tenant(), context.serverConfiguration().clientAttestationChallengeDuration());
 
     return new UseAttestationChallengeException(
         ClientAuthenticationType.attest_jwt_client_auth.name(),

@@ -13,75 +13,95 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.idp.server.core.openid.oauth.clientattestation;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.Duration;
-import java.util.Base64;
 import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallenge;
-import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallengeIssuer;
+import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallenges;
+import org.idp.server.platform.crypto.ServerNonceCodec;
 import org.idp.server.platform.date.SystemDateTime;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 /**
- * draft-ietf-oauth-attestation-based-client-auth-11 Section 6: Challenges issued by the server.
- *
- * <p>Section 10.7 and Section 12.1 let a challenge bound to a Client Instance session be validated
- * against the single value expected for that session, so a challenge here is reusable for its whole
- * lifetime and there is no consume step.
+ * draft-ietf-oauth-attestation-based-client-auth-11 Section 6: Challenges issued by the server and
+ * recognized without being stored. Reusable for their whole lifetime (Section 12.1), so there is no
+ * consume step.
  */
 class ClientAttestationChallengeTest {
 
-  private final ClientAttestationChallengeIssuer issuer = new ClientAttestationChallengeIssuer();
+  static final String SECRET = "server-secret-for-tests";
 
-  @Test
-  void issuedChallengeIsBase64UrlEncodedRandomOf32Bytes() {
-    ClientAttestationChallenge challenge = issuer.issue(300);
+  private final ClientAttestationChallenges challenges =
+      new ClientAttestationChallenges(new ServerNonceCodec(SECRET));
 
-    byte[] decoded = Base64.getUrlDecoder().decode(challenge.value());
-    assertEquals(32, decoded.length);
-    assertFalse(challenge.value().contains("="), "base64url without padding");
-    assertFalse(challenge.value().contains("+"));
-    assertFalse(challenge.value().contains("/"));
+  private final Tenant tenant = tenant("67e7eae6-62b0-4500-9eff-87459f63fc66");
+  private final Tenant otherTenant = tenant("b01c0787-b7be-4699-9a5a-042f70d41697");
+
+  private static Tenant tenant(String id) {
+    return new Tenant(
+        new TenantIdentifier(id),
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        true);
   }
 
   @Test
-  void issuedChallengesDoNotRepeat() {
-    ClientAttestationChallenge first = issuer.issue(300);
-    ClientAttestationChallenge second = issuer.issue(300);
+  @DisplayName("発行した Challenge は、同じテナントで何度でも認識でき、期限は発行時のもの")
+  void issuedChallengeIsRecognizedForItsLifetime() {
+    ClientAttestationChallenge issued = challenges.issue(tenant, 300);
 
-    assertNotEquals(first.value(), second.value());
+    assertTrue(issued.isValid());
+    assertEquals(300, Duration.between(issued.createdAt(), issued.expiresAt()).toSeconds());
+
+    ClientAttestationChallenge found = challenges.find(tenant, issued.value());
+    assertTrue(found.isValid());
+    assertEquals(
+        SystemDateTime.toEpochSecond(issued.expiresAt()),
+        SystemDateTime.toEpochSecond(found.expiresAt()));
+    assertTrue(challenges.find(tenant, issued.value()).isValid(), "reusable, not consumed");
   }
 
   @Test
-  void issuedChallengeIsValidForTheRequestedLifetime() {
-    ClientAttestationChallenge challenge = issuer.issue(300);
-
-    assertTrue(challenge.isValid());
-    assertFalse(challenge.isExpired());
-    Duration lifetime = Duration.between(challenge.createdAt(), challenge.expiresAt());
-    assertEquals(300, lifetime.toSeconds());
-  }
-
-  @Test
+  @DisplayName("期限切れの Challenge は有効でない")
   void expiredChallengeIsNotValid() {
-    ClientAttestationChallenge challenge =
-        new ClientAttestationChallenge(
-            "value", SystemDateTime.now().minusSeconds(1), SystemDateTime.now());
+    ClientAttestationChallenge issued = challenges.issue(tenant, -1);
 
-    assertTrue(challenge.exists());
-    assertTrue(challenge.isExpired());
-    assertFalse(challenge.isValid());
+    ClientAttestationChallenge found = challenges.find(tenant, issued.value());
+    assertTrue(found.exists());
+    assertFalse(found.isValid());
   }
 
   @Test
-  void unknownChallengeIsNotValid() {
-    // What the repository returns when the value was never issued by this server.
-    ClientAttestationChallenge challenge = new ClientAttestationChallenge();
+  @DisplayName("別テナント・別の鍵・このサーバーが出していない値は認識しない")
+  void foreignValuesAreNotRecognized() {
+    ClientAttestationChallenge issued = challenges.issue(tenant, 300);
 
-    assertFalse(challenge.exists());
-    assertFalse(challenge.isValid());
+    assertFalse(challenges.find(otherTenant, issued.value()).exists());
+    assertFalse(
+        new ClientAttestationChallenges(new ServerNonceCodec("another-secret"))
+            .find(tenant, issued.value())
+            .exists());
+    assertFalse(challenges.find(tenant, "never-issued").exists());
+  }
+
+  @Test
+  @DisplayName("Challenge は毎回違う")
+  void issuedChallengesDoNotRepeat() {
+    assertNotEquals(challenges.issue(tenant, 300).value(), challenges.issue(tenant, 300).value());
   }
 }

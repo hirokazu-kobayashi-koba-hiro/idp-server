@@ -151,7 +151,6 @@ import org.idp.server.core.openid.identity.role.RoleCommandRepository;
 import org.idp.server.core.openid.identity.role.RoleQueryRepository;
 import org.idp.server.core.openid.oauth.*;
 import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallengeApi;
-import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallengeOperationCommandRepository;
 import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallengeProtocol;
 import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallengeProtocols;
 import org.idp.server.core.openid.oauth.clientauthenticator.ClientAuthenticationHandler;
@@ -191,6 +190,7 @@ import org.idp.server.platform.audit.AuditLogQueryRepository;
 import org.idp.server.platform.audit.AuditLogWriters;
 import org.idp.server.platform.crypto.AesCipher;
 import org.idp.server.platform.crypto.HmacHasher;
+import org.idp.server.platform.crypto.ServerNonceCodec;
 import org.idp.server.platform.datasource.*;
 import org.idp.server.platform.datasource.DatabaseTypeConfiguration;
 import org.idp.server.platform.datasource.cache.CacheStore;
@@ -419,6 +419,8 @@ public class IdpServerApplication {
         ApplicationComponentContainerPluginLoader.load(dependencyContainer);
     applicationComponentContainer.register(SessionCookieDelegate.class, sessionCookieDelegate);
     applicationComponentContainer.register(
+        ServerNonceCodec.class, new ServerNonceCodec(encryptionKey));
+    applicationComponentContainer.register(
         AuthSessionCookieDelegate.class, authSessionCookieDelegate);
 
     AuthorizationServerConfigurationCommandRepository
@@ -532,10 +534,6 @@ public class IdpServerApplication {
         contactVerificationChallengeOperationCommandRepository =
             applicationComponentContainer.resolve(
                 ContactVerificationChallengeOperationCommandRepository.class);
-    ClientAttestationChallengeOperationCommandRepository
-        clientAttestationChallengeOperationCommandRepository =
-            applicationComponentContainer.resolve(
-                ClientAttestationChallengeOperationCommandRepository.class);
     ClientInstanceRegistrationChallengeOperationCommandRepository
         clientInstanceRegistrationChallengeOperationCommandRepository =
             applicationComponentContainer.resolve(
@@ -720,7 +718,6 @@ public class IdpServerApplication {
                 cibaGrantOperationCommandRepository,
                 ssoSessionOperationCommandRepository,
                 contactVerificationChallengeOperationCommandRepository,
-                clientAttestationChallengeOperationCommandRepository,
                 clientInstanceRegistrationChallengeOperationCommandRepository),
             IdpServerOperationApi.class,
             databaseTypeProvider);

@@ -18,6 +18,7 @@ package org.idp.server.core.openid.oauth.clientattestation.challenge;
 
 import org.idp.server.core.openid.oauth.clientattestation.challenge.handler.ClientAttestationChallengeHandler;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
+import org.idp.server.platform.crypto.ServerNonceCodec;
 import org.idp.server.platform.dependency.ApplicationComponentContainer;
 import org.idp.server.platform.dependency.protocol.ProtocolProvider;
 
@@ -34,8 +35,7 @@ public class DefaultClientAttestationChallengeProtocolProvider
     ClientAttestationChallengeHandler handler =
         new ClientAttestationChallengeHandler(
             container.resolve(AuthorizationServerConfigurationQueryRepository.class),
-            container.resolve(ClientAttestationChallengeRepository.class),
-            new ClientAttestationChallengeIssuer());
+            new ClientAttestationChallenges(container.resolve(ServerNonceCodec.class)));
     return new DefaultClientAttestationChallengeProtocol(handler);
   }
 }
