@@ -458,6 +458,9 @@ Android Key Attestation の検証は次の順で行います。
 | `package_names` | 必須 | 許可するパッケージ名 |
 | `signature_digests` | 必須 | 署名証明書のダイジェスト。**提示された値がすべてここに含まれること**が条件 |
 | `min_security_level` | `trusted_environment` | `trusted_environment` / `strong_box`。`software` は常に拒否。**`attestationSecurityLevel` と `keyMintSecurityLevel` の両方**に適用されます |
+| `verified_boot_states` | `["verified"]` | 受け入れる起動状態。`verified` / `self_signed` / `unverified`。`failed` は指定できない |
+| `require_device_locked` | `true` | ブートローダーがロックされていることを要求する |
+| `min_os_patch_level` | なし | OS のセキュリティパッチの下限（`YYYYMM` の数値。例: `202406`） |
 | `trusted_root_certificates` | — | ルートの上書き。設定すると WARN ログが出ます（実質そのルートの持ち主を信頼することになるため） |
 
 `signature_digests` が必須なのは、パッケージ名が秘密ではないためです。攻撃者は自分の端末で同じパッケージ名のアプリを名乗れるので、**再署名を見分けるのは署名証明書のダイジェストだけ**です。
@@ -469,7 +472,9 @@ Android Key Attestation の検証は次の順で行います。
 | `origin` が `KM_ORIGIN_GENERATED` | 外部で生成して取り込んだ鍵。セキュアハードウェア内にあっても生成元に複製が存在するため、所持を示しても「どの端末か」を示せない。`KM_ORIGIN_SECURELY_IMPORTED` も同様に拒否します（ラップした側は平文を持っていたため） |
 | `purpose` が `KM_PURPOSE_SIGN` を含む | 署名に使えない鍵。登録は通り、最初の PoP で署名検証に落ちる |
 
-どちらも `hardwareEnforced` 側の `AuthorizationList` から読みます。鍵自身の性質を知っているのは KeyMint だけで、`softwareEnforced` に同じ値があっても、それはプラットフォームの申告にすぎないためです。端末が報告しなかった場合も拒否します（判定の材料が無いことは、条件を満たす証拠にはなりません）。
+**起動状態も要求します。** パッケージ名と署名ダイジェスト（`attestationApplicationId`）を書くのは Android プラットフォームで、KeyMint ではありません。改造した OS はどのアプリの名前でも名乗れます。KeyMint がブートローダーの計測から書く `rootOfTrust`（`verifiedBootState` と `deviceLocked`）で、正規に検証された OS が起動し、ブートローダーがロックされていることを確かめて初めて、アプリの名乗りを信用できます。既定では `verified` かつロック済みだけを受け入れます。開発端末やカスタム OS（`self_signed`）を通したい配備は、`verified_boot_states` と `require_device_locked` で明示的に緩めます。
+
+鍵の性質（`origin` / `purpose`）も起動状態（`rootOfTrust` / `osPatchLevel`）も、`hardwareEnforced` 側の `AuthorizationList` から読みます。鍵自身の性質を知っているのは KeyMint だけで、`softwareEnforced` に同じ値があっても、それはプラットフォームの申告にすぎないためです。端末が報告しなかった場合も拒否します（判定の材料が無いことは、条件を満たす証拠にはなりません）。
 
 
 ### 登録時に残す証跡
@@ -486,6 +491,7 @@ Android Key Attestation の検証は次の順で行います。
     "origin": "generated"
   },
   "app": { "package_names": ["com.example.wallet"], "signature_digests": ["..."] },
+  "device": { "verified_boot_state": "verified", "device_locked": true, "os_patch_level": 202409 },
   "chain": {
     "certificates": [
       { "serial": "1", "not_after": "2036-01-01T00:00:00Z", "sha256": "<証明書の SHA-256（16進）>" }
@@ -494,7 +500,7 @@ Android Key Attestation の検証は次の順で行います。
 }
 ```
 
-iOS App Attest では `key` を持たず、`app` が `{ "app_id": "...", "environment": "production" }` になります。
+iOS App Attest では `key` と `device` を持たず、`app` が `{ "app_id": "...", "environment": "production" }` になります。
 
 残す目的は 3 つです。
 

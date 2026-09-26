@@ -16,6 +16,7 @@
 
 package org.idp.server.core.openid.extension.attestation.android;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -48,16 +49,25 @@ public class AndroidKeyAttestationConfiguration {
   List<String> packageNames;
   List<String> signatureDigests;
   AndroidKeyAttestationSecurityLevel minSecurityLevel;
+  List<AndroidVerifiedBootState> verifiedBootStates;
+  boolean requireDeviceLocked;
+  int minOsPatchLevel;
   List<String> trustedRootCertificates;
 
   AndroidKeyAttestationConfiguration(
       List<String> packageNames,
       List<String> signatureDigests,
       AndroidKeyAttestationSecurityLevel minSecurityLevel,
+      List<AndroidVerifiedBootState> verifiedBootStates,
+      boolean requireDeviceLocked,
+      int minOsPatchLevel,
       List<String> trustedRootCertificates) {
     this.packageNames = packageNames;
     this.signatureDigests = signatureDigests;
     this.minSecurityLevel = minSecurityLevel;
+    this.verifiedBootStates = verifiedBootStates;
+    this.requireDeviceLocked = requireDeviceLocked;
+    this.minOsPatchLevel = minOsPatchLevel;
     this.trustedRootCertificates = trustedRootCertificates;
   }
 
@@ -95,7 +105,49 @@ public class AndroidKeyAttestationConfiguration {
         packageNames,
         signatureDigests,
         minSecurityLevel,
+        verifiedBootStates(values.get("verified_boot_states")),
+        requireDeviceLocked(values.get("require_device_locked")),
+        minOsPatchLevel(values.get("min_os_patch_level")),
         stringList(values.get("trusted_root_certificates")));
+  }
+
+  /**
+   * The boot states accepted, {@code verified} only by default.
+   *
+   * <p>{@code failed} cannot be listed: it means the OS failed verification, and a configuration
+   * that accepts it has turned the check off rather than relaxed it.
+   */
+  private static List<AndroidVerifiedBootState> verifiedBootStates(Object value) {
+    List<String> names = stringList(value);
+    if (names.isEmpty()) {
+      return List.of(AndroidVerifiedBootState.verified);
+    }
+    List<AndroidVerifiedBootState> states = new ArrayList<>();
+    for (String name : names) {
+      AndroidVerifiedBootState state = AndroidVerifiedBootState.of(name);
+      if (state == AndroidVerifiedBootState.undefined || state == AndroidVerifiedBootState.failed) {
+        throw new AndroidKeyAttestationException("unsupported verified_boot_states value: " + name);
+      }
+      states.add(state);
+    }
+    return List.copyOf(states);
+  }
+
+  /** A locked bootloader is required unless the configuration says {@code false}. */
+  private static boolean requireDeviceLocked(Object value) {
+    return !(value instanceof Boolean required) || required;
+  }
+
+  /** The minimum OS patch level as YYYYMM; 0 (the default) sets no minimum. */
+  private static int minOsPatchLevel(Object value) {
+    if (value == null) {
+      return 0;
+    }
+    if (!(value instanceof Number number) || number.intValue() < 0) {
+      throw new AndroidKeyAttestationException(
+          "min_os_patch_level must be a number in the form YYYYMM: " + value);
+    }
+    return number.intValue();
   }
 
   private static AndroidKeyAttestationSecurityLevel minSecurityLevel(Object value) {
@@ -127,6 +179,22 @@ public class AndroidKeyAttestationConfiguration {
 
   public AndroidKeyAttestationSecurityLevel minSecurityLevel() {
     return minSecurityLevel;
+  }
+
+  public List<AndroidVerifiedBootState> verifiedBootStates() {
+    return verifiedBootStates;
+  }
+
+  public boolean requiresDeviceLocked() {
+    return requireDeviceLocked;
+  }
+
+  public int minOsPatchLevel() {
+    return minOsPatchLevel;
+  }
+
+  public boolean hasMinOsPatchLevel() {
+    return minOsPatchLevel > 0;
   }
 
   public List<String> trustedRootCertificates() {

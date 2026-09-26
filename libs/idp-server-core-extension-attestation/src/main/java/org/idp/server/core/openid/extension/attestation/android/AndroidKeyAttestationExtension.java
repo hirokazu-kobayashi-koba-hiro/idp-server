@@ -71,6 +71,8 @@ public class AndroidKeyAttestationExtension {
   private static final int PURPOSE_TAG = 1;
 
   private static final int ORIGIN_TAG = 702;
+  private static final int ROOT_OF_TRUST_TAG = 704;
+  private static final int OS_PATCH_LEVEL_TAG = 706;
   private static final int ATTESTATION_APPLICATION_ID_TAG = 709;
 
   private static final int ATTESTATION_SECURITY_LEVEL_INDEX = 1;
@@ -80,11 +82,17 @@ public class AndroidKeyAttestationExtension {
   private static final int HARDWARE_ENFORCED_INDEX = 7;
   private static final int KEY_DESCRIPTION_ELEMENTS = 8;
 
+  private static final int DEVICE_LOCKED_INDEX = 1;
+  private static final int VERIFIED_BOOT_STATE_INDEX = 2;
+  private static final int ROOT_OF_TRUST_ELEMENTS = 3;
+
   byte[] attestationChallenge;
   AndroidKeyAttestationSecurityLevel attestationSecurityLevel;
   AndroidKeyAttestationSecurityLevel keyMintSecurityLevel;
   AndroidKeyOrigin origin;
   List<AndroidKeyPurpose> purposes;
+  AndroidRootOfTrust rootOfTrust;
+  int osPatchLevel;
   AndroidAttestationApplicationId attestationApplicationId;
 
   AndroidKeyAttestationExtension(
@@ -93,12 +101,16 @@ public class AndroidKeyAttestationExtension {
       AndroidKeyAttestationSecurityLevel keyMintSecurityLevel,
       AndroidKeyOrigin origin,
       List<AndroidKeyPurpose> purposes,
+      AndroidRootOfTrust rootOfTrust,
+      int osPatchLevel,
       AndroidAttestationApplicationId attestationApplicationId) {
     this.attestationChallenge = attestationChallenge;
     this.attestationSecurityLevel = attestationSecurityLevel;
     this.keyMintSecurityLevel = keyMintSecurityLevel;
     this.origin = origin;
     this.purposes = purposes;
+    this.rootOfTrust = rootOfTrust;
+    this.osPatchLevel = osPatchLevel;
     this.attestationApplicationId = attestationApplicationId;
   }
 
@@ -137,6 +149,8 @@ public class AndroidKeyAttestationExtension {
       Asn1Node hardwareEnforced = keyDescription.at(HARDWARE_ENFORCED_INDEX);
       AndroidKeyOrigin origin = origin(hardwareEnforced);
       List<AndroidKeyPurpose> purposes = purposes(hardwareEnforced);
+      AndroidRootOfTrust rootOfTrust = rootOfTrust(hardwareEnforced);
+      int osPatchLevel = osPatchLevel(hardwareEnforced);
 
       // The schema allows the field in either AuthorizationList, and it is the Android platform
       // rather than the secure hardware that records it, so softwareEnforced is where it lands.
@@ -150,7 +164,14 @@ public class AndroidKeyAttestationExtension {
                           "key attestation extension has no attestationApplicationId"));
 
       return new AndroidKeyAttestationExtension(
-          challenge, securityLevel, keyMintSecurityLevel, origin, purposes, applicationId);
+          challenge,
+          securityLevel,
+          keyMintSecurityLevel,
+          origin,
+          purposes,
+          rootOfTrust,
+          osPatchLevel,
+          applicationId);
     } catch (AndroidKeyAttestationException e) {
       throw e;
     } catch (Asn1InvalidException e) {
@@ -180,6 +201,40 @@ public class AndroidKeyAttestationExtension {
       purposes.add(AndroidKeyPurpose.of(element.intValue()));
     }
     return purposes;
+  }
+
+  /**
+   * {@code rootOfTrust} of the hardware list, or a not reported one when the device omitted it.
+   *
+   * <p>Read from the hardware list only: the boot state is what decides whether the platform's
+   * statements can be believed, so a copy the platform wrote itself would prove nothing.
+   */
+  private static AndroidRootOfTrust rootOfTrust(Asn1Node hardwareEnforced)
+      throws Asn1InvalidException {
+    Optional<Asn1Node> tagged = hardwareEnforced.findTagged(ROOT_OF_TRUST_TAG);
+    if (tagged.isEmpty()) {
+      return AndroidRootOfTrust.notReported();
+    }
+    Asn1Node rootOfTrust = tagged.get().taggedContent();
+    if (rootOfTrust.size() < ROOT_OF_TRUST_ELEMENTS) {
+      throw new AndroidKeyAttestationException(
+          "rootOfTrust has "
+              + rootOfTrust.size()
+              + " elements, expected at least "
+              + ROOT_OF_TRUST_ELEMENTS);
+    }
+    return AndroidRootOfTrust.of(
+        rootOfTrust.at(DEVICE_LOCKED_INDEX).booleanValue(),
+        AndroidVerifiedBootState.of(rootOfTrust.at(VERIFIED_BOOT_STATE_INDEX).enumeratedValue()));
+  }
+
+  /** {@code osPatchLevel} of the hardware list as YYYYMM, or 0 when the device omitted it. */
+  private static int osPatchLevel(Asn1Node hardwareEnforced) throws Asn1InvalidException {
+    Optional<Asn1Node> tagged = hardwareEnforced.findTagged(OS_PATCH_LEVEL_TAG);
+    if (tagged.isEmpty()) {
+      return 0;
+    }
+    return tagged.get().taggedContent().intValue();
   }
 
   private static Optional<AndroidAttestationApplicationId> findAttestationApplicationId(
@@ -213,6 +268,19 @@ public class AndroidKeyAttestationExtension {
 
   public List<AndroidKeyPurpose> purposes() {
     return new ArrayList<>(purposes);
+  }
+
+  public AndroidRootOfTrust rootOfTrust() {
+    return rootOfTrust;
+  }
+
+  /** The OS security patch level as YYYYMM, or 0 when the device did not report it. */
+  public int osPatchLevel() {
+    return osPatchLevel;
+  }
+
+  public boolean hasOsPatchLevel() {
+    return osPatchLevel > 0;
   }
 
   public List<String> packageNames() {

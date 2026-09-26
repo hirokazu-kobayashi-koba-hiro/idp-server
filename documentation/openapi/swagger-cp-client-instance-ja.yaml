@@ -676,6 +676,18 @@ components:
           type: object
           description: 一致したアプリの識別（Android は package_names / signature_digests、iOS は app_id / environment）
           additionalProperties: true
+        device:
+          type: object
+          description: 端末の起動状態（Android）。端末を識別する値は含まない
+          properties:
+            verified_boot_state:
+              type: string
+              enum: [verified, self_signed, unverified]
+            device_locked:
+              type: boolean
+            os_patch_level:
+              type: integer
+              description: OS のセキュリティパッチレベル（YYYYMM）
         chain:
           type: object
           properties:

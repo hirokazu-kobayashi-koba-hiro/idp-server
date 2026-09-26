@@ -28,6 +28,7 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 import javax.security.auth.x500.X500Principal;
+import org.bouncycastle.asn1.ASN1Boolean;
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1EncodableVector;
 import org.bouncycastle.asn1.ASN1Enumerated;
@@ -63,39 +64,95 @@ class AndroidAttestationFixture {
    *
    * @param keyMintSecurityLevel where the key lives, which a device may report below the level it
    *     produced the attestation at
-   * @param inSoftwareList writes {@code origin} and {@code purpose} into {@code softwareEnforced}
-   *     instead, which is where a platform that wanted to claim them could put them
+   * @param inSoftwareList writes {@code origin}, {@code purpose} and {@code rootOfTrust} into
+   *     {@code softwareEnforced} instead, which is where a platform that wanted to claim them could
+   *     put them
+   * @param verifiedBootState {@code undefined} omits {@code rootOfTrust}
+   * @param osPatchLevel YYYYMM; 0 omits {@code osPatchLevel}
    */
   record KeyProperties(
       AndroidKeyOrigin origin,
       List<AndroidKeyPurpose> purposes,
       AndroidKeyAttestationSecurityLevel keyMintSecurityLevel,
-      boolean inSoftwareList) {
+      boolean inSoftwareList,
+      AndroidVerifiedBootState verifiedBootState,
+      boolean deviceLocked,
+      int osPatchLevel) {
 
-    /** What a device generating a signing key in secure hardware reports. */
+    /**
+     * What a device generating a signing key in secure hardware reports, having booted its stock OS
+     * with the bootloader locked.
+     */
     static KeyProperties ofDevice(AndroidKeyAttestationSecurityLevel securityLevel) {
       return new KeyProperties(
           AndroidKeyOrigin.generated,
           List.of(AndroidKeyPurpose.sign, AndroidKeyPurpose.verify),
           securityLevel,
-          false);
+          false,
+          AndroidVerifiedBootState.verified,
+          true,
+          202409);
     }
 
     KeyProperties withOrigin(AndroidKeyOrigin replacement) {
-      return new KeyProperties(replacement, purposes, keyMintSecurityLevel, inSoftwareList);
+      return new KeyProperties(
+          replacement,
+          purposes,
+          keyMintSecurityLevel,
+          inSoftwareList,
+          verifiedBootState,
+          deviceLocked,
+          osPatchLevel);
     }
 
     KeyProperties withPurposes(List<AndroidKeyPurpose> replacement) {
-      return new KeyProperties(origin, replacement, keyMintSecurityLevel, inSoftwareList);
+      return new KeyProperties(
+          origin,
+          replacement,
+          keyMintSecurityLevel,
+          inSoftwareList,
+          verifiedBootState,
+          deviceLocked,
+          osPatchLevel);
     }
 
     KeyProperties withKeyMintSecurityLevel(AndroidKeyAttestationSecurityLevel replacement) {
-      return new KeyProperties(origin, purposes, replacement, inSoftwareList);
+      return new KeyProperties(
+          origin,
+          purposes,
+          replacement,
+          inSoftwareList,
+          verifiedBootState,
+          deviceLocked,
+          osPatchLevel);
+    }
+
+    KeyProperties withBoot(AndroidVerifiedBootState state, boolean locked) {
+      return new KeyProperties(
+          origin, purposes, keyMintSecurityLevel, inSoftwareList, state, locked, osPatchLevel);
+    }
+
+    KeyProperties withOsPatchLevel(int replacement) {
+      return new KeyProperties(
+          origin,
+          purposes,
+          keyMintSecurityLevel,
+          inSoftwareList,
+          verifiedBootState,
+          deviceLocked,
+          replacement);
     }
 
     /** The same values, moved to the list the platform writes. */
     KeyProperties movedToSoftwareList() {
-      return new KeyProperties(origin, purposes, keyMintSecurityLevel, true);
+      return new KeyProperties(
+          origin,
+          purposes,
+          keyMintSecurityLevel,
+          true,
+          verifiedBootState,
+          deviceLocked,
+          osPatchLevel);
     }
   }
 
@@ -297,6 +354,18 @@ class AndroidAttestationFixture {
     if (properties.origin() != AndroidKeyOrigin.undefined) {
       authorizationList.add(
           new DERTaggedObject(true, 702, new ASN1Integer(properties.origin().value)));
+    }
+    if (properties.verifiedBootState() != AndroidVerifiedBootState.undefined) {
+      ASN1EncodableVector rootOfTrust = new ASN1EncodableVector();
+      rootOfTrust.add(new DEROctetString(new byte[32])); // verifiedBootKey
+      rootOfTrust.add(ASN1Boolean.getInstance(properties.deviceLocked())); // deviceLocked
+      rootOfTrust.add(new ASN1Enumerated(properties.verifiedBootState().value));
+      rootOfTrust.add(new DEROctetString(new byte[32])); // verifiedBootHash
+      authorizationList.add(new DERTaggedObject(true, 704, new DERSequence(rootOfTrust)));
+    }
+    if (properties.osPatchLevel() > 0) {
+      authorizationList.add(
+          new DERTaggedObject(true, 706, new ASN1Integer(properties.osPatchLevel())));
     }
   }
 

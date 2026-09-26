@@ -32,6 +32,7 @@ import {
   ORIGIN,
   PURPOSE,
   SECURITY_LEVEL,
+  VERIFIED_BOOT_STATE,
   generateAttestationRoot,
   generateAttestedKey,
   platformEvidence,
@@ -465,6 +466,36 @@ describe("Android key attestation (Issue #1521)", () => {
 
       expect(response.status).toBe(400);
     }, 120000);
+
+    it("rejects a device whose bootloader is unlocked", async () => {
+      // attestationApplicationId is written by the Android platform: on a device that can boot any
+      // OS, it names whatever application that OS likes. The boot state is written by KeyMint.
+      const { challenge } = await requestChallenge();
+      const instanceKey = await generateInstanceKey();
+
+      const response = await register({
+        challenge,
+        instanceKey,
+        chainOptions: {
+          rootOfTrust: { verifiedBootState: VERIFIED_BOOT_STATE.unverified, deviceLocked: false },
+        },
+      });
+
+      expect(response.status).toBe(400);
+    }, 120000);
+
+    it("rejects a device that does not report its root of trust", async () => {
+      const { challenge } = await requestChallenge();
+      const instanceKey = await generateInstanceKey();
+
+      const response = await register({
+        challenge,
+        instanceKey,
+        chainOptions: { rootOfTrust: null },
+      });
+
+      expect(response.status).toBe(400);
+    }, 120000);
   });
 
   describe("the ID token and the evidence name the same key", () => {
@@ -509,6 +540,11 @@ describe("Android key attestation (Issue #1521)", () => {
         origin: "generated",
       });
       expect(evidence.app.package_names).toEqual([PACKAGE_NAME]);
+      expect(evidence.device).toEqual({
+        verified_boot_state: "verified",
+        device_locked: true,
+        os_patch_level: 202409,
+      });
       // Serial numbers are what a revocation list is keyed on: lowercase hex.
       expect(evidence.chain.certificates.length).toBeGreaterThan(0);
       for (const certificate of evidence.chain.certificates) {

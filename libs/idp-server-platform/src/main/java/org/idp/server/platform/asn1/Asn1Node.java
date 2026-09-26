@@ -19,6 +19,7 @@ package org.idp.server.platform.asn1;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import org.bouncycastle.asn1.ASN1Boolean;
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1Enumerated;
 import org.bouncycastle.asn1.ASN1Integer;
@@ -123,6 +124,20 @@ public class Asn1Node {
           "ASN.1 node is not an enumerated: " + value.getClass().getSimpleName());
     }
     return enumerated.getValue().intValue();
+  }
+
+  /**
+   * The value of a BOOLEAN node.
+   *
+   * <p>Strict for the same reason as {@link #enumeratedValue()}: an INTEGER standing in for a
+   * BOOLEAN is not what the schema says, and accepting it would hide a wrongly built fixture.
+   */
+  public boolean booleanValue() throws Asn1InvalidException {
+    if (!(value instanceof ASN1Boolean bool)) {
+      throw new Asn1InvalidException(
+          "ASN.1 node is not a boolean: " + value.getClass().getSimpleName());
+    }
+    return bool.isTrue();
   }
 
   /** The context specific tag number, when this node is a tagged object. */

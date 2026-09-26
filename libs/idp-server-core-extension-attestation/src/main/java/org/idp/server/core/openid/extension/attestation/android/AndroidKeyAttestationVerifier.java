@@ -20,6 +20,7 @@ import java.security.MessageDigest;
 import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 import java.util.Base64;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import org.idp.server.core.openid.clientinstance.registration.PlatformAttestationEvidence;
 import org.idp.server.core.openid.clientinstance.registration.PlatformAttestationVerificationException;
@@ -97,6 +98,8 @@ public class AndroidKeyAttestationVerifier implements PlatformAttestationVerifie
     throwExceptionIfSecurityLevelIsNotAccepted(extension, configuration);
     throwExceptionIfKeyWasNotGeneratedInSecureHardware(extension);
     throwExceptionIfKeyCannotSign(extension);
+    throwExceptionIfBootIsNotAccepted(extension, configuration);
+    throwExceptionIfOsPatchLevelIsTooOld(extension, configuration);
 
     if (configuration.hasTrustedRootCertificates()) {
       log.warn(
@@ -125,7 +128,22 @@ public class AndroidKeyAttestationVerifier implements PlatformAttestationVerifie
         Map.of(
             "package_names", extension.packageNames(),
             "signature_digests", extension.signatureDigests()),
+        deviceOf(extension),
         chain);
+  }
+
+  /** The boot state and patch level the device reported, for re-evaluation when policy tightens. */
+  private Map<String, Object> deviceOf(AndroidKeyAttestationExtension extension) {
+    Map<String, Object> device = new LinkedHashMap<>();
+    AndroidRootOfTrust rootOfTrust = extension.rootOfTrust();
+    if (rootOfTrust.isReported()) {
+      device.put("verified_boot_state", rootOfTrust.verifiedBootState().name());
+      device.put("device_locked", rootOfTrust.isDeviceLocked());
+    }
+    if (extension.hasOsPatchLevel()) {
+      device.put("os_patch_level", extension.osPatchLevel());
+    }
+    return device;
   }
 
   /** Binding 1: the evidence was produced for this registration. */
@@ -230,6 +248,64 @@ public class AndroidKeyAttestationVerifier implements PlatformAttestationVerifie
       throw new PlatformAttestationVerificationException(
           "the attested key was not generated in secure hardware: origin="
               + extension.origin().name());
+    }
+  }
+
+  /**
+   * The device booted an OS it verified, with the bootloader locked.
+   *
+   * <p>This is what the application identity above rests on. {@code attestationApplicationId} is
+   * written by the Android platform, so a modified OS can name any application; the boot state is
+   * written by KeyMint from what the bootloader measured. An OS that booted verified, on a device
+   * whose bootloader cannot load another, is the one that named the application.
+   *
+   * <p>A device that reports no root of trust is refused, as with {@code origin}: an absent field
+   * is not evidence that the device booted verified.
+   */
+  private void throwExceptionIfBootIsNotAccepted(
+      AndroidKeyAttestationExtension extension, AndroidKeyAttestationConfiguration configuration) {
+
+    AndroidRootOfTrust rootOfTrust = extension.rootOfTrust();
+    if (!rootOfTrust.isReported()) {
+      throw new PlatformAttestationVerificationException(
+          "the attestation does not report the device's root of trust");
+    }
+
+    if (!configuration.verifiedBootStates().contains(rootOfTrust.verifiedBootState())) {
+      throw new PlatformAttestationVerificationException(
+          "verified boot state "
+              + rootOfTrust.verifiedBootState().name()
+              + " is not accepted: "
+              + configuration.verifiedBootStates());
+    }
+
+    if (configuration.requiresDeviceLocked() && !rootOfTrust.isDeviceLocked()) {
+      throw new PlatformAttestationVerificationException("the device's bootloader is unlocked");
+    }
+  }
+
+  /**
+   * The OS carries security patches at least as recent as configured.
+   *
+   * <p>No minimum by default. When one is set, a device that does not report its patch level is
+   * refused, for the same reason as a missing root of trust.
+   */
+  private void throwExceptionIfOsPatchLevelIsTooOld(
+      AndroidKeyAttestationExtension extension, AndroidKeyAttestationConfiguration configuration) {
+
+    if (!configuration.hasMinOsPatchLevel()) {
+      return;
+    }
+    if (!extension.hasOsPatchLevel()) {
+      throw new PlatformAttestationVerificationException(
+          "the attestation does not report the OS patch level");
+    }
+    if (extension.osPatchLevel() < configuration.minOsPatchLevel()) {
+      throw new PlatformAttestationVerificationException(
+          "OS patch level "
+              + extension.osPatchLevel()
+              + " is older than the configured minimum "
+              + configuration.minOsPatchLevel());
     }
   }
 

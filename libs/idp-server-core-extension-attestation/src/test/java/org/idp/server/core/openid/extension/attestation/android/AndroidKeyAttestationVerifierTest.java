@@ -110,6 +110,25 @@ class AndroidKeyAttestationVerifierTest {
         clientPlatformConfig(fixture.rootBase64()), CHALLENGE, instanceKeyAsJwk(), evidence(chain));
   }
 
+  /** {@link #requestFor} with more settings in the client's android_key_attestation. */
+  @SuppressWarnings("unchecked")
+  private PlatformAttestationVerificationRequest requestFor(
+      List<String> chain, Map<String, Object> additionalSettings) throws Exception {
+    Map<String, Object> android =
+        new java.util.HashMap<>(
+            (Map<String, Object>)
+                ((Map<String, Object>)
+                        clientPlatformConfig(fixture.rootBase64())
+                            .get("client_instance_platform_config"))
+                    .get("android_key_attestation"));
+    android.putAll(additionalSettings);
+    return StubVerificationRequest.of(
+        Map.of("client_instance_platform_config", Map.of("android_key_attestation", android)),
+        CHALLENGE,
+        instanceKeyAsJwk(),
+        evidence(chain));
+  }
+
   private AndroidAttestationFixture.KeyProperties deviceProperties() {
     return AndroidAttestationFixture.KeyProperties.ofDevice(
         AndroidKeyAttestationSecurityLevel.trusted_environment);
@@ -153,6 +172,10 @@ class AndroidKeyAttestationVerifierTest {
       assertEquals("generated", key.get("origin"));
       Map<String, Object> app = (Map<String, Object>) stored.get("app");
       assertEquals(List.of(AndroidAttestationFixture.PACKAGE_NAME), app.get("package_names"));
+      Map<String, Object> device = (Map<String, Object>) stored.get("device");
+      assertEquals("verified", device.get("verified_boot_state"));
+      assertEquals(true, device.get("device_locked"));
+      assertEquals(202409, device.get("os_patch_level"));
 
       // Every certificate of the presented chain, by the serial a revocation list is keyed on.
       List<Map<String, Object>> certificates =
@@ -501,6 +524,135 @@ class AndroidKeyAttestationVerifierTest {
    * INTEGER. Reading it as INTEGER passes every test built the same way and then fails on the first
    * chain from a device, so the encoding is pinned rather than accommodated.
    */
+  /**
+   * The boot state decides whether the platform's statements, the application identity among them,
+   * can be believed: a modified OS names any application it likes.
+   */
+  @Nested
+  class Boot {
+
+    private void assertRejected(PlatformAttestationVerificationRequest request, String reason) {
+      PlatformAttestationVerificationException exception =
+          assertThrows(
+              PlatformAttestationVerificationException.class, () -> verifier.verify(request));
+      assertTrue(exception.getMessage().contains(reason), exception.getMessage());
+    }
+
+    @Test
+    void rejectsADeviceWhoseBootloaderIsUnlocked() throws Exception {
+      // What an unlocked device reports: nothing is verified, and the bootloader loads any OS.
+      assertRejected(
+          requestFor(
+              chainWith(deviceProperties().withBoot(AndroidVerifiedBootState.unverified, false))),
+          "verified boot state unverified is not accepted");
+    }
+
+    @Test
+    void rejectsAVerifiedBootWithTheBootloaderUnlocked() throws Exception {
+      assertRejected(
+          requestFor(
+              chainWith(deviceProperties().withBoot(AndroidVerifiedBootState.verified, false))),
+          "bootloader is unlocked");
+    }
+
+    @Test
+    void rejectsAnOsVerifiedAgainstAnOwnerInstalledKeyByDefault() throws Exception {
+      assertRejected(
+          requestFor(
+              chainWith(deviceProperties().withBoot(AndroidVerifiedBootState.self_signed, true))),
+          "verified boot state self_signed is not accepted");
+    }
+
+    @Test
+    void acceptsAnOsVerifiedAgainstAnOwnerInstalledKeyWhenConfigured() throws Exception {
+      PlatformAttestationVerificationRequest request =
+          requestFor(
+              chainWith(deviceProperties().withBoot(AndroidVerifiedBootState.self_signed, true)),
+              Map.of("verified_boot_states", List.of("verified", "self_signed")));
+
+      assertDoesNotThrow(() -> verifier.verify(request));
+    }
+
+    @Test
+    void acceptsAnUnlockedDeviceOnlyWhenBothSettingsAreRelaxed() throws Exception {
+      // A development device: the operator relaxes both the state and the lock, deliberately.
+      PlatformAttestationVerificationRequest request =
+          requestFor(
+              chainWith(deviceProperties().withBoot(AndroidVerifiedBootState.unverified, false)),
+              Map.of(
+                  "verified_boot_states",
+                  List.of("verified", "unverified"),
+                  "require_device_locked",
+                  false));
+
+      assertDoesNotThrow(() -> verifier.verify(request));
+    }
+
+    @Test
+    void rejectsADeviceThatDoesNotReportItsRootOfTrust() throws Exception {
+      assertRejected(
+          requestFor(
+              chainWith(deviceProperties().withBoot(AndroidVerifiedBootState.undefined, false))),
+          "does not report the device's root of trust");
+    }
+
+    @Test
+    void refusesAConfigurationThatAcceptsAFailedBoot() throws Exception {
+      PlatformAttestationVerificationRequest request =
+          requestFor(validChain(), Map.of("verified_boot_states", List.of("verified", "failed")));
+
+      assertThrows(RuntimeException.class, () -> verifier.verify(request));
+    }
+  }
+
+  @Nested
+  class OsPatchLevel {
+
+    @Test
+    void setsNoMinimumByDefault() throws Exception {
+      PlatformAttestationVerificationRequest request =
+          requestFor(chainWith(deviceProperties().withOsPatchLevel(0)));
+
+      assertDoesNotThrow(() -> verifier.verify(request));
+    }
+
+    @Test
+    void rejectsAPatchLevelOlderThanTheMinimum() throws Exception {
+      PlatformAttestationVerificationRequest request =
+          requestFor(
+              chainWith(deviceProperties().withOsPatchLevel(202401)),
+              Map.of("min_os_patch_level", 202406));
+
+      PlatformAttestationVerificationException exception =
+          assertThrows(
+              PlatformAttestationVerificationException.class, () -> verifier.verify(request));
+      assertTrue(exception.getMessage().contains("older than the configured minimum"));
+    }
+
+    @Test
+    void acceptsThePatchLevelTheMinimumNames() throws Exception {
+      PlatformAttestationVerificationRequest request =
+          requestFor(
+              chainWith(deviceProperties().withOsPatchLevel(202406)),
+              Map.of("min_os_patch_level", 202406));
+
+      assertDoesNotThrow(() -> verifier.verify(request));
+    }
+
+    @Test
+    void rejectsADeviceThatDoesNotReportThePatchLevelWhenAMinimumIsSet() throws Exception {
+      PlatformAttestationVerificationRequest request =
+          requestFor(
+              chainWith(deviceProperties().withOsPatchLevel(0)),
+              Map.of("min_os_patch_level", 202406));
+
+      PlatformAttestationVerificationException exception =
+          assertThrows(
+              PlatformAttestationVerificationException.class, () -> verifier.verify(request));
+      assertTrue(exception.getMessage().contains("does not report the OS patch level"));
+    }
+  }
+
   @Nested
   class SecurityLevelEncoding {
 

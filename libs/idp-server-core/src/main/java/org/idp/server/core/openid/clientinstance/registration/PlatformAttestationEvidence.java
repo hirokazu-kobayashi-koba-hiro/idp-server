@@ -53,16 +53,19 @@ public class PlatformAttestationEvidence {
   String platform;
   Map<String, Object> key;
   Map<String, Object> app;
+  Map<String, Object> device;
   List<Map<String, Object>> certificates;
 
   PlatformAttestationEvidence(
       String platform,
       Map<String, Object> key,
       Map<String, Object> app,
+      Map<String, Object> device,
       List<Map<String, Object>> certificates) {
     this.platform = platform;
     this.key = key;
     this.app = app;
+    this.device = device;
     this.certificates = certificates;
   }
 
@@ -78,8 +81,23 @@ public class PlatformAttestationEvidence {
       Map<String, Object> key,
       Map<String, Object> app,
       X509CertificateChain chain) {
+    return of(platform, key, app, Map.of(), chain);
+  }
+
+  /**
+   * Evidence of a verified platform attestation that also stated the state of the device.
+   *
+   * @param device what the attestation established about the device (boot state, patch level).
+   *     Never an identifier of the device
+   */
+  public static PlatformAttestationEvidence of(
+      String platform,
+      Map<String, Object> key,
+      Map<String, Object> app,
+      Map<String, Object> device,
+      X509CertificateChain chain) {
     return new PlatformAttestationEvidence(
-        platform, Map.copyOf(key), Map.copyOf(app), certificatesOf(chain));
+        platform, Map.copyOf(key), Map.copyOf(app), Map.copyOf(device), certificatesOf(chain));
   }
 
   public String platform() {
@@ -97,6 +115,7 @@ public class PlatformAttestationEvidence {
     map.put("verified_at", verifiedAt.toString());
     if (!key.isEmpty()) map.put("key", key);
     if (!app.isEmpty()) map.put("app", app);
+    if (!device.isEmpty()) map.put("device", device);
     map.put("chain", Map.of("certificates", certificates));
     return map;
   }

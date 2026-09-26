@@ -185,9 +185,13 @@ SecurityLevel ::= ENUMERATED { Software (0), TrustedEnvironment (1), StrongBox (
 |---|---|---|---|
 | `purpose` | `[1] EXPLICIT SET OF INTEGER` | `hardwareEnforced` | `sign`(2) を含むこと |
 | `origin` | `[702] EXPLICIT INTEGER` | `hardwareEnforced` | `KM_ORIGIN_GENERATED`(0) であること |
+| `rootOfTrust` | `[704] EXPLICIT RootOfTrust` | `hardwareEnforced` | `verifiedBootState` が `verified_boot_states` に含まれ、`require_device_locked` なら `deviceLocked` が真であること |
+| `osPatchLevel` | `[706] EXPLICIT INTEGER` | `hardwareEnforced` | `min_os_patch_level` を設定したとき、その値以上であること |
 | `attestationApplicationId` | `[709] EXPLICIT OCTET_STRING` | `softwareEnforced`（無ければ `hardwareEnforced`） | package / 署名ダイジェストの照合 |
 
 `attestationApplicationId` だけプラットフォームが埋めるフィールドなので `softwareEnforced` 側です。逆に `origin` / `purpose` は鍵自身の性質なので、`hardwareEnforced` にあるときだけセキュアハードウェアの申告として扱います。
+
+`attestationApplicationId` をプラットフォームが書く以上、改造した OS はどのアプリの名前でも名乗れます。そこで `rootOfTrust`（KeyMint がブートローダーの計測から書く）で、検証済みの OS が起動し、ブートローダーがロックされていることを確かめます。これがアプリの照合の前提です。`rootOfTrust` が無い端末は拒否します。
 
 `SecurityLevel` は 2 か所にあり、**どちらも**設定した `min_security_level` 以上であることを要求します。
 

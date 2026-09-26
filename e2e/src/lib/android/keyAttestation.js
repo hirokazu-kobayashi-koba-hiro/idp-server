@@ -11,6 +11,7 @@
 import forge from "node-forge";
 
 import {
+  derBoolean,
   derEnumerated,
   derInteger,
   derOctetString,
@@ -39,6 +40,14 @@ export const ORIGIN = {
   securely_imported: 4,
 };
 
+/** RootOfTrust.verifiedBootState. Only `verified` is accepted by default. */
+export const VERIFIED_BOOT_STATE = {
+  verified: 0,
+  self_signed: 1,
+  unverified: 2,
+  failed: 3,
+};
+
 /** KM_PURPOSE_*. A Client Instance key has to carry `sign`. */
 export const PURPOSE = {
   encrypt: 0,
@@ -56,6 +65,9 @@ export const PURPOSE = {
  * `origin` and `purpose` go in `hardwareEnforced` because only KeyMint knows them; the server
  * refuses to read them from `softwareEnforced`, so `keyPropertiesInSoftwareList` can produce that
  * rejection too. `attestationApplicationId` is the opposite case and stays in `softwareEnforced`.
+ *
+ * `rootOfTrust` and `osPatchLevel` are KeyMint's too. By default the device booted its stock OS with
+ * the bootloader locked; `rootOfTrust: null` / `osPatchLevel: 0` stand for a device that omitted them.
  */
 const keyDescription = ({
   challenge,
@@ -67,6 +79,8 @@ const keyDescription = ({
   purposes = [PURPOSE.sign, PURPOSE.verify],
   keyMintSecurityLevel = securityLevel,
   keyPropertiesInSoftwareList = false,
+  rootOfTrust = { verifiedBootState: VERIFIED_BOOT_STATE.verified, deviceLocked: true },
+  osPatchLevel = 202409,
 }) => {
   const applicationId = derSequence(
     derSet(derSequence(derOctetString(packageName), derInteger(1))),
@@ -79,6 +93,20 @@ const keyDescription = ({
       ? [derTagged(1, derSet(...purposes.map((purpose) => derInteger(purpose))))]
       : []),
     ...(origin === null ? [] : [derTagged(702, derInteger(origin))]),
+    ...(rootOfTrust === null
+      ? []
+      : [
+          derTagged(
+            704,
+            derSequence(
+              derOctetString(Buffer.alloc(32)), // verifiedBootKey
+              derBoolean(rootOfTrust.deviceLocked),
+              derEnumerated(rootOfTrust.verifiedBootState),
+              derOctetString(Buffer.alloc(32)) // verifiedBootHash
+            )
+          ),
+        ]),
+    ...(osPatchLevel ? [derTagged(706, derInteger(osPatchLevel))] : []),
   ];
 
   const softwareEnforced = derSequence(
@@ -212,6 +240,8 @@ export const generateAttestedKey = ({
   purposes,
   keyMintSecurityLevel,
   keyPropertiesInSoftwareList,
+  rootOfTrust,
+  osPatchLevel,
 }) => {
   const publicKey = publicKeyPem
     ? forge.pki.publicKeyFromPem(publicKeyPem)
@@ -229,6 +259,8 @@ export const generateAttestedKey = ({
     ...(keyPropertiesInSoftwareList !== undefined
       ? { keyPropertiesInSoftwareList }
       : {}),
+    ...(rootOfTrust !== undefined ? { rootOfTrust } : {}),
+    ...(osPatchLevel !== undefined ? { osPatchLevel } : {}),
   });
 
   const leaf = certificate({
