@@ -22,6 +22,7 @@ import org.idp.server.core.openid.clientinstance.ClientInstance;
 import org.idp.server.core.openid.clientinstance.ClientInstanceIdentifier;
 import org.idp.server.core.openid.clientinstance.registration.ClientInstanceRegistrationChallenge;
 import org.idp.server.core.openid.clientinstance.registration.ClientInstanceRegistrationResult;
+import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 
 /**
@@ -32,9 +33,9 @@ import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
  *     unresolvable
  * @param instanceIdentifier the instance this outcome concerns, kept as a value rather than read
  *     back out of {@code contents}
- * @param userId the user a registered instance is bound to; null for every other outcome. Kept out
- *     of {@code contents}: the caller already knows who logged in, the security event is what needs
- *     it
+ * @param user the user a registered instance is bound to; null for every other outcome. Kept out of
+ *     {@code contents}: the caller already knows who logged in, the security event is what needs
+ *     it, whole, so that it can be searched and notified by user
  * @param auditReason why a request was rejected. Never serialized — {@code contents} says the same
  *     thing for every rejection. This carries the reason back to the use case so the security event
  *     can record it.
@@ -46,7 +47,7 @@ public record ClientInstanceRegistrationResponse(
     Map<String, Object> contents,
     RequestedClientId requestedClientId,
     ClientInstanceIdentifier instanceIdentifier,
-    String userId,
+    User user,
     String auditReason,
     List<ClientInstanceIdentifier> supersededInstances) {
 
@@ -75,7 +76,7 @@ public record ClientInstanceRegistrationResponse(
         Map.of("instance_id", clientInstance.id()),
         new RequestedClientId(clientInstance.clientId()),
         clientInstance.identifier(),
-        clientInstance.userId(),
+        result.user(),
         null,
         result.superseded().stream().map(ClientInstance::identifier).toList());
   }

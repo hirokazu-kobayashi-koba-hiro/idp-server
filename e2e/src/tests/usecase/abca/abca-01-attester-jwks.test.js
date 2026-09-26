@@ -14,6 +14,7 @@
  * 3. Expiry of the Client Attestation JWT and recovery from use_fresh_attestation
  * 4. Attester key rotation: publishing both keys, then retiring the old one
  * 5. The same credentials working at the Pushed Authorization Request endpoint
+ * 6. A malformed Client Attestation JWT is refused as a client authentication failure, never a 500
  */
 import { beforeAll, describe, expect, it } from "@jest/globals";
 import { v4 as uuidv4 } from "uuid";
@@ -375,5 +376,28 @@ describe("ABCA Use Case: Client Attester with a static JWKS", () => {
       popJwt: createPopJwt({ challenge: handedBack }),
     });
     expect(retried.status).toBe(200);
+  });
+
+  it("refuses a Client Attestation JWT whose payload is not a claims set as a failed client authentication, not a server error", async () => {
+    // Anyone can send this before authenticating. It is a malformed credential, and the response
+    // says so rather than reporting an internal error with the parser's message.
+    const b64 = (value) => Buffer.from(value, "utf8").toString("base64url");
+    const malformed = `${b64(JSON.stringify({ alg: "ES256", typ: ATTESTATION_TYP }))}.${b64("not a json object")}.${b64("sig")}`;
+
+    const withClientId = await requestTokenWith({ attestationJwt: malformed, popJwt: createPopJwt() });
+    expect(withClientId.status).toBe(401);
+    expect(withClientId.data).toHaveProperty("error", "invalid_client_attestation");
+
+    // Without client_id the client is resolved from the attestation's sub, which cannot be read.
+    const params = new URLSearchParams();
+    params.append("grant_type", "client_credentials");
+    params.append("scope", "account");
+    const withoutClientId = await post({
+      url: tokenEndpoint,
+      body: params,
+      headers: { [ATTESTATION_HEADER]: malformed, [POP_HEADER]: createPopJwt() },
+    });
+    expect(withoutClientId.status).toBeLessThan(500);
+    expect(withoutClientId.data.error).not.toBe("server_error");
   });
 });

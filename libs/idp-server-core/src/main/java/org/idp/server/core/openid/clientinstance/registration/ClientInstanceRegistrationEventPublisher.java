@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.openid.clientinstance.ClientInstanceIdentifier;
 import org.idp.server.core.openid.clientinstance.ClientInstanceRevocationReason;
+import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.SecurityEvent;
@@ -62,6 +63,7 @@ public class ClientInstanceRegistrationEventPublisher {
     publish(
         tenant,
         DefaultSecurityEventType.client_instance_registration_challenge_issued,
+        null,
         details,
         requestAttributes);
   }
@@ -70,19 +72,17 @@ public class ClientInstanceRegistrationEventPublisher {
       Tenant tenant,
       RequestedClientId requestedClientId,
       ClientInstanceIdentifier instanceIdentifier,
-      String userId,
+      User user,
       RequestAttributes requestAttributes) {
 
     Map<String, Object> details = new HashMap<>();
     details.put("client_id", requestedClientId.value());
     details.put("instance_id", instanceIdentifier.value());
-    if (userId != null) {
-      details.put("user_id", userId);
-    }
 
     publish(
         tenant,
         DefaultSecurityEventType.client_instance_registration_success,
+        user,
         details,
         requestAttributes);
   }
@@ -98,17 +98,15 @@ public class ClientInstanceRegistrationEventPublisher {
       RequestedClientId requestedClientId,
       ClientInstanceIdentifier revokedInstance,
       ClientInstanceIdentifier supersededBy,
-      String userId,
+      User user,
       RequestAttributes requestAttributes) {
     Map<String, Object> details = new HashMap<>();
     details.put("client_id", requestedClientId.value());
     details.put("instance_id", revokedInstance.value());
     details.put("revocation_reason", ClientInstanceRevocationReason.superseded.name());
     details.put("superseded_by", supersededBy.value());
-    if (userId != null) {
-      details.put("user_id", userId);
-    }
-    publish(tenant, DefaultSecurityEventType.client_instance_revoked, details, requestAttributes);
+    publish(
+        tenant, DefaultSecurityEventType.client_instance_revoked, user, details, requestAttributes);
   }
 
   /**
@@ -131,6 +129,7 @@ public class ClientInstanceRegistrationEventPublisher {
     publish(
         tenant,
         DefaultSecurityEventType.client_instance_registration_failure,
+        null,
         merged,
         requestAttributes);
   }
@@ -138,12 +137,13 @@ public class ClientInstanceRegistrationEventPublisher {
   private void publish(
       Tenant tenant,
       DefaultSecurityEventType type,
+      User user,
       Map<String, Object> details,
       RequestAttributes requestAttributes) {
 
     SecurityEvent securityEvent =
         new ClientInstanceRegistrationEventCreator(
-                tenant, type.toEventType(), details, requestAttributes)
+                tenant, type.toEventType(), user, details, requestAttributes)
             .create();
 
     if (type.isSynchronous()) {

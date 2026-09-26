@@ -22,10 +22,12 @@ import org.idp.server.control_plane.management.oidc.client.ClientManagementConte
 import org.idp.server.control_plane.management.oidc.client.io.ClientDeleteRequest;
 import org.idp.server.control_plane.management.oidc.client.io.ClientManagementResponse;
 import org.idp.server.control_plane.management.oidc.client.io.ClientManagementStatus;
+import org.idp.server.core.openid.clientinstance.ClientInstanceCommandRepository;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationCommandRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
+import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
@@ -39,12 +41,15 @@ public class ClientDeletionService implements ClientManagementService<ClientDele
 
   private final ClientConfigurationQueryRepository queryRepository;
   private final ClientConfigurationCommandRepository commandRepository;
+  private final ClientInstanceCommandRepository clientInstanceCommandRepository;
 
   public ClientDeletionService(
       ClientConfigurationQueryRepository queryRepository,
-      ClientConfigurationCommandRepository commandRepository) {
+      ClientConfigurationCommandRepository commandRepository,
+      ClientInstanceCommandRepository clientInstanceCommandRepository) {
     this.queryRepository = queryRepository;
     this.commandRepository = commandRepository;
+    this.clientInstanceCommandRepository = clientInstanceCommandRepository;
   }
 
   @Override
@@ -80,6 +85,9 @@ public class ClientDeletionService implements ClientManagementService<ClientDele
     }
 
     commandRepository.delete(tenant, clientConfiguration);
+    // A client recreated with the same identifier must not find these instances authenticating.
+    clientInstanceCommandRepository.deleteByClient(
+        tenant, new RequestedClientId(clientConfiguration.clientIdValue()));
 
     return new ClientManagementResponse(ClientManagementStatus.NO_CONTENT, Map.of());
   }

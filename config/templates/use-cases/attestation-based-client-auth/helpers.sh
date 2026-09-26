@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# MFA (Password + FIDO-UAF) - Experiment Helpers
+# Attestation-Based Client Authentication - Experiment Helpers
 #
 # 使い方:
 #   source helpers.sh

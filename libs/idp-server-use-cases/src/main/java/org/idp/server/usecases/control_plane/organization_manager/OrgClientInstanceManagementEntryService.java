@@ -64,7 +64,10 @@ public class OrgClientInstanceManagementEntryService implements OrgClientInstanc
             clientInstanceQueryRepository,
             clientInstanceCommandRepository,
             clientConfigurationQueryRepository));
-    services.put("findList", new ClientInstanceFindListService(clientInstanceQueryRepository));
+    services.put(
+        "findList",
+        new ClientInstanceFindListService(
+            clientInstanceQueryRepository, clientConfigurationQueryRepository));
     services.put("get", new ClientInstanceFindService(clientInstanceQueryRepository));
     services.put(
         "revoke",

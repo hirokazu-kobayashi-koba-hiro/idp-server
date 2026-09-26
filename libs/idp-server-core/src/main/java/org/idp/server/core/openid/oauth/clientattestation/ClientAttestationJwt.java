@@ -20,6 +20,7 @@ import java.util.Objects;
 import org.idp.server.platform.jose.JoseInvalidException;
 import org.idp.server.platform.jose.JsonWebSignature;
 import org.idp.server.platform.jose.JsonWebTokenClaims;
+import org.idp.server.platform.jose.JsonWebTokenClaimsInvalidException;
 
 /**
  * Client Attestation JWT value object.
@@ -80,7 +81,7 @@ public class ClientAttestationJwt {
         return claims.getSub();
       }
       return "";
-    } catch (JoseInvalidException e) {
+    } catch (JoseInvalidException | JsonWebTokenClaimsInvalidException e) {
       return "";
     }
   }

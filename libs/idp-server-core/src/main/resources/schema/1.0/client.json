@@ -432,6 +432,20 @@
           },
           "description": "OPTIONAL. idp-server specific. client_id values of other clients whose ID tokens may authenticate the registration of this client's instances. The client's own ID tokens are always accepted. Intended for tenants that require PAR, where the client cannot obtain an ID token before it has an instance; list a public client that obtains it instead, and give that client only the scopes needed until registration (usually openid)."
         },
+        "client_instance_platform_config": {
+          "type": "object",
+          "description": "OPTIONAL. idp-server specific. Platform attestation accepted at Client Instance registration, and the conditions it is verified against, keyed by platform.",
+          "properties": {
+            "android_key_attestation": {
+              "type": "object",
+              "description": "Android Key Attestation: package_names and signature_digests (REQUIRED), min_security_level, verified_boot_states, require_device_locked, min_os_patch_level, challenge_binding, override_root_certificates (testing only: replaces the shipped Google roots)."
+            },
+            "ios_app_attest": {
+              "type": "object",
+              "description": "Apple App Attest: app_ids (REQUIRED), environment, challenge_binding, override_root_certificates (testing only: replaces the shipped Apple roots)."
+            }
+          }
+        },
         "client_instance_lifetime_seconds": {
           "type": "integer",
           "minimum": 0,

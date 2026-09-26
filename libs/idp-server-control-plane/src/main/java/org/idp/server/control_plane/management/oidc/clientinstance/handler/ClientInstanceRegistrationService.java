@@ -31,6 +31,7 @@ import org.idp.server.core.openid.clientinstance.ClientInstanceQueryRepository;
 import org.idp.server.core.openid.clientinstance.ClientInstanceStatus;
 import org.idp.server.core.openid.clientinstance.ClientInstanceThumbprint;
 import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.exception.ClientConfigurationNotFoundException;
 import org.idp.server.core.openid.token.OAuthToken;
@@ -70,7 +71,7 @@ public class ClientInstanceRegistrationService
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    throwExceptionIfClientIsUnknown(tenant, request);
+    ClientConfiguration clientConfiguration = clientOf(tenant, request);
 
     Map<String, Object> instanceKey = request.instanceKey();
     throwExceptionIfInvalidInstanceKey(instanceKey);
@@ -85,7 +86,8 @@ public class ClientInstanceRegistrationService
         new ClientInstance(
             id,
             tenant.identifierValue(),
-            request.requestedClientId().value(),
+            // The identifier, never the alias the request named the client by.
+            clientConfiguration.clientIdValue(),
             instanceKey,
             ClientInstanceStatus.active.name(),
             request.attestationEvidence(),
@@ -112,13 +114,12 @@ public class ClientInstanceRegistrationService
   }
 
   /** The client comes from the body: the path no longer names one. */
-  private void throwExceptionIfClientIsUnknown(
-      Tenant tenant, ClientInstanceRegistrationRequest request) {
+  private ClientConfiguration clientOf(Tenant tenant, ClientInstanceRegistrationRequest request) {
     if (!request.hasClientId()) {
       throw new InvalidRequestException("client_id is required");
     }
     try {
-      clientConfigurationQueryRepository.get(tenant, request.requestedClientId());
+      return clientConfigurationQueryRepository.get(tenant, request.requestedClientId());
     } catch (ClientConfigurationNotFoundException e) {
       throw new InvalidRequestException(
           "client_id is not a client of this tenant: " + request.requestedClientId().value());

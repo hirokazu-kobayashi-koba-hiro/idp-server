@@ -1079,6 +1079,7 @@ public class IdpServerApplication {
                 tenantQueryRepository,
                 clientConfigurationCommandRepository,
                 clientConfigurationQueryRepository,
+                applicationComponentContainer.resolve(ClientInstanceCommandRepository.class),
                 auditLogPublisher),
             ClientManagementApi.class,
             databaseTypeProvider);
@@ -1315,6 +1316,7 @@ public class IdpServerApplication {
                 organizationRepository,
                 clientConfigurationCommandRepository,
                 clientConfigurationQueryRepository,
+                applicationComponentContainer.resolve(ClientInstanceCommandRepository.class),
                 auditLogPublisher),
             OrgClientManagementApi.class,
             databaseTypeProvider);

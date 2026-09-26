@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# MFA (Password + FIDO-UAF Device Authentication) - Use Case Setup Script
+# Attestation-Based Client Authentication - Use Case Setup Script
 #
 # Prerequisites:
 #   1. idp-server is running
@@ -21,7 +21,7 @@ DRY_RUN=false
 [ "$1" = "--dry-run" ] && DRY_RUN=true
 
 echo "=========================================="
-echo "MFA (Password + FIDO-UAF) Use Case Setup"
+echo "Attestation-Based Client Authentication Use Case Setup"
 echo "=========================================="
 echo ""
 

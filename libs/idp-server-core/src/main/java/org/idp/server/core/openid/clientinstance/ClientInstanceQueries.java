@@ -45,6 +45,13 @@ public class ClientInstanceQueries {
     this.values = Objects.requireNonNullElseGet(values, HashMap::new);
   }
 
+  /** The same conditions, with {@code client_id} replaced. */
+  public ClientInstanceQueries withClientId(String clientId) {
+    Map<String, String> replaced = new HashMap<>(values);
+    replaced.put("client_id", clientId);
+    return new ClientInstanceQueries(replaced);
+  }
+
   public boolean hasClientId() {
     return has("client_id");
   }

@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# MFA (Password + FIDO-UAF) - Use Case Update Script
+# Attestation-Based Client Authentication - Use Case Update Script
 # Updates public tenant, authorization server, client, and authentication settings.
 #
 # Usage:
@@ -16,7 +16,7 @@ ORGANIZATION_NAME="${ORGANIZATION_NAME:-attestation-based-client-auth}"
 OUTPUT_DIR="${PROJECT_ROOT}/config/generated/${ORGANIZATION_NAME}"
 
 echo "=========================================="
-echo "MFA (Password + FIDO-UAF) Use Case Update"
+echo "Attestation-Based Client Authentication Use Case Update"
 echo "=========================================="
 
 # --- Load .env ---

@@ -89,6 +89,18 @@ public class ClientConfiguration implements JsonReadable, Configurable {
     return clientIdAlias;
   }
 
+  /**
+   * True when {@code value} names this client: its identifier, or its alias. A client is looked up
+   * by either, so a value that arrives in a request or a token can be either.
+   */
+  public boolean isIdentifiedBy(String value) {
+    if (value == null || value.isEmpty()) {
+      return false;
+    }
+    return value.equals(clientId)
+        || (clientIdAlias != null && !clientIdAlias.isEmpty() && value.equals(clientIdAlias));
+  }
+
   public String clientIdValue() {
     return clientId;
   }

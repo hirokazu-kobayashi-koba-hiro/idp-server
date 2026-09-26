@@ -18,6 +18,7 @@ package org.idp.server.core.openid.clientinstance.registration;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.clientinstance.ClientInstance;
@@ -34,6 +35,8 @@ import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigu
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
+import org.idp.server.core.openid.oauth.configuration.exception.ClientConfigurationNotFoundException;
+import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.jose.JsonWebTokenClaims;
 import org.idp.server.platform.log.LoggerWrapper;
@@ -129,7 +132,12 @@ public class ClientInstanceRegistrationService {
 
     JsonWebTokenClaims idTokenClaims =
         idTokenVerifier.verify(
-            serverConfiguration, clientConfiguration, challenge, instanceKey, idToken);
+            serverConfiguration,
+            clientConfiguration,
+            registrationClientsOf(tenant, clientConfiguration),
+            challenge,
+            instanceKey,
+            idToken);
     User user = resolveUser(tenant, idTokenClaims);
 
     PlatformAttestationVerifier verifier = verifiers.get(platform(platformEvidence));
@@ -163,7 +171,29 @@ public class ClientInstanceRegistrationService {
         challenge.instanceId(),
         user.sub());
 
-    return new ClientInstanceRegistrationResult(clientInstance, superseded);
+    return new ClientInstanceRegistrationResult(clientInstance, superseded, user);
+  }
+
+  /**
+   * The clients whose ID tokens may authenticate the registration, as configurations: listed by
+   * identifier or alias, and matched against an {@code aud} that may be either. A listed client
+   * that does not exist accepts nothing.
+   */
+  private List<ClientConfiguration> registrationClientsOf(
+      Tenant tenant, ClientConfiguration clientConfiguration) {
+    List<ClientConfiguration> registrationClients = new ArrayList<>();
+    for (String listed : clientConfiguration.clientInstanceRegistrationClients()) {
+      try {
+        registrationClients.add(
+            clientConfigurationQueryRepository.get(tenant, new RequestedClientId(listed)));
+      } catch (ClientConfigurationNotFoundException e) {
+        log.warn(
+            "client_instance_registration_clients names an unknown client: client_id={}, listed={}",
+            clientConfiguration.clientIdValue(),
+            listed);
+      }
+    }
+    return registrationClients;
   }
 
   /**

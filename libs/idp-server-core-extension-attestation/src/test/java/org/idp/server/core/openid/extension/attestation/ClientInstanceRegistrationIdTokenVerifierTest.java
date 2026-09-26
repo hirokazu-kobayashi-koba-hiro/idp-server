@@ -56,7 +56,9 @@ class ClientInstanceRegistrationIdTokenVerifierTest {
   static final JsonConverter JSON = JsonConverter.snakeCaseInstance();
   static final String ISSUER = "https://idp.example.com/tenant";
   static final String CLIENT_ID = "mobile-app";
+  static final String CLIENT_ID_ALIAS = "mobile-app-alias";
   static final String REGISTRATION_CLIENT_ID = "mobile-app-bootstrap";
+  static final String REGISTRATION_CLIENT_UUID = "0b8f3c2e-8a51-4d8c-9b57-6f1f7f0e2a11";
   static final String CHALLENGE = "Zm9vYmFyLWNoYWxsZW5nZS0wMQ";
 
   ClientInstanceRegistrationIdTokenVerifier verifier =
@@ -64,6 +66,7 @@ class ClientInstanceRegistrationIdTokenVerifierTest {
   ECKey serverKey;
   AuthorizationServerConfiguration serverConfiguration;
   ClientConfiguration clientConfiguration;
+  List<ClientConfiguration> registrationClients;
   ClientInstanceRegistrationChallenge challenge;
   Map<String, Object> instanceKey;
   String subject;
@@ -81,10 +84,24 @@ class ClientInstanceRegistrationIdTokenVerifierTest {
                 Map.of(
                     "client_id",
                     CLIENT_ID,
+                    "client_id_alias",
+                    CLIENT_ID_ALIAS,
                     "extension",
                     Map.of(
                         "client_instance_registration_clients", List.of(REGISTRATION_CLIENT_ID)))),
             ClientConfiguration.class);
+    // The listed registration client, as the registration service resolves it: listed by its alias,
+    // identified by its UUID.
+    registrationClients =
+        List.of(
+            JSON.read(
+                JSON.write(
+                    Map.of(
+                        "client_id",
+                        REGISTRATION_CLIENT_UUID,
+                        "client_id_alias",
+                        REGISTRATION_CLIENT_ID)),
+                ClientConfiguration.class));
 
     LocalDateTime issuedAt = SystemDateTime.now().minusSeconds(30);
     challenge =
@@ -125,7 +142,13 @@ class ClientInstanceRegistrationIdTokenVerifierTest {
 
   private String verify(String idToken) {
     JsonWebTokenClaims claims =
-        verifier.verify(serverConfiguration, clientConfiguration, challenge, instanceKey, idToken);
+        verifier.verify(
+            serverConfiguration,
+            clientConfiguration,
+            registrationClients,
+            challenge,
+            instanceKey,
+            idToken);
     return claims.getSub();
   }
 
@@ -145,6 +168,21 @@ class ClientInstanceRegistrationIdTokenVerifierTest {
   @Test
   void acceptsAnIdTokenOfAListedRegistrationClient() throws Exception {
     String idToken = sign(validClaims().audience(REGISTRATION_CLIENT_ID).build(), serverKey);
+
+    assertEquals(subject, verify(idToken));
+  }
+
+  @Test
+  void acceptsTheClientsOwnIdTokenRequestedByItsAlias() throws Exception {
+    // The login was requested with the alias, so that is the aud; it names the same client.
+    String idToken = sign(validClaims().audience(CLIENT_ID_ALIAS).build(), serverKey);
+
+    assertEquals(subject, verify(idToken));
+  }
+
+  @Test
+  void acceptsARegistrationClientListedByAliasWhoseIdTokenNamesItsIdentifier() throws Exception {
+    String idToken = sign(validClaims().audience(REGISTRATION_CLIENT_UUID).build(), serverKey);
 
     assertEquals(subject, verify(idToken));
   }

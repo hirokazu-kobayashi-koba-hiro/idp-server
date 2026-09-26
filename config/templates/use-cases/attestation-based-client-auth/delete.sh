@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# MFA (Password + FIDO-UAF) - Use Case Delete Script
+# Attestation-Based Client Authentication - Use Case Delete Script
 # Deletes all resources created by setup.sh.
 #
 # Usage:
@@ -16,7 +16,7 @@ ORGANIZATION_NAME="${ORGANIZATION_NAME:-attestation-based-client-auth}"
 OUTPUT_DIR="${PROJECT_ROOT}/config/generated/${ORGANIZATION_NAME}"
 
 echo "=========================================="
-echo "MFA (Password + FIDO-UAF) Use Case Delete"
+echo "Attestation-Based Client Authentication Use Case Delete"
 echo "=========================================="
 
 # --- Load .env ---

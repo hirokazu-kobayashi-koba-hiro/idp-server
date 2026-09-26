@@ -94,3 +94,8 @@ CREATE UNIQUE INDEX uq_client_instance_active_user
 -- With the ordering carried by the index the LIMIT stops early (5 buffers, 0.09ms).
 CREATE INDEX idx_client_instance_tenant_client_created_at
     ON client_instance (tenant_id, client_id, created_at DESC);
+
+-- The same listing without client_id, which is optional since the API moved under the tenant:
+-- without this index an unfiltered page sorts every instance of the tenant.
+CREATE INDEX idx_client_instance_tenant_created_at
+    ON client_instance (tenant_id, created_at DESC);

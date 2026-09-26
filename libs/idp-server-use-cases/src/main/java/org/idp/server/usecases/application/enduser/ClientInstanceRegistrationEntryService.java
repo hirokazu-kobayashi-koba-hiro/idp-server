@@ -35,10 +35,11 @@ import org.idp.server.platform.type.RequestAttributes;
 /**
  * Client Instance registration for end-user applications.
  *
- * <p>Both endpoints are unauthenticated: the challenge is an authorization ticket decided by the
- * server, and the platform attestation bound to it is what authenticates the registration. Those
- * decisions belong to the protocol; this service resolves the tenant, hands the request over, and
- * records the outcome as a security event.
+ * <p>Neither endpoint takes client authentication, which the app cannot perform before it has an
+ * instance. The challenge is issued to anyone; the registration is authenticated by an ID token
+ * (who the instance belongs to, bound to the key through its nonce) and the platform attestation
+ * bound to the challenge (which device and key). Those decisions belong to the protocol; this
+ * service resolves the tenant, hands the request over, and records the outcome as a security event.
  */
 @Transaction
 public class ClientInstanceRegistrationEntryService implements ClientInstanceRegistrationApi {
@@ -106,7 +107,7 @@ public class ClientInstanceRegistrationEntryService implements ClientInstanceReg
         tenant,
         response.requestedClientId(),
         response.instanceIdentifier(),
-        response.userId(),
+        response.user(),
         requestAttributes);
 
     for (ClientInstanceIdentifier superseded : response.supersededInstances()) {
@@ -115,7 +116,7 @@ public class ClientInstanceRegistrationEntryService implements ClientInstanceReg
           response.requestedClientId(),
           superseded,
           response.instanceIdentifier(),
-          response.userId(),
+          response.user(),
           requestAttributes);
     }
 

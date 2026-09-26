@@ -20,6 +20,7 @@ import org.idp.server.core.openid.clientinstance.ClientInstance;
 import org.idp.server.core.openid.clientinstance.ClientInstanceIdentifier;
 import org.idp.server.core.openid.clientinstance.ClientInstanceQueryRepository;
 import org.idp.server.core.openid.oauth.clientauthenticator.BackchannelRequestContext;
+import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.platform.jose.JsonWebSignatureHeader;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -66,7 +67,10 @@ public class RegisteredInstanceKeyResolver implements ClientAttestationKeyResolv
     }
 
     ClientInstance clientInstance =
-        clientInstanceQueryRepository.find(tenant, context.requestedClientId(), identifier);
+        clientInstanceQueryRepository.find(
+            tenant,
+            new RequestedClientId(context.clientConfiguration().clientIdValue()),
+            identifier);
 
     if (!clientInstance.isActive()) {
       return TrustedAttestationKeys.none();

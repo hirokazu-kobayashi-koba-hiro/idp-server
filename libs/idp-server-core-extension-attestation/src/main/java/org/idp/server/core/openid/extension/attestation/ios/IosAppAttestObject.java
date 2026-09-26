@@ -111,7 +111,11 @@ public class IosAppAttestObject {
   private static byte[] decode(String base64) {
     String normalized = base64.replaceAll("\\s", "").replace('-', '+').replace('_', '/');
     int padding = (4 - normalized.length() % 4) % 4;
-    return Base64.getDecoder().decode(normalized + "=".repeat(padding));
+    try {
+      return Base64.getDecoder().decode(normalized + "=".repeat(padding));
+    } catch (IllegalArgumentException e) {
+      throw new IosAppAttestException("platform_evidence." + EVIDENCE_KEY + " is not base64", e);
+    }
   }
 
   public String format() {

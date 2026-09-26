@@ -18,6 +18,8 @@ package org.idp.server.core.openid.clientinstance.registration;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.core.openid.identity.SecurityEventUserCreatable;
+import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.SecurityEvent;
 import org.idp.server.platform.security.event.*;
@@ -28,23 +30,27 @@ import org.idp.server.platform.type.RequestAttributes;
  *
  * <p>What the registration establishes is a client credential, not a session, and a rejected
  * registration has no user it could trust. The event therefore carries the tenant, whatever of
- * client_id / instance_id the step actually knows, the user_id of a successful registration, and
- * the caller's address.
+ * client_id / instance_id the step actually knows, the user of a successful registration (and of
+ * the instances it replaced), and the caller's address. The user goes in the event's user rather
+ * than its details, so that events are searchable by user and hooks can reach them.
  */
-public class ClientInstanceRegistrationEventCreator {
+public class ClientInstanceRegistrationEventCreator implements SecurityEventUserCreatable {
 
   Tenant tenant;
   SecurityEventType type;
+  User user;
   Map<String, Object> details;
   RequestAttributes requestAttributes;
 
   public ClientInstanceRegistrationEventCreator(
       Tenant tenant,
       SecurityEventType type,
+      User user,
       Map<String, Object> details,
       RequestAttributes requestAttributes) {
     this.tenant = tenant;
     this.type = type;
+    this.user = user;
     this.details = details;
     this.requestAttributes = requestAttributes;
   }
@@ -62,6 +68,10 @@ public class ClientInstanceRegistrationEventCreator {
     Object clientId = details.get("client_id");
     String clientIdValue = clientId instanceof String value ? value : "";
     builder.add(new SecurityEventClient(clientIdValue, ""));
+
+    if (user != null && user.exists()) {
+      builder.add(createSecurityEventUser(user));
+    }
 
     builder.add(requestAttributes.getIpAddress());
     builder.add(requestAttributes.getUserAgent());

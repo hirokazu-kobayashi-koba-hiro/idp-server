@@ -31,6 +31,8 @@
  * 10. A user_bound client obtains tokens in its users' context only: no client_credentials
  * 11. The organization's own administrator manages the instances of its tenant, and no other
  * 12. A client that sets an instance lifetime: the instance expires, and the app registers again
+ * 13. The client named by its alias or its identifier is one client: one active instance per user
+ * 14. Registration and replacement are recorded as security events of the user, searchable by user
  */
 import { beforeAll, describe, expect, it } from "@jest/globals";
 import { v4 as uuidv4 } from "uuid";
@@ -347,6 +349,8 @@ beforeAll(async () => {
         identity_policy_config: { identity_unique_key_type: "EMAIL" },
         session_config: { cookie_name: `AB2_${tenantId.substring(0, 8)}`, use_secure_cookie: false },
         cors_config: { allow_origins: [backendUrl] },
+        // Registration events are asserted on, and a tenant keeps none unless it says so.
+        security_event_log_config: { persistence_enabled: true, include_event_detail: true },
       },
       authorization_server: {
         issuer,
@@ -789,6 +793,109 @@ describe("ABCA Use Case: an app that registers its own Client Instance Key", () 
     }
   });
 
+  it("the client named by its alias or its identifier is one client: the instance records the identifier, and one user holds one active instance", async () => {
+    const alias = `abca-app-${Date.now()}`;
+    const setAlias = async (value) => {
+      const current = (await get({ url: `${clientsUrl()}/${clientId}`, headers: managementHeaders })).data;
+      const body = { ...current };
+      if (value === undefined) {
+        delete body.client_id_alias;
+      } else {
+        body.client_id_alias = value;
+      }
+      const updated = await putWithJson({ url: `${clientsUrl()}/${clientId}`, headers: managementHeaders, body });
+      expect(updated.status).toBe(200);
+    };
+
+    await setAlias(alias);
+    try {
+      console.log("\n=== the app registers naming the client by its alias ===");
+      const jwk = await generateInstanceJwk();
+      const challengeResponse = await postWithJson({
+        url: `${issuer}/v1/client-instances/challenges`,
+        body: { client_id: alias },
+      });
+      expect(challengeResponse.status).toBe(200);
+      const { challenge, instance_id: aliasInstanceId } = challengeResponse.data;
+      const requestHash = deriveRequestHash(challenge, jwk);
+      const { idToken } = await loginForRegistration({
+        tenantId,
+        clientId: alias,
+        redirectUri: REDIRECT_URI,
+        nonce: requestHash,
+        username,
+        password,
+        scope: "openid account",
+      });
+      const registered = await postWithJson({
+        url: `${issuer}/v1/client-instances`,
+        body: {
+          challenge,
+          id_token: idToken,
+          client_instance_public_key: publicJwkOf(jwk),
+          platform_evidence: platformEvidence(
+            generateAttestation({
+              authority,
+              challenge,
+              appId: APP_ID,
+              publicKeyPem: publicKeyPemOf(jwk),
+              publicJwk: publicJwkOf(jwk),
+            })
+          ),
+        },
+      });
+      expect(registered.status).toBe(201);
+
+      const recorded = (await getInstance(aliasInstanceId)).data;
+      expect(recorded).toHaveProperty("client_id", clientId);
+
+      console.log("=== the operator finds it by either name ===");
+      for (const name of [alias, clientId]) {
+        const found = await get({ url: `${instancesUrl()}?client_id=${name}&user_id=${userSub}`, headers: managementHeaders });
+        expect(found.status).toBe(200);
+        expect(found.data.list.map((instance) => instance.id)).toContain(aliasInstanceId);
+      }
+
+      console.log("=== registering again by the identifier replaces it: one client, one active instance ===");
+      const renewed = await enrollInstance();
+      expect((await exchangeCodeWith(renewed)).status).toBe(200);
+      const replaced = (await getInstance(aliasInstanceId)).data;
+      expect(replaced).toHaveProperty("status", "revoked");
+      expect(replaced).toHaveProperty("revocation_reason", "superseded");
+    } finally {
+      await setAlias(undefined);
+      await deleteInstancesOf();
+    }
+  });
+
+  it("registration and replacement are security events of the user: searchable by user, and reachable by hooks that notify them", async () => {
+    const eventsOfUser = async (type, instanceId) => {
+      // Published asynchronously.
+      for (let attempt = 0; attempt < 20; attempt++) {
+        const response = await get({
+          url: `${backendUrl}/v1/management/tenants/${tenantId}/security-events?user_id=${userSub}&event_type=${type}&limit=50`,
+          headers: managementHeaders,
+        });
+        expect(response.status).toBe(200);
+        const matched = response.data.list.filter((event) => JSON.stringify(event).includes(instanceId));
+        if (matched.length > 0) return matched;
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+      return [];
+    };
+
+    const first = await enrollInstance();
+    const registered = await eventsOfUser("client_instance_registration_success", first.instanceId);
+    expect(registered).toHaveLength(1);
+
+    console.log("\n=== the app registers again: the replaced instance is an event of the same user ===");
+    await enrollInstance();
+    const revoked = await eventsOfUser("client_instance_revoked", first.instanceId);
+    expect(revoked).toHaveLength(1);
+
+    await deleteInstancesOf();
+  });
+
   it("the operator finds instances across the clients of the tenant, by what is at hand", async () => {
     const first = await enrollInstance();
     const second = await enrollInstance(); // supersedes the first
@@ -881,6 +988,38 @@ describe("ABCA Use Case: an app that registers its own Client Instance Key", () 
     expect(sameId.status).toBe(400);
 
     expect((await deleteInstance(id)).status).toBe(204);
+  });
+
+  it("deleting a client deletes its instances: a client recreated with the same identifier does not find them", async () => {
+    const disposableClientId = uuidv4();
+    const clientBody = {
+      client_id: disposableClientId,
+      client_name: "ABCA Disposable Client",
+      token_endpoint_auth_method: "attest_jwt_client_auth",
+      extension: { client_attestation_trust_source: "registered_instance_key" },
+      grant_types: ["authorization_code"],
+      redirect_uris: [REDIRECT_URI],
+      response_types: ["code"],
+      scope: "openid",
+      enabled: true,
+    };
+    expect((await postWithJson({ url: clientsUrl(), headers: managementHeaders, body: clientBody })).status).toBe(201);
+
+    const instanceId = uuidv4();
+    const created = await postWithJson({
+      url: instancesUrl(),
+      headers: managementHeaders,
+      body: { id: instanceId, client_id: disposableClientId, instance_key: publicJwkOf(await generateInstanceJwk()) },
+    });
+    expect(created.status).toBe(201);
+
+    console.log("\n=== the operator deletes the client, then creates it again with the same identifier ===");
+    expect((await deletion({ url: `${clientsUrl()}/${disposableClientId}`, headers: managementHeaders })).status).toBe(204);
+    expect((await postWithJson({ url: clientsUrl(), headers: managementHeaders, body: clientBody })).status).toBe(201);
+
+    expect((await getInstance(instanceId)).status).toBe(404);
+
+    await deletion({ url: `${clientsUrl()}/${disposableClientId}`, headers: managementHeaders });
   });
 
   it("a user_bound client obtains tokens in its users' context only: client_credentials is refused", async () => {

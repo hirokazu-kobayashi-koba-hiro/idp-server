@@ -29,6 +29,7 @@ import org.idp.server.control_plane.management.oidc.client.handler.ClientManagem
 import org.idp.server.control_plane.management.oidc.client.handler.ClientManagementService;
 import org.idp.server.control_plane.management.oidc.client.handler.ClientUpdateService;
 import org.idp.server.control_plane.management.oidc.client.io.*;
+import org.idp.server.core.openid.clientinstance.ClientInstanceCommandRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationCommandRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientIdentifier;
@@ -50,6 +51,7 @@ public class ClientManagementEntryService implements ClientManagementApi {
       TenantQueryRepository tenantQueryRepository,
       ClientConfigurationCommandRepository clientConfigurationCommandRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository,
+      ClientInstanceCommandRepository clientInstanceCommandRepository,
       AuditLogPublisher auditLogPublisher) {
 
     Map<String, ClientManagementService<?>> services = new HashMap<>();
@@ -63,7 +65,9 @@ public class ClientManagementEntryService implements ClientManagementApi {
     services.put(
         "delete",
         new ClientDeletionService(
-            clientConfigurationQueryRepository, clientConfigurationCommandRepository));
+            clientConfigurationQueryRepository,
+            clientConfigurationCommandRepository,
+            clientInstanceCommandRepository));
 
     this.handler = new ClientManagementHandler(services, this, tenantQueryRepository);
     this.auditLogPublisher = auditLogPublisher;

@@ -34,6 +34,8 @@ public interface ClientInstanceSqlExecutor {
   void delete(
       Tenant tenant, RequestedClientId requestedClientId, ClientInstanceIdentifier identifier);
 
+  void deleteByClient(Tenant tenant, RequestedClientId requestedClientId);
+
   Map<String, String> selectOne(
       Tenant tenant, RequestedClientId requestedClientId, ClientInstanceIdentifier identifier);
 

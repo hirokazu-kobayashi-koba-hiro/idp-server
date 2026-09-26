@@ -32,6 +32,7 @@ import org.idp.server.platform.jose.JsonWebSignature;
 import org.idp.server.platform.jose.JsonWebSignatureHeader;
 import org.idp.server.platform.jose.JsonWebSignatureVerifier;
 import org.idp.server.platform.jose.JsonWebTokenClaims;
+import org.idp.server.platform.jose.JsonWebTokenClaimsInvalidException;
 import org.idp.server.platform.jose.JwtClockSkewException;
 import org.idp.server.platform.jose.JwtClockSkewValidator;
 
@@ -84,12 +85,24 @@ class ClientAttestationPopJwtVerifier {
     throwExceptionIfInvalidType(jws.header());
     throwExceptionIfInvalidAlg(jws);
     verifySignature(jws);
-    JsonWebTokenClaims claims = jws.claims();
+    JsonWebTokenClaims claims = claimsOf(jws);
     throwExceptionIfInvalidAud(claims);
     throwExceptionIfInvalidJti(claims);
     throwExceptionIfInvalidIat(claims);
     throwExceptionIfInvalidChallenge(claims);
     return jws;
+  }
+
+  /**
+   * The PoP is signed with the instance key the client itself presents, so a valid signature over a
+   * payload that is not a claims set is within anyone's reach; it is a malformed PoP, not an error.
+   */
+  private JsonWebTokenClaims claimsOf(JsonWebSignature jws) {
+    try {
+      return jws.claims();
+    } catch (JsonWebTokenClaimsInvalidException e) {
+      throw exception("client attestation pop jwt payload is not a claims set", e);
+    }
   }
 
   private JsonWebSignature parse() {

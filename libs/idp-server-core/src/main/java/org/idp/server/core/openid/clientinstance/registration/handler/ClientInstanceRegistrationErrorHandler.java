@@ -21,6 +21,8 @@ import org.idp.server.core.openid.clientinstance.registration.PlatformAttestatio
 import org.idp.server.core.openid.clientinstance.registration.handler.io.ClientInstanceRegistrationResponse;
 import org.idp.server.core.openid.oauth.configuration.exception.ClientConfigurationNotFoundException;
 import org.idp.server.platform.datasource.SqlDuplicateKeyException;
+import org.idp.server.platform.datasource.SqlRuntimeException;
+import org.idp.server.platform.datasource.SqlTransactionConflictException;
 import org.idp.server.platform.log.LoggerWrapper;
 
 /**
@@ -40,19 +42,38 @@ public class ClientInstanceRegistrationErrorHandler {
 
   LoggerWrapper log = LoggerWrapper.getLogger(ClientInstanceRegistrationErrorHandler.class);
 
+  /**
+   * Turns a rejected registration into a response, and lets a database failure through.
+   *
+   * <p>A rejection is answered, and the transaction commits: the challenge was consumed before the
+   * checks so that a failed attempt cannot be retried with it, and that consumption has to stick. A
+   * database failure is rethrown so that the transaction rolls back instead. A failed statement
+   * leaves a PostgreSQL transaction aborted, where a commit silently becomes a rollback, and leaves
+   * a MySQL one open, where a commit keeps the statements before it: the other instances revoked,
+   * without the new one that replaced them. Two registrations of the same user racing past the
+   * checks end here, the later one stopped by the unique indexes; the global handler answers 409.
+   */
   public ClientInstanceRegistrationResponse handle(String operation, Exception exception) {
 
-    // SqlDuplicateKeyException: two registrations of the same key raced past the lookup and the
-    // unique constraint on the key thumbprint stopped the second. The caller's mistake, not ours.
+    if (isDatabaseFailure(exception)) {
+      log.warn("Client instance {} rolled back: {}", operation, exception.getMessage());
+      throw (RuntimeException) exception;
+    }
+
     if (exception instanceof ClientInstanceRegistrationException
         || exception instanceof PlatformAttestationVerificationException
-        || exception instanceof ClientConfigurationNotFoundException
-        || exception instanceof SqlDuplicateKeyException) {
+        || exception instanceof ClientConfigurationNotFoundException) {
       log.warn("Client instance {} rejected: {}", operation, exception.getMessage());
       return ClientInstanceRegistrationResponse.invalidRequest(exception.getMessage());
     }
 
     log.error("Client instance {} failed: {}", operation, exception.getMessage(), exception);
     return ClientInstanceRegistrationResponse.serverError(exception.getMessage());
+  }
+
+  private boolean isDatabaseFailure(Exception exception) {
+    return exception instanceof SqlDuplicateKeyException
+        || exception instanceof SqlTransactionConflictException
+        || exception instanceof SqlRuntimeException;
   }
 }

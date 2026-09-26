@@ -45,4 +45,9 @@ public class ClientInstanceCommandDataSource implements ClientInstanceCommandRep
       Tenant tenant, RequestedClientId requestedClientId, ClientInstanceIdentifier identifier) {
     executor.delete(tenant, requestedClientId, identifier);
   }
+
+  @Override
+  public void deleteByClient(Tenant tenant, RequestedClientId requestedClientId) {
+    executor.deleteByClient(tenant, requestedClientId);
+  }
 }

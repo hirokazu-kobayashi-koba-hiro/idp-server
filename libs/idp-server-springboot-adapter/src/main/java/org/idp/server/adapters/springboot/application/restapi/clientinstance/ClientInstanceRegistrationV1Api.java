@@ -34,9 +34,10 @@ import org.springframework.web.bind.annotation.*;
 /**
  * Client Instance registration for end-user applications.
  *
- * <p>Unauthenticated by design: registration has to happen before the client can authenticate at
- * the token endpoint, which is also where login happens. The platform attestation bound to the
- * server issued challenge is what authorizes the request.
+ * <p>Neither endpoint takes client authentication: registration has to happen before the client
+ * can authenticate at the token endpoint. The registration is authenticated by an ID token (who the
+ * instance belongs to, bound to the key through its nonce) and the platform attestation bound to the
+ * server issued challenge (which device and key).
  */
 @RestController
 @RequestMapping("{tenant-id}/v1/client-instances")

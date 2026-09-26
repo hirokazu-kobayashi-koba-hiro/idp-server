@@ -131,6 +131,24 @@ public class MysqlExecutor implements ClientInstanceSqlExecutor {
   }
 
   @Override
+  public void deleteByClient(Tenant tenant, RequestedClientId requestedClientId) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        """
+        DELETE FROM client_instance
+        WHERE tenant_id = ?
+        AND client_id = ?
+        """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierValue());
+    params.add(requestedClientId.value());
+
+    sqlExecutor.execute(sqlTemplate, params);
+  }
+
+  @Override
   public Map<String, String> selectOne(
       Tenant tenant, RequestedClientId requestedClientId, ClientInstanceIdentifier identifier) {
     SqlExecutor sqlExecutor = new SqlExecutor();

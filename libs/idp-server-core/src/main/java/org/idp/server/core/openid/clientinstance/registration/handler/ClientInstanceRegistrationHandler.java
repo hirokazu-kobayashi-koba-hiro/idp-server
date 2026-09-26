@@ -76,8 +76,13 @@ public class ClientInstanceRegistrationHandler {
         clientConfigurationQueryRepository.get(tenant, requestedClientId);
     policyVerifier.verify(clientConfiguration, requestedClientId);
 
+    // The instance records the client's identifier, never the alias it was asked for by: the two
+    // name the same client, and a stored alias would fork one client's instances in two.
     ClientInstanceRegistrationChallenge challenge =
-        challengeIssuer.issue(tenant, requestedClientId, CHALLENGE_EXPIRES_IN_SECONDS);
+        challengeIssuer.issue(
+            tenant,
+            new RequestedClientId(clientConfiguration.clientIdValue()),
+            CHALLENGE_EXPIRES_IN_SECONDS);
     challengeRepository.register(tenant, challenge);
 
     return ClientInstanceRegistrationResponse.challengeIssued(

@@ -53,3 +53,7 @@ CREATE UNIQUE INDEX uq_client_instance_active_user
 -- See the PostgreSQL migration for the measurements behind this index.
 CREATE INDEX idx_client_instance_tenant_client_created_at
     ON client_instance (tenant_id, client_id, created_at DESC);
+
+-- The same listing without client_id (see the PostgreSQL migration).
+CREATE INDEX idx_client_instance_tenant_created_at
+    ON client_instance (tenant_id, created_at DESC);

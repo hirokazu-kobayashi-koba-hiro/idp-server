@@ -62,6 +62,34 @@
       "email",
       "management"
     ],
+    "claims_supported": [
+      "sub",
+      "iss",
+      "auth_time",
+      "acr",
+      "name",
+      "given_name",
+      "family_name",
+      "nickname",
+      "profile",
+      "picture",
+      "website",
+      "email",
+      "email_verified",
+      "locale",
+      "zoneinfo",
+      "birthdate",
+      "gender",
+      "preferred_username",
+      "middle_name",
+      "updated_at",
+      "address",
+      "phone_number",
+      "phone_number_verified"
+    ],
+    "claim_types_supported": [
+      "normal"
+    ],
     "response_types_supported": [
       "code"
     ],

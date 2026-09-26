@@ -63,6 +63,7 @@ public class ClientInstanceRegistrationIdTokenVerifier {
   public JsonWebTokenClaims verify(
       AuthorizationServerConfiguration serverConfiguration,
       ClientConfiguration clientConfiguration,
+      List<ClientConfiguration> registrationClients,
       ClientInstanceRegistrationChallenge challenge,
       Map<String, Object> instanceKey,
       String idToken) {
@@ -71,7 +72,7 @@ public class ClientInstanceRegistrationIdTokenVerifier {
 
     throwExceptionIfIssuerDoesNotMatch(serverConfiguration, claims);
     throwExceptionIfExpired(claims);
-    throwExceptionIfAudienceIsNotAllowed(clientConfiguration, challenge, claims);
+    throwExceptionIfAudienceIsNotAllowed(clientConfiguration, registrationClients, claims);
     throwExceptionIfNonceDoesNotBindTheKey(challenge, instanceKey, claims);
     throwExceptionIfIssuedBeforeChallenge(challenge, claims);
     throwExceptionIfSubjectIsMissing(claims);
@@ -121,18 +122,27 @@ public class ClientInstanceRegistrationIdTokenVerifier {
    * The client's own ID tokens are always accepted. Those of another client only when this client
    * names it: without the allow list, any client of the tenant — a third party application the user
    * merely logged into — could authenticate the registration of this client's instances.
+   *
+   * <p>{@code aud} is the client_id the login was requested with, the identifier or the alias, so
+   * each client is matched by either.
+   *
+   * @param registrationClients the clients this client lists, resolved to their configurations
    */
   private void throwExceptionIfAudienceIsNotAllowed(
       ClientConfiguration clientConfiguration,
-      ClientInstanceRegistrationChallenge challenge,
+      List<ClientConfiguration> registrationClients,
       JsonWebTokenClaims claims) {
 
     List<String> audience = claims.hasAud() ? claims.getAud() : List.of();
-    List<String> registrationClients = clientConfiguration.clientInstanceRegistrationClients();
 
     boolean allowed =
-        audience.contains(challenge.clientId())
-            || audience.stream().anyMatch(registrationClients::contains);
+        audience.stream().anyMatch(clientConfiguration::isIdentifiedBy)
+            || audience.stream()
+                .anyMatch(
+                    value ->
+                        registrationClients.stream()
+                            .anyMatch(
+                                registrationClient -> registrationClient.isIdentifiedBy(value)));
 
     if (!allowed) {
       throw new ClientInstanceRegistrationException(

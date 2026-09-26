@@ -27,6 +27,10 @@ import org.idp.server.core.openid.clientinstance.ClientInstance;
 import org.idp.server.core.openid.clientinstance.ClientInstanceQueries;
 import org.idp.server.core.openid.clientinstance.ClientInstanceQueryRepository;
 import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
+import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
+import org.idp.server.core.openid.oauth.configuration.exception.ClientConfigurationNotFoundException;
+import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
@@ -42,9 +46,13 @@ public class ClientInstanceFindListService
     implements ClientInstanceManagementService<ClientInstanceFindListRequest> {
 
   private final ClientInstanceQueryRepository queryRepository;
+  private final ClientConfigurationQueryRepository clientConfigurationQueryRepository;
 
-  public ClientInstanceFindListService(ClientInstanceQueryRepository queryRepository) {
+  public ClientInstanceFindListService(
+      ClientInstanceQueryRepository queryRepository,
+      ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
     this.queryRepository = queryRepository;
+    this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
   }
 
   @Override
@@ -57,7 +65,7 @@ public class ClientInstanceFindListService
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    ClientInstanceQueries queries = request.queries();
+    ClientInstanceQueries queries = withClientIdentifier(tenant, request.queries());
     throwExceptionIfInvalidQueries(queries);
 
     long totalCount = queryRepository.findTotalCount(tenant, queries);
@@ -71,6 +79,23 @@ public class ClientInstanceFindListService
             "total_count", totalCount,
             "limit", queries.limit(),
             "offset", queries.offset()));
+  }
+
+  /**
+   * Instances record the client's identifier, while an operator may name the client by its alias.
+   * An unknown client_id is kept as is and matches nothing.
+   */
+  private ClientInstanceQueries withClientIdentifier(Tenant tenant, ClientInstanceQueries queries) {
+    if (!queries.hasClientId()) {
+      return queries;
+    }
+    try {
+      ClientConfiguration clientConfiguration =
+          clientConfigurationQueryRepository.get(tenant, new RequestedClientId(queries.clientId()));
+      return queries.withClientId(clientConfiguration.clientIdValue());
+    } catch (ClientConfigurationNotFoundException e) {
+      return queries;
+    }
   }
 
   private void throwExceptionIfInvalidQueries(ClientInstanceQueries queries) {

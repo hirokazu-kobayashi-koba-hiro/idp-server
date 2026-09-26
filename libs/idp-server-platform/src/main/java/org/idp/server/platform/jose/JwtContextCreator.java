@@ -21,7 +21,12 @@ public class JwtContextCreator implements JoseContextCreator {
   public JoseContext create(String jose, String publicJwks, String privateJwks, String secret)
       throws JoseInvalidException {
     JsonWebToken jsonWebToken = JsonWebToken.parse(jose);
-    JsonWebTokenClaims claims = jsonWebToken.claims();
+    JsonWebTokenClaims claims;
+    try {
+      claims = jsonWebToken.claims();
+    } catch (JsonWebTokenClaimsInvalidException e) {
+      throw new JoseInvalidException(e.getMessage(), e);
+    }
     return new JoseContext(
         new JsonWebSignature(), claims, new JsonWebSignatureVerifier(), new JsonWebKey());
   }

@@ -27,4 +27,10 @@ public interface ClientInstanceCommandRepository {
 
   void delete(
       Tenant tenant, RequestedClientId requestedClientId, ClientInstanceIdentifier identifier);
+
+  /**
+   * Deletes every instance of a client, for deleting the client: a client recreated with the same
+   * identifier must not find the previous one's instances authenticating again.
+   */
+  void deleteByClient(Tenant tenant, RequestedClientId requestedClientId);
 }
