@@ -24,6 +24,7 @@ import org.idp.server.control_plane.admin.operation.io.IdpServerOperationRespons
 import org.idp.server.control_plane.admin.operation.io.IdpServerOperationStatus;
 import org.idp.server.core.extension.ciba.repository.BackchannelAuthenticationRequestOperationCommandRepository;
 import org.idp.server.core.extension.ciba.repository.CibaGrantOperationCommandRepository;
+import org.idp.server.core.extension.oid4vci.nonce.CredentialNonceOperationCommandRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationTransactionOperationCommandRepository;
 import org.idp.server.core.openid.clientinstance.registration.ClientInstanceRegistrationChallengeOperationCommandRepository;
 import org.idp.server.core.openid.federation.sso.SsoSessionOperationCommandRepository;
@@ -61,6 +62,7 @@ public class IdpServerOperationEntryService implements IdpServerOperationApi {
       clientAttestationChallengeOperationCommandRepository;
   ClientInstanceRegistrationChallengeOperationCommandRepository
       clientInstanceRegistrationChallengeOperationCommandRepository;
+  CredentialNonceOperationCommandRepository credentialNonceOperationCommandRepository;
 
   public IdpServerOperationEntryService(
       TenantQueryRepository tenantQueryRepository,
@@ -79,7 +81,8 @@ public class IdpServerOperationEntryService implements IdpServerOperationApi {
       ClientAttestationChallengeOperationCommandRepository
           clientAttestationChallengeOperationCommandRepository,
       ClientInstanceRegistrationChallengeOperationCommandRepository
-          clientInstanceRegistrationChallengeOperationCommandRepository) {
+          clientInstanceRegistrationChallengeOperationCommandRepository,
+      CredentialNonceOperationCommandRepository credentialNonceOperationCommandRepository) {
     this.tenantQueryRepository = tenantQueryRepository;
     this.oAuthTokenOperationCommandRepository = oAuthTokenOperationCommandRepository;
     this.authenticationTransactionOperationCommandRepository =
@@ -98,6 +101,7 @@ public class IdpServerOperationEntryService implements IdpServerOperationApi {
         clientAttestationChallengeOperationCommandRepository;
     this.clientInstanceRegistrationChallengeOperationCommandRepository =
         clientInstanceRegistrationChallengeOperationCommandRepository;
+    this.credentialNonceOperationCommandRepository = credentialNonceOperationCommandRepository;
   }
 
   @Override
@@ -148,6 +152,9 @@ public class IdpServerOperationEntryService implements IdpServerOperationApi {
         "client_instance_registration_challenge",
         clientInstanceRegistrationChallengeOperationCommandRepository.deleteExpired(
             adminTenant, maxDeletionNumber));
+    deleted.put(
+        "credential_nonce",
+        credentialNonceOperationCommandRepository.deleteExpired(adminTenant, maxDeletionNumber));
 
     int total = deleted.values().stream().mapToInt(Integer::intValue).sum();
     log.info(

@@ -105,9 +105,11 @@ import org.idp.server.core.extension.identity.verification.repository.IdentityVe
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationConfigurationQueryRepository;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationResultCommandRepository;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationResultQueryRepository;
+import org.idp.server.core.extension.oid4vci.CredentialIssuanceApi;
 import org.idp.server.core.extension.oid4vci.Oid4vciMetaDataApi;
 import org.idp.server.core.extension.oid4vci.Oid4vciProtocol;
 import org.idp.server.core.extension.oid4vci.Oid4vciProtocols;
+import org.idp.server.core.extension.oid4vci.nonce.CredentialNonceOperationCommandRepository;
 import org.idp.server.core.openid.authentication.AuthenticationInteractors;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionApi;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutors;
@@ -229,6 +231,7 @@ import org.idp.server.platform.system.SystemConfigurationApi;
 import org.idp.server.platform.system.SystemConfigurationRepository;
 import org.idp.server.platform.system.SystemConfigurationResolver;
 import org.idp.server.security.event.hook.ssf.SharedSignalsFrameworkMetaDataApi;
+import org.idp.server.usecases.application.credential_issuer.CredentialIssuanceEntryService;
 import org.idp.server.usecases.application.credential_issuer.Oid4vciMetaDataEntryService;
 import org.idp.server.usecases.application.enduser.*;
 import org.idp.server.usecases.application.enduser.AuthenticationDeviceLogEntryService;
@@ -254,6 +257,7 @@ public class IdpServerApplication {
   TokenApi tokenApi;
   OidcMetaDataApi oidcMetaDataApi;
   Oid4vciMetaDataApi oid4vciMetaDataApi;
+  CredentialIssuanceApi credentialIssuanceApi;
   UserinfoApi userinfoApi;
   CibaFlowApi cibaFlowApi;
   CibaFlowApi rawCibaFlowApi;
@@ -541,6 +545,8 @@ public class IdpServerApplication {
         clientAttestationChallengeOperationCommandRepository =
             applicationComponentContainer.resolve(
                 ClientAttestationChallengeOperationCommandRepository.class);
+    CredentialNonceOperationCommandRepository credentialNonceOperationCommandRepository =
+        applicationComponentContainer.resolve(CredentialNonceOperationCommandRepository.class);
     ClientInstanceRegistrationChallengeOperationCommandRepository
         clientInstanceRegistrationChallengeOperationCommandRepository =
             applicationComponentContainer.resolve(
@@ -726,7 +732,8 @@ public class IdpServerApplication {
                 ssoSessionOperationCommandRepository,
                 contactVerificationChallengeOperationCommandRepository,
                 clientAttestationChallengeOperationCommandRepository,
-                clientInstanceRegistrationChallengeOperationCommandRepository),
+                clientInstanceRegistrationChallengeOperationCommandRepository,
+                credentialNonceOperationCommandRepository),
             IdpServerOperationApi.class,
             databaseTypeProvider);
 
@@ -796,6 +803,14 @@ public class IdpServerApplication {
                 tenantQueryRepository,
                 new Oid4vciProtocols(protocolContainer.resolveAll(Oid4vciProtocol.class))),
             Oid4vciMetaDataApi.class,
+            databaseTypeProvider);
+
+    this.credentialIssuanceApi =
+        TenantAwareEntryServiceProxy.createProxy(
+            new CredentialIssuanceEntryService(
+                tenantQueryRepository,
+                new Oid4vciProtocols(protocolContainer.resolveAll(Oid4vciProtocol.class))),
+            CredentialIssuanceApi.class,
             databaseTypeProvider);
 
     this.userinfoApi =
@@ -1560,6 +1575,10 @@ public class IdpServerApplication {
 
   public Oid4vciMetaDataApi oid4vciMetaDataApi() {
     return oid4vciMetaDataApi;
+  }
+
+  public CredentialIssuanceApi credentialIssuanceApi() {
+    return credentialIssuanceApi;
   }
 
   public UserinfoApi userinfoApi() {

@@ -73,3 +73,5 @@ org.idp.server.core.adapters.datasource.oidc.clientinstance.registration.ClientI
 org.idp.server.core.adapters.datasource.oidc.clientattestation.challenge.ClientAttestationChallengeDataSourceProvider
 org.idp.server.core.adapters.datasource.oidc.clientattestation.challenge.operation.ClientAttestationChallengeOperationCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.oidc.clientinstance.registration.operation.ClientInstanceRegistrationChallengeOperationCommandDataSourceProvider
+org.idp.server.core.adapters.datasource.oid4vci.nonce.CredentialNonceDataSourceProvider
+org.idp.server.core.adapters.datasource.oid4vci.nonce.operation.CredentialNonceOperationCommandDataSourceProvider
