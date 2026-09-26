@@ -150,7 +150,7 @@ public class ClientInstanceRegistrationService {
             user.sub(),
             null,
             null,
-            null,
+            expiresAtOf(clientConfiguration),
             null);
 
     // Before the insert: the database admits one active instance per user and client.
@@ -164,6 +164,19 @@ public class ClientInstanceRegistrationService {
         user.sub());
 
     return new ClientInstanceRegistrationResult(clientInstance, superseded);
+  }
+
+  /**
+   * When the instance stops being usable, from the client's {@code
+   * client_instance_lifetime_seconds}; {@code null} (no expiry) when it sets none.
+   */
+  private LocalDateTime expiresAtOf(ClientConfiguration clientConfiguration) {
+    if (!clientConfiguration.hasClientInstanceLifetime()) {
+      return null;
+    }
+    return SystemDateTime.now()
+        .plusSeconds(clientConfiguration.clientInstanceLifetimeSeconds())
+        .truncatedTo(ChronoUnit.MICROS);
   }
 
   /**

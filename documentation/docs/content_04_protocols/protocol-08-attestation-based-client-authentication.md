@@ -572,6 +572,16 @@ iOS App Attest では `key` と `device` を持たず、`app` が `{ "app_id": "
 - **`client_instance_registration_policy: user_bound` のクライアントは `client_credentials` を使えません**（`400 unauthorized_client`）。利用者のいるグラントは、ログイン・リフレッシュのたびに利用者が有効かを確かめますが、`client_credentials` のトークンには利用者がいないため、利用者を削除・無効化しても端末がトークンを取り続けられてしまうからです。グラントの可否は他のグラントと同じくクライアント単位で決まり、管理API から登録した（利用者の無い）インスタンスも同じ扱いです。利用者のいない端末やサーバーで `client_credentials` が必要なら、別のクライアントにします。ABCA の仕様の要件ではなく `idp-server` の方針です。先行事例も同じ方向で、IT-Wallet の Credential Issuer はトークンエンドポイントのグラントを `authorization_code` と `refresh_token` に限り、EUDI の PID Issuer は Attestation で認証するクライアントの `client_credentials` を無効にし、バックエンド用の別クライアントにだけ許しています
 - **管理API で失効・削除するとトークンも削除します。** リフレッシュトークンと、introspection で確かめるアクセストークンはその時点で止まります。新しい登録で置き換えられた（`superseded`）インスタンスのトークンは削除しません。JWT をリソースサーバーが手元で検証する場合は有効期限まで通るため、即座に止めたいならアクセストークンの有効期限を短くするか introspection を使います
 
+### 有効期限
+
+インスタンスは既定では期限を持たず、失効か、同じ利用者の新しい登録で置き換わるまで使えます。クライアントに `client_instance_lifetime_seconds` を設定すると、アプリからの登録時に `expires_at` が入ります（管理API からの登録では `expires_at` を直接指定します）。
+
+期限を過ぎたインスタンスは ABCA で認証できなくなり（`invalid_client_attestation`）、インスタンスに束縛したリフレッシュトークンも更新できなくなります。アプリは登録し直すしかなく、それには**利用者のログインと、新しい鍵でのプラットフォーム証明**が要ります（Android はチャレンジを鍵の生成時に埋め込み、iOS は 1 つの鍵を 1 回しか証明できないため、同じ鍵では作り直せません）。新しい登録で、期限切れのインスタンスは `superseded` として失効します。
+
+期限を設ける意味は、端末の状態（OS のパッチレベルなど）を新しい証明で確かめ直すこと、方針を厳しくしたときに既存のインスタンスも入れ替わることです。
+
+**期間はリフレッシュトークンの寿命以上に揃えます。** `refresh_token_strategy` を固定（最初の発行から数える）にしている配備では、利用者はリフレッシュトークンの寿命ごとにログインし直します。インスタンスの期限をそれに重ねれば、ハイブリッドフローのログイン 1 回で登録し直しとトークンの取得が済み、利用者の負担はほとんど増えません。リフレッシュトークンより短くすると、ログインの回数がそのぶん増えます。
+
 ---
 
 ## Challenge
@@ -615,6 +625,7 @@ PoP JWT の `challenge` クレームは、その PoP がこの認可サーバー
 | `client_attestation_attester_jwks` | `attester_jwks` 時 | 信頼する Client Attester の公開鍵（JWK Set）。秘密鍵・共通鍵を含めてはならない |
 | `client_instance_registration_policy` | 登録エンドポイント使用時 | `user_bound` |
 | `client_instance_registration_clients` | — | 登録を認証する ID トークンを受け付ける、ほかのクライアントの `client_id`。自分自身の ID トークンは常に受け付ける |
+| `client_instance_lifetime_seconds` | — | アプリが登録したインスタンスの有効期間（秒）。未設定または 0 なら期限なし（[有効期限](#有効期限)） |
 
 ### 認可サーバー
 

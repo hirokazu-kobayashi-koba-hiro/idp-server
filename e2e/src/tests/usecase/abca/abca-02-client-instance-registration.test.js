@@ -30,11 +30,12 @@
  * 9. The operator finds instances across the clients of the tenant, by what is at hand
  * 10. A user_bound client obtains tokens in its users' context only: no client_credentials
  * 11. The organization's own administrator manages the instances of its tenant, and no other
+ * 12. A client that sets an instance lifetime: the instance expires, and the app registers again
  */
 import { beforeAll, describe, expect, it } from "@jest/globals";
 import { v4 as uuidv4 } from "uuid";
 import * as jose from "jose";
-import { deletion, get, post, postWithJson } from "../../../lib/http";
+import { deletion, get, post, postWithJson, putWithJson } from "../../../lib/http";
 import { onboarding } from "../../../api/managementClient";
 import { inspectToken, requestToken } from "../../../api/oauthClient";
 import { adminServerConfig, backendUrl } from "../../testConfig";
@@ -741,6 +742,51 @@ describe("ABCA Use Case: an app that registers its own Client Instance Key", () 
     const afterDeletion = await requestTokenWith(instance);
     expect(afterDeletion.status).toBe(401);
     expect(afterDeletion.data).toHaveProperty("error", "invalid_client_attestation");
+  });
+
+  it("instance lifetime: an expired instance stops authenticating, and the app registers again", async () => {
+    // The client sets a lifetime, briefly, and puts it back afterwards: the other cases here run
+    // with instances that do not expire.
+    const setLifetime = async (seconds) => {
+      const current = (await get({ url: `${clientsUrl()}/${clientId}`, headers: managementHeaders })).data;
+      const extension = { ...current.extension };
+      if (seconds === undefined) {
+        delete extension.client_instance_lifetime_seconds;
+      } else {
+        extension.client_instance_lifetime_seconds = seconds;
+      }
+      const updated = await putWithJson({
+        url: `${clientsUrl()}/${clientId}`,
+        headers: managementHeaders,
+        body: { ...current, extension },
+      });
+      expect(updated.status).toBe(200);
+    };
+
+    await setLifetime(3);
+    try {
+      console.log("\n=== the app registers: the instance carries an expiry ===");
+      const instance = await enrollInstance();
+      const registered = (await getInstance(instance.instanceId)).data;
+      expect(registered).toHaveProperty("expires_at");
+      expect((await exchangeCodeWith(instance)).status).toBe(200);
+
+      console.log("=== after the lifetime, the instance no longer authenticates ===");
+      await new Promise((resolve) => setTimeout(resolve, 4000));
+      const expired = await requestTokenWith(instance);
+      expect(expired.status).toBe(401);
+      expect(expired.data).toHaveProperty("error", "invalid_client_attestation");
+
+      console.log("=== the app registers again: a login and a new key; the expired one is superseded ===");
+      const renewed = await enrollInstance();
+      expect((await exchangeCodeWith(renewed)).status).toBe(200);
+      const previous = (await getInstance(instance.instanceId)).data;
+      expect(previous).toHaveProperty("status", "revoked");
+      expect(previous).toHaveProperty("revocation_reason", "superseded");
+    } finally {
+      await setLifetime(undefined);
+      await deleteInstancesOf();
+    }
   });
 
   it("the operator finds instances across the clients of the tenant, by what is at hand", async () => {

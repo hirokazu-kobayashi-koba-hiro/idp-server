@@ -635,6 +635,7 @@ components:
         expires_at:
           type: string
           format: date-time
+          description: この時刻を過ぎると認証できない。アプリからの登録ではクライアントの client_instance_lifetime_seconds から決まり、未設定なら無い（期限なし）
         revoked_at:
           type: string
           format: date-time
@@ -729,6 +730,7 @@ components:
         expires_at:
           type: string
           format: date-time
+          description: 有効期限。省略すると期限なし
       required:
         - client_id
         - instance_key

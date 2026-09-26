@@ -41,6 +41,7 @@ public class ClientExtensionConfiguration implements JsonReadable {
   String clientAttestationTrustSource;
   String clientInstanceRegistrationPolicy;
   List<String> clientInstanceRegistrationClients = new ArrayList<>();
+  Long clientInstanceLifetimeSeconds;
   String clientAttestationAttesterJwks;
   List<String> clientAttestationTrustedRootCertificates = new ArrayList<>();
   Map<String, Object> clientInstancePlatformConfig = new HashMap<>();
@@ -84,6 +85,21 @@ public class ClientExtensionConfiguration implements JsonReadable {
   public boolean hasClientInstanceRegistrationClients() {
     return clientInstanceRegistrationClients != null
         && !clientInstanceRegistrationClients.isEmpty();
+  }
+
+  /**
+   * How long an instance the app registers stays usable, in seconds. idp-server specific.
+   *
+   * <p>Unset or 0: no expiry, an instance lasts until it is revoked or replaced. When it expires
+   * the app registers again, which takes a login and a new key with fresh platform attestation; set
+   * it no shorter than the refresh token's lifetime so that the two coincide.
+   */
+  public long clientInstanceLifetimeSeconds() {
+    return clientInstanceLifetimeSeconds != null ? clientInstanceLifetimeSeconds : 0;
+  }
+
+  public boolean hasClientInstanceLifetime() {
+    return clientInstanceLifetimeSeconds != null && clientInstanceLifetimeSeconds > 0;
   }
 
   /**
@@ -261,6 +277,8 @@ public class ClientExtensionConfiguration implements JsonReadable {
       map.put("client_instance_registration_policy", clientInstanceRegistrationPolicy);
     if (hasClientInstanceRegistrationClients())
       map.put("client_instance_registration_clients", clientInstanceRegistrationClients);
+    if (clientInstanceLifetimeSeconds != null)
+      map.put("client_instance_lifetime_seconds", clientInstanceLifetimeSeconds);
     if (hasClientAttestationAttesterJwks())
       map.put("client_attestation_attester_jwks", clientAttestationAttesterJwks);
     if (hasClientAttestationTrustedRootCertificates())

@@ -430,7 +430,12 @@
           "items": {
             "type": "string"
           },
-          "description": "OPTIONAL. idp-server specific. client_id values of other clients whose ID tokens may authenticate the registration of this client's instances. The client's own ID tokens are always accepted. Intended for tenants that require PAR, where the client cannot obtain an ID token before it has an instance; list a public client that obtains it instead, and give that client no scope beyond openid."
+          "description": "OPTIONAL. idp-server specific. client_id values of other clients whose ID tokens may authenticate the registration of this client's instances. The client's own ID tokens are always accepted. Intended for tenants that require PAR, where the client cannot obtain an ID token before it has an instance; list a public client that obtains it instead, and give that client only the scopes needed until registration (usually openid)."
+        },
+        "client_instance_lifetime_seconds": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "OPTIONAL. idp-server specific. How long an instance registered by the app stays usable, in seconds. Unset or 0: no expiry. An expired instance no longer authenticates, and the app registers again (a login and a new key with fresh platform attestation). Set it no shorter than the refresh token's lifetime so that the two coincide."
         }
       }
     }

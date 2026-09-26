@@ -596,6 +596,14 @@ public class ClientConfiguration implements JsonReadable, Configurable {
     return extension.clientInstanceRegistrationClients();
   }
 
+  public long clientInstanceLifetimeSeconds() {
+    return extension.clientInstanceLifetimeSeconds();
+  }
+
+  public boolean hasClientInstanceLifetime() {
+    return extension.hasClientInstanceLifetime();
+  }
+
   /** Per-platform settings read by the platform attestation verifiers at instance registration. */
   public Map<String, Object> clientInstancePlatformConfig() {
     return extension.clientInstancePlatformConfig();
