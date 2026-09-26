@@ -93,7 +93,7 @@ class AppleAttestationRoots {
     if (certificates.isEmpty()) {
       log.warn(
           "No Apple App Attest root was loaded. Every App Attest registration will be rejected"
-              + " unless a client configures trusted_root_certificates.");
+              + " unless a client configures override_root_certificates.");
     }
     return List.copyOf(certificates);
   }

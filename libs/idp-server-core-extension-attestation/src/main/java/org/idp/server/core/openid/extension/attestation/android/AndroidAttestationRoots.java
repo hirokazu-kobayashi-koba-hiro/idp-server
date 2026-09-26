@@ -88,7 +88,7 @@ class AndroidAttestationRoots {
     if (digests.isEmpty()) {
       log.warn(
           "No Android attestation root was loaded. Every Android key attestation will be rejected"
-              + " unless a client configures trusted_root_certificates.");
+              + " unless a client configures override_root_certificates.");
     }
     return List.copyOf(digests);
   }

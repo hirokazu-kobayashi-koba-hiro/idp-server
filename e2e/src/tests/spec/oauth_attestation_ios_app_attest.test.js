@@ -8,7 +8,7 @@
  * removes exactly one of the properties the verifier requires.
  *
  * The chain leads to a root the test generates rather than to Apple's, so the client under test
- * sets `trusted_root_certificates`. That is the one difference from a device.
+ * sets `override_root_certificates`. That is the one difference from a device.
  *
  * @see https://developer.apple.com/documentation/devicecheck/validating-apps-that-connect-to-your-server
  */
@@ -231,7 +231,7 @@ describe("Apple App Attest (Issue #1521)", () => {
               ios_app_attest: {
                 app_ids: [APP_ID],
                 environment: "production",
-                trusted_root_certificates: [authority.rootBase64],
+                override_root_certificates: [authority.rootBase64],
               },
             },
           },
@@ -370,7 +370,7 @@ describe("Apple App Attest (Issue #1521)", () => {
               ios_app_attest: {
                 app_ids: [APP_ID],
                 environment: "production",
-                trusted_root_certificates: [authority.rootBase64],
+                override_root_certificates: [authority.rootBase64],
                 challenge_binding: "request_hash",
               },
             },

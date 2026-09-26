@@ -411,7 +411,7 @@ beforeAll(async () => {
           ios_app_attest: {
             app_ids: [APP_ID],
             environment: "production",
-            trusted_root_certificates: [authority.rootBase64],
+            override_root_certificates: [authority.rootBase64],
           },
         },
       },

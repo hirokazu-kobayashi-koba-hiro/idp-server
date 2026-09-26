@@ -465,7 +465,7 @@ Android Key Attestation の検証は次の順で行います。
 | `require_device_locked` | `true` | ブートローダーがロックされていることを要求する |
 | `min_os_patch_level` | なし | OS のセキュリティパッチの下限（`YYYYMM` の数値。例: `202406`） |
 | `challenge_binding` | `challenge` | `attestationChallenge` に埋め込む値（[プラットフォーム証明に埋め込む値](#プラットフォーム証明に埋め込む値)） |
-| `trusted_root_certificates` | — | ルートの上書き。設定すると WARN ログが出ます（実質そのルートの持ち主を信頼することになるため） |
+| `override_root_certificates` | — | 同梱の Google ルートを**置き換える**ルート（テスト用）。設定すると同梱のルートでは検証せず、そのルートの持ち主が作った証明だけが通ります。設定すると WARN ログが出ます |
 
 `signature_digests` が必須なのは、パッケージ名が秘密ではないためです。攻撃者は自分の端末で同じパッケージ名のアプリを名乗れるので、**再署名を見分けるのは署名証明書のダイジェストだけ**です。
 
@@ -690,7 +690,7 @@ draft-11 のうち、次は対応していません。
 
 | 項目 | 確認すること |
 |---|---|
-| プラットフォーム証明のルート | `client_instance_platform_config` の `trusted_root_certificates` は設定しない（組み込みの Google / Apple のルートを使う）。設定すると WARN ログが出る。テストで自前のルートを信頼させるための設定なので、本番のクライアントに残っていないか確かめる |
+| テスト用ルートの残り | `client_instance_platform_config` に `override_root_certificates` が**入っていない**こと。未設定なら同梱の Google / Apple のルートで検証する。設定すると同梱のルートが置き換わり、そのルートの持ち主が作った証明だけが通る（WARN ログが出る） |
 | `x5c` のルート | `client_attestation_trusted_root_certificates` に Attester の**ルート**をピン留めする |
 | アクセストークン | リソースサーバーが JWT を手元で検証するなら有効期限を短くするか introspection を使う。失効・削除でトークンを消しても、手元で検証する JWT は期限まで通る |
 | `ENCRYPTION_KEY` | Challenge の HMAC 鍵を兼ねる。変更すると発行済みの Challenge は通らなくなる（クライアントは `use_attestation_challenge` で取り直せる） |

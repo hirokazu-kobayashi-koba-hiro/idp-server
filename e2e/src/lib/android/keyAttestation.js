@@ -4,7 +4,7 @@
  * The registration endpoint accepts the certificate chain of a hardware-backed key, so exercising
  * it end to end means producing that chain. What a device produces and what this builds differ in
  * one way only: the chain leads to a root generated here rather than to Google's, which is why the
- * client under test configures `trusted_root_certificates`.
+ * client under test configures `override_root_certificates`.
  *
  * @see https://source.android.com/docs/security/features/keystore/attestation
  */

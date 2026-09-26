@@ -100,7 +100,7 @@ public class AndroidKeyAttestationVerifier implements PlatformAttestationVerifie
     throwExceptionIfBootIsNotAccepted(extension, configuration);
     throwExceptionIfOsPatchLevelIsTooOld(extension, configuration);
 
-    if (configuration.hasTrustedRootCertificates()) {
+    if (configuration.hasOverrideRootCertificates()) {
       log.warn(
           "Android key attestation verified against a configured root rather than the Google hardware"
               + " attestation root: tenant={}, client_id={}. Hardware backing is only as trustworthy as"

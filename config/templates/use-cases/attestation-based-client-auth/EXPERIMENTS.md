@@ -319,7 +319,7 @@ TEST_ROOT=$(node $TPL/mint-app-attest.mjs --init-authority --out-dir "$OUT")
 
 curl -sk "${CLIENTS_URL}/${SELF_SIGNED_CLIENT}" -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   | jq --arg app "$APP_ID" --arg root "$TEST_ROOT" \
-      '.extension.client_instance_platform_config = {ios_app_attest: {app_ids: [$app], environment: "production", trusted_root_certificates: [$root]}}' \
+      '.extension.client_instance_platform_config = {ios_app_attest: {app_ids: [$app], environment: "production", override_root_certificates: [$root]}}' \
   > /tmp/s.json
 
 curl -sk -X PUT "${CLIENTS_URL}/${SELF_SIGNED_CLIENT}" \
@@ -327,7 +327,7 @@ curl -sk -X PUT "${CLIENTS_URL}/${SELF_SIGNED_CLIENT}" \
   | jq '{diff}'
 ```
 
-`trusted_root_certificates` を設定すると、サーバーのログに WARN が出ます。そのルートの持ち主を信頼することになるためで、本番のクライアントには設定しません。
+`override_root_certificates` を設定すると、サーバーのログに WARN が出ます。そのルートの持ち主を信頼することになるためで、本番のクライアントには設定しません。
 
 ### 1. チャレンジを取得
 

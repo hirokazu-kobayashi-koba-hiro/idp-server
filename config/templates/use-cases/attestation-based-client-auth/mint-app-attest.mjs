@@ -5,7 +5,7 @@
  *
  * What a device produces and what this builds differ in one way only: the chain leads to a root
  * generated here rather than to Apple's, so the client has to trust that root through
- * client_instance_platform_config.ios_app_attest.trusted_root_certificates. The server verifies
+ * client_instance_platform_config.ios_app_attest.override_root_certificates. The server verifies
  * the evidence exactly as it verifies a device's. Uses only Node built-ins.
  *
  *   # generate the test root and intermediate (kept in app-attest-authority.json), print the root

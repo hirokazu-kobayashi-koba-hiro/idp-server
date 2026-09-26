@@ -106,7 +106,7 @@ public class IosAppAttestVerifier implements PlatformAttestationVerifier {
     throwExceptionIfCounterIsNotZero(authenticatorData);
     throwExceptionIfEnvironmentDoesNotMatch(authenticatorData, configuration);
 
-    if (configuration.hasTrustedRootCertificates()) {
+    if (configuration.hasOverrideRootCertificates()) {
       log.warn(
           "App Attest verified against a configured root rather than the Apple App Attest root:"
               + " tenant={}, client_id={}. Hardware backing is only as trustworthy as that root.",
@@ -141,24 +141,24 @@ public class IosAppAttestVerifier implements PlatformAttestationVerifier {
   }
 
   private List<X509Certificate> trustedRoots(IosAppAttestConfiguration configuration) {
-    if (!configuration.hasTrustedRootCertificates()) {
+    if (!configuration.hasOverrideRootCertificates()) {
       List<X509Certificate> shipped = AppleAttestationRoots.certificates();
       if (shipped.isEmpty()) {
         throw new IosAppAttestException(
             "no trusted attestation root is available; the shipped Apple root failed to load."
-                + " Set client_instance_platform_config.ios_app_attest.trusted_root_certificates"
+                + " Set client_instance_platform_config.ios_app_attest.override_root_certificates"
                 + " to continue");
       }
       return shipped;
     }
 
     List<X509Certificate> configured = new ArrayList<>();
-    for (String base64Der : configuration.trustedRootCertificates()) {
+    for (String base64Der : configuration.overrideRootCertificates()) {
       try {
         configured.add(X509CertificateChain.parseCertificate(base64Der));
       } catch (X509CertInvalidException e) {
         throw new IosAppAttestException(
-            "trusted_root_certificates contains a value that is not a certificate: "
+            "override_root_certificates contains a value that is not a certificate: "
                 + e.getMessage(),
             e);
       }

@@ -82,7 +82,7 @@ class AndroidKeyAttestationVerifierTest {
                 "signature_digests",
                     List.of(Base64.getUrlEncoder().withoutPadding().encodeToString(SIGNING_DIGEST)),
                 "min_security_level", "trusted_environment",
-                "trusted_root_certificates", List.of(rootBase64))));
+                "override_root_certificates", List.of(rootBase64))));
   }
 
   private List<String> validChain() throws Exception {

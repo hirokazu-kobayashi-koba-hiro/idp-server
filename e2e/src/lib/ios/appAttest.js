@@ -4,7 +4,7 @@
  * The registration endpoint accepts the attestation object `DCAppAttestService` produces, so
  * exercising it end to end means producing one. What a device produces and what this builds differ
  * in one way only: the chain leads to a root generated here rather than to Apple's, which is why
- * the client under test configures `trusted_root_certificates`.
+ * the client under test configures `override_root_certificates`.
  *
  * Certificates are assembled as DER rather than through node-forge, which signs with RSA only
  * while App Attest keys are EC P-256.

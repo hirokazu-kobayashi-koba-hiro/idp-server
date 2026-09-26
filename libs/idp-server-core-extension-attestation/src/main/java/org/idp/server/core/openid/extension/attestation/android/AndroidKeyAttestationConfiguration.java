@@ -34,13 +34,13 @@ import org.idp.server.core.openid.extension.attestation.PlatformChallengeBinding
  *     "package_names": ["com.example.wallet"],
  *     "signature_digests": ["V2h5IGFyZSB5b3UgcmVhZGluZyB0aGlz"],
  *     "min_security_level": "trusted_environment",
- *     "trusted_root_certificates": []
+ *     "override_root_certificates": []
  *   }
  * }
  * </pre>
  *
- * <p>{@code trusted_root_certificates} overrides the Google hardware attestation root. It exists so
- * that a chain can be produced without a device — a deployment that sets it is trusting whoever
+ * <p>{@code override_root_certificates} overrides the Google hardware attestation root. It exists
+ * so that a chain can be produced without a device — a deployment that sets it is trusting whoever
  * holds that root, which is why the verifier logs a warning when it is used.
  */
 public class AndroidKeyAttestationConfiguration {
@@ -54,7 +54,7 @@ public class AndroidKeyAttestationConfiguration {
   boolean requireDeviceLocked;
   int minOsPatchLevel;
   PlatformChallengeBinding challengeBinding;
-  List<String> trustedRootCertificates;
+  List<String> overrideRootCertificates;
 
   AndroidKeyAttestationConfiguration(
       List<String> packageNames,
@@ -64,7 +64,7 @@ public class AndroidKeyAttestationConfiguration {
       boolean requireDeviceLocked,
       int minOsPatchLevel,
       PlatformChallengeBinding challengeBinding,
-      List<String> trustedRootCertificates) {
+      List<String> overrideRootCertificates) {
     this.packageNames = packageNames;
     this.signatureDigests = signatureDigests;
     this.minSecurityLevel = minSecurityLevel;
@@ -72,7 +72,7 @@ public class AndroidKeyAttestationConfiguration {
     this.requireDeviceLocked = requireDeviceLocked;
     this.minOsPatchLevel = minOsPatchLevel;
     this.challengeBinding = challengeBinding;
-    this.trustedRootCertificates = trustedRootCertificates;
+    this.overrideRootCertificates = overrideRootCertificates;
   }
 
   /**
@@ -113,7 +113,7 @@ public class AndroidKeyAttestationConfiguration {
         requireDeviceLocked(values.get("require_device_locked")),
         minOsPatchLevel(values.get("min_os_patch_level")),
         PlatformChallengeBinding.fromSettings(values),
-        stringList(values.get("trusted_root_certificates")));
+        stringList(values.get("override_root_certificates")));
   }
 
   /**
@@ -206,12 +206,12 @@ public class AndroidKeyAttestationConfiguration {
     return challengeBinding;
   }
 
-  public List<String> trustedRootCertificates() {
-    return trustedRootCertificates;
+  public List<String> overrideRootCertificates() {
+    return overrideRootCertificates;
   }
 
-  public boolean hasTrustedRootCertificates() {
-    return !trustedRootCertificates.isEmpty();
+  public boolean hasOverrideRootCertificates() {
+    return !overrideRootCertificates.isEmpty();
   }
 
   /** True when the presented level is at least as strong as the configured minimum. */

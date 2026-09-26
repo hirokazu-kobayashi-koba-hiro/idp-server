@@ -80,7 +80,7 @@ x5c = [ leaf , 中間 , ... , Google ルート ]
 ```
 
 - チェーンにルートを含むので `verify(ダイジェスト)` を使う
-- 既定の信頼点は同梱の Google ルート。`trusted_root_certificates` で上書きできるが、**上書きすると WARN が出る**（実質そのルートの持ち主を信頼することになるため）
+- 既定の信頼点は同梱の Google ルート。`override_root_certificates` で**置き換え**られる（足すのではない）が、**置き換えると WARN が出る**（実質そのルートの持ち主を信頼することになるため）。テスト用の設定
 - リーフから読む: attestation 拡張（OID `1.3.6.1.4.1.11129.2.1.17`）、チャレンジ、`package_names`、`signature_digests`、セキュリティレベル、インスタンス鍵
 
 ### Apple App Attest

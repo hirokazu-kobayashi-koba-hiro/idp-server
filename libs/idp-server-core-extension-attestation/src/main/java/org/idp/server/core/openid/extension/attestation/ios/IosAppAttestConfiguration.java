@@ -27,7 +27,7 @@ import org.idp.server.core.openid.extension.attestation.PlatformChallengeBinding
  * "ios_app_attest": {
  *   "app_ids": ["ABCDE12345.com.example.wallet"],
  *   "environment": "production",
- *   "trusted_root_certificates": []
+ *   "override_root_certificates": []
  * }
  * </pre>
  */
@@ -38,17 +38,17 @@ public class IosAppAttestConfiguration {
   List<String> appIds;
   IosAppAttestEnvironment environment;
   PlatformChallengeBinding challengeBinding;
-  List<String> trustedRootCertificates;
+  List<String> overrideRootCertificates;
 
   IosAppAttestConfiguration(
       List<String> appIds,
       IosAppAttestEnvironment environment,
       PlatformChallengeBinding challengeBinding,
-      List<String> trustedRootCertificates) {
+      List<String> overrideRootCertificates) {
     this.appIds = appIds;
     this.environment = environment;
     this.challengeBinding = challengeBinding;
-    this.trustedRootCertificates = trustedRootCertificates;
+    this.overrideRootCertificates = overrideRootCertificates;
   }
 
   /**
@@ -77,7 +77,7 @@ public class IosAppAttestConfiguration {
         appIds,
         environment(values.get("environment")),
         PlatformChallengeBinding.fromSettings(values),
-        stringList(values.get("trusted_root_certificates")));
+        stringList(values.get("override_root_certificates")));
   }
 
   private static IosAppAttestEnvironment environment(Object value) {
@@ -111,11 +111,11 @@ public class IosAppAttestConfiguration {
     return challengeBinding;
   }
 
-  public List<String> trustedRootCertificates() {
-    return trustedRootCertificates;
+  public List<String> overrideRootCertificates() {
+    return overrideRootCertificates;
   }
 
-  public boolean hasTrustedRootCertificates() {
-    return !trustedRootCertificates.isEmpty();
+  public boolean hasOverrideRootCertificates() {
+    return !overrideRootCertificates.isEmpty();
   }
 }

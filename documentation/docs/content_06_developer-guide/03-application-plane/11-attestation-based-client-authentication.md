@@ -135,7 +135,7 @@ public interface PlatformAttestationVerifier {
 
 `PlatformAttestationVerifierPluginLoader` は既定で何も登録しません。verifier が1つも無ければ未知 platform として例外になり、**登録はすべて拒否**されます。端末を確かめられないなら登録させない、という安全側の既定です。
 
-検証を迂回する開発用の仕組みはありません。E2E は、端末と同じ形の証明をテスト用に生成したルートで作り、クライアント設定の `trusted_root_certificates` でそのルートを信頼させて、本番と同じ検証を通します（`e2e/src/lib/android/keyAttestation.js` / `e2e/src/lib/ios/appAttest.js`）。
+検証を迂回する開発用の仕組みはありません。E2E は、端末と同じ形の証明をテスト用に生成したルートで作り、クライアント設定の `override_root_certificates` でそのルートを信頼させて、本番と同じ検証を通します（`e2e/src/lib/android/keyAttestation.js` / `e2e/src/lib/ios/appAttest.js`）。
 
 ---
 
@@ -253,9 +253,8 @@ iOS App Attest を足す場合、束縛②の作り方が Android と異なり�
 
 | 項目 | 状態 |
 |---|---|
-| Google ルート証明書の同梱 | 未実施。`trusted_root_certificates` を設定しない限り拒否されます |
-| 証明書の失効確認 | 未実装 |
-| iOS App Attest | 未実装 |
+| 証明書の失効確認 | 未実装（#1890） |
+| Play Integrity | 見送り。改造 OS の検出は Key Attestation の `rootOfTrust` で行う |
 | PoP のリプレイ検出 | `jti` は存在確認のみ。使用済みの記録は持ちません |
 
 ---

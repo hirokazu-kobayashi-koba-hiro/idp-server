@@ -8,7 +8,7 @@
  * bindings the verifier requires.
  *
  * The chain leads to a root the test generates rather than to Google's, so the client under test
- * sets `trusted_root_certificates`. That is the one difference from a device.
+ * sets `override_root_certificates`. That is the one difference from a device.
  *
  * @see https://source.android.com/docs/security/features/keystore/attestation
  */
@@ -207,7 +207,7 @@ describe("Android key attestation (Issue #1521)", () => {
                 package_names: [PACKAGE_NAME],
                 signature_digests: [SIGNING_DIGEST.toString("base64url")],
                 min_security_level: "trusted_environment",
-                trusted_root_certificates: [root.base64Der],
+                override_root_certificates: [root.base64Der],
               },
             },
           },
@@ -529,7 +529,7 @@ describe("Android key attestation (Issue #1521)", () => {
               android_key_attestation: {
                 package_names: [PACKAGE_NAME],
                 signature_digests: [SIGNING_DIGEST.toString("base64url")],
-                trusted_root_certificates: [root.base64Der],
+                override_root_certificates: [root.base64Der],
                 challenge_binding: "challenge_text",
               },
             },

@@ -49,7 +49,7 @@ import tools.jackson.dataformat.cbor.CBORMapper;
  *
  * <p>What a device produces and what this builds differ in one way only: the chain leads to a root
  * generated here rather than to Apple's, which is why the client under test configures {@code
- * trusted_root_certificates}.
+ * override_root_certificates}.
  *
  * @see <a
  *     href="https://developer.apple.com/documentation/devicecheck/validating-apps-that-connect-to-your-server">Validating

@@ -64,19 +64,19 @@ class AndroidCertificateChain {
   }
 
   private List<String> trustedRoots(AndroidKeyAttestationConfiguration configuration) {
-    if (!configuration.hasTrustedRootCertificates()) {
+    if (!configuration.hasOverrideRootCertificates()) {
       List<String> shipped = googleRoots();
       if (shipped.isEmpty()) {
         throw new PlatformAttestationVerificationException(
             "no trusted attestation root is available; the shipped Google roots failed to load."
                 + " Set client_instance_platform_config.android_key_attestation"
-                + ".trusted_root_certificates to continue");
+                + ".override_root_certificates to continue");
       }
       return shipped;
     }
 
     try {
-      List<String> digests = configuration.trustedRootCertificates().stream().toList();
+      List<String> digests = configuration.overrideRootCertificates().stream().toList();
       return digests.stream()
           .map(
               base64Der -> {
@@ -84,7 +84,7 @@ class AndroidCertificateChain {
                   return X509CertificateChain.sha256OfBase64Der(base64Der);
                 } catch (X509CertInvalidException e) {
                   throw new PlatformAttestationVerificationException(
-                      "trusted_root_certificates contains a value that is not a certificate: "
+                      "override_root_certificates contains a value that is not a certificate: "
                           + e.getMessage(),
                       e);
                 }

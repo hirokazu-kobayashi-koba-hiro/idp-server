@@ -87,7 +87,7 @@ class IosAppAttestVerifierTest {
             Map.of(
                 "app_ids", List.of(IosAppAttestFixture.APP_ID),
                 "environment", environment,
-                "trusted_root_certificates", List.of(rootBase64))));
+                "override_root_certificates", List.of(rootBase64))));
   }
 
   /**
@@ -204,7 +204,7 @@ class IosAppAttestVerifierTest {
                       "ios_app_attest",
                       Map.of(
                           "app_ids", List.of(IosAppAttestFixture.APP_ID),
-                          "trusted_root_certificates", List.of(fixture.rootBase64()),
+                          "override_root_certificates", List.of(fixture.rootBase64()),
                           "challenge_binding", binding))),
               CHALLENGE,
               instanceKeyAsJwk(),
