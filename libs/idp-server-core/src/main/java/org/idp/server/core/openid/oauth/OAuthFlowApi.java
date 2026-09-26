@@ -97,6 +97,20 @@ public interface OAuthFlowApi {
       Map<String, Object> params,
       RequestAttributes requestAttributes);
 
+  /**
+   * First-party hand-off at the end of the authorization flow.
+   *
+   * <p>Reached by a top level navigation, so this server's cookies are first-party here. Everything
+   * before it runs as XHR from the authorization view, which is third-party whenever that view is
+   * on another site — where the browser binding cannot be read and the OP session cannot be
+   * written.
+   */
+  OAuthCompleteResponse complete(
+      TenantIdentifier tenantIdentifier,
+      AuthorizationRequestIdentifier authorizationRequestIdentifier,
+      String authProof,
+      RequestAttributes requestAttributes);
+
   OAuthAuthorizeResponse authorizeWithSession(
       TenantIdentifier tenantIdentifier,
       AuthorizationRequestIdentifier authorizationRequestIdentifier,

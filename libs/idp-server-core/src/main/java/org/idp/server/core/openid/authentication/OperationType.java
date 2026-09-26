@@ -45,4 +45,15 @@ public enum OperationType {
   public boolean isChallenge() {
     return this == CHALLENGE;
   }
+
+  /**
+   * Whether the end-user had to supply something only they hold.
+   *
+   * <p>Separates the steps that say something about who is at the keyboard from the ones that do
+   * not. Sending a code, cancelling, or acknowledging a notification can be done by anyone who
+   * knows the request id; entering a password or a one-time code cannot.
+   */
+  public boolean provesPossession() {
+    return this == AUTHENTICATION || this == REGISTRATION;
+  }
 }

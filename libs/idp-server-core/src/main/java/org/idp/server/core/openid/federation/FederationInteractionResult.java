@@ -16,6 +16,7 @@
 
 package org.idp.server.core.openid.federation;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.openid.authentication.Authentication;
@@ -132,6 +133,20 @@ public class FederationInteractionResult {
 
   public Authentication authentication() {
     return authentication;
+  }
+
+  /**
+   * Attaches the value the browser must present to {@code /authorize}.
+   *
+   * <p>Federated sign-in ends in this response, read by the browser that came back from the
+   * external provider and by nothing else, so it is the same moment as a local interaction
+   * succeeding.
+   */
+  public FederationInteractionResult withAuthProof(String authProof) {
+    Map<String, Object> merged = new HashMap<>(response == null ? Map.of() : response);
+    merged.put("auth_proof", authProof);
+    this.response = merged;
+    return this;
   }
 
   public Map<String, Object> response() {

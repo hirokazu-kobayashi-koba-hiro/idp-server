@@ -12,6 +12,7 @@ import {
   Typography,
 } from "@mui/material";
 import { backendUrl } from "@/pages/_app";
+import { completeAuthorization } from "@/auth/completion";
 import { ClaimValue, ViewData } from "@/auth/types";
 
 /** Human-readable labels for common scopes; unknown scopes are shown as-is. */
@@ -308,14 +309,13 @@ export const ConsentStep = ({ tenantId, id, viewData }: Props) => {
         ]),
     );
 
-  const toggle =
-    (setter: typeof setDeniedScopes) => (value: string) =>
-      setter((prev) => {
-        const next = new Set(prev);
-        if (next.has(value)) next.delete(value);
-        else next.add(value);
-        return next;
-      });
+  const toggle = (setter: typeof setDeniedScopes) => (value: string) =>
+    setter((prev) => {
+      const next = new Set(prev);
+      if (next.has(value)) next.delete(value);
+      else next.add(value);
+      return next;
+    });
 
   const submit = async (action: "authorize" | "deny") => {
     setLoading(true);
@@ -338,7 +338,19 @@ export const ConsentStep = ({ tenantId, id, viewData }: Props) => {
         },
       );
       const body = await response.json().catch(() => ({}));
-      if (body.redirect_uri) window.location.href = body.redirect_uri;
+      if (action === "authorize") {
+        // 認可画面が別サイトのときは code がボディに入らず、auth_proof だけが返る。
+        completeAuthorization({
+          backendUrl,
+          tenantId,
+          id,
+          authProof: body.auth_proof,
+          redirectUri: body.redirect_uri,
+        });
+      } else if (body.redirect_uri) {
+        // deny は何も残さないので、そのまま RP へ返してよい。
+        window.location.href = body.redirect_uri;
+      }
     } finally {
       setLoading(false);
     }

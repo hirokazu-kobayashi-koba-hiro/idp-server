@@ -207,4 +207,18 @@ class UIConfigurationTest {
       assertEquals("view_version", restored.variantParam());
     }
   }
+
+  @org.junit.jupiter.api.Test
+  @org.junit.jupiter.api.DisplayName("cross_site は明示したときだけ true。base_url があるだけでは同一サイト扱いのまま")
+  void crossSiteIsDeclaredNotDerived() {
+    org.junit.jupiter.api.Assertions.assertFalse(new UIConfiguration().crossSite());
+    org.junit.jupiter.api.Assertions.assertFalse(
+        new UIConfiguration(java.util.Map.of("base_url", "https://auth.example.com")).crossSite());
+    org.junit.jupiter.api.Assertions.assertTrue(
+        new UIConfiguration(java.util.Map.of("cross_site", true)).crossSite());
+    org.junit.jupiter.api.Assertions.assertTrue(
+        new UIConfiguration(java.util.Map.of("cross_site", "true")).crossSite());
+    org.junit.jupiter.api.Assertions.assertFalse(
+        new UIConfiguration(java.util.Map.of("cross_site", "nonsense")).crossSite());
+  }
 }

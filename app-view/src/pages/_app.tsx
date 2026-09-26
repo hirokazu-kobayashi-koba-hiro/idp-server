@@ -5,8 +5,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Inter } from "next/font/google";
 import { createContext, useContext, useState } from "react";
 import { createAppTheme } from "@/theme/theme";
+import { installAuthProofRelay } from "@/auth/authProof";
 
 const queryClient = new QueryClient();
+
+installAuthProofRelay();
 
 const inter = Inter({
   subsets: ["latin"],
@@ -48,7 +51,16 @@ export default function App({ Component, pageProps }: AppProps) {
 
   return (
     <AppContext.Provider
-      value={{ id, setId, tenantId, setTenantId, userId, setUserId, email, setEmail }}
+      value={{
+        id,
+        setId,
+        tenantId,
+        setTenantId,
+        userId,
+        setUserId,
+        email,
+        setEmail,
+      }}
     >
       <ThemeProvider theme={theme}>
         <CssBaseline />

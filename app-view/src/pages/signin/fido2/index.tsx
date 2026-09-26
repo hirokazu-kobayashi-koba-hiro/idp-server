@@ -1,7 +1,16 @@
 import { useEffect, useState, useRef } from "react";
-import { Typography, Button, Stack, Link, Divider, Box, TextField } from "@mui/material";
+import {
+  Typography,
+  Button,
+  Stack,
+  Link,
+  Divider,
+  Box,
+  TextField,
+} from "@mui/material";
 import { useRouter } from "next/router";
 import { backendUrl, useAppContext } from "@/pages/_app";
+import { completeAuthorization } from "@/auth/completion";
 import { BaseLayout } from "@/components/layout/BaseLayout";
 import { useQuery } from "@tanstack/react-query";
 import { Loading } from "@/components/Loading";
@@ -16,7 +25,7 @@ import { authSessionIdAtom, authSessionTenantIdAtom } from "@/state/AuthState";
  * WebAuthn uses Base64URL encoding for binary data transmission
  */
 const base64UrlToBuffer = (base64url: string): Uint8Array => {
-  const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
+  const base64 = base64url.replace(/-/g, "+").replace(/_/g, "/");
   const binaryString = atob(base64);
   return Uint8Array.from(binaryString, (char) => char.charCodeAt(0));
 };
@@ -27,12 +36,12 @@ const base64UrlToBuffer = (base64url: string): Uint8Array => {
  */
 const bufferToBase64Url = (buffer: ArrayBuffer): string => {
   const bytes = new Uint8Array(buffer);
-  let binary = '';
+  let binary = "";
   for (let i = 0; i < bytes.byteLength; i++) {
     binary += String.fromCharCode(bytes[i]);
   }
   const base64 = btoa(binary);
-  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+  return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
 };
 
 interface credential {
@@ -67,7 +76,8 @@ export default function Login() {
   const [username, setUsername] = useState(contextEmail || "");
 
   // AbortController for managing concurrent authentication requests
-  const [currentCredentialGetController, setCurrentCredentialGetController] = useState<AbortController | null>(null);
+  const [currentCredentialGetController, setCurrentCredentialGetController] =
+    useState<AbortController | null>(null);
   // Ref to track controller for cleanup (avoids stale closure in useEffect cleanup)
   const controllerRef = useRef<AbortController | null>(null);
   // Flag to prevent duplicate challenge requests
@@ -125,7 +135,9 @@ export default function Login() {
 
     // Check browser compatibility
     if (!window.PublicKeyCredential) {
-      setMessage("Your browser does not support passkey authentication. Please use a modern browser.");
+      setMessage(
+        "Your browser does not support passkey authentication. Please use a modern browser.",
+      );
       return;
     }
 
@@ -158,8 +170,8 @@ export default function Login() {
           body: JSON.stringify({
             username: username || contextEmail,
             userVerification: "required",
-            timeout: 60000
-          })
+            timeout: 60000,
+          }),
         },
       );
 
@@ -168,18 +180,20 @@ export default function Login() {
         let errMsg;
         switch (res.status) {
           case 401:
-            errMsg = 'Session expired. Please log in again.';
+            errMsg = "Session expired. Please log in again.";
             break;
           case 429:
-            errMsg = 'Passkey authentication is temporarily unavailable due to rate limiting. Please try again later or use password login.';
+            errMsg =
+              "Passkey authentication is temporarily unavailable due to rate limiting. Please try again later or use password login.";
             break;
           case 503:
-            errMsg = 'Passkey authentication service is currently unavailable. Please try again later or use password login.';
+            errMsg =
+              "Passkey authentication service is currently unavailable. Please try again later or use password login.";
             break;
           default:
             errMsg = isConditional
-              ? 'Passkey authentication is currently unavailable. Please try again later or use password login.'
-              : 'System error. Please try again.';
+              ? "Passkey authentication is currently unavailable. Please try again later or use password login."
+              : "System error. Please try again.";
             break;
         }
         setMessage(errMsg);
@@ -193,7 +207,7 @@ export default function Login() {
         rp_id,
         rp,
         allowCredentials = [],
-        user_verification = "required"
+        user_verification = "required",
       } = challengeResponse;
 
       // Extract rpId from either flat rp_id or nested rp.id
@@ -232,8 +246,8 @@ export default function Login() {
     } catch (error) {
       console.error(error);
       const errMsg = isConditional
-        ? 'Passkey authentication is currently unavailable. Please try again later or use password login.'
-        : 'Failed to get authentication challenge. Please try again.';
+        ? "Passkey authentication is currently unavailable. Please try again later or use password login."
+        : "Failed to get authentication challenge. Please try again.";
       setMessage(errMsg);
     } finally {
       // Only reset isFetching for manual mode
@@ -249,7 +263,10 @@ export default function Login() {
    * @param authOptions - PublicKeyCredentialRequestOptions
    * @param isConditional - Whether this is conditional UI (autofill) or manual button
    */
-  const auth = async (authOptions: PublicKeyCredentialRequestOptions, isConditional: boolean) => {
+  const auth = async (
+    authOptions: PublicKeyCredentialRequestOptions,
+    isConditional: boolean,
+  ) => {
     try {
       // Abort existing credential.get() request if any
       if (currentCredentialGetController) {
@@ -261,12 +278,12 @@ export default function Login() {
       setCurrentCredentialGetController(controller);
       controllerRef.current = controller;
 
-      const credential = await navigator.credentials.get({
+      const credential = (await navigator.credentials.get({
         publicKey: authOptions,
         // conditional: autofill UI, optional: manual button
-        mediation: isConditional ? 'conditional' : 'optional',
+        mediation: isConditional ? "conditional" : "optional",
         signal: controller.signal,
-      }) as PublicKeyCredential;
+      })) as PublicKeyCredential;
 
       // Submit credential to server
       await authSubmit(credential);
@@ -274,10 +291,14 @@ export default function Login() {
       if (!isConditional) {
         // Manual button mode: show error to user
         if (error instanceof Error) {
-          if (error.name === 'AbortError' || error.name === 'NotAllowedError') {
-            setMessage('Authentication was cancelled. Please ensure the selected passkey is available and try again.');
+          if (error.name === "AbortError" || error.name === "NotAllowedError") {
+            setMessage(
+              "Authentication was cancelled. Please ensure the selected passkey is available and try again.",
+            );
           } else {
-            setMessage('An error occurred during authentication. Please ensure the selected passkey is available and try again.');
+            setMessage(
+              "An error occurred during authentication. Please ensure the selected passkey is available and try again.",
+            );
           }
         }
         // Restart conditional UI after manual error
@@ -288,8 +309,10 @@ export default function Login() {
       } else {
         // Conditional mode: only show error if it's not AbortError
         // (AbortError is expected when manual button is clicked)
-        if (error instanceof Error && error.name !== 'AbortError') {
-          setMessage('An error occurred during authentication. Please ensure the selected passkey is available and try again.');
+        if (error instanceof Error && error.name !== "AbortError") {
+          setMessage(
+            "An error occurred during authentication. Please ensure the selected passkey is available and try again.",
+          );
         }
       }
     } finally {
@@ -308,16 +331,21 @@ export default function Login() {
     // Serialize credential for transmission
     // PublicKeyCredential contains ArrayBuffer fields that don't serialize with JSON.stringify
     // Safari especially requires manual serialization
-    const assertionResponse = credential.response as AuthenticatorAssertionResponse;
+    const assertionResponse =
+      credential.response as AuthenticatorAssertionResponse;
     const credentialData = {
       id: credential.id,
       rawId: bufferToBase64Url(credential.rawId),
       type: credential.type,
       response: {
         clientDataJSON: bufferToBase64Url(assertionResponse.clientDataJSON),
-        authenticatorData: bufferToBase64Url(assertionResponse.authenticatorData),
+        authenticatorData: bufferToBase64Url(
+          assertionResponse.authenticatorData,
+        ),
         signature: bufferToBase64Url(assertionResponse.signature),
-        userHandle: assertionResponse.userHandle ? bufferToBase64Url(assertionResponse.userHandle) : null,
+        userHandle: assertionResponse.userHandle
+          ? bufferToBase64Url(assertionResponse.userHandle)
+          : null,
       },
       clientExtensionResults: credential.getClientExtensionResults(),
     };
@@ -352,8 +380,14 @@ export default function Login() {
       );
       const body = await authorizeResponse.json();
       console.log(authorizeResponse.status, body);
-      if (body.redirect_uri) {
-        window.location.href = body.redirect_uri;
+      if (body.auth_proof || body.redirect_uri) {
+        completeAuthorization({
+          backendUrl,
+          tenantId,
+          id,
+          authProof: body.auth_proof,
+          redirectUri: body.redirect_uri,
+        });
       }
       return;
     }
@@ -490,7 +524,7 @@ export default function Login() {
                   p: 1.5,
                   backgroundColor: "#FEF2F2",
                   borderRadius: 1,
-                  border: "1px solid #FCA5A5"
+                  border: "1px solid #FCA5A5",
                 }}
               >
                 {message}
