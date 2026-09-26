@@ -39,8 +39,12 @@ import org.idp.server.platform.json.JsonReadable;
  *
  * <p>The question that has to be answered is "is this the browser that <i>authenticated</i>?", and
  * only one thing separates the two browsers there — the victim supplied credentials and the
- * attacker cannot. So this value is issued the moment the transaction succeeds, handed back in that
+ * attacker cannot. So this value is issued by the step where that happened, handed back in that
  * response, and required from then on.
+ *
+ * <p>Issued per step rather than when the whole transaction succeeds, because the two are often not
+ * the same caller: a flow that finishes out of band is completed by the device, and a value handed
+ * back there never reaches the browser that has to call {@code /authorize}.
  *
  * <h2>Rotation</h2>
  *
@@ -56,12 +60,14 @@ import org.idp.server.platform.json.JsonReadable;
 public class AuthenticationProof implements JsonReadable {
 
   String authorizationRequestId;
+  String sub;
   String redirectUri;
 
   public AuthenticationProof() {}
 
-  public AuthenticationProof(String authorizationRequestId, String redirectUri) {
+  public AuthenticationProof(String authorizationRequestId, String sub, String redirectUri) {
     this.authorizationRequestId = authorizationRequestId;
+    this.sub = sub;
     this.redirectUri = redirectUri;
   }
 
@@ -71,6 +77,17 @@ public class AuthenticationProof implements JsonReadable {
 
   public String redirectUri() {
     return redirectUri;
+  }
+
+  /**
+   * Whether this proof was earned by {@code sub}.
+   *
+   * <p>A proof is issued per step, so more than one can exist for a transaction. Without this, a
+   * proof earned before the transaction settled on a user would carry over to whoever it settled
+   * on.
+   */
+  public boolean issuedTo(String sub) {
+    return this.sub != null && this.sub.equals(sub);
   }
 
   /**
