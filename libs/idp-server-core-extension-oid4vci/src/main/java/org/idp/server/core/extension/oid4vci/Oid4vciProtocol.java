@@ -16,6 +16,9 @@
 package org.idp.server.core.extension.oid4vci;
 
 import org.idp.server.core.extension.oid4vci.io.CredentialIssuerMetadataResponse;
+import org.idp.server.core.extension.oid4vci.io.CredentialNonceResponse;
+import org.idp.server.core.extension.oid4vci.io.CredentialRequest;
+import org.idp.server.core.extension.oid4vci.io.CredentialResponse;
 import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -25,4 +28,8 @@ public interface Oid4vciProtocol {
   AuthorizationProvider authorizationProtocolProvider();
 
   CredentialIssuerMetadataResponse getMetadata(Tenant tenant);
+
+  CredentialNonceResponse issueNonce(Tenant tenant);
+
+  CredentialResponse requestCredential(CredentialRequest request);
 }

@@ -15,7 +15,12 @@
  */
 package org.idp.server.core.extension.oid4vci;
 
+import org.idp.server.core.extension.oid4vci.nonce.CredentialNonceRepository;
+import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
+import org.idp.server.core.openid.oauth.replay.JwtReplayDetector;
+import org.idp.server.core.openid.token.repository.OAuthTokenQueryRepository;
+import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.platform.dependency.ApplicationComponentContainer;
 import org.idp.server.platform.dependency.protocol.ProtocolProvider;
 
@@ -31,6 +36,13 @@ public class DefaultOid4vciProtocolProvider implements ProtocolProvider<Oid4vciP
     AuthorizationServerConfigurationQueryRepository
         authorizationServerConfigurationQueryRepository =
             container.resolve(AuthorizationServerConfigurationQueryRepository.class);
-    return new DefaultOid4vciProtocol(authorizationServerConfigurationQueryRepository);
+    CredentialNonceRepository credentialNonceRepository =
+        container.resolve(CredentialNonceRepository.class);
+    return new DefaultOid4vciProtocol(
+        authorizationServerConfigurationQueryRepository,
+        credentialNonceRepository,
+        container.resolve(OAuthTokenQueryRepository.class),
+        container.resolve(UserQueryRepository.class),
+        new JwtReplayDetector(container.resolve(CacheStore.class)));
   }
 }

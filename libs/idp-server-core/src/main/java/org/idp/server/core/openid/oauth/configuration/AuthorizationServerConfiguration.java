@@ -19,6 +19,7 @@ package org.idp.server.core.openid.oauth.configuration;
 import java.time.Duration;
 import java.util.*;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionType;
+import org.idp.server.core.openid.oauth.configuration.vci.CredentialIssuanceConfiguration;
 import org.idp.server.core.openid.oauth.configuration.vci.CredentialIssuerMetadataConfiguration;
 import org.idp.server.core.openid.oauth.type.oauth.GrantType;
 import org.idp.server.core.openid.oauth.type.oauth.ResponseType;
@@ -105,6 +106,7 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
   // OpenID4VCI: the tenant as a Credential Issuer
   CredentialIssuerMetadataConfiguration credentialIssuerMetadata =
       new CredentialIssuerMetadataConfiguration();
+  CredentialIssuanceConfiguration credentialIssuance = new CredentialIssuanceConfiguration();
 
   public AuthorizationServerExtensionConfiguration extension =
       new AuthorizationServerExtensionConfiguration();
@@ -711,6 +713,10 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
     return extension.clientAttestationPopAcceptableWindow();
   }
 
+  public int credentialNonceDuration() {
+    return extension.credentialNonceDuration();
+  }
+
   public boolean hasKey(String algorithm) {
     return jwks.contains(algorithm);
   }
@@ -720,6 +726,13 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
       return new CredentialIssuerMetadataConfiguration();
     }
     return credentialIssuerMetadata;
+  }
+
+  public CredentialIssuanceConfiguration credentialIssuance() {
+    if (credentialIssuance == null) {
+      return new CredentialIssuanceConfiguration();
+    }
+    return credentialIssuance;
   }
 
   public boolean hasCredentialIssuerMetadata() {
@@ -1019,6 +1032,9 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
     }
     if (hasCredentialIssuerMetadata()) {
       map.put("credential_issuer_metadata", credentialIssuerMetadata.toMap());
+    }
+    if (credentialIssuance().exists()) {
+      map.put("credential_issuance", credentialIssuance.toMap());
     }
     map.put("enabled", enabled);
     map.put("extension", extension.toMap());

@@ -26,6 +26,7 @@ import com.nimbusds.jose.util.Base64URL;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
@@ -167,6 +168,14 @@ public class JsonWebKey {
    */
   public String toJwks() {
     return new JWKSet(value.toPublicJWK()).toString();
+  }
+
+  /**
+   * The public half of this key as a JSON object, e.g. for a {@code cnf.jwk} claim (RFC 7800).
+   * Private members are never included.
+   */
+  public Map<String, Object> toPublicMap() {
+    return value.toPublicJWK().toJSONObject();
   }
 
   public String thumbprintSha256() throws JsonWebKeyInvalidException {

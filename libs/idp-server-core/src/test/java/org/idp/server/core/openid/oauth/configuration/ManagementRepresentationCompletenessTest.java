@@ -43,12 +43,13 @@ class ManagementRepresentationCompletenessTest {
   private final JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   /**
-   * The Credential Issuer Metadata is a model of its own rather than a plain value, so this test
-   * cannot build a sample for it. {@code toMap()} does carry it; its round trip is covered by
-   * {@code CredentialIssuerMetadataConfigurationTest}.
+   * The Credential Issuer Metadata and the credential issuance settings are models of their own
+   * rather than plain values, so this test cannot build a sample for them. {@code toMap()} does
+   * carry them; their round trips are covered by {@code CredentialIssuerMetadataConfigurationTest}
+   * and {@code CredentialIssuanceConfigurationTest}.
    */
   private static final Set<String> AUTHORIZATION_SERVER_EXCLUSIONS =
-      Set.of("credential_issuer_metadata");
+      Set.of("credential_issuer_metadata", "credential_issuance");
 
   /**
    * Timestamps are assigned by the server on write, so they are not part of what a caller sends
