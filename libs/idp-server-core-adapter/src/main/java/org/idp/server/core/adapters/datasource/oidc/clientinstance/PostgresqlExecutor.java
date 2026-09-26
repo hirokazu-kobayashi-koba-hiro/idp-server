@@ -282,4 +282,22 @@ public class PostgresqlExecutor implements ClientInstanceSqlExecutor {
 
     return sqlExecutor.selectList(sqlTemplate, params);
   }
+
+  @Override
+  public List<Map<String, String>> selectListByUser(Tenant tenant, String userId) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        selectColumns
+            + """
+            WHERE tenant_id = ?::uuid
+            AND user_id = ?::uuid
+            """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierUUID());
+    params.add(userId);
+
+    return sqlExecutor.selectList(sqlTemplate, params);
+  }
 }

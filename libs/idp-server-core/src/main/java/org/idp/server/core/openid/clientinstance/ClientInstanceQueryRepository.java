@@ -65,4 +65,10 @@ public interface ClientInstanceQueryRepository {
    */
   List<ClientInstance> findActiveListByUser(
       Tenant tenant, RequestedClientId requestedClientId, String userId);
+
+  /**
+   * Returns every instance bound to a user, across clients and statuses. For deleting them with the
+   * user.
+   */
+  List<ClientInstance> findListByUser(Tenant tenant, String userId);
 }

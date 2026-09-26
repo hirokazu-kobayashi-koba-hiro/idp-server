@@ -47,4 +47,6 @@ public interface ClientInstanceSqlExecutor {
 
   List<Map<String, String>> selectActiveListByUser(
       Tenant tenant, RequestedClientId requestedClientId, String userId);
+
+  List<Map<String, String>> selectListByUser(Tenant tenant, String userId);
 }

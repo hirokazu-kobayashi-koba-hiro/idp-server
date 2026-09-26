@@ -277,4 +277,22 @@ public class MysqlExecutor implements ClientInstanceSqlExecutor {
 
     return sqlExecutor.selectList(sqlTemplate, params);
   }
+
+  @Override
+  public List<Map<String, String>> selectListByUser(Tenant tenant, String userId) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        selectColumns
+            + """
+            WHERE tenant_id = ?
+            AND user_id = ?
+            """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierValue());
+    params.add(userId);
+
+    return sqlExecutor.selectList(sqlTemplate, params);
+  }
 }

@@ -41,8 +41,9 @@ CREATE TABLE client_instance
 CREATE UNIQUE INDEX uq_client_instance_tenant_key_thumbprint
     ON client_instance (tenant_id, instance_key_thumbprint);
 
-CREATE INDEX idx_client_instance_tenant_client_user
-    ON client_instance (tenant_id, client_id, user_id);
+-- user_id leads client_id (see the PostgreSQL migration).
+CREATE INDEX idx_client_instance_tenant_user_client
+    ON client_instance (tenant_id, user_id, client_id);
 
 -- A user holds at most one active instance of a client (see the PostgreSQL migration).
 CREATE UNIQUE INDEX uq_client_instance_active_user

@@ -26,7 +26,7 @@
  * 6. Lifecycle: revocation is final and keeps the key taken; deletion forgets the instance
  * 7. Tokens follow the instance: revoking or deleting it deletes its tokens, and a new registration
  *    of the same key does not inherit them
- * 8. An instance receives its own user's tokens only
+ * 8. An instance receives its own user's tokens only; deleting the user deletes the user's instances
  * 9. The operator finds instances across the clients of the tenant, by what is at hand
  * 10. A user_bound client obtains tokens in its users' context only: no client_credentials
  * 11. The organization's own administrator manages the instances of its tenant, and no other
@@ -674,6 +674,51 @@ describe("ABCA Use Case: an app that registers its own Client Instance Key", () 
     expect((await exchangeCodeWith(othersInstance)).status).toBe(200);
 
     await deleteInstancesOf(otherSub);
+  });
+
+  it("deleting the user deletes the user's instances: the app stops authenticating", async () => {
+    const leavingSub = uuidv4();
+    const leavingUsername = `leaving-${Date.now()}@abca-instance.example.com`;
+    const leavingPassword = `AbcaLeaving_${Date.now()}!`;
+    const created = await postWithJson({
+      url: `${backendUrl}/v1/management/tenants/${tenantId}/users`,
+      headers: managementHeaders,
+      body: {
+        sub: leavingSub,
+        provider_id: "idp-server",
+        name: leavingUsername,
+        email: leavingUsername,
+        email_verified: true,
+        raw_password: leavingPassword,
+      },
+    });
+    expect(created.status).toBe(201);
+
+    const instance = await enrollInstance({
+      as: { username: leavingUsername, password: leavingPassword },
+    });
+    expect((await exchangeCodeWith(instance)).status).toBe(200);
+
+    console.log("\n=== the operator deletes the user ===");
+    const deleted = await deletion({
+      url: `${backendUrl}/v1/management/tenants/${tenantId}/users/${leavingSub}`,
+      headers: managementHeaders,
+    });
+    expect(deleted.status).toBe(204);
+
+    console.log("=== the instance goes with the user (asynchronously) ===");
+    let found;
+    for (let attempt = 0; attempt < 20; attempt++) {
+      found = await getInstance(instance.instanceId);
+      if (found.status === 404) break;
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+    expect(found.status).toBe(404);
+
+    console.log("=== the app no longer authenticates with the instance ===");
+    const afterDeletion = await requestTokenWith(instance);
+    expect(afterDeletion.status).toBe(401);
+    expect(afterDeletion.data).toHaveProperty("error", "invalid_client_attestation");
   });
 
   it("the operator finds instances across the clients of the tenant, by what is at hand", async () => {

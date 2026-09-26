@@ -68,14 +68,15 @@ POLICY tenant_isolation_policy
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE client_instance FORCE ROW LEVEL SECURITY;
 
--- Instances registered by the end-user flow are bound to a user. Registering a new one
--- revokes the user's other active instances of the client, and deleting a user revokes
--- theirs: both are lookups by user rather than by primary key.
 CREATE UNIQUE INDEX uq_client_instance_tenant_key_thumbprint
     ON client_instance (tenant_id, instance_key_thumbprint);
 
-CREATE INDEX idx_client_instance_tenant_client_user
-    ON client_instance (tenant_id, client_id, user_id);
+-- Instances registered by the end-user flow are bound to a user, and two paths look them up by
+-- user rather than by primary key: deleting a user deletes their instances of every client (by
+-- user alone), and registering a new instance revokes the user's other active ones of the client
+-- (by user and client). user_id leads client_id so that one index serves both.
+CREATE INDEX idx_client_instance_tenant_user_client
+    ON client_instance (tenant_id, user_id, client_id);
 
 -- A user holds at most one active instance of a client. Registering a new one revokes the
 -- others in the same transaction; this index is what keeps two registrations running at once

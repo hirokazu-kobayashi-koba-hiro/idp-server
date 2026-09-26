@@ -102,4 +102,15 @@ public class ClientInstanceQueryDataSource implements ClientInstanceQueryReposit
 
     return results.stream().map(ModelConverter::convert).toList();
   }
+
+  @Override
+  public List<ClientInstance> findListByUser(Tenant tenant, String userId) {
+    List<Map<String, String>> results = executor.selectListByUser(tenant, userId);
+
+    if (results == null || results.isEmpty()) {
+      return List.of();
+    }
+
+    return results.stream().map(ModelConverter::convert).toList();
+  }
 }

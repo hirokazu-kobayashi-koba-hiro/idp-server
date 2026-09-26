@@ -74,4 +74,11 @@ class StubClientInstanceQueryRepository implements ClientInstanceQueryRepository
         .filter(instance -> instance.isActive() && userId.equals(instance.userId()))
         .toList();
   }
+
+  @Override
+  public List<ClientInstance> findListByUser(Tenant tenant, String userId) {
+    return instances.values().stream()
+        .filter(instance -> userId.equals(instance.userId()))
+        .toList();
+  }
 }
