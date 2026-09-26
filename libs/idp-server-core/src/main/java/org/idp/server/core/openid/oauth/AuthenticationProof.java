@@ -59,6 +59,9 @@ import org.idp.server.platform.json.JsonReadable;
  */
 public class AuthenticationProof implements JsonReadable {
 
+  /** The name this travels under, in the authorize body and in the {@code /complete} query. */
+  public static final String KEY = "auth_proof";
+
   String authorizationRequestId;
   String sub;
   String redirectUri;
@@ -77,6 +80,19 @@ public class AuthenticationProof implements JsonReadable {
 
   public String redirectUri() {
     return redirectUri;
+  }
+
+  /**
+   * Whether this proof lets {@code sub} mint a code for {@code authorizationRequestIdentifier}.
+   *
+   * <p>Three questions, and all three are about this value. It has to be the first of the two
+   * stages, because the one that carries a redirect belongs to {@code /complete} and accepting it
+   * here would let a caller skip a step. It has to belong to this request, or a proof earned
+   * elsewhere would travel. And it has to belong to this user, because a proof is issued per step
+   * and more than one can exist for a transaction.
+   */
+  public boolean authorizes(String authorizationRequestIdentifier, String sub) {
+    return !hasRedirectUri() && issuedFor(authorizationRequestIdentifier) && issuedTo(sub);
   }
 
   /**

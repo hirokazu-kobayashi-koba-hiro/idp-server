@@ -64,6 +64,7 @@ import org.idp.server.core.openid.oauth.io.OAuthAuthenticationStatusStatus;
 import org.idp.server.core.openid.oauth.repository.AuthenticationProofRepository;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequestIdentifier;
+import org.idp.server.core.openid.oauth.response.RedirectUriDecidable;
 import org.idp.server.core.openid.oauth.type.StandardAuthFlow;
 import org.idp.server.core.openid.oauth.type.extension.OAuthDenyReason;
 import org.idp.server.core.openid.oauth.type.oauth.RedirectUri;
@@ -89,7 +90,8 @@ import org.idp.server.platform.type.RequestAttributes;
  * ClientSession for session management, similar to Keycloak's UserSession/ClientSession pattern.
  */
 @Transaction
-public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
+public class OAuthFlowEntryService
+    implements OAuthFlowApi, OAuthUserDelegate, RedirectUriDecidable {
 
   private static final LoggerWrapper log = LoggerWrapper.getLogger(OAuthFlowEntryService.class);
 
@@ -690,9 +692,6 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
     return OAuthCompleteResponse.redirect(to.value());
   }
 
-  /** The key the authorize response carries the proof under. */
-  public static final String AUTH_PROOF_KEY = "auth_proof";
-
   /**
    * Hands the browser its proof, as soon as it has earned one.
    *
@@ -748,16 +747,14 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
       User user,
       Map<String, Object> params) {
 
-    Object value = params != null ? params.get(AUTH_PROOF_KEY) : null;
+    Object value = params != null ? params.get(AuthenticationProof.KEY) : null;
     if (!(value instanceof String authProof) || authProof.isEmpty()) {
       return false;
     }
 
     AuthenticationProof claimed = authenticationProofRepository.claim(tenant, authProof);
     return claimed != null
-        && !claimed.hasRedirectUri()
-        && claimed.issuedFor(authorizationRequestIdentifier.value())
-        && claimed.issuedTo(user.sub());
+        && claimed.authorizes(authorizationRequestIdentifier.value(), user.sub());
   }
 
   /**
@@ -772,8 +769,10 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
       String sub,
       OAuthAuthorizeResponse authorize) {
 
-    Object redirectUri = authorize.contents().get("redirect_uri");
-    if (!(redirectUri instanceof String target) || target.isEmpty()) {
+    // 応答に直接聞く。contents() は authProof の有無で中身が変わるので、そこから読むと
+    // 呼ぶ順番に依存する。
+    String target = authorize.redirectUriValue();
+    if (target == null || target.isEmpty()) {
       return;
     }
     authorize.withAuthProof(
@@ -782,22 +781,18 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
   }
 
   /**
-   * The redirect URI this request is entitled to, decided the same way the authorization response
-   * decided it.
+   * The redirect URI this request is entitled to.
    *
-   * <p>{@code redirect_uri} is optional for an OAuth 2.0 request whose client registered exactly
-   * one, and {@link org.idp.server.core.openid.oauth.response.RedirectUriDecidable} fills it in
-   * from the client. Reading it off the request alone yields null for those, and comparing against
-   * null is not a rejection — it is a crash.
+   * <p>Decided by {@link RedirectUriDecidable}, the same way the authorization response decided it.
+   * {@code redirect_uri} is optional for an OAuth 2.0 request whose client registered exactly one,
+   * so reading it off the request alone yields null for those — and comparing against null is not a
+   * rejection, it is a crash.
    */
   private RedirectUri registeredRedirectUri(
       Tenant tenant, AuthorizationRequest authorizationRequest) {
-    if (authorizationRequest.hasRedirectUri()) {
-      return authorizationRequest.redirectUri();
-    }
     ClientConfiguration clientConfiguration =
         clientConfigurationQueryRepository.get(tenant, authorizationRequest.requestedClientId());
-    return clientConfiguration.getFirstRedirectUri();
+    return decideRedirectUri(authorizationRequest, clientConfiguration);
   }
 
   private List<String> extractDeniedScopes(Map<String, Object> params) {

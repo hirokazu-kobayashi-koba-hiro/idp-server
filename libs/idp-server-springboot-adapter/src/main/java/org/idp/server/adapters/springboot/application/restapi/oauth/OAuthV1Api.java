@@ -31,6 +31,7 @@ import org.idp.server.core.openid.federation.FederationType;
 import org.idp.server.core.openid.federation.io.FederationCallbackRequest;
 import org.idp.server.core.openid.federation.io.FederationRequestResponse;
 import org.idp.server.core.openid.federation.sso.SsoProvider;
+import org.idp.server.core.openid.oauth.AuthenticationProof;
 import org.idp.server.core.openid.oauth.OAuthFlowApi;
 import org.idp.server.core.openid.oauth.io.*;
 import org.idp.server.core.openid.oauth.io.OAuthAuthenticationStatusResponse;
@@ -313,7 +314,7 @@ public class OAuthV1Api implements ParameterTransformable, SecurityHeaderConfigu
   public ResponseEntity<?> complete(
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @PathVariable("id") AuthorizationRequestIdentifier authorizationRequestIdentifier,
-      @RequestParam(value = "auth_proof", required = false) String authProof,
+      @RequestParam(value = AuthenticationProof.KEY, required = false) String authProof,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
