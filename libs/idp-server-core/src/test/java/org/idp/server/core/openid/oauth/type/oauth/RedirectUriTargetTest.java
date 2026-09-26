@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.usecases.application.enduser;
+package org.idp.server.core.openid.oauth.type.oauth;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -32,13 +32,13 @@ import org.junit.jupiter.api.Test;
  * <p>It was first written as a prefix test, which has no boundary. The cases below are the ones a
  * prefix test lets through, plus the ones where there is nothing to compare against.
  */
-class AuthorizationCompleteRedirectTargetTest {
+class RedirectUriTargetTest {
 
   private static final String REGISTERED = "https://sample.idp.local/api/auth/callback/idp-server";
   private static final String ORIGIN_ONLY = "http://localhost:3000";
 
   private boolean accepts(String to, String registered) {
-    return OAuthFlowEntryService.addressesSameTarget(to, registered);
+    return new RedirectUri(registered).addressesSameTarget(new RedirectUri(to));
   }
 
   @Test

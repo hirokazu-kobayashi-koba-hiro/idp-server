@@ -16,15 +16,11 @@
 
 package org.idp.server.usecases.application.enduser;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
 import org.idp.server.core.openid.authentication.AuthSessionId;
 import org.idp.server.core.openid.authentication.AuthSessionValidator;
 import org.idp.server.core.openid.authentication.Authentication;
@@ -65,10 +61,12 @@ import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration
 import org.idp.server.core.openid.oauth.io.*;
 import org.idp.server.core.openid.oauth.io.OAuthAuthenticationStatusResponse;
 import org.idp.server.core.openid.oauth.io.OAuthAuthenticationStatusStatus;
+import org.idp.server.core.openid.oauth.repository.AuthenticationProofRepository;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.openid.oauth.type.StandardAuthFlow;
 import org.idp.server.core.openid.oauth.type.extension.OAuthDenyReason;
+import org.idp.server.core.openid.oauth.type.oauth.RedirectUri;
 import org.idp.server.core.openid.session.AuthSessionCookieDelegate;
 import org.idp.server.core.openid.session.ClientSessionIdentifier;
 import org.idp.server.core.openid.session.OIDCSessionHandler;
@@ -76,14 +74,11 @@ import org.idp.server.core.openid.session.OPSession;
 import org.idp.server.core.openid.session.SessionCookieDelegate;
 import org.idp.server.core.openid.session.SessionValidationResult;
 import org.idp.server.platform.datasource.Transaction;
-import org.idp.server.platform.datasource.cache.CacheStore;
-import org.idp.server.platform.datasource.cache.NoOperationCacheStore;
 import org.idp.server.platform.http.HttpRequestInputs;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
-import org.idp.server.platform.random.RandomStringGenerator;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -112,7 +107,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
   OAuthFlowEventPublisher eventPublisher;
   UserLifecycleEventPublisher userLifecycleEventPublisher;
   OIDCSessionHandler oidcSessionHandler;
-  CacheStore cacheStore;
+  AuthenticationProofRepository authenticationProofRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
 
   public OAuthFlowEntryService(
@@ -131,7 +126,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
       OAuthFlowEventPublisher eventPublisher,
       UserLifecycleEventPublisher userLifecycleEventPublisher,
       OIDCSessionHandler oidcSessionHandler,
-      CacheStore cacheStore,
+      AuthenticationProofRepository authenticationProofRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
     this.oAuthProtocols = oAuthProtocols;
     this.sessionCookieDelegate = sessionCookieDelegate;
@@ -148,7 +143,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
     this.eventPublisher = eventPublisher;
     this.userLifecycleEventPublisher = userLifecycleEventPublisher;
     this.oidcSessionHandler = oidcSessionHandler;
-    this.cacheStore = cacheStore;
+    this.authenticationProofRepository = authenticationProofRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
   }
 
@@ -486,7 +481,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
     // browser before that happens.
     if (crossSiteAuthorizationView(tenant) && !result.isError() && result.hasUser()) {
       result.withAuthProof(
-          issueAuthenticationProof(
+          authenticationProofRepository.issue(
               tenant, result.authorizationRequestIdentifier(), result.user().sub()));
     }
 
@@ -647,7 +642,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
     //
     // It has to be the second of the two stages. The first is what /authorize itself asks for, and
     // accepting one here would let a caller skip that step and arrive with the wrong one.
-    AuthenticationProof proof = consumeProof(tenant, authProof);
+    AuthenticationProof proof = authenticationProofRepository.claim(tenant, authProof);
     if (proof == null
         || !proof.hasRedirectUri()
         || !proof.issuedFor(authorizationRequestIdentifier.value())) {
@@ -667,8 +662,8 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
 
     // The redirect target is taken from the proof, never from the query string, so there is
     // nothing here for a caller to point somewhere else.
-    String to = proof.redirectUri();
-    if (!addressesSameTarget(to, registeredRedirectUri(tenant, authorizationRequest))) {
+    RedirectUri to = new RedirectUri(proof.redirectUri());
+    if (!registeredRedirectUri(tenant, authorizationRequest).addressesSameTarget(to)) {
       return OAuthCompleteResponse.error(
           "invalid_request", "redirect target does not match the authorization request.");
     }
@@ -692,13 +687,10 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
         tenant, authenticationTransaction.identifier());
     authSessionCookieDelegate.clearAuthSessionCookie(tenant);
 
-    return OAuthCompleteResponse.redirect(to);
+    return OAuthCompleteResponse.redirect(to.value());
   }
 
-  /** How long the browser has to make the hand-off navigation. Seconds, not minutes. */
-  private static final int AUTH_PROOF_TTL_SECONDS = 120;
-
-  /** The key the authorize response carries the hand-off under. */
+  /** The key the authorize response carries the proof under. */
   public static final String AUTH_PROOF_KEY = "auth_proof";
 
   /**
@@ -741,34 +733,14 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
     }
 
     result.withAuthProof(
-        issueAuthenticationProof(tenant, authorizationRequestIdentifier, result.user().sub()));
-  }
-
-  /**
-   * Issues the value the authenticated browser must present to {@code /authorize}.
-   *
-   * <p>Handed back in the response to the interaction that succeeded, which only the browser that
-   * supplied the credentials receives. Knowing the authorization request id is not enough to get
-   * one, which is the whole point: the id is known to whoever opened the request, and in the attack
-   * this defends against that is not the person who authenticated.
-   */
-  private String issueAuthenticationProof(
-      Tenant tenant, AuthorizationRequestIdentifier authorizationRequestIdentifier, String sub) {
-
-    String authProof = new RandomStringGenerator(32).generate();
-    cacheStore.put(
-        AuthenticationProof.cacheKey(tenant.identifier().value(), authProof),
-        new AuthenticationProof(authorizationRequestIdentifier.value(), sub, null),
-        AUTH_PROOF_TTL_SECONDS);
-    return authProof;
+        authenticationProofRepository.issue(
+            tenant, authorizationRequestIdentifier, result.user().sub()));
   }
 
   /**
    * Whether the caller is the browser that authenticated.
    *
-   * <p>The hand-off is consumed here whether or not it turns out to be valid, so a caller cannot
-   * try one twice, and a completion hand-off is rejected outright — the two stages are not
-   * interchangeable.
+   * <p>A completion proof is refused outright — the two stages are not interchangeable.
    */
   private boolean holdsAuthenticationProof(
       Tenant tenant,
@@ -781,11 +753,11 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
       return false;
     }
 
-    AuthenticationProof consumed = consumeProof(tenant, authProof);
-    return consumed != null
-        && !consumed.hasRedirectUri()
-        && consumed.issuedFor(authorizationRequestIdentifier.value())
-        && consumed.issuedTo(user.sub());
+    AuthenticationProof claimed = authenticationProofRepository.claim(tenant, authProof);
+    return claimed != null
+        && !claimed.hasRedirectUri()
+        && claimed.issuedFor(authorizationRequestIdentifier.value())
+        && claimed.issuedTo(user.sub());
   }
 
   /**
@@ -804,44 +776,9 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
     if (!(redirectUri instanceof String target) || target.isEmpty()) {
       return;
     }
-
-    String authProof = new RandomStringGenerator(32).generate();
-    cacheStore.put(
-        AuthenticationProof.cacheKey(tenant.identifier().value(), authProof),
-        new AuthenticationProof(authorizationRequestIdentifier.value(), sub, target),
-        AUTH_PROOF_TTL_SECONDS);
-    authorize.withAuthProof(authProof);
-  }
-
-  /**
-   * Claims the proof and removes it, so one authentication finishes one flow.
-   *
-   * <p>The claim is an atomic increment rather than a read followed by a delete. Two requests
-   * arriving together — a double-clicked button is enough — would both read the value before either
-   * removed it, and cross-site the transaction is still alive at that point, so both would mint a
-   * code. Only the caller that sees the first increment continues.
-   *
-   * <p>Anything other than a first claim is refused, including the zero a store returns when it
-   * failed or is not storing anything. Refusing is the safe direction: the flow stops rather than
-   * proceeding unguarded.
-   */
-  private AuthenticationProof consumeProof(Tenant tenant, String authProof) {
-    if (authProof == null || authProof.isEmpty()) {
-      return null;
-    }
-    String key = AuthenticationProof.cacheKey(tenant.identifier().value(), authProof);
-
-    long claim = cacheStore.increment(key + ":claimed", AUTH_PROOF_TTL_SECONDS);
-    if (claim != 1) {
-      // 消さずに帰る。消すと、先に claim を取った側が読む前に値が無くなり、両方が失敗して
-      // 正規の利用者まで最初からやり直しになる。再利用はこのカウンタだけで防げている。
-      log.warn("auth_proof was already claimed or could not be claimed. claim:{}", claim);
-      return null;
-    }
-
-    AuthenticationProof found = cacheStore.find(key, AuthenticationProof.class).orElse(null);
-    cacheStore.delete(key);
-    return found;
+    authorize.withAuthProof(
+        authenticationProofRepository.issueForCompletion(
+            tenant, authorizationRequestIdentifier, sub, target));
   }
 
   /**
@@ -853,66 +790,16 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
    * from the client. Reading it off the request alone yields null for those, and comparing against
    * null is not a rejection — it is a crash.
    */
-  private String registeredRedirectUri(Tenant tenant, AuthorizationRequest authorizationRequest) {
+  private RedirectUri registeredRedirectUri(
+      Tenant tenant, AuthorizationRequest authorizationRequest) {
     if (authorizationRequest.hasRedirectUri()) {
-      return authorizationRequest.redirectUri().value();
+      return authorizationRequest.redirectUri();
     }
     ClientConfiguration clientConfiguration =
         clientConfigurationQueryRepository.get(tenant, authorizationRequest.requestedClientId());
-    return clientConfiguration.getFirstRedirectUri().value();
+    return clientConfiguration.getFirstRedirectUri();
   }
 
-  /**
-   * Whether {@code to} addresses the same place as the registered redirect URI.
-   *
-   * <p>Compared structurally rather than by prefix. A prefix test has no boundary, so a client
-   * registered with a bare origin — {@code http://localhost:3000}, which plenty are — would accept
-   * {@code http://localhost:3000.attacker.example}: it starts with the registered string while
-   * pointing somewhere else entirely.
-   *
-   * <p>Scheme, host, port and path must match. Query and fragment are free, because that is where
-   * the authorization response puts the code and state.
-   */
-  static boolean addressesSameTarget(String to, String registered) {
-    if (to == null || to.isEmpty() || registered == null || registered.isEmpty()) {
-      return false;
-    }
-    try {
-      URI toUri = new URI(to);
-      URI registeredUri = new URI(registered);
-      // Userinfo is refused outright rather than compared. It is never part of a registered
-      // redirect URI, and it is the part of a URL people misread: https://expected.example@host
-      // shows the expected name while addressing host.
-      if (toUri.getUserInfo() != null) {
-        return false;
-      }
-      return Objects.equals(toUri.getScheme(), registeredUri.getScheme())
-          && Objects.equals(normalizeHost(toUri), normalizeHost(registeredUri))
-          && toUri.getPort() == registeredUri.getPort()
-          && Objects.equals(normalizePath(toUri), normalizePath(registeredUri));
-    } catch (URISyntaxException e) {
-      return false;
-    }
-  }
-
-  /** Host names are case-insensitive, so a differently cased one addresses the same place. */
-  private static String normalizeHost(URI uri) {
-    String host = uri.getHost();
-    return host == null ? null : host.toLowerCase(java.util.Locale.ROOT);
-  }
-
-  /** An absent path and "/" address the same resource; everything else compares as written. */
-  private static String normalizePath(URI uri) {
-    String path = uri.getPath();
-    return path == null || path.isEmpty() ? "/" : path;
-  }
-
-  /**
-   * Scope names the end-user declined on the consent screen, taken from the authorize request body
-   * ({@code denied_scopes}). Empty when no body / no denial. These are merged with the
-   * policy-enforced (level-of-authentication) denied scopes and removed from the granted scopes at
-   * grant build time, so the scope and its derived claims are not issued.
-   */
   private List<String> extractDeniedScopes(Map<String, Object> params) {
     return extractStringList(params, "denied_scopes");
   }
@@ -1141,29 +1028,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
    * org.idp.server.platform.multi_tenancy.tenant.config.UIConfiguration#crossSite()}.
    */
   private boolean crossSiteAuthorizationView(Tenant tenant) {
-    boolean crossSite = tenant.uiConfiguration().crossSite();
-    if (crossSite) {
-      warnOnceIfProofsCannotBeStored();
-    }
-    return crossSite;
-  }
-
-  private static final AtomicBoolean cacheWarningLogged = new AtomicBoolean(false);
-
-  /**
-   * Says so when the proof has nowhere to live.
-   *
-   * <p>Without a cache the proof cannot be issued, and every authorize call fails with "auth_proof
-   * is missing", which says nothing about why. The deployment is misconfigured rather than under
-   * attack, and that is worth one line in the log.
-   */
-  private void warnOnceIfProofsCannotBeStored() {
-    if (cacheStore instanceof NoOperationCacheStore
-        && cacheWarningLogged.compareAndSet(false, true)) {
-      log.warn(
-          "ui_config.cross_site is enabled but no cache is configured. auth_proof cannot be stored,"
-              + " so authorize will reject every request. Enable the cache or turn cross_site off.");
-    }
+    return tenant.uiConfiguration().crossSite();
   }
 
   /**

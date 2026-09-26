@@ -159,6 +159,7 @@ import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigu
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationCommandRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
+import org.idp.server.core.openid.oauth.repository.AuthenticationProofRepository;
 import org.idp.server.core.openid.oauth.repository.AuthorizationCodeGrantOperationCommandRepository;
 import org.idp.server.core.openid.oauth.repository.AuthorizationRequestOperationCommandRepository;
 import org.idp.server.core.openid.plugin.AuthenticationDependencyContainerPluginLoader;
@@ -759,7 +760,7 @@ public class IdpServerApplication {
             oAuthFLowEventPublisher,
             userLifecycleEventPublisher,
             oidcSessionHandler,
-            authenticationDependencyContainer.resolve(CacheStore.class),
+            applicationComponentContainer.resolve(AuthenticationProofRepository.class),
             clientConfigurationQueryRepository);
     this.rawOAuthFlowApi = oAuthFlowEntryService;
     this.oAuthFlowApi =
