@@ -60,6 +60,7 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
   int backchannelAuthenticationPollingInterval = 5;
   boolean clientAttestationChallengeRequired = false;
   int clientAttestationChallengeDuration = 300;
+  int credentialNonceDuration = 300;
   boolean requiredBackchannelAuthUserCode = false;
   String backchannelAuthUserCodeType = "password";
   String defaultCibaAuthenticationInteractionType = "authentication-device-notification";
@@ -207,6 +208,14 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
     return clientAttestationChallengeDuration;
   }
 
+  /**
+   * Lifetime in seconds of a {@code c_nonce} from the OpenID4VCI Nonce Endpoint. A nonce is spent
+   * by the Credential Request that carries it, so this only bounds how long an unused one waits.
+   */
+  public int credentialNonceDuration() {
+    return credentialNonceDuration;
+  }
+
   public boolean requiredBackchannelAuthUserCode() {
     return requiredBackchannelAuthUserCode;
   }
@@ -312,6 +321,7 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
         "backchannel_authentication_polling_interval", backchannelAuthenticationPollingInterval);
     map.put("client_attestation_challenge_required", clientAttestationChallengeRequired);
     map.put("client_attestation_challenge_duration", clientAttestationChallengeDuration);
+    map.put("credential_nonce_duration", credentialNonceDuration);
     map.put("required_backchannel_auth_user_code", requiredBackchannelAuthUserCode);
     map.put("backchannel_auth_user_code_type", backchannelAuthUserCodeType);
     map.put(

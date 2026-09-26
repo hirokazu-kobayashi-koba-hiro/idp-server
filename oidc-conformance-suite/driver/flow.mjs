@@ -57,6 +57,20 @@ export const TENANTS = {
       clientSecret: "fapi2-conformance-admin-secret-change-in-production-minimum-32-characters",
     },
   },
+  // config/examples/oid4vci-haip/setup.sh（OID4VCI 1.0 Final / HAIP issuer）
+  "b01c0787-b7be-4699-9a5a-042f70d41697": {
+    label: "oid4vci-haip",
+    signIn: "otp-passkey",
+    organizationId: "fc67e9a8-623f-4a64-9301-1e9044224457",
+    email: "oid4vci-conformance-driver@example.com",
+    admin: {
+      tenantId: "41b7e675-29a2-4145-a857-3cfb41f7ac3a",
+      username: "oid4vci-conformance-admin@example.com",
+      password: "Oid4vciConformanceSecure123!",
+      clientId: "d70f5b22-e27e-4556-8473-d8711c4b58d5",
+      clientSecret: "oid4vci-conformance-admin-secret-change-in-production-minimum-32-characters",
+    },
+  },
   // config/examples/oidcc-cross-site/setup.sh（OpenID Connect Core / Basic OP）
   "e8c169c2-019f-46c9-af39-7be12ec51e4d": {
     label: "oidcc-cross-site",

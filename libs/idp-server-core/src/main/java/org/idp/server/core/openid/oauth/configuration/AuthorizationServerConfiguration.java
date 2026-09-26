@@ -18,7 +18,8 @@ package org.idp.server.core.openid.oauth.configuration;
 
 import java.util.*;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionType;
-import org.idp.server.core.openid.oauth.configuration.vc.VerifiableCredentialConfiguration;
+import org.idp.server.core.openid.oauth.configuration.vci.CredentialIssuanceConfiguration;
+import org.idp.server.core.openid.oauth.configuration.vci.CredentialIssuerMetadataConfiguration;
 import org.idp.server.core.openid.oauth.type.oauth.GrantType;
 import org.idp.server.core.openid.oauth.type.oauth.ResponseType;
 import org.idp.server.core.openid.oauth.type.oauth.TokenIssuer;
@@ -101,9 +102,10 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
   // enable/disable
   boolean enabled = true;
 
-  // vc
-  VerifiableCredentialConfiguration credentialIssuerMetadata =
-      new VerifiableCredentialConfiguration();
+  // OpenID4VCI: the tenant as a Credential Issuer
+  CredentialIssuerMetadataConfiguration credentialIssuerMetadata =
+      new CredentialIssuerMetadataConfiguration();
+  CredentialIssuanceConfiguration credentialIssuance = new CredentialIssuanceConfiguration();
 
   public AuthorizationServerExtensionConfiguration extension =
       new AuthorizationServerExtensionConfiguration();
@@ -695,16 +697,30 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
     return extension.clientAttestationChallengeDuration();
   }
 
+  public int credentialNonceDuration() {
+    return extension.credentialNonceDuration();
+  }
+
   public boolean hasKey(String algorithm) {
     return jwks.contains(algorithm);
   }
 
-  public VerifiableCredentialConfiguration credentialIssuerMetadata() {
+  public CredentialIssuerMetadataConfiguration credentialIssuerMetadata() {
+    if (credentialIssuerMetadata == null) {
+      return new CredentialIssuerMetadataConfiguration();
+    }
     return credentialIssuerMetadata;
   }
 
+  public CredentialIssuanceConfiguration credentialIssuance() {
+    if (credentialIssuance == null) {
+      return new CredentialIssuanceConfiguration();
+    }
+    return credentialIssuance;
+  }
+
   public boolean hasCredentialIssuerMetadata() {
-    return credentialIssuerMetadata.exists();
+    return credentialIssuerMetadata().exists();
   }
 
   public AuthenticationInteractionType defaultCibaAuthenticationInteractionType() {
@@ -998,9 +1014,12 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
     if (hasAuthorizationDetailsTypesSupported()) {
       map.put("authorization_details_types_supported", authorizationDetailsTypesSupported);
     }
-    // credential_issuer_metadata is deliberately left out: the verifiable credential model is
-    // provisional and does not hold every member of the stored metadata, so emitting it here would
-    // advertise a round trip that silently drops the parts the model does not know about.
+    if (hasCredentialIssuerMetadata()) {
+      map.put("credential_issuer_metadata", credentialIssuerMetadata.toMap());
+    }
+    if (credentialIssuance().exists()) {
+      map.put("credential_issuance", credentialIssuance.toMap());
+    }
     map.put("enabled", enabled);
     map.put("extension", extension.toMap());
     return map;

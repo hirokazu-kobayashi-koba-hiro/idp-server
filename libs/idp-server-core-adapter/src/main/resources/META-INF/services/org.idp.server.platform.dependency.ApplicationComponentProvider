@@ -6,7 +6,6 @@ org.idp.server.core.adapters.datasource.oidc.configuration.server.query.ServerCo
 org.idp.server.core.adapters.datasource.oidc.configuration.server.command.ServerConfigurationCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.oidc.configuration.client.query.ClientConfigurationQueryDataSourceProvider
 org.idp.server.core.adapters.datasource.oidc.configuration.client.command.ClientConfigurationCommandDataSourceProvider
-org.idp.server.core.adapters.datasource.verifiable_credentials.VerifiableCredentialTransactionDataSourceProvider
 org.idp.server.core.adapters.datasource.grant_management.AuthorizationGrantedDataSourceProvider
 org.idp.server.core.adapters.datasource.grant_management.AuthorizationGrantedQueryDataSourceProvider
 org.idp.server.core.adapters.datasource.identity.permission.command.PermissionCommandDataSourceProvider
@@ -74,3 +73,5 @@ org.idp.server.core.adapters.datasource.oidc.clientinstance.registration.ClientI
 org.idp.server.core.adapters.datasource.oidc.clientattestation.challenge.ClientAttestationChallengeDataSourceProvider
 org.idp.server.core.adapters.datasource.oidc.clientattestation.challenge.operation.ClientAttestationChallengeOperationCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.oidc.clientinstance.registration.operation.ClientInstanceRegistrationChallengeOperationCommandDataSourceProvider
+org.idp.server.core.adapters.datasource.oid4vci.nonce.CredentialNonceDataSourceProvider
+org.idp.server.core.adapters.datasource.oid4vci.nonce.operation.CredentialNonceOperationCommandDataSourceProvider
