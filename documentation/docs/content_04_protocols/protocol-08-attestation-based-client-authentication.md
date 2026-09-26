@@ -506,8 +506,6 @@ iOS App Attest では `key` を持たず、`app` が `{ "app_id": "...", "enviro
 
 チェーンそのものと、端末を一意に識別する値は残しません。
 
-開発用の検証器で登録したインスタンスは `{ "platform": "request-hash-binding-development-only", "binding_only": true, ... }` になり、アプリも端末も確かめていないことが記録に残ります。
-
 ---
 
 ## Client Instance の失効と削除
@@ -649,6 +647,18 @@ draft-11 のうち、次は対応していません。
 | `e2e/src/tests/usecase/abca/abca-02-client-instance-registration.test.js` | 自己署名モデルの一生（初回登録・再インストール・端末紛失時の失効）。Challenge を強制したテナントで実行 | 7 |
 
 設定を実際に組んで動かす手順は [ユースケーステンプレート](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/tree/main/config/templates/use-cases/attestation-based-client-auth) にあります。
+
+---
+
+## 本番で確認すること
+
+| 項目 | 確認すること |
+|---|---|
+| プラットフォーム証明のルート | `client_instance_platform_config` の `trusted_root_certificates` は設定しない（組み込みの Google / Apple のルートを使う）。設定すると WARN ログが出る。テストで自前のルートを信頼させるための設定なので、本番のクライアントに残っていないか確かめる |
+| `x5c` のルート | `client_attestation_trusted_root_certificates` に Attester の**ルート**をピン留めする |
+| アクセストークン | リソースサーバーが JWT を手元で検証するなら有効期限を短くするか introspection を使う。失効・削除でトークンを消しても、手元で検証する JWT は期限まで通る |
+| `ENCRYPTION_KEY` | Challenge の HMAC 鍵を兼ねる。変更すると発行済みの Challenge は通らなくなる（クライアントは `use_attestation_challenge` で取り直せる） |
+| 流量制御 | Challenge エンドポイントとインスタンス登録用のチャレンジは認証なしで呼べる。エッジで絞る（[運用ガイダンス](../content_08_ops/commercial-deployment/05-operational-guidance.md#6-認証なしで呼べるエンドポイントの流量制御)） |
 
 ---
 

@@ -13,6 +13,7 @@ idp-server 固有の運用知識とトラブルシューティング手順。
 - **アプリケーションライフサイクル**: Graceful Shutdown、マルチインスタンス運用
 - **定期メンテナンスタスク**: pg_cron ジョブの監視
 - **トラブルシューティング**: 起動失敗、Redis障害、RLS問題、パフォーマンス
+- **流量制御**: 認証なしで呼べるエンドポイントのうち、エッジで絞るべきもの
 
 ### ❌ 本ドキュメントで扱わない内容（利用者の責任範囲）
 
@@ -878,7 +879,21 @@ Timed out while waiting for executor 'securityEventTaskExecutor' to terminate
 
 ---
 
-## 6. 運用チェックリスト
+## 6. 認証なしで呼べるエンドポイントの流量制御
+
+idp-server はアプリ層にレート制限を持ちません（アプリ層にあるのはパスワード認証のブルートフォース対策だけです）。認証なしで呼べて、呼ばれるたびに書き込みが起きるエンドポイントは、WAF / API Gateway / ロードバランサーで IP やテナント単位に絞ってください。
+
+| エンドポイント | 1 リクエストで起きること |
+|---|---|
+| `GET` / `POST /{tenant-id}/v1/authorizations`（認可エンドポイント） | 認可リクエストを 1 行保存 |
+| `POST /{tenant-id}/v1/client-instances/challenges`（インスタンス登録用のチャレンジ） | チャレンジを 1 行保存し、セキュリティイベントを 1 件記録。`client_instance_registration_policy: user_bound` のクライアントに限る |
+| `POST /{tenant-id}/v1/client-attestation/challenges`（Attestation Challenge） | 保存しない（HMAC の計算だけ） |
+
+期限切れの認可リクエストとインスタンス登録用のチャレンジは、ほかの期限切れデータと同じ定期削除の対象です。
+
+---
+
+## 7. 運用チェックリスト
 
 ### 日次確認
 
