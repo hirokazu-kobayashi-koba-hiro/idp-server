@@ -206,6 +206,23 @@ describe("cross-site authorization view: auth_proof", () => {
     });
     expect(passwordConfig.status).toBe(201);
 
+    const emailConfig = await postWithJson({
+      url: `${management}/authentication-configurations`,
+      headers,
+      body: {
+        id: uuidv4(),
+        type: "email",
+        attributes: {},
+        metadata: { type: "internal", description: "Email authentication" },
+        interactions: {
+          "email-authentication-challenge": {
+            execution: { function: "email_authentication_challenge" },
+          },
+        },
+      },
+    });
+    expect(emailConfig.status).toBe(201);
+
     const policy = await postWithJson({
       url: `${management}/authentication-policies`,
       headers,
@@ -218,7 +235,7 @@ describe("cross-site authorization view: auth_proof", () => {
             description: "password_only",
             priority: 10,
             conditions: { scopes: ["openid"] },
-            available_methods: ["password"],
+            available_methods: ["password", "email"],
             success_conditions: {
               any_of: [
                 [
@@ -239,6 +256,18 @@ describe("cross-site authorization view: auth_proof", () => {
   }, 120000);
 
   describe("発行", () => {
+    it("認証の開始（challenge）では auth_proof は返らない", async () => {
+      const id = await startAuthorization();
+
+      // 誰でも呼べる種類のステップ。ここで proof を出すと、ID を知っているだけで手に入る。
+      const response = await postWithJson({
+        url: `${authorizations()}/${id}/email-authentication-challenge`,
+        body: { email: user.email },
+      });
+
+      expect(response.data?.auth_proof).toBeUndefined();
+    });
+
     it("ブラウザ側の認証が成功すると auth_proof が返る", async () => {
       const id = await startAuthorization();
       const response = await authenticate(id);
@@ -288,6 +317,19 @@ describe("cross-site authorization view: auth_proof", () => {
       expect((await authorize(id, { auth_proof: authProof })).status).toBe(400);
     });
 
+    it("別のユーザーが得た auth_proof は使えない", async () => {
+      const id = await startAuthorization();
+      const otherId = await startAuthorization();
+
+      // 他人の proof を、自分のトランザクションに持ち込む。リクエスト ID の一致だけを見ていると通る。
+      const otherProof = (await authenticate(otherId)).data.auth_proof;
+      await authenticate(id);
+
+      expect((await authorize(id, { auth_proof: otherProof })).status).toBe(
+        400
+      );
+    });
+
     it("成功しても code は応答に含まれず、auth_proof だけが返る", async () => {
       const id = await startAuthorization();
       const authProof = (await authenticate(id)).data.auth_proof;
@@ -313,6 +355,32 @@ describe("cross-site authorization view: auth_proof", () => {
       const location = new URL(response.headers.location);
       expect(`${location.origin}${location.pathname}`).toBe(redirectUri);
       expect(location.searchParams.get("code")).toBeTruthy();
+    });
+
+    it("redirect_uri を省略したリクエストでも完了できる", async () => {
+      // 登録値が 1 つのクライアントは redirect_uri を省略できる。リクエストから読むと null になる。
+      const started = await get({
+        url: authorizations(),
+        params: {
+          client_id: clientId,
+          response_type: "code",
+          scope: "openid profile email",
+          state: uuidv4(),
+          nonce: uuidv4(),
+        },
+      });
+      expect(started.status).toBe(302);
+      const id = new URL(started.headers.location).searchParams.get("id");
+
+      const authProof = (await authenticate(id)).data.auth_proof;
+      const completionProof = (await authorize(id, { auth_proof: authProof }))
+        .data.auth_proof;
+      const response = await complete(id, completionProof);
+
+      expect(response.status).toBe(302);
+      expect(
+        new URL(response.headers.location).searchParams.get("code")
+      ).toBeTruthy();
     });
 
     it("authorize 用の auth_proof は /complete では使えない", async () => {

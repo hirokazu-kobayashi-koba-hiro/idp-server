@@ -65,9 +65,30 @@ const take = (id: string): string | undefined => {
   return value;
 };
 
-/** URL から認可リクエスト ID を取り出す。どのフローの値かはこれで決まる。 */
-const requestIdOf = (url: string): string | undefined =>
-  url.match(/\/v1\/authorizations\/([^/?#]+)\//)?.[1];
+/**
+ * URL から認可リクエスト ID を取り出す。どのフローの値かはこれで決まる。
+ *
+ * ID の形まで見る。この位置に来るのは ID だけではなく、フェデレーションのコールバックは
+ * `/v1/authorizations/federations/oidc/callback` で、素朴に 1 つ目のセグメントを取ると
+ * "federations" を ID だと思い込む。そこに置いた値は、直後の authorize からは見つからない。
+ */
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const requestIdOf = (url: string): string | undefined => {
+  const segment = url.match(/\/v1\/authorizations\/([^/?#]+)\//)?.[1];
+  return segment && UUID.test(segment) ? segment : undefined;
+};
+
+/**
+ * URL から ID を読み取れない応答の値を、呼び出し側が知っている ID で預ける。
+ *
+ * フェデレーションのコールバックがこれにあたる。応答の中で初めて認可リクエスト ID が分かるので、
+ * URL からは決められない。
+ */
+export const rememberAuthProof = (id: string, authProof?: string) => {
+  if (typeof window === "undefined" || !id || !authProof) return;
+  store(id, authProof);
+};
 
 const urlOf = (input: RequestInfo | URL): string => {
   if (typeof input === "string") return input;

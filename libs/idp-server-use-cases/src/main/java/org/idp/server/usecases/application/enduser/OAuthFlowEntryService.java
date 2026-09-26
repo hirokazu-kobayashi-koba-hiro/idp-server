@@ -484,7 +484,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
     // external provider. Issued on the step rather than on the transaction, for the same reason as
     // a local interaction: a device step may still follow, and the proof has to be with the
     // browser before that happens.
-    if (crossSiteAuthorizationView(tenant) && !result.isError()) {
+    if (crossSiteAuthorizationView(tenant) && !result.isError() && result.hasUser()) {
       result.withAuthProof(
           issueAuthenticationProof(
               tenant, result.authorizationRequestIdentifier(), result.user().sub()));
@@ -734,6 +734,11 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
     if (!result.isSuccess() || !result.operationType().provesPossession()) {
       return;
     }
+    if (!result.hasUser()) {
+      // 誰のものか言えない proof は authorize が受け取らない。発行しないのと結果は同じで、
+      // こちらは sub を読みに行かない分だけ落ちない。
+      return;
+    }
 
     result.withAuthProof(
         issueAuthenticationProof(tenant, authorizationRequestIdentifier, result.user().sub()));
@@ -828,8 +833,9 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
 
     long claim = cacheStore.increment(key + ":claimed", AUTH_PROOF_TTL_SECONDS);
     if (claim != 1) {
+      // 消さずに帰る。消すと、先に claim を取った側が読む前に値が無くなり、両方が失敗して
+      // 正規の利用者まで最初からやり直しになる。再利用はこのカウンタだけで防げている。
       log.warn("auth_proof was already claimed or could not be claimed. claim:{}", claim);
-      cacheStore.delete(key);
       return null;
     }
 
