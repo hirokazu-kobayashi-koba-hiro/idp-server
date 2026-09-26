@@ -26,6 +26,8 @@
  *   --instances <n>     登録するインスタンス数（デフォルト: 100）
  *   --tenant-index <i>  対象テナントのインデックス（デフォルト: 0）
  *   --resign            登録をスキップし、保存済みの鍵から JWT を再生成する
+ *   --challenge         Challenge エンドポイントから 1 つ取得し、全 PoP JWT の challenge クレームに入れる。
+ *                       PoP に入った Challenge はサーバが必ず照合するので、照合のコストを測るときに使う
  *
  * Output:
  *   - performance-test/data/performance-test-client-instances.json
@@ -62,6 +64,7 @@ const argValue = (name, fallback) => {
 const instanceCount = parseInt(argValue("--instances", "100"), 10);
 const tenantIndex = parseInt(argValue("--tenant-index", "0"), 10);
 const resignOnly = args.includes("--resign");
+const withChallenge = args.includes("--challenge");
 
 // =============================================================================
 // .env (register-tenants.sh と同じキーを読む)
@@ -141,24 +144,35 @@ async function signAttestationJwt(instance, clientId, now) {
     .sign(key);
 }
 
-async function signPopJwt(instance, issuer, now) {
+async function signPopJwt(instance, issuer, now, challenge) {
   const key = await jose.importJWK(instance.jwk, "ES256");
   return await new jose.SignJWT({
     aud: issuer,
     jti: crypto.randomUUID(),
     iat: now,
+    ...(challenge ? { challenge } : {}),
   })
     .setProtectedHeader({ alg: "ES256", typ: POP_TYP })
     .sign(key);
 }
 
+async function fetchChallenge(issuer) {
+  const response = await postJson(`${issuer}/v1/client-attestation/challenges`, {});
+  if (response.status !== 200 || !response.data.attestation_challenge) {
+    throw new Error(`challenge endpoint returned ${response.status}: ${JSON.stringify(response.data)}`);
+  }
+  return response.data.attestation_challenge;
+}
+
 async function signAll(entry) {
   const now = Math.floor(Date.now() / 1000);
+  const challenge = withChallenge ? await fetchChallenge(entry.issuer) : undefined;
   for (const instance of entry.instances) {
     instance.attestationJwt = await signAttestationJwt(instance, entry.clientId, now);
-    instance.popJwt = await signPopJwt(instance, entry.issuer, now);
+    instance.popJwt = await signPopJwt(instance, entry.issuer, now, challenge);
   }
   entry.generatedAt = now;
+  entry.challenge = challenge ?? null;
   return entry;
 }
 
@@ -230,14 +244,15 @@ async function main() {
   console.log(`registered client ${clientId} on tenant ${tenant.tenantId}`);
 
   // 2. Client Instance Key を登録
-  const instancesUrl = `${baseUrl}/v1/management/tenants/${tenant.tenantId}/clients/${clientId}/instances`;
+  // インスタンスはテナント直下の管理 API で登録する（client_id は本文で指定）
+  const instancesUrl = `${baseUrl}/v1/management/tenants/${tenant.tenantId}/client-instances`;
   const instances = [];
   for (let i = 0; i < instanceCount; i++) {
     const instanceId = crypto.randomUUID();
     const jwk = await generateInstanceJwk(instanceId);
     const response = await postJson(
       instancesUrl,
-      { id: instanceId, instance_key: publicJwkOf(jwk) },
+      { id: instanceId, client_id: clientId, instance_key: publicJwkOf(jwk) },
       managementHeaders
     );
     if (response.status !== 201) {

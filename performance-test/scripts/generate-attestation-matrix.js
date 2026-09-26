@@ -249,8 +249,8 @@ async function main() {
         // attester_jwks は cnf.jwk の鍵で検証するので client_instance への登録は不要
         if (selfSigned) {
           const response = await postJson(
-            `${baseUrl}/v1/management/tenants/${tenant.tenantId}/clients/${clientId}/instances`,
-            { id: instanceId, instance_key: publicJwkOf(jwk) },
+            `${baseUrl}/v1/management/tenants/${tenant.tenantId}/client-instances`,
+            { id: instanceId, client_id: clientId, instance_key: publicJwkOf(jwk) },
             managementHeaders
           );
           if (response.status !== 201) {
