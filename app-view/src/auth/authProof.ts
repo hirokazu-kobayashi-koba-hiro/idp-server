@@ -21,29 +21,53 @@
  */
 const AUTHORIZE = /\/v1\/authorizations\/[^/?#]+\/authorize(?:$|[?#])/;
 
-const KEY = "idp.auth_proof";
+const KEY_PREFIX = "idp.auth_proof:";
 
-let held: string | undefined;
+const held = new Map<string, string>();
 
-/** sessionStorage は private window や site data ブロックで読み書きとも投げるので、必ず包む。 */
-const readStored = (): string | undefined => {
+/**
+ * 認可リクエストごとに持つ。使ったら捨てる。
+ *
+ * 1 つのキーに入れると、authorize が返す 2 段目の値が 1 段目を上書きする。/complete への遷移に
+ * 失敗して authorize からやり直すと、authorize が受け付けない値だけが残って必ず拒否される。
+ * 別のフローの残りを送ってしまうこともある。
+ *
+ * sessionStorage は private window や site data のブロックで読み書きとも投げるので、必ず包む。
+ */
+const key = (id: string) => KEY_PREFIX + id;
+
+const read = (id: string): string | undefined => {
   try {
-    return window.sessionStorage.getItem(KEY) ?? undefined;
+    return window.sessionStorage.getItem(key(id)) ?? undefined;
   } catch {
     return undefined;
   }
 };
 
-const store = (value: string) => {
-  held = value;
+const store = (id: string, value: string) => {
+  held.set(id, value);
   try {
-    window.sessionStorage.setItem(KEY, value);
+    window.sessionStorage.setItem(key(id), value);
   } catch {
     // メモリ側には載っているので、同じページに留まる限りは動く。
   }
 };
 
-const take = (): string | undefined => held ?? readStored();
+/** 読み出しと同時に捨てる。同じ値を二度送らない。 */
+const take = (id: string): string | undefined => {
+  const value = held.get(id) ?? read(id);
+  held.delete(id);
+  try {
+    window.sessionStorage.removeItem(key(id));
+  } catch {
+    // 消せなくても、次に来る値で上書きされる。
+  }
+  return value;
+};
+
+/** URL から認可リクエスト ID を取り出す。どのフローの値かはこれで決まる。 */
+const requestIdOf = (url: string): string | undefined =>
+  url.match(/\/v1\/authorizations\/([^/?#]+)\//)?.[1];
 
 const urlOf = (input: RequestInfo | URL): string => {
   if (typeof input === "string") return input;
@@ -57,13 +81,13 @@ const urlOf = (input: RequestInfo | URL): string => {
  * Awaited rather than left to settle on its own: a step that leads straight into the authorize
  * call would otherwise race the read and send nothing.
  */
-const remember = async (response: Response) => {
+const remember = async (response: Response, id: string) => {
   const type = response.headers.get("content-type") ?? "";
   if (!type.includes("json")) return;
   try {
     const body = await response.clone().json();
     if (body && typeof body.auth_proof === "string" && body.auth_proof) {
-      store(body.auth_proof);
+      store(id, body.auth_proof);
     }
   } catch {
     // Not JSON after all. Nothing to carry.
@@ -86,10 +110,14 @@ const withAuthProof = (
       return init;
     }
   }
+  // init.headers は Headers / 配列 / オブジェクトのいずれも取りうる。展開すると Headers は
+  // 中身が消えるので、Headers に通してから渡す。
+  const headers = new Headers(init?.headers);
+  headers.set("Content-Type", "application/json");
   return {
     ...init,
     method: init?.method ?? "POST",
-    headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
+    headers,
     body: JSON.stringify({ ...body, auth_proof: authProof }),
   };
 };
@@ -103,10 +131,11 @@ export const installAuthProofRelay = () => {
   const original = window.fetch.bind(window);
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = urlOf(input);
-    const authProof = AUTHORIZE.test(url) ? take() : undefined;
+    const id = requestIdOf(url);
+    const authProof = id && AUTHORIZE.test(url) ? take(id) : undefined;
     const request = authProof ? withAuthProof(init, authProof) : init;
     const response = await original(input, request);
-    await remember(response);
+    if (id) await remember(response, id);
     return response;
   };
 };

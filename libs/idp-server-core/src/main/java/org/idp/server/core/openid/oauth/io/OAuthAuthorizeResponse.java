@@ -30,6 +30,13 @@ public class OAuthAuthorizeResponse {
   String error;
   String errorDescription;
 
+  /**
+   * One-time value telling {@code /complete} that the caller is the browser which authenticated.
+   *
+   * <p>Only ever read from this response, which only that browser receives.
+   */
+  String authProof;
+
   public OAuthAuthorizeResponse() {}
 
   public OAuthAuthorizeResponse(
@@ -77,13 +84,6 @@ public class OAuthAuthorizeResponse {
   public String errorDescription() {
     return errorResponse.errorDescription().value();
   }
-
-  /**
-   * One-time value telling {@code /complete} that the caller is the browser which authenticated.
-   *
-   * <p>Only ever read from this response, which only that browser receives.
-   */
-  String authProof;
 
   public OAuthAuthorizeResponse withAuthProof(String authProof) {
     this.authProof = authProof;

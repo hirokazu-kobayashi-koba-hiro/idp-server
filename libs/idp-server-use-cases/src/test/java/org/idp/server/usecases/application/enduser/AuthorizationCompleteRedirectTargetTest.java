@@ -24,13 +24,13 @@ import org.junit.jupiter.api.Test;
 /**
  * Where {@code /complete} is allowed to send the browser.
  *
- * <p>The target arrives in the query string, so it is attacker-supplied: anyone who can open an
- * authorization request of their own can call {@code /complete} with whatever {@code to} they like.
- * If that were honoured, this server would hand out redirects to anywhere under its own domain —
- * which is the whole value of an open redirect to a phisher.
+ * <p>The target is no longer taken from the query string — it travels inside the proof, which this
+ * server issued. The comparison is therefore defence in depth rather than input validation, and it
+ * is kept because the cost of a wrong answer here is a redirect this server vouches for, which is
+ * the whole value of an open redirect to a phisher.
  *
  * <p>It was first written as a prefix test, which has no boundary. The cases below are the ones a
- * prefix test lets through.
+ * prefix test lets through, plus the ones where there is nothing to compare against.
  */
 class AuthorizationCompleteRedirectTargetTest {
 
@@ -100,5 +100,14 @@ class AuthorizationCompleteRedirectTargetTest {
     assertFalse(accepts(null, REGISTERED));
     assertFalse(accepts("", REGISTERED));
     assertFalse(accepts("ht tp://broken", REGISTERED));
+  }
+
+  @Test
+  @DisplayName("登録値が無い場合も落ちずに弾く")
+  void rejectsMissingRegisteredValue() {
+    // redirect_uri は OAuth 2.0 のリクエストでは省略でき、そのとき値は null で届く。
+    // 比較できないことと、比較して一致しないことは同じ扱いでよいが、落ちてはいけない。
+    assertFalse(accepts(REGISTERED, null));
+    assertFalse(accepts(REGISTERED, ""));
   }
 }

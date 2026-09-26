@@ -8,7 +8,8 @@
     "ui_config": {
       "base_url": "https://auth-cp.idp.local",
       "signin_page": "/auth/",
-      "signup_page": "/auth/"
+      "signup_page": "/auth/",
+      "cross_site": true
     },
     "session_config": {
       "cookie_name": "PUBLIC_WEB_SESSION",
