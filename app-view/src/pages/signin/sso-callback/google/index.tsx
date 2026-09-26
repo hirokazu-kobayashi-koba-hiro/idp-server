@@ -2,6 +2,7 @@ import { Loading } from "@/components/Loading";
 import { useRouter } from "next/router";
 import { useQuery } from "@tanstack/react-query";
 import { backendUrl } from "@/pages/_app";
+import { completeAuthorization } from "@/auth/completion";
 import { Stack, Typography } from "@mui/material";
 import { BaseLayout } from "@/components/layout/BaseLayout";
 import { useState } from "react";
@@ -52,8 +53,14 @@ const SsoCallback = () => {
       );
       const body = await authorizeResponse.json();
       console.log(authorizeResponse.status, body);
-      if (body.redirect_uri) {
-        window.location.href = body.redirect_uri;
+      if (body.auth_proof || body.redirect_uri) {
+        completeAuthorization({
+          backendUrl,
+          tenantId,
+          id,
+          authProof: body.auth_proof,
+          redirectUri: body.redirect_uri,
+        });
         return;
       }
       setMessage("failed social login. server occurred unexpected error");

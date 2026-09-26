@@ -16,6 +16,7 @@
 
 package org.idp.server.core.openid.authentication;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.openid.identity.User;
@@ -209,6 +210,20 @@ public class AuthenticationInteractionRequestResult {
     this.user = user;
     this.response = response;
     this.eventType = eventType;
+  }
+
+  /**
+   * Attaches the value the browser must present to {@code /authorize}.
+   *
+   * <p>Only reaches the response body, never the transaction or the security event: it is issued
+   * after both have been written, because its only purpose is to distinguish this browser from one
+   * that merely knows the authorization request id.
+   */
+  public AuthenticationInteractionRequestResult withAuthProof(String authProof) {
+    Map<String, Object> merged = new HashMap<>(response == null ? Map.of() : response);
+    merged.put("auth_proof", authProof);
+    this.response = merged;
+    return this;
   }
 
   public AuthenticationInteractionStatus status() {

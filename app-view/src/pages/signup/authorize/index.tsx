@@ -15,6 +15,7 @@ import {
 import { useRouter } from "next/router";
 import { useQuery } from "@tanstack/react-query";
 import { backendUrl } from "@/pages/_app";
+import { completeAuthorization } from "@/auth/completion";
 import { Loading } from "@/components/Loading";
 import { SignupStepper } from "@/components/SignupStepper";
 
@@ -60,7 +61,14 @@ export default function AuthorizePage() {
       },
     );
     const body = await response.json();
-    if (body.redirect_uri) window.location.href = body.redirect_uri;
+    if (body.auth_proof || body.redirect_uri)
+      completeAuthorization({
+        backendUrl,
+        tenantId,
+        id,
+        authProof: body.auth_proof,
+        redirectUri: body.redirect_uri,
+      });
   };
 
   if (isPending || !data) return <Loading />;
