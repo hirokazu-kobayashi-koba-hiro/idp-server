@@ -242,13 +242,15 @@ export const generateAttestedKey = ({
   keyPropertiesInSoftwareList,
   rootOfTrust,
   osPatchLevel,
+  challengeBytes,
 }) => {
   const publicKey = publicKeyPem
     ? forge.pki.publicKeyFromPem(publicKeyPem)
     : forge.pki.rsa.generateKeyPair(2048).publicKey;
 
   const extension = keyDescription({
-    challenge: Buffer.from(challenge, "base64url"),
+    // The decoded challenge (challenge_binding "challenge"), unless another binding is embedded.
+    challenge: challengeBytes ?? Buffer.from(challenge, "base64url"),
     securityLevel,
     packageName,
     signatureDigests: [signatureDigest],

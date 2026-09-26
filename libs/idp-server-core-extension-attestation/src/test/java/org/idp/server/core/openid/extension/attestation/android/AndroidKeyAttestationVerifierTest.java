@@ -29,6 +29,7 @@ import java.util.Map;
 import org.idp.server.core.openid.clientinstance.registration.PlatformAttestationEvidence;
 import org.idp.server.core.openid.clientinstance.registration.PlatformAttestationVerificationException;
 import org.idp.server.core.openid.clientinstance.registration.PlatformAttestationVerificationRequest;
+import org.idp.server.core.openid.extension.attestation.PlatformChallengeBinding;
 import org.idp.server.core.openid.extension.attestation.StubVerificationRequest;
 import org.idp.server.platform.x509.X509CertificateChain;
 import org.junit.jupiter.api.BeforeEach;
@@ -290,6 +291,51 @@ class AndroidKeyAttestationVerifierTest {
                           evidence(chain))));
 
       assertTrue(exception.getMessage().contains("signing certificate digests"));
+    }
+  }
+
+  /** What the app embeds as attestationChallenge is the client's challenge_binding. */
+  @Nested
+  class ChallengeBinding {
+
+    private List<String> chainEmbedding(PlatformChallengeBinding binding) throws Exception {
+      return fixture.chain(
+          instanceKeyPair,
+          binding.challengeBytes(CHALLENGE, instanceKeyAsJwk()),
+          AndroidKeyAttestationSecurityLevel.trusted_environment,
+          AndroidAttestationFixture.PACKAGE_NAME,
+          List.of(SIGNING_DIGEST));
+    }
+
+    @Test
+    void acceptsRequestHashWhenConfigured() throws Exception {
+      PlatformAttestationVerificationRequest request =
+          requestFor(
+              chainEmbedding(PlatformChallengeBinding.request_hash),
+              Map.of("challenge_binding", "request_hash"));
+
+      assertDoesNotThrow(() -> verifier.verify(request));
+    }
+
+    @Test
+    void acceptsTheChallengeTextWhenConfigured() throws Exception {
+      PlatformAttestationVerificationRequest request =
+          requestFor(
+              chainEmbedding(PlatformChallengeBinding.challenge_text),
+              Map.of("challenge_binding", "challenge_text"));
+
+      assertDoesNotThrow(() -> verifier.verify(request));
+    }
+
+    @Test
+    void rejectsTheChallengeTextUnderTheDefault() throws Exception {
+      PlatformAttestationVerificationRequest request =
+          requestFor(chainEmbedding(PlatformChallengeBinding.challenge_text));
+
+      PlatformAttestationVerificationException exception =
+          assertThrows(
+              PlatformAttestationVerificationException.class, () -> verifier.verify(request));
+      assertTrue(exception.getMessage().contains("attestationChallenge does not match"));
     }
   }
 

@@ -24,7 +24,6 @@ import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.ECPublicKey;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.clientinstance.registration.PlatformAttestationEvidence;
@@ -99,7 +98,8 @@ public class IosAppAttestVerifier implements PlatformAttestationVerifier {
     X509Certificate credentialCertificate = object.certificateChain().leaf();
     IosAppAttestAuthenticatorData authenticatorData = object.authenticatorData();
 
-    throwExceptionIfNonceDoesNotMatch(credentialCertificate, authenticatorData, request);
+    throwExceptionIfNonceDoesNotMatch(
+        credentialCertificate, authenticatorData, request, configuration);
     throwExceptionIfInstanceKeyDoesNotMatch(credentialCertificate, request);
     throwExceptionIfCredentialIdDoesNotMatchKey(credentialCertificate, authenticatorData);
     String appId = attestedApplication(authenticatorData, configuration);
@@ -175,19 +175,22 @@ public class IosAppAttestVerifier implements PlatformAttestationVerifier {
    * invalidating the other.
    *
    * <p>Apple specifies {@code clientDataHash} as "the SHA256 hash of the one-time challenge your
-   * server sends", which leaves open what is hashed when the challenge travels as text. Here it is
-   * the bytes the base64url challenge decodes to, never the characters, so that "the challenge" is
-   * one thing across platforms — Android embeds those same bytes. An app that hashes the string it
-   * received instead produces a nonce that will not match, and the failure is silent on its side,
-   * so this is part of the client contract rather than an implementation detail.
+   * server sends", which leaves open what is hashed when the challenge travels as text. Which one
+   * the app uses is the client's {@code challenge_binding}; by default the bytes the base64url
+   * challenge decodes to, the same bytes Android embeds. A mismatch is silent on the app's side, so
+   * this is part of the client contract rather than an implementation detail.
    */
   private void throwExceptionIfNonceDoesNotMatch(
       X509Certificate credentialCertificate,
       IosAppAttestAuthenticatorData authenticatorData,
-      PlatformAttestationVerificationRequest request) {
+      PlatformAttestationVerificationRequest request,
+      IosAppAttestConfiguration configuration) {
 
-    byte[] challenge = Base64.getUrlDecoder().decode(request.challenge().challenge());
-    byte[] expected = sha256(concat(authenticatorData.raw(), sha256(challenge)));
+    byte[] clientDataHash =
+        configuration
+            .challengeBinding()
+            .clientDataHash(request.challenge().challenge(), request.instanceKey());
+    byte[] expected = sha256(concat(authenticatorData.raw(), clientDataHash));
 
     if (!MessageDigest.isEqual(expected, nonceFrom(credentialCertificate))) {
       throw new IosAppAttestException(

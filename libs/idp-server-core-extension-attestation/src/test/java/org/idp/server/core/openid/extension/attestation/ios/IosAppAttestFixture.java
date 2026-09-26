@@ -119,6 +119,7 @@ class IosAppAttestFixture {
 
     KeyPair attestedKey;
     byte[] challenge = new byte[] {0x00};
+    byte[] clientDataHash;
     String appId = APP_ID;
     byte[] aaguid = IosAppAttestEnvironment.production.aaguid();
     long counter = 0;
@@ -132,6 +133,12 @@ class IosAppAttestFixture {
 
     Attestation challenge(byte[] challenge) {
       this.challenge = challenge;
+      return this;
+    }
+
+    /** Uses {@code clientDataHash} as is, rather than the SHA-256 of the challenge. */
+    Attestation clientDataHash(byte[] clientDataHash) {
+      this.clientDataHash = clientDataHash;
       return this;
     }
 
@@ -170,7 +177,8 @@ class IosAppAttestFixture {
      */
     String build() throws Exception {
       byte[] authData = authenticatorData();
-      byte[] nonce = sha256(concat(authData, sha256(challenge)));
+      byte[] hash = clientDataHash != null ? clientDataHash : sha256(challenge);
+      byte[] nonce = sha256(concat(authData, hash));
 
       KeyPair issuer = signedByUntrustedRoot ? generateKeyPair() : intermediateKeyPair;
       String issuerName = signedByUntrustedRoot ? "CN=other-ca" : "CN=test-app-attest-ca";

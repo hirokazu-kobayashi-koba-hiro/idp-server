@@ -151,6 +151,7 @@ Challenge を必須にしている場合は、リクエスト前に `POST /{tena
 | Pushed Authorization Request | `POST /{tenant-id}/v1/authorizations/push` |
 | CIBA backchannel authentication | `POST /{tenant-id}/v1/backchannel/authentications` |
 | Introspection | `POST /{tenant-id}/v1/tokens/introspection` |
+| Introspection（拡張） | `POST /{tenant-id}/v1/tokens/introspection-extensions` |
 | Revocation | `POST /{tenant-id}/v1/tokens/revocation` |
 
 ### 管理API側
@@ -413,7 +414,9 @@ ID トークンは**クライアント認証なしで**取得する必要があ�
 ```
 
 :::warning 登録用クライアントは明示したものだけ
-`client_instance_registration_clients` に載っていないクライアントの ID トークンは拒否します。載せていないクライアント（利用者がログインしただけの第三者アプリなど）の ID トークンで、登録先クライアントのインスタンスを登録できないようにするためです。登録用クライアントには `openid` 以外のスコープを与えないでください。
+`client_instance_registration_clients` に載っていないクライアントの ID トークンは拒否します。載せていないクライアント（利用者がログインしただけの第三者アプリなど）の ID トークンで、登録先クライアントのインスタンスを登録できないようにするためです。
+
+登録用クライアントには、登録までに必要なスコープだけを与えてください（通常は `openid`）。登録用クライアントはパブリッククライアントで、そのトークンはどの端末・アプリから来たかを保証しません。eKYC など利用者の操作は、登録後に ABCA で認証する登録先クライアントで行うのが基本です。登録前に必要な場合だけ、その操作に要るスコープに限って与えます。
 :::
 
 パブリッククライアントを置けないテナント（FAPI 2.0 など）では、どちらの経路も使えません。
@@ -461,6 +464,7 @@ Android Key Attestation の検証は次の順で行います。
 | `verified_boot_states` | `["verified"]` | 受け入れる起動状態。`verified` / `self_signed` / `unverified`。`failed` は指定できない |
 | `require_device_locked` | `true` | ブートローダーがロックされていることを要求する |
 | `min_os_patch_level` | なし | OS のセキュリティパッチの下限（`YYYYMM` の数値。例: `202406`） |
+| `challenge_binding` | `challenge` | `attestationChallenge` に埋め込む値（[プラットフォーム証明に埋め込む値](#プラットフォーム証明に埋め込む値)） |
 | `trusted_root_certificates` | — | ルートの上書き。設定すると WARN ログが出ます（実質そのルートの持ち主を信頼することになるため） |
 
 `signature_digests` が必須なのは、パッケージ名が秘密ではないためです。攻撃者は自分の端末で同じパッケージ名のアプリを名乗れるので、**再署名を見分けるのは署名証明書のダイジェストだけ**です。
@@ -474,8 +478,34 @@ Android Key Attestation の検証は次の順で行います。
 
 **起動状態も要求します。** パッケージ名と署名ダイジェスト（`attestationApplicationId`）を書くのは Android プラットフォームで、KeyMint ではありません。改造した OS はどのアプリの名前でも名乗れます。KeyMint がブートローダーの計測から書く `rootOfTrust`（`verifiedBootState` と `deviceLocked`）で、正規に検証された OS が起動し、ブートローダーがロックされていることを確かめて初めて、アプリの名乗りを信用できます。既定では `verified` かつロック済みだけを受け入れます。開発端末やカスタム OS（`self_signed`）を通したい配備は、`verified_boot_states` と `require_device_locked` で明示的に緩めます。
 
+これで確かめているのは「正規の OS が正規の手順で起動した」ことで、「root 化されていない」ことの保証ではありません。ブートローダーのアンロックを前提とする root 化（改造した boot イメージを書き込む方式）やカスタム OS は弾けますが、ロックされたまま OS の脆弱性で一時的に root を取るものは、起動時の状態に現れないため弾けません。iOS の App Attest には、脱獄の有無を示す項目がありません。
+
 鍵の性質（`origin` / `purpose`）も起動状態（`rootOfTrust` / `osPatchLevel`）も、`hardwareEnforced` 側の `AuthorizationList` から読みます。鍵自身の性質を知っているのは KeyMint だけで、`softwareEnforced` に同じ値があっても、それはプラットフォームの申告にすぎないためです。端末が報告しなかった場合も拒否します（判定の材料が無いことは、条件を満たす証拠にはなりません）。
 
+
+### プラットフォーム証明に埋め込む値
+
+アプリは登録用のチャレンジをプラットフォーム証明に埋め込みます。Android は `attestationChallenge` を「任意のバイト列」、Apple は `clientDataHash` を「サーバーが送る一回限りのチャレンジの SHA-256」としか定めておらず、**チャレンジが文字列として届いたとき何を埋め込むか**はクライアントの実装によって分かれます。ずれると `nonce` が一致しないとしか分からず、登録エンドポイントは理由を返さないため、切り分けが困難です。
+
+そこで、埋め込む値をクライアントごとに `challenge_binding` で選びます（`android_key_attestation` と `ios_app_attest` のそれぞれに置きます）。自由な組み立て方ではなく、次の 3 つからの選択です。どれを選んでも、証明はこの登録のチャレンジに結びつきます。
+
+| 値 | Android `attestationChallenge` | iOS `clientDataHash` |
+|---|---|---|
+| `challenge`（既定） | チャレンジを base64url デコードしたバイト列 | SHA-256(チャレンジを base64url デコードしたバイト列) |
+| `challenge_text` | チャレンジの文字列の UTF-8 | SHA-256(チャレンジの文字列の UTF-8) |
+| `request_hash` | `request_hash` を base64url デコードした 32 バイト | `request_hash` を base64url デコードした 32 バイト（それ自体が SHA-256 なので、もう一度はハッシュしない） |
+
+`request_hash` は ID トークンの `nonce` と同じ値（チャレンジと鍵の SHA-256）です。鍵まで含みますが、鍵の一致は証明書の公開鍵で別に確かめているので、強さは他の 2 つと変わりません。
+
+**固定ベクタ**（`challenge = Zm9vYmFyLWNoYWxsZW5nZS0wMQ`、鍵は `x = VcKVNBZ4IaBAYW3jxM4w3TJFVA7myeUGQyGt-g_yvpQ`, `y = f-E-hYE3TAWKwhVv9pej9NABs9SX9XsNO80x57jFTyU` の P-256。いずれも 16 進）
+
+| 値 | Android `attestationChallenge` | iOS `clientDataHash` |
+|---|---|---|
+| `challenge` | `666f6f6261722d6368616c6c656e67652d3031` | `352c35fa1dac334a252a5c43601c542c2db3e4878f7ea78a0e16010998550cd8` |
+| `challenge_text` | `5a6d3976596d46794c574e6f595778735a57356e5a5330774d51` | `06867a128ca08e2c8b7ec015b4c84efb146cd8cb983efa7d239fdbae2728c892` |
+| `request_hash` | `618fa70c42ba24740b55ef3ddea89e0a2cb2436916e5f06620f36555d7e58f52` | `618fa70c42ba24740b55ef3ddea89e0a2cb2436916e5f06620f36555d7e58f52` |
+
+iOS の `nonce`（証明書の拡張に入る値）は、ここからさらに `SHA-256(authenticatorData ‖ clientDataHash)` です。
 
 ### 登録時に残す証跡
 

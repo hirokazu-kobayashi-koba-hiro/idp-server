@@ -225,6 +225,9 @@ const authenticatorData = ({ appId, counter, aaguid, credentialId }) => {
  * The key is supplied by the caller rather than generated here, because the same key has to sign
  * the Client Attestation JWT afterwards: the registration proves the key came from the Secure
  * Enclave, and the authentication proves the client holds it.
+ *
+ * `clientDataHash` defaults to the SHA-256 of the challenge bytes (challenge_binding "challenge");
+ * pass it to embed what another binding names, such as request_hash as is.
  */
 export const generateAttestation = ({
   authority,
@@ -237,6 +240,7 @@ export const generateAttestation = ({
   credentialId,
   format = "apple-appattest",
   signedByUntrustedRoot = false,
+  clientDataHash,
 }) => {
   const authData = authenticatorData({
     appId,
@@ -246,7 +250,10 @@ export const generateAttestation = ({
   });
 
   const nonce = sha256(
-    Buffer.concat([authData, sha256(Buffer.from(challenge, "base64url"))])
+    Buffer.concat([
+      authData,
+      clientDataHash ?? sha256(Buffer.from(challenge, "base64url")),
+    ])
   );
 
   const issuer = signedByUntrustedRoot

@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.clientinstance.registration.PlatformAttestationEvidence;
 import org.idp.server.core.openid.clientinstance.registration.PlatformAttestationVerificationException;
+import org.idp.server.core.openid.extension.attestation.PlatformChallengeBinding;
 import org.idp.server.core.openid.extension.attestation.StubVerificationRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -186,6 +187,67 @@ class IosAppAttestVerifierTest {
               .build();
 
       assertRejected(attestation, "credentialId is not the key identifier of the certified key");
+    }
+  }
+
+  /** What the app embeds as clientDataHash is the client's challenge_binding. */
+  @Nested
+  class ChallengeBinding {
+
+    private PlatformAttestationEvidence verifyWith(String binding, String attestationObject)
+        throws Exception {
+      return verifier.verify(
+          StubVerificationRequest.of(
+              Map.of(
+                  "client_instance_platform_config",
+                  Map.of(
+                      "ios_app_attest",
+                      Map.of(
+                          "app_ids", List.of(IosAppAttestFixture.APP_ID),
+                          "trusted_root_certificates", List.of(fixture.rootBase64()),
+                          "challenge_binding", binding))),
+              CHALLENGE,
+              instanceKeyAsJwk(),
+              evidence(attestationObject)));
+    }
+
+    private byte[] clientDataHashFor(PlatformChallengeBinding binding) throws Exception {
+      return binding.clientDataHash(CHALLENGE, instanceKeyAsJwk());
+    }
+
+    @Test
+    void acceptsRequestHashAsClientDataHashWhenConfigured() throws Exception {
+      String attestation =
+          fixture
+              .attestation(instanceKeyPair)
+              .clientDataHash(clientDataHashFor(PlatformChallengeBinding.request_hash))
+              .build();
+
+      assertDoesNotThrow(() -> verifyWith("request_hash", attestation));
+    }
+
+    @Test
+    void rejectsRequestHashUnderTheDefault() throws Exception {
+      // The app hashed something other than what the client is configured for: a nonce mismatch,
+      // which is all the app would ever see.
+      String attestation =
+          fixture
+              .attestation(instanceKeyPair)
+              .clientDataHash(clientDataHashFor(PlatformChallengeBinding.request_hash))
+              .build();
+
+      assertRejected(attestation, "nonce does not match");
+    }
+
+    @Test
+    void acceptsTheHashOfTheChallengeTextWhenConfigured() throws Exception {
+      String attestation =
+          fixture
+              .attestation(instanceKeyPair)
+              .clientDataHash(clientDataHashFor(PlatformChallengeBinding.challenge_text))
+              .build();
+
+      assertDoesNotThrow(() -> verifyWith("challenge_text", attestation));
     }
   }
 

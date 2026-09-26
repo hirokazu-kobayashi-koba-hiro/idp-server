@@ -19,6 +19,7 @@ package org.idp.server.core.openid.extension.attestation.android;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.core.openid.extension.attestation.PlatformChallengeBinding;
 
 /**
  * What a client accepts as an Android key attestation.
@@ -52,6 +53,7 @@ public class AndroidKeyAttestationConfiguration {
   List<AndroidVerifiedBootState> verifiedBootStates;
   boolean requireDeviceLocked;
   int minOsPatchLevel;
+  PlatformChallengeBinding challengeBinding;
   List<String> trustedRootCertificates;
 
   AndroidKeyAttestationConfiguration(
@@ -61,6 +63,7 @@ public class AndroidKeyAttestationConfiguration {
       List<AndroidVerifiedBootState> verifiedBootStates,
       boolean requireDeviceLocked,
       int minOsPatchLevel,
+      PlatformChallengeBinding challengeBinding,
       List<String> trustedRootCertificates) {
     this.packageNames = packageNames;
     this.signatureDigests = signatureDigests;
@@ -68,6 +71,7 @@ public class AndroidKeyAttestationConfiguration {
     this.verifiedBootStates = verifiedBootStates;
     this.requireDeviceLocked = requireDeviceLocked;
     this.minOsPatchLevel = minOsPatchLevel;
+    this.challengeBinding = challengeBinding;
     this.trustedRootCertificates = trustedRootCertificates;
   }
 
@@ -108,6 +112,7 @@ public class AndroidKeyAttestationConfiguration {
         verifiedBootStates(values.get("verified_boot_states")),
         requireDeviceLocked(values.get("require_device_locked")),
         minOsPatchLevel(values.get("min_os_patch_level")),
+        PlatformChallengeBinding.fromSettings(values),
         stringList(values.get("trusted_root_certificates")));
   }
 
@@ -195,6 +200,10 @@ public class AndroidKeyAttestationConfiguration {
 
   public boolean hasMinOsPatchLevel() {
     return minOsPatchLevel > 0;
+  }
+
+  public PlatformChallengeBinding challengeBinding() {
+    return challengeBinding;
   }
 
   public List<String> trustedRootCertificates() {

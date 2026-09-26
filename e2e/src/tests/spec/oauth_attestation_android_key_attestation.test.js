@@ -71,10 +71,10 @@ describe("Android key attestation (Issue #1521)", () => {
     };
   };
 
-  const requestChallenge = async () => {
+  const requestChallenge = async (client = clientId) => {
     const response = await postWithJson({
       url: challengesUrl(),
-      body: { client_id: clientId },
+      body: { client_id: client },
     });
     expect(response.status).toBe(200);
     return response.data;
@@ -84,20 +84,27 @@ describe("Android key attestation (Issue #1521)", () => {
    * The login that authenticates a registration: its ID token is obtained for this challenge and
    * this key, and the code of the same response is what the app then exchanges with the key.
    */
-  const loginFor = async ({ challenge, publicJwk }) =>
+  const loginFor = async ({ challenge, publicJwk, client = clientId }) =>
     await loginForRegistration({
       tenantId,
-      clientId,
+      clientId: client,
       redirectUri: REDIRECT_URI,
       nonce: deriveRequestHash(challenge, publicJwk),
       username,
       password,
     });
 
-  const register = async ({ challenge, instanceKey, chainOptions = {}, idTokenKey }) => {
+  const register = async ({
+    challenge,
+    instanceKey,
+    chainOptions = {},
+    idTokenKey,
+    client = clientId,
+  }) => {
     const { idToken, code } = await loginFor({
       challenge,
       publicJwk: (idTokenKey ?? instanceKey).publicJwk,
+      client,
     });
     const attested = generateAttestedKey({
       root,
@@ -492,6 +499,68 @@ describe("Android key attestation (Issue #1521)", () => {
         challenge,
         instanceKey,
         chainOptions: { rootOfTrust: null },
+      });
+
+      expect(response.status).toBe(400);
+    }, 120000);
+  });
+
+  /** What the app embeds as attestationChallenge is the client's challenge_binding. */
+  describe("challenge_binding", () => {
+    let textBindingClientId;
+
+    beforeAll(async () => {
+      textBindingClientId = uuidv4();
+      const response = await postWithJson({
+        url: `${backendUrl}/v1/management/tenants/${tenantId}/clients`,
+        headers: { Authorization: `Bearer ${systemAccessToken}` },
+        body: {
+          client_id: textBindingClientId,
+          redirect_uris: [REDIRECT_URI],
+          grant_types: ["authorization_code"],
+          response_types: ["code", "code id_token"],
+          scope: "openid account",
+          client_name: "Android Key Attestation Client (challenge_text binding)",
+          token_endpoint_auth_method: "attest_jwt_client_auth",
+          extension: {
+            client_attestation_trust_source: "registered_instance_key",
+            client_instance_registration_policy: "user_bound",
+            client_instance_platform_config: {
+              android_key_attestation: {
+                package_names: [PACKAGE_NAME],
+                signature_digests: [SIGNING_DIGEST.toString("base64url")],
+                trusted_root_certificates: [root.base64Der],
+                challenge_binding: "challenge_text",
+              },
+            },
+          },
+        },
+      });
+      expect(response.status).toBe(201);
+    }, 120000);
+
+    it("registers with the challenge text embedded when the client binds challenge_text", async () => {
+      const { challenge } = await requestChallenge(textBindingClientId);
+      const instanceKey = await generateInstanceKey();
+
+      const response = await register({
+        challenge,
+        instanceKey,
+        chainOptions: { challengeBytes: Buffer.from(challenge, "utf8") },
+        client: textBindingClientId,
+      });
+
+      expect(response.status).toBe(201);
+    }, 120000);
+
+    it("rejects the challenge text under the default binding", async () => {
+      const { challenge } = await requestChallenge();
+      const instanceKey = await generateInstanceKey();
+
+      const response = await register({
+        challenge,
+        instanceKey,
+        chainOptions: { challengeBytes: Buffer.from(challenge, "utf8") },
       });
 
       expect(response.status).toBe(400);

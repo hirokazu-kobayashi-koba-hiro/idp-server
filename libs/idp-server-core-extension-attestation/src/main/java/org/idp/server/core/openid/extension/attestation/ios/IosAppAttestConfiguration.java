@@ -18,6 +18,7 @@ package org.idp.server.core.openid.extension.attestation.ios;
 
 import java.util.List;
 import java.util.Map;
+import org.idp.server.core.openid.extension.attestation.PlatformChallengeBinding;
 
 /**
  * The client's App Attest configuration, read from {@code client_instance_platform_config}.
@@ -36,14 +37,17 @@ public class IosAppAttestConfiguration {
 
   List<String> appIds;
   IosAppAttestEnvironment environment;
+  PlatformChallengeBinding challengeBinding;
   List<String> trustedRootCertificates;
 
   IosAppAttestConfiguration(
       List<String> appIds,
       IosAppAttestEnvironment environment,
+      PlatformChallengeBinding challengeBinding,
       List<String> trustedRootCertificates) {
     this.appIds = appIds;
     this.environment = environment;
+    this.challengeBinding = challengeBinding;
     this.trustedRootCertificates = trustedRootCertificates;
   }
 
@@ -72,6 +76,7 @@ public class IosAppAttestConfiguration {
     return new IosAppAttestConfiguration(
         appIds,
         environment(values.get("environment")),
+        PlatformChallengeBinding.fromSettings(values),
         stringList(values.get("trusted_root_certificates")));
   }
 
@@ -100,6 +105,10 @@ public class IosAppAttestConfiguration {
 
   public IosAppAttestEnvironment environment() {
     return environment;
+  }
+
+  public PlatformChallengeBinding challengeBinding() {
+    return challengeBinding;
   }
 
   public List<String> trustedRootCertificates() {

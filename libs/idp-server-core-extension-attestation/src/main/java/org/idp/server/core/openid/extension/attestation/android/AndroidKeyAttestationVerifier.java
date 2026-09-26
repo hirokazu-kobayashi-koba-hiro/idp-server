@@ -19,7 +19,6 @@ package org.idp.server.core.openid.extension.attestation.android;
 import java.security.MessageDigest;
 import java.security.PublicKey;
 import java.security.cert.X509Certificate;
-import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.idp.server.core.openid.clientinstance.registration.PlatformAttestationEvidence;
@@ -92,7 +91,7 @@ public class AndroidKeyAttestationVerifier implements PlatformAttestationVerifie
     X509Certificate leaf = chain.leaf();
     AndroidKeyAttestationExtension extension = AndroidKeyAttestationExtension.parse(leaf);
 
-    throwExceptionIfChallengeDoesNotMatch(extension, request);
+    throwExceptionIfChallengeDoesNotMatch(extension, request, configuration);
     throwExceptionIfInstanceKeyDoesNotMatch(leaf, request);
     throwExceptionIfApplicationDoesNotMatch(extension, configuration);
     throwExceptionIfSecurityLevelIsNotAccepted(extension, configuration);
@@ -146,11 +145,19 @@ public class AndroidKeyAttestationVerifier implements PlatformAttestationVerifie
     return device;
   }
 
-  /** Binding 1: the evidence was produced for this registration. */
+  /**
+   * Binding 1: the evidence was produced for this registration. What the app embeds is the client's
+   * {@code challenge_binding}.
+   */
   private void throwExceptionIfChallengeDoesNotMatch(
-      AndroidKeyAttestationExtension extension, PlatformAttestationVerificationRequest request) {
+      AndroidKeyAttestationExtension extension,
+      PlatformAttestationVerificationRequest request,
+      AndroidKeyAttestationConfiguration configuration) {
 
-    byte[] expected = Base64.getUrlDecoder().decode(request.challenge().challenge());
+    byte[] expected =
+        configuration
+            .challengeBinding()
+            .challengeBytes(request.challenge().challenge(), request.instanceKey());
 
     if (!MessageDigest.isEqual(expected, extension.attestationChallenge())) {
       throw new PlatformAttestationVerificationException(
