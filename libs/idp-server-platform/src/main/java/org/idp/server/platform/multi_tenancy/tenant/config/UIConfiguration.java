@@ -39,6 +39,7 @@ public class UIConfiguration {
   private String signupPage;
   private String signinPage;
   private String variantParam;
+  private boolean crossSite;
   private Map<String, UIViewVariant> variants;
 
   public UIConfiguration() {
@@ -46,6 +47,7 @@ public class UIConfiguration {
     this.signupPage = "/auth-views/signup/index.html";
     this.signinPage = "/auth-views/signin/index.html";
     this.variantParam = DEFAULT_VARIANT_PARAM;
+    this.crossSite = false;
     this.variants = Map.of();
   }
 
@@ -55,6 +57,7 @@ public class UIConfiguration {
     this.signupPage = extractString(safeValues, "signup_page", "/auth-views/signup/index.html");
     this.signinPage = extractString(safeValues, "signin_page", "/auth-views/signin/index.html");
     this.variantParam = extractString(safeValues, "variant_param", DEFAULT_VARIANT_PARAM);
+    this.crossSite = extractBoolean(safeValues, "cross_site", false);
     this.variants = extractVariants(safeValues);
   }
 
@@ -133,6 +136,26 @@ public class UIConfiguration {
   }
 
   /**
+   * Whether the authorization view is on a different site from this server.
+   *
+   * <p>Not derived from {@code base_url}: the boundary that decides whether a browser will carry
+   * this server's cookies is the registrable domain, not the origin, and telling the two apart
+   * needs the public suffix list. A view at {@code auth.example.com} talking to {@code
+   * api.example.com} is a different origin but the same site, and its cookies are fine.
+   *
+   * <p>Declaring this changes which browser binding the authorization flow uses, because the two
+   * cannot both apply: where the view is on another site, every call it makes is third-party, the
+   * binding cookie is neither sent nor stored, and the flow is bound by a one-time value the view
+   * carries instead. A view that has not been written to carry that value will not work with this
+   * turned on.
+   *
+   * @return true when the view cannot rely on this server's cookies (default false)
+   */
+  public boolean crossSite() {
+    return crossSite;
+  }
+
+  /**
    * Returns the configuration as a map
    *
    * @return configuration map
@@ -145,6 +168,7 @@ public class UIConfiguration {
     map.put("signup_page", signupPage);
     map.put("signin_page", signinPage);
     map.put("variant_param", variantParam);
+    map.put("cross_site", crossSite);
     if (hasVariants()) {
       Map<String, Object> variantsMap = new LinkedHashMap<>();
       variants.forEach((name, variant) -> variantsMap.put(name, variant.toMap()));
@@ -178,6 +202,18 @@ public class UIConfiguration {
               rawVariant == null ? "null" : rawVariant.getClass().getSimpleName());
         });
     return variants;
+  }
+
+  private static boolean extractBoolean(
+      Map<String, Object> values, String key, boolean defaultValue) {
+    Object value = values.get(key);
+    if (value instanceof Boolean bool) {
+      return bool;
+    }
+    if (value instanceof String text) {
+      return Boolean.parseBoolean(text);
+    }
+    return defaultValue;
   }
 
   private static String extractString(Map<String, Object> values, String key, String defaultValue) {

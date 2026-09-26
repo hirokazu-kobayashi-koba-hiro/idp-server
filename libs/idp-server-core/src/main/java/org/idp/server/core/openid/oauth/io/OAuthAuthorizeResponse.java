@@ -16,6 +16,7 @@
 
 package org.idp.server.core.openid.oauth.io;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.openid.oauth.response.AuthorizationErrorResponse;
@@ -77,6 +78,18 @@ public class OAuthAuthorizeResponse {
     return errorResponse.errorDescription().value();
   }
 
+  /**
+   * One-time value telling {@code /complete} that the caller is the browser which authenticated.
+   *
+   * <p>Only ever read from this response, which only that browser receives.
+   */
+  String authProof;
+
+  public OAuthAuthorizeResponse withAuthProof(String authProof) {
+    this.authProof = authProof;
+    return this;
+  }
+
   public Map<String, Object> contents() {
     if (status.isError() && Objects.nonNull(errorResponse)) {
       return Map.of("error", error(), "error_description", errorDescription());
@@ -84,7 +97,16 @@ public class OAuthAuthorizeResponse {
     if (status.isError()) {
       return Map.of("error", error, "error_description", errorDescription);
     }
-    return Map.of("redirect_uri", redirectUriValue());
+    Map<String, Object> contents = new HashMap<>();
+    if (authProof != null && !authProof.isEmpty()) {
+      // The redirect carries the authorization code, so where a hand-off is in use it is withheld
+      // here and travels inside the hand-off instead. Anything able to read this body could
+      // otherwise take the code without ever reaching /complete.
+      contents.put("auth_proof", authProof);
+    } else {
+      contents.put("redirect_uri", redirectUriValue());
+    }
+    return contents;
   }
 
   public boolean isOk() {
