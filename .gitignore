@@ -84,3 +84,6 @@ CLAUDE.local.md
 e2e/allure-results/
 e2e/allure-report/
 docker/nginx/ca.srl
+
+# macOS Finder metadata
+.DS_Store
