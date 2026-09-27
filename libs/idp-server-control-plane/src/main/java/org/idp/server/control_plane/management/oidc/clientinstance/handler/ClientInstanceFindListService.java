@@ -108,6 +108,12 @@ public class ClientInstanceFindListService
     if (queries.hasRevocationReason() && !queries.revocationReason().exists()) {
       throw new InvalidRequestException("revocation_reason must be one of: operator, superseded");
     }
+    if (queries.hasInvalidExpired()) {
+      throw new InvalidRequestException("expired must be true or false");
+    }
+    if (queries.hasInvalidPaging()) {
+      throw new InvalidRequestException("limit and offset must be non-negative integers");
+    }
     try {
       if (queries.hasFrom()) queries.from();
       if (queries.hasTo()) queries.to();

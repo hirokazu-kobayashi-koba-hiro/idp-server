@@ -76,6 +76,26 @@ public class ClientInstanceQueries {
     return ClientInstanceStatus.of(values.get("status"));
   }
 
+  /**
+   * Past {@code expires_at} or not. Separate from {@link #status()}, which is the stored state: an
+   * instance past its expiry stays active there, yet no longer authenticates. {@code status=active}
+   * with {@code expired=false} finds the instances that can authenticate now.
+   */
+  public boolean hasExpired() {
+    return has("expired");
+  }
+
+  public boolean expired() {
+    return Boolean.parseBoolean(values.get("expired"));
+  }
+
+  /** True when {@code expired} is given but is neither {@code true} nor {@code false}. */
+  public boolean hasInvalidExpired() {
+    return hasExpired()
+        && !values.get("expired").equals("true")
+        && !values.get("expired").equals("false");
+  }
+
   public boolean hasRevocationReason() {
     return has("revocation_reason");
   }
@@ -129,6 +149,22 @@ public class ClientInstanceQueries {
 
   public LocalDateTime to() {
     return LocalDateTimeParser.parse(values.get("to"));
+  }
+
+  /** True when limit or offset is given but is not a non-negative number. */
+  public boolean hasInvalidPaging() {
+    return isInvalidNonNegative("limit") || isInvalidNonNegative("offset");
+  }
+
+  private boolean isInvalidNonNegative(String key) {
+    if (!has(key)) {
+      return false;
+    }
+    try {
+      return Integer.parseInt(values.get(key)) < 0;
+    } catch (NumberFormatException e) {
+      return true;
+    }
   }
 
   public int limit() {

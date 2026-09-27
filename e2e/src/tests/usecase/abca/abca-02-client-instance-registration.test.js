@@ -781,6 +781,21 @@ describe("ABCA Use Case: an app that registers its own Client Instance Key", () 
       expect(expired.status).toBe(401);
       expect(expired.data).toHaveProperty("error", "invalid_client_attestation");
 
+      console.log("=== the operator sees it expired: status stays active, expired is true ===");
+      const expiredInstance = (await getInstance(instance.instanceId)).data;
+      expect(expiredInstance).toHaveProperty("status", "active");
+      expect(expiredInstance).toHaveProperty("expired", true);
+      const searchIds = async (conditions) =>
+        (
+          await get({
+            url: `${instancesUrl()}?client_id=${clientId}&user_id=${userSub}&${conditions}`,
+            headers: managementHeaders,
+          })
+        ).data.list.map((found) => found.id);
+      expect(await searchIds("status=active&expired=true")).toContain(instance.instanceId);
+      // What can authenticate now: active and not expired.
+      expect(await searchIds("status=active&expired=false")).not.toContain(instance.instanceId);
+
       console.log("=== the app registers again: a login and a new key; the expired one is superseded ===");
       const renewed = await enrollInstance();
       expect((await exchangeCodeWith(renewed)).status).toBe(200);
@@ -894,6 +909,14 @@ describe("ABCA Use Case: an app that registers its own Client Instance Key", () 
     expect(revoked).toHaveLength(1);
 
     await deleteInstancesOf();
+  });
+
+  it("the operator's search refuses a malformed limit, offset or expired rather than failing", async () => {
+    for (const paging of ["limit=-1", "offset=-1", "limit=abc", "expired=yes"]) {
+      const response = await get({ url: `${instancesUrl()}?${paging}`, headers: managementHeaders });
+      expect(response.status).toBe(400);
+      expect(response.data).toHaveProperty("error", "invalid_request");
+    }
   });
 
   it("the operator finds instances across the clients of the tenant, by what is at hand", async () => {

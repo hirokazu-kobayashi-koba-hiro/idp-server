@@ -25,6 +25,7 @@ import org.idp.server.core.openid.clientinstance.ClientInstanceQueries;
 import org.idp.server.core.openid.clientinstance.ClientInstanceThumbprint;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.platform.datasource.SqlExecutor;
+import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -212,6 +213,16 @@ public class MysqlExecutor implements ClientInstanceSqlExecutor {
     return sqlExecutor.selectOne(sql.toString(), params);
   }
 
+  /** Whether expires_at has passed, with the application's clock as authentication uses. */
+  private void appendExpiredCondition(StringBuilder sql, List<Object> params, boolean expired) {
+    if (expired) {
+      sql.append(" AND expires_at IS NOT NULL AND expires_at <= ?");
+    } else {
+      sql.append(" AND (expires_at IS NULL OR expires_at > ?)");
+    }
+    params.add(SystemDateTime.now());
+  }
+
   private void appendConditions(
       StringBuilder sql, List<Object> params, Tenant tenant, ClientInstanceQueries queries) {
     sql.append(" WHERE tenant_id = ?");
@@ -228,6 +239,9 @@ public class MysqlExecutor implements ClientInstanceSqlExecutor {
     if (queries.hasStatus()) {
       sql.append(" AND status = ?");
       params.add(queries.status().name());
+    }
+    if (queries.hasExpired()) {
+      appendExpiredCondition(sql, params, queries.expired());
     }
     if (queries.hasRevocationReason()) {
       sql.append(" AND revocation_reason = ?");

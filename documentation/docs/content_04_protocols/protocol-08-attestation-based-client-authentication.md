@@ -173,9 +173,10 @@ Challenge を必須にしている場合は、リクエスト前に `POST /{tena
 
 | パラメータ | 使う場面 |
 |---|---|
-| `client_id` | クライアントで絞る |
+| `client_id` | クライアントで絞る（client_id でも alias でも可） |
 | `user_id` | 利用者の問い合わせ（その人の端末の一覧） |
 | `status` / `revocation_reason` | 有効なもの、失効したものと理由（`active` / `revoked`、`operator` / `superseded`） |
+| `expired` | 有効期限（`expires_at`）を過ぎているか（`true` / `false`）。期限切れは `status` が `active` のままでも認証できないので、今使えるものは `status=active&expired=false` |
 | `certificate_serial` | 証明書の漏えい時に、その証明書を経由して登録したインスタンスを探す（`attestation_evidence` のチェーンのシリアル。大文字でも可） |
 | `platform` | 証明の種類（`android-key-attestation` / `ios-app-attest` など） |
 | `instance_key_thumbprint` | 鍵（RFC 7638 サムプリント）からインスタンスを引く |

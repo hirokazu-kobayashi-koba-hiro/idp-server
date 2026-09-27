@@ -272,6 +272,9 @@ public class ClientInstance {
     map.put("client_id", clientId);
     map.put("instance_key", instanceKey());
     map.put("status", status);
+    // Past expires_at: kept apart from status, which stays active in storage, as authentication
+    // refuses it all the same.
+    map.put("expired", isExpired());
     if (hasAttestationEvidence()) map.put("attestation_evidence", attestationEvidence);
     if (hasDeviceId()) map.put("device_id", deviceId);
     if (hasUserId()) map.put("user_id", userId);
