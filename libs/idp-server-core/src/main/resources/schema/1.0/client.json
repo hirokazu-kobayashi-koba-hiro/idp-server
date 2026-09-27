@@ -416,7 +416,7 @@
           "items": {
             "type": "string"
           },
-          "description": "OPTIONAL. idp-server specific. Root certificates an x5c chain on a Client Attestation JWT must lead to, base64 encoded DER, used when client_attestation_trust_source is x5c. Roots rather than the attester's own certificate: the point of that trust source is that the attester can replace its signing key without the client being reconfigured, which only holds while what is pinned outlives that key. Required when client_attestation_trust_source is x5c; without it every chain is refused rather than the presented one being trusted."
+          "description": "OPTIONAL. idp-server specific. Root certificates an x5c chain on a Client Attestation JWT must lead to, base64 encoded DER, used when client_attestation_trust_source is x5c. Roots rather than the attester's own certificate: the point of that trust source is that the attester can replace its signing key without the client being reconfigured, which only holds while what is pinned outlives that key. Required when client_attestation_trust_source is x5c; without it every chain is refused rather than the presented one being trusted. List only the trust anchor of this client's attester: the leaf certificate's owner is not checked, so a root shared by several attesters (a whole trusted list, or a CA above several providers) lets any of them attest as this client."
         },
         "client_instance_registration_policy": {
           "type": "string",

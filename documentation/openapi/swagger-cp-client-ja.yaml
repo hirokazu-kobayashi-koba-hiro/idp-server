@@ -671,7 +671,7 @@ components:
               type: array
               items:
                 type: string
-              description: OPTIONAL. trust_source が x5c のとき、ピン留めする Attester のルート証明書（DER の base64）
+              description: OPTIONAL. trust_source が x5c のとき、ピン留めする Attester のルート証明書（DER の base64）。このクライアントの Attester のトラストアンカーだけを入れる（複数の提供者の上位の CA を入れると、別の提供者がこのクライアントを名乗れる）
             client_instance_registration_policy:
               type: string
               enum: [user_bound]
@@ -1076,7 +1076,7 @@ components:
               type: array
               items:
                 type: string
-              description: OPTIONAL. trust_source が x5c のとき、ピン留めする Attester のルート証明書（DER の base64）
+              description: OPTIONAL. trust_source が x5c のとき、ピン留めする Attester のルート証明書（DER の base64）。このクライアントの Attester のトラストアンカーだけを入れる（複数の提供者の上位の CA を入れると、別の提供者がこのクライアントを名乗れる）
             client_instance_registration_policy:
               type: string
               enum: [user_bound]
@@ -1367,7 +1367,7 @@ components:
               type: array
               items:
                 type: string
-              description: OPTIONAL. trust_source が x5c のとき、ピン留めする Attester のルート証明書（DER の base64）
+              description: OPTIONAL. trust_source が x5c のとき、ピン留めする Attester のルート証明書（DER の base64）。このクライアントの Attester のトラストアンカーだけを入れる（複数の提供者の上位の CA を入れると、別の提供者がこのクライアントを名乗れる）
             client_instance_registration_policy:
               type: string
               enum: [user_bound]

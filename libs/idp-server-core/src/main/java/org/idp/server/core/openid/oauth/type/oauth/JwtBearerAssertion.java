@@ -20,6 +20,7 @@ import java.util.Objects;
 import org.idp.server.platform.jose.JoseInvalidException;
 import org.idp.server.platform.jose.JsonWebSignature;
 import org.idp.server.platform.jose.JsonWebTokenClaims;
+import org.idp.server.platform.jose.JsonWebTokenClaimsInvalidException;
 
 public class JwtBearerAssertion {
 
@@ -50,7 +51,11 @@ public class JwtBearerAssertion {
   }
 
   public JsonWebTokenClaims claims() throws JoseInvalidException {
-    return parse().claims();
+    try {
+      return parse().claims();
+    } catch (JsonWebTokenClaimsInvalidException e) {
+      throw new JoseInvalidException(e.getMessage(), e);
+    }
   }
 
   public String issuer() throws JoseInvalidException {
