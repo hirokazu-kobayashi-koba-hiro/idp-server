@@ -27,9 +27,17 @@ import org.idp.server.core.openid.extension.attestation.PlatformChallengeBinding
  * "ios_app_attest": {
  *   "app_ids": ["ABCDE12345.com.example.wallet"],
  *   "environment": "production",
+ *   "challenge_binding": "request_hash",
  *   "override_root_certificates": []
  * }
  * </pre>
+ *
+ * <p>{@code challenge_binding} is {@code request_hash} and nothing else. The App Attest key cannot
+ * be the instance key: the app can only ask it for an assertion over {@code authenticatorData ||
+ * clientDataHash}, never for a JWS, so it cannot sign the Client Attestation JWT or the PoP JWT.
+ * The instance key is therefore a separate key, and the attestation covers it only through {@code
+ * clientDataHash}. {@code request_hash} is the one value that includes the instance key; with the
+ * others the attestation would say nothing about which key is being registered.
  */
 public class IosAppAttestConfiguration {
 
@@ -73,10 +81,20 @@ public class IosAppAttestConfiguration {
       throw new IosAppAttestException("app_ids must not be empty");
     }
 
+    PlatformChallengeBinding challengeBinding =
+        PlatformChallengeBinding.fromSettings(values, PlatformChallengeBinding.request_hash);
+    if (challengeBinding != PlatformChallengeBinding.request_hash) {
+      throw new IosAppAttestException(
+          PlatformChallengeBinding.CONFIG_KEY
+              + " must be request_hash for "
+              + IOS_KEY
+              + ": the attestation covers the instance key only through clientDataHash");
+    }
+
     return new IosAppAttestConfiguration(
         appIds,
         environment(values.get("environment")),
-        PlatformChallengeBinding.fromSettings(values),
+        challengeBinding,
         stringList(values.get("override_root_certificates")));
   }
 

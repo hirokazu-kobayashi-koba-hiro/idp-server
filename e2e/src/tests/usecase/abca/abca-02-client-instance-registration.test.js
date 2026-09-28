@@ -87,9 +87,6 @@ const generateInstanceJwk = async () => {
 
 const publicJwkOf = (jwk) => ({ kty: jwk.kty, crv: jwk.crv, x: jwk.x, y: jwk.y });
 
-const publicKeyPemOf = (jwk) =>
-  crypto.createPublicKey({ key: publicJwkOf(jwk), format: "jwk" }).export({ type: "spki", format: "pem" });
-
 const clientsUrl = () => `${backendUrl}/v1/management/tenants/${tenantId}/clients`;
 const instancesUrl = () => `${backendUrl}/v1/management/tenants/${tenantId}/client-instances`;
 
@@ -168,8 +165,7 @@ const enrollInstance = async ({
           authority,
           challenge,
           appId: APP_ID,
-          publicKeyPem: publicKeyPemOf(jwk),
-          publicJwk: publicJwkOf(jwk),
+          instanceJwk: publicJwkOf(jwk),
         })
       ),
     },
@@ -853,8 +849,7 @@ describe("ABCA Use Case: an app that registers its own Client Instance Key", () 
               authority,
               challenge,
               appId: APP_ID,
-              publicKeyPem: publicKeyPemOf(jwk),
-              publicJwk: publicJwkOf(jwk),
+              instanceJwk: publicJwkOf(jwk),
             })
           ),
         },

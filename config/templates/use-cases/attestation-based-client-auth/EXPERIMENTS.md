@@ -402,7 +402,7 @@ curl -sk -X POST "${ISSUER}/v1/client-instances" \
 
 → `201`
 
-証明に埋め込まれるのはチャレンジ（`clientDataHash` = チャレンジのバイト列の SHA-256）で、`request_hash` ではありません。`request_hash` は ID トークンの `nonce` にだけ使います。
+iOS では、App Attest が証明する鍵とインスタンス鍵は別の鍵です（App Attest の鍵は assertion しか署名できず、JWT を作れないため）。インスタンス鍵は `clientDataHash` = `request_hash` で証明に結びつきます。`mint-app-attest.mjs` もこの形で、App Attest の鍵を毎回生成し、`clientDataHash` に `request_hash` を入れます。
 
 試しに、手順2で作った鍵とは**別の鍵**を `client_instance_public_key` にして送ると `400` になります。ID トークンの `nonce` が元の鍵を指しているためです。漏れた ID トークンを別の鍵と組み合わせても登録できない、ということです。
 

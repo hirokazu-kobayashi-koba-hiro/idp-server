@@ -32,6 +32,8 @@ import org.idp.server.core.openid.extension.attestation.StubVerificationRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 /**
  * Verifying an Apple App Attest attestation.
@@ -46,17 +48,28 @@ class IosAppAttestVerifierTest {
 
   IosAppAttestFixture fixture;
   IosAppAttestVerifier verifier;
+
+  /** The key App Attest certifies. It signs only assertions, so it is never the instance key. */
+  KeyPair attestKeyPair;
+
+  /** The key being registered, which signs the Client Attestation JWT and the PoP JWT. */
   KeyPair instanceKeyPair;
 
   @BeforeEach
   void setUp() throws Exception {
     fixture = new IosAppAttestFixture();
     verifier = new IosAppAttestVerifier();
+    attestKeyPair = IosAppAttestFixture.generateKeyPair();
     instanceKeyPair = IosAppAttestFixture.generateKeyPair();
   }
 
   private byte[] challengeBytes() {
     return Base64.getUrlDecoder().decode(CHALLENGE);
+  }
+
+  /** The clientDataHash the app passes: this registration's request_hash. */
+  private byte[] requestHash() throws Exception {
+    return PlatformChallengeBinding.request_hash.clientDataHash(CHALLENGE, instanceKeyAsJwk());
   }
 
   private Map<String, Object> instanceKeyAsJwk() throws Exception {
@@ -121,7 +134,7 @@ class IosAppAttestVerifierTest {
 
     @Test
     void acceptsAnAttestationThatSatisfiesAllThreeBindings() throws Exception {
-      String attestation = fixture.attestation(instanceKeyPair).challenge(challengeBytes()).build();
+      String attestation = fixture.attestation(attestKeyPair).clientDataHash(requestHash()).build();
 
       assertDoesNotThrow(() -> verify(attestation));
     }
@@ -129,7 +142,7 @@ class IosAppAttestVerifierTest {
     @Test
     @SuppressWarnings("unchecked")
     void recordsWhatTheVerificationEstablished() throws Exception {
-      String attestation = fixture.attestation(instanceKeyPair).challenge(challengeBytes()).build();
+      String attestation = fixture.attestation(attestKeyPair).clientDataHash(requestHash()).build();
 
       Map<String, Object> stored = verify(attestation).toMap(LocalDateTime.now());
 
@@ -147,28 +160,43 @@ class IosAppAttestVerifierTest {
     @Test
     void rejectsAnAttestationProducedForAnotherChallenge() throws Exception {
       String attestation =
-          fixture.attestation(instanceKeyPair).challenge("another-challenge".getBytes()).build();
+          fixture
+              .attestation(attestKeyPair)
+              .clientDataHash(
+                  PlatformChallengeBinding.request_hash.clientDataHash(
+                      "YW5vdGhlci1jaGFsbGVuZ2U", instanceKeyAsJwk()))
+              .build();
 
       assertRejected(
           attestation, "the attestation nonce does not match the registration challenge");
     }
 
     @Test
-    void rejectsAnAttestationOfAKeyOtherThanTheOneBeingRegistered() throws Exception {
-      // The attestation is valid, but it covers a key the registrant did not present. Accepting it
-      // would register a key no hardware ever vouched for.
+    void rejectsAnAttestationThatCoversAnotherInstanceKey() throws Exception {
+      // The attestation is valid, but the app asked for it to register a different key. Accepting
+      // it would register a key the genuine app never asked for.
       KeyPair otherKey = IosAppAttestFixture.generateKeyPair();
-      String attestation = fixture.attestation(otherKey).challenge(challengeBytes()).build();
+      Map<String, Object> otherJwk =
+          new ECKey.Builder(com.nimbusds.jose.jwk.Curve.P_256, (ECPublicKey) otherKey.getPublic())
+              .build()
+              .toPublicJWK()
+              .toJSONObject();
+      String attestation =
+          fixture
+              .attestation(attestKeyPair)
+              .clientDataHash(
+                  PlatformChallengeBinding.request_hash.clientDataHash(CHALLENGE, otherJwk))
+              .build();
 
-      assertRejected(attestation, "does not certify client_instance_public_key");
+      assertRejected(attestation, "nonce does not match");
     }
 
     @Test
     void rejectsAnAttestationFromAnotherApplication() throws Exception {
       String attestation =
           fixture
-              .attestation(instanceKeyPair)
-              .challenge(challengeBytes())
+              .attestation(attestKeyPair)
+              .clientDataHash(requestHash())
               .appId("ABCDE12345.com.attacker.app")
               .build();
 
@@ -181,8 +209,8 @@ class IosAppAttestVerifierTest {
       // data and the certificate describe different keys.
       String attestation =
           fixture
-              .attestation(instanceKeyPair)
-              .challenge(challengeBytes())
+              .attestation(attestKeyPair)
+              .clientDataHash(requestHash())
               .credentialId(IosAppAttestFixture.sha256("not-the-key".getBytes()))
               .build();
 
@@ -190,7 +218,10 @@ class IosAppAttestVerifierTest {
     }
   }
 
-  /** What the app embeds as clientDataHash is the client's challenge_binding. */
+  /**
+   * iOS accepts only challenge_binding request_hash: it is the one value that includes the instance
+   * key, which the App Attest key cannot be.
+   */
   @Nested
   class ChallengeBinding {
 
@@ -211,43 +242,33 @@ class IosAppAttestVerifierTest {
               evidence(attestationObject)));
     }
 
-    private byte[] clientDataHashFor(PlatformChallengeBinding binding) throws Exception {
-      return binding.clientDataHash(CHALLENGE, instanceKeyAsJwk());
-    }
-
     @Test
-    void acceptsRequestHashAsClientDataHashWhenConfigured() throws Exception {
-      String attestation =
-          fixture
-              .attestation(instanceKeyPair)
-              .clientDataHash(clientDataHashFor(PlatformChallengeBinding.request_hash))
-              .build();
+    void acceptsRequestHashConfiguredExplicitly() throws Exception {
+      String attestation = fixture.attestation(attestKeyPair).clientDataHash(requestHash()).build();
 
       assertDoesNotThrow(() -> verifyWith("request_hash", attestation));
     }
 
     @Test
-    void rejectsRequestHashUnderTheDefault() throws Exception {
-      // The app hashed something other than what the client is configured for: a nonce mismatch,
-      // which is all the app would ever see.
-      String attestation =
-          fixture
-              .attestation(instanceKeyPair)
-              .clientDataHash(clientDataHashFor(PlatformChallengeBinding.request_hash))
-              .build();
+    void rejectsTheHashOfTheChallengeAlone() throws Exception {
+      // Covers the challenge but not the instance key: nothing would tie the key to the
+      // attestation.
+      String attestation = fixture.attestation(attestKeyPair).challenge(challengeBytes()).build();
 
       assertRejected(attestation, "nonce does not match");
     }
 
-    @Test
-    void acceptsTheHashOfTheChallengeTextWhenConfigured() throws Exception {
-      String attestation =
-          fixture
-              .attestation(instanceKeyPair)
-              .clientDataHash(clientDataHashFor(PlatformChallengeBinding.challenge_text))
-              .build();
+    @ParameterizedTest
+    @ValueSource(strings = {"challenge", "challenge_text"})
+    void rejectsAClientConfiguredWithABindingThatOmitsTheInstanceKey(String binding)
+        throws Exception {
+      String attestation = fixture.attestation(attestKeyPair).clientDataHash(requestHash()).build();
 
-      assertDoesNotThrow(() -> verifyWith("challenge_text", attestation));
+      PlatformAttestationVerificationException exception =
+          assertThrows(
+              PlatformAttestationVerificationException.class,
+              () -> verifyWith(binding, attestation));
+      assertTrue(exception.getMessage().contains("must be request_hash"), exception.getMessage());
     }
   }
 
@@ -260,8 +281,8 @@ class IosAppAttestVerifierTest {
       // root check separates this from genuine evidence.
       String attestation =
           fixture
-              .attestation(instanceKeyPair)
-              .challenge(challengeBytes())
+              .attestation(attestKeyPair)
+              .clientDataHash(requestHash())
               .signedByUntrustedRoot()
               .build();
 
@@ -271,7 +292,7 @@ class IosAppAttestVerifierTest {
     @Test
     void rejectsAnAttestationInAnotherFormat() throws Exception {
       String attestation =
-          fixture.attestation(instanceKeyPair).challenge(challengeBytes()).format("packed").build();
+          fixture.attestation(attestKeyPair).clientDataHash(requestHash()).format("packed").build();
 
       assertRejected(attestation, "fmt is not apple-appattest");
     }
@@ -283,7 +304,7 @@ class IosAppAttestVerifierTest {
     @Test
     void rejectsAKeyThatHasAlreadySignedAnAssertion() throws Exception {
       String attestation =
-          fixture.attestation(instanceKeyPair).challenge(challengeBytes()).counter(1).build();
+          fixture.attestation(attestKeyPair).clientDataHash(requestHash()).counter(1).build();
 
       assertRejected(attestation, "counter is not 0 at attestation");
     }
@@ -292,8 +313,8 @@ class IosAppAttestVerifierTest {
     void rejectsADevelopmentKeyWhenProductionIsConfigured() throws Exception {
       String attestation =
           fixture
-              .attestation(instanceKeyPair)
-              .challenge(challengeBytes())
+              .attestation(attestKeyPair)
+              .clientDataHash(requestHash())
               .environment(IosAppAttestEnvironment.development)
               .build();
 
@@ -304,8 +325,8 @@ class IosAppAttestVerifierTest {
     void acceptsADevelopmentKeyWhenDevelopmentIsConfigured() throws Exception {
       String attestation =
           fixture
-              .attestation(instanceKeyPair)
-              .challenge(challengeBytes())
+              .attestation(attestKeyPair)
+              .clientDataHash(requestHash())
               .environment(IosAppAttestEnvironment.development)
               .build();
 
@@ -325,7 +346,7 @@ class IosAppAttestVerifierTest {
 
     @Test
     void rejectsAClientWithNoAppAttestConfiguration() throws Exception {
-      String attestation = fixture.attestation(instanceKeyPair).challenge(challengeBytes()).build();
+      String attestation = fixture.attestation(attestKeyPair).clientDataHash(requestHash()).build();
 
       assertThrows(
           PlatformAttestationVerificationException.class,
@@ -342,7 +363,7 @@ class IosAppAttestVerifierTest {
     void rejectsAClientWithNoAppIds() throws Exception {
       // Apple signs an attestation for any app on the device. Without an App ID to check, any
       // App Attest capable app would satisfy the remaining checks.
-      String attestation = fixture.attestation(instanceKeyPair).challenge(challengeBytes()).build();
+      String attestation = fixture.attestation(attestKeyPair).clientDataHash(requestHash()).build();
 
       assertThrows(
           PlatformAttestationVerificationException.class,

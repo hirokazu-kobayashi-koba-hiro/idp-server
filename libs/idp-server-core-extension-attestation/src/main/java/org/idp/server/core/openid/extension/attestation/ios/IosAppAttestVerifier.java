@@ -27,14 +27,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.clientinstance.registration.PlatformAttestationEvidence;
-import org.idp.server.core.openid.clientinstance.registration.PlatformAttestationVerificationException;
 import org.idp.server.core.openid.clientinstance.registration.PlatformAttestationVerificationRequest;
 import org.idp.server.core.openid.clientinstance.registration.PlatformAttestationVerifier;
 import org.idp.server.platform.asn1.Asn1InvalidException;
 import org.idp.server.platform.asn1.Asn1Node;
-import org.idp.server.platform.jose.JsonWebKey;
-import org.idp.server.platform.jose.JwkParser;
-import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.x509.X509CertInvalidException;
 import org.idp.server.platform.x509.X509CertificateChain;
@@ -48,8 +44,10 @@ import org.idp.server.platform.x509.X509CertificateChain;
  * <ol>
  *   <li><b>Challenge</b> — the certificate extension holds {@code nonce}, the hash of the
  *       authenticator data together with the hash of the challenge this registration was issued
- *   <li><b>Instance key</b> — the credential certificate certifies the key being registered, so its
- *       public key must equal {@code client_instance_public_key}
+ *   <li><b>Instance key</b> — {@code clientDataHash} is the {@code request_hash}, which covers
+ *       {@code client_instance_public_key}. The key the credential certificate certifies is the App
+ *       Attest key, not the instance key: the App Attest key signs only assertions, so the app
+ *       holds the instance key separately (see {@link IosAppAttestConfiguration})
  *   <li><b>Application identity</b> — {@code rpIdHash} is the hash of the App ID, checked against
  *       the App IDs configured for this client
  * </ol>
@@ -77,7 +75,6 @@ public class IosAppAttestVerifier implements PlatformAttestationVerifier {
   static final int NONCE_TAG_NUMBER = 1;
 
   LoggerWrapper log = LoggerWrapper.getLogger(IosAppAttestVerifier.class);
-  JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   @Override
   public String platform() {
@@ -100,7 +97,6 @@ public class IosAppAttestVerifier implements PlatformAttestationVerifier {
 
     throwExceptionIfNonceDoesNotMatch(
         credentialCertificate, authenticatorData, request, configuration);
-    throwExceptionIfInstanceKeyDoesNotMatch(credentialCertificate, request);
     throwExceptionIfCredentialIdDoesNotMatchKey(credentialCertificate, authenticatorData);
     String appId = attestedApplication(authenticatorData, configuration);
     throwExceptionIfCounterIsNotZero(authenticatorData);
@@ -167,18 +163,17 @@ public class IosAppAttestVerifier implements PlatformAttestationVerifier {
   }
 
   /**
-   * Binding 1, Apple steps 2 to 4: the evidence was produced for this registration.
+   * Bindings 1 and 2, Apple steps 2 to 4: the evidence was produced for this registration and this
+   * instance key.
    *
    * <p>{@code nonce} is the hash of the authenticator data with the hash of the challenge appended,
    * and it sits inside a certificate Apple signed. That is what makes it unforgeable, and it is
    * also what binds the authenticator data to the certificate: neither can be swapped without
    * invalidating the other.
    *
-   * <p>Apple specifies {@code clientDataHash} as "the SHA256 hash of the one-time challenge your
-   * server sends", which leaves open what is hashed when the challenge travels as text. Which one
-   * the app uses is the client's {@code challenge_binding}; by default the bytes the base64url
-   * challenge decodes to, the same bytes Android embeds. A mismatch is silent on the app's side, so
-   * this is part of the client contract rather than an implementation detail.
+   * <p>{@code clientDataHash} is the {@code request_hash} of this registration: SHA-256 of the
+   * challenge bytes and the canonical instance key. It also carries binding 2, so the nonce
+   * matching is what ties the instance key to this attestation.
    */
   private void throwExceptionIfNonceDoesNotMatch(
       X509Certificate credentialCertificate,
@@ -218,28 +213,6 @@ public class IosAppAttestVerifier implements PlatformAttestationVerifier {
     } catch (Asn1InvalidException e) {
       throw new IosAppAttestException(
           "failed to read the " + NONCE_EXTENSION_OID + " extension: " + e.getMessage(), e);
-    }
-  }
-
-  /** Binding 2: the evidence covers the key being registered. */
-  private void throwExceptionIfInstanceKeyDoesNotMatch(
-      X509Certificate credentialCertificate, PlatformAttestationVerificationRequest request) {
-
-    try {
-      JsonWebKey instanceKey = JwkParser.parse(jsonConverter.write(request.instanceKey()));
-      PublicKey registered = instanceKey.toPublicKey();
-
-      if (!MessageDigest.isEqual(
-          registered.getEncoded(), credentialCertificate.getPublicKey().getEncoded())) {
-        throw new IosAppAttestException(
-            "the credential certificate does not certify client_instance_public_key");
-      }
-    } catch (PlatformAttestationVerificationException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new IosAppAttestException(
-          "failed to compare client_instance_public_key with the attested key: " + e.getMessage(),
-          e);
     }
   }
 

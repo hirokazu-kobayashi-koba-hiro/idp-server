@@ -8,11 +8,16 @@
  * client_instance_platform_config.ios_app_attest.override_root_certificates. The server verifies
  * the evidence exactly as it verifies a device's. Uses only Node built-ins.
  *
+ * As on a device, two keys are involved. The App Attest key, generated here, is what the credential
+ * certificate certifies; on a device it signs only assertions, never a JWS, so it cannot be the
+ * Client Instance Key. The Client Instance Key (instance-key.json) is covered through
+ * clientDataHash, which is the registration's request_hash.
+ *
  *   # generate the test root and intermediate (kept in app-attest-authority.json), print the root
  *   node mint-app-attest.mjs --init-authority
  *
- *   # platform_evidence certifying the Client Instance Key (instance-key.json, as
- *   # mint-attestation.mjs keeps it) for a registration challenge
+ *   # platform_evidence for registering the Client Instance Key (instance-key.json, as
+ *   # mint-attestation.mjs keeps it) under a registration challenge
  *   node mint-app-attest.mjs --evidence --challenge <challenge> --app-id <TEAMID.bundle.id>
  *
  * @see https://developer.apple.com/documentation/devicecheck/validating-apps-that-connect-to-your-server
@@ -196,10 +201,15 @@ if (flag("evidence")) {
   }
   const authority = JSON.parse(fs.readFileSync(authorityPath, "utf8"));
   const { kty, crv, x, y } = JSON.parse(fs.readFileSync(instanceKeyPath, "utf8")).public;
-  const instancePublicKey = crypto.createPublicKey({ key: { kty, crv, x, y }, format: "jwk" });
+
+  // The App Attest key, which the Secure Enclave generates and Apple certifies.
+  const attestKey = newEcKey();
+  const attestJwk = attestKey.publicKey.export({ format: "jwk" });
 
   // The key identifier Apple derives: SHA-256 of the key as an uncompressed point.
-  const keyId = sha256(Buffer.concat([Buffer.from([0x04]), Buffer.from(x, "base64url"), Buffer.from(y, "base64url")]));
+  const keyId = sha256(
+    Buffer.concat([Buffer.from([0x04]), Buffer.from(attestJwk.x, "base64url"), Buffer.from(attestJwk.y, "base64url")])
+  );
 
   // rpIdHash | flags (AT) | counter 0 | aaguid "appattest" (production) | credentialId length | id | key
   const credentialIdLength = Buffer.alloc(2);
@@ -214,11 +224,15 @@ if (flag("evidence")) {
     Buffer.alloc(77),
   ]);
 
-  // clientDataHash is SHA-256 of the challenge bytes, not of the base64url text.
-  const nonce = sha256(Buffer.concat([authData, sha256(Buffer.from(challenge, "base64url"))]));
+  // clientDataHash is the request_hash: SHA-256 of the challenge bytes and the canonical instance
+  // key (RFC 7638 members, lexicographic), used as is rather than hashed again.
+  const requestHash = sha256(
+    Buffer.concat([Buffer.from(challenge, "base64url"), Buffer.from(JSON.stringify({ crv, kty, x, y }), "utf8")])
+  );
+  const nonce = sha256(Buffer.concat([authData, requestHash]));
 
   const credentialCertificate = certificate({
-    spki: spkiOf(instancePublicKey),
+    spki: spkiOf(attestKey.publicKey),
     subject: "attested-key",
     issuer: "test-app-attest-ca",
     issuerKey: crypto.createPrivateKey(authority.intermediate_private_key),

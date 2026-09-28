@@ -47,7 +47,7 @@ import org.idp.server.core.openid.clientinstance.registration.PlatformAttestatio
  */
 public enum PlatformChallengeBinding {
 
-  /** The bytes the base64url challenge decodes to. The default. */
+  /** The bytes the base64url challenge decodes to. The default for Android. */
   challenge,
 
   /** The challenge as received, its UTF-8 bytes. */
@@ -55,7 +55,8 @@ public enum PlatformChallengeBinding {
 
   /**
    * {@code request_hash}: SHA-256 of the challenge bytes and the canonical instance key. Already a
-   * SHA-256, so iOS uses it as {@code clientDataHash} without hashing it again.
+   * SHA-256, so iOS uses it as {@code clientDataHash} without hashing it again. The only value iOS
+   * accepts: see {@code IosAppAttestConfiguration}.
    */
   request_hash;
 
@@ -67,9 +68,20 @@ public enum PlatformChallengeBinding {
    * @throws PlatformAttestationVerificationException when the value is not one of the list
    */
   public static PlatformChallengeBinding fromSettings(Map<String, Object> settings) {
+    return fromSettings(settings, challenge);
+  }
+
+  /**
+   * Reads {@code challenge_binding} from a platform's settings, falling back to {@code
+   * defaultBinding} when it is unset.
+   *
+   * @throws PlatformAttestationVerificationException when the value is not one of the list
+   */
+  public static PlatformChallengeBinding fromSettings(
+      Map<String, Object> settings, PlatformChallengeBinding defaultBinding) {
     Object value = settings.get(CONFIG_KEY);
     if (!(value instanceof String name) || name.isEmpty()) {
-      return challenge;
+      return defaultBinding;
     }
     for (PlatformChallengeBinding binding : values()) {
       if (binding.name().equals(name)) {

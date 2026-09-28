@@ -491,6 +491,35 @@ Android Key Attestation の検証は次の順で行います。
 
 鍵の性質（`origin` / `purpose`）も起動状態（`rootOfTrust` / `osPatchLevel`）も、`hardwareEnforced` 側の `AuthorizationList` から読みます。鍵自身の性質を知っているのは KeyMint だけで、`softwareEnforced` に同じ値があっても、それはプラットフォームの申告にすぎないためです。端末が報告しなかった場合も拒否します（判定の材料が無いことは、条件を満たす証拠にはなりません）。
 
+#### iOS App Attest
+
+```json
+"client_instance_platform_config": {
+  "ios_app_attest": {
+    "app_ids": ["ABCDE12345.com.example.wallet"],
+    "environment": "production"
+  }
+}
+```
+
+| フィールド | 既定 | 内容 |
+|---|---|---|
+| `app_ids` | 必須 | 許可する App ID（Team ID.Bundle ID） |
+| `environment` | `production` | `production` / `development` |
+| `challenge_binding` | `request_hash` | `request_hash` だけを受け付けます（下記） |
+| `override_root_certificates` | — | 同梱の Apple ルートを**置き換える**ルート（テスト用）。設定すると WARN ログが出ます |
+
+**インスタンス鍵は App Attest の鍵とは別の鍵です。** App Attest の秘密鍵にアプリができる操作は `generateAssertion`（`authenticatorData ‖ clientDataHash` への署名）だけで、任意の JWS には署名できません。そのため、App Attest の鍵では Client Attestation JWT も PoP JWT も作れません。アプリはインスタンス鍵を別に作り（CryptoKit の `SecureEnclave.P256.Signing.PrivateKey` を推奨）、`clientDataHash` に `request_hash`（チャレンジとインスタンス鍵の SHA-256）を渡して App Attest の鍵を attest します。
+
+```
+1. チャレンジを取得し、インスタンス鍵を生成（Secure Enclave）
+2. request_hash = SHA-256(チャレンジのバイト列 ‖ インスタンス鍵の canonical JWK)
+3. DCAppAttestService.generateKey() → attestKey(keyId, clientDataHash = request_hash)
+4. 登録: client_instance_public_key = インスタンス鍵、platform_evidence = attestation object
+```
+
+認可サーバーは、証明書の `nonce` が `SHA-256(authenticatorData ‖ request_hash)` と一致することで、「この登録で、このインスタンス鍵の登録を、正規のアプリが要求した」ことを確かめます。証明書が証明する公開鍵（App Attest の鍵）と `client_instance_public_key` は一致しません。
+
 
 ### プラットフォーム証明に埋め込む値
 
@@ -498,20 +527,22 @@ Android Key Attestation の検証は次の順で行います。
 
 そこで、埋め込む値をクライアントごとに `challenge_binding` で選びます（`android_key_attestation` と `ios_app_attest` のそれぞれに置きます）。自由な組み立て方ではなく、次の 3 つからの選択です。どれを選んでも、証明はこの登録のチャレンジに結びつきます。
 
+**iOS は `request_hash` だけです**（既定も `request_hash`）。iOS ではインスタンス鍵が App Attest の鍵と別なので（[iOS App Attest](#ios-app-attest)）、インスタンス鍵を証明に結びつける手段は `clientDataHash` しかありません。鍵を含むのは `request_hash` だけで、他の値ではどの鍵の登録かを証明が何も言わなくなるため、クライアント設定の時点で拒否します。
+
 | 値 | Android `attestationChallenge` | iOS `clientDataHash` |
 |---|---|---|
-| `challenge`（既定） | チャレンジを base64url デコードしたバイト列 | SHA-256(チャレンジを base64url デコードしたバイト列) |
-| `challenge_text` | チャレンジの文字列の UTF-8 | SHA-256(チャレンジの文字列の UTF-8) |
-| `request_hash` | `request_hash` を base64url デコードした 32 バイト | `request_hash` を base64url デコードした 32 バイト（それ自体が SHA-256 なので、もう一度はハッシュしない） |
+| `challenge`（Android の既定） | チャレンジを base64url デコードしたバイト列 | 指定できない |
+| `challenge_text` | チャレンジの文字列の UTF-8 | 指定できない |
+| `request_hash`（iOS の既定） | `request_hash` を base64url デコードした 32 バイト | `request_hash` を base64url デコードした 32 バイト（それ自体が SHA-256 なので、もう一度はハッシュしない） |
 
-`request_hash` は ID トークンの `nonce` と同じ値（チャレンジと鍵の SHA-256）です。鍵まで含みますが、鍵の一致は証明書の公開鍵で別に確かめているので、強さは他の 2 つと変わりません。
+`request_hash` は ID トークンの `nonce` と同じ値（チャレンジと鍵の SHA-256）です。Android では鍵の一致を証明書の公開鍵で別に確かめているので、強さは 3 つとも変わりません。
 
 **固定ベクタ**（`challenge = Zm9vYmFyLWNoYWxsZW5nZS0wMQ`、鍵は `x = VcKVNBZ4IaBAYW3jxM4w3TJFVA7myeUGQyGt-g_yvpQ`, `y = f-E-hYE3TAWKwhVv9pej9NABs9SX9XsNO80x57jFTyU` の P-256。いずれも 16 進）
 
 | 値 | Android `attestationChallenge` | iOS `clientDataHash` |
 |---|---|---|
-| `challenge` | `666f6f6261722d6368616c6c656e67652d3031` | `352c35fa1dac334a252a5c43601c542c2db3e4878f7ea78a0e16010998550cd8` |
-| `challenge_text` | `5a6d3976596d46794c574e6f595778735a57356e5a5330774d51` | `06867a128ca08e2c8b7ec015b4c84efb146cd8cb983efa7d239fdbae2728c892` |
+| `challenge` | `666f6f6261722d6368616c6c656e67652d3031` | — |
+| `challenge_text` | `5a6d3976596d46794c574e6f595778735a57356e5a5330774d51` | — |
 | `request_hash` | `618fa70c42ba24740b55ef3ddea89e0a2cb2436916e5f06620f36555d7e58f52` | `618fa70c42ba24740b55ef3ddea89e0a2cb2436916e5f06620f36555d7e58f52` |
 
 iOS の `nonce`（証明書の拡張に入る値）は、ここからさらに `SHA-256(authenticatorData ‖ clientDataHash)` です。
@@ -721,6 +752,7 @@ draft-11 のうち、次は対応していません。
 ## セキュリティ考慮事項
 
 - **Client Instance Key は端末のセキュアハードウェアに置く。** ソフトウェア保管では、アプリのコピーで認証が通ってしまい、この方式を採用する意味が薄れます
+- **iOS ではインスタンス鍵の置き場所を App Attest は証明しない。** App Attest が示すのは「正規のアプリが、このインスタンス鍵の登録を要求した」ことまでです。インスタンス鍵が Secure Enclave にあるかはアプリの実装に委ねられます（Android は Key Attestation がインスタンス鍵そのものを証明するため、置き場所まで確かめられます）
 - **`attester_jwks` では Client Attester の検証が信頼の起点。** 認可サーバーはプラットフォーム証明を見ません。Attester が App Attest / Play Integrity を正しく検証していることが前提です
 - **`registered_instance_key` は自己署名。** 「正当なアプリか」の裏付けは登録時のみで、以降は鍵の所持だけが根拠です。登録経路の強度がそのまま全体の強度になります
 - **PoP のリプレイ検出は未実装。** `jti` は存在チェックのみで、使用済みの記録は持ちません。同じ PoP JWT は `iat` の ±5分窓内で再利用できてしまいます

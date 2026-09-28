@@ -14,6 +14,8 @@
 import crypto from "crypto";
 import cbor from "cbor";
 
+import { deriveRequestHash } from "../clientInstance";
+
 import {
   derBitString,
   derBoolean,
@@ -52,12 +54,6 @@ const sha256 = (input) => crypto.createHash("sha256").update(input).digest();
 const name = (commonName) =>
   derSequence(
     derSet(derSequence(derOid(COMMON_NAME_OID), derUtf8String(commonName)))
-  );
-
-const pemToDer = (pem) =>
-  Buffer.from(
-    pem.replace(/-----(BEGIN|END)[^-]+-----/g, "").replace(/\s/g, ""),
-    "base64"
   );
 
 /** Extension ::= SEQUENCE { extnID, critical DEFAULT FALSE, extnValue OCTET STRING } */
@@ -220,21 +216,22 @@ const authenticatorData = ({ appId, counter, aaguid, credentialId }) => {
 };
 
 /**
- * An attestation object certifying `publicKeyPem`, base64 encoded as platform_evidence carries it.
+ * An attestation object for registering `instanceJwk`, base64 encoded as platform_evidence
+ * carries it.
  *
- * The key is supplied by the caller rather than generated here, because the same key has to sign
- * the Client Attestation JWT afterwards: the registration proves the key came from the Secure
- * Enclave, and the authentication proves the client holds it.
+ * Two keys are involved, as on a device. The App Attest key is generated here and is what the
+ * credential certificate certifies; on a device it can only sign assertions, never a JWS, so it
+ * cannot be the instance key. The instance key is the caller's: it signs the Client Attestation
+ * JWT afterwards, and the attestation covers it through `clientDataHash`, which is the
+ * registration's request_hash (SHA-256 of the challenge bytes and the canonical instance key).
  *
- * `clientDataHash` defaults to the SHA-256 of the challenge bytes (challenge_binding "challenge");
- * pass it to embed what another binding names, such as request_hash as is.
+ * Pass `clientDataHash` to embed something else, such as a value for another challenge or key.
  */
 export const generateAttestation = ({
   authority,
   challenge,
   appId,
-  publicKeyPem,
-  publicJwk,
+  instanceJwk,
   environment = ENVIRONMENT.production,
   counter = 0,
   credentialId,
@@ -242,17 +239,21 @@ export const generateAttestation = ({
   signedByUntrustedRoot = false,
   clientDataHash,
 }) => {
+  const attestKey = crypto.generateKeyPairSync("ec", { namedCurve: "prime256v1" });
+  const attestJwk = attestKey.publicKey.export({ format: "jwk" });
+
   const authData = authenticatorData({
     appId,
     counter,
     aaguid: environment,
-    credentialId: credentialId ?? keyIdentifier(publicJwk),
+    credentialId: credentialId ?? keyIdentifier(attestJwk),
   });
 
   const nonce = sha256(
     Buffer.concat([
       authData,
-      clientDataHash ?? sha256(Buffer.from(challenge, "base64url")),
+      clientDataHash ??
+        Buffer.from(deriveRequestHash(challenge, instanceJwk), "base64url"),
     ])
   );
 
@@ -261,7 +262,7 @@ export const generateAttestation = ({
     : authority;
 
   const credentialCertificate = certificate({
-    subjectPublicKeyInfo: pemToDer(publicKeyPem),
+    subjectPublicKeyInfo: attestKey.publicKey.export({ type: "spki", format: "der" }),
     subject: "attested-key",
     issuer: "test-app-attest-ca",
     issuerPrivateKey: issuer.intermediate.privateKey,

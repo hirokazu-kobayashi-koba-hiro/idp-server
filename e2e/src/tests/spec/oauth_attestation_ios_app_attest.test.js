@@ -59,9 +59,11 @@ describe("Apple App Attest (Issue #1521)", () => {
   const instancesUrl = () => `${backendUrl}/${tenantId}/v1/client-instances`;
 
   /**
-   * The instance key: certified by the attestation, and later the signer of the Attestation JWT.
+   * The instance key: the signer of the Attestation JWT and the PoP JWT.
    *
-   * ES256, because App Attest generates a P-256 key in the Secure Enclave and attests that key.
+   * A key separate from the App Attest key, which on a device signs only assertions. On a device it
+   * would be a Secure Enclave key (CryptoKit's SecureEnclave.P256.Signing.PrivateKey), hence ES256.
+   * The attestation covers it through clientDataHash = request_hash.
    */
   const generateInstanceKey = async () => {
     const { publicKey, privateKey } = await jose.generateKeyPair("ES256", {
@@ -70,7 +72,6 @@ describe("Apple App Attest (Issue #1521)", () => {
     return {
       privateJwk: await jose.exportJWK(privateKey),
       publicJwk: await jose.exportJWK(publicKey),
-      publicKeyPem: await jose.exportSPKI(publicKey),
     };
   };
 
@@ -124,8 +125,7 @@ describe("Apple App Attest (Issue #1521)", () => {
       authority,
       challenge,
       appId: APP_ID,
-      publicKeyPem: instanceKey.publicKeyPem,
-      publicJwk: instanceKey.publicJwk,
+      instanceJwk: instanceKey.publicJwk,
       ...attestationOptions,
     });
 
@@ -256,7 +256,7 @@ describe("Apple App Attest (Issue #1521)", () => {
   });
 
   describe("registration", () => {
-    it("registers an instance whose key the attestation certifies", async () => {
+    it("registers an instance whose key the attestation covers", async () => {
       const { challenge } = await requestChallenge();
       const instanceKey = await generateInstanceKey();
 
@@ -282,8 +282,7 @@ describe("Apple App Attest (Issue #1521)", () => {
         authority,
         challenge: other.challenge,
         appId: APP_ID,
-        publicKeyPem: instanceKey.publicKeyPem,
-        publicJwk: instanceKey.publicJwk,
+        instanceJwk: instanceKey.publicJwk,
       });
 
       const response = await postRegistration({ challenge, instanceKey, attestationObject });
@@ -291,19 +290,18 @@ describe("Apple App Attest (Issue #1521)", () => {
       expect(response.status).toBe(400);
     }, 120000);
 
-    it("rejects an attestation of a key other than the one being registered", async () => {
+    it("rejects an attestation that covers a key other than the one being registered", async () => {
       const { challenge } = await requestChallenge();
       const instanceKey = await generateInstanceKey();
       const otherKey = await generateInstanceKey();
 
-      // The attestation is valid, but it covers a key the registrant does not hold. Accepting it
-      // would register a key no Secure Enclave ever vouched for.
+      // The attestation is valid, but the app asked for it to register another key. Accepting it
+      // would register a key the genuine app never asked for.
       const attestationObject = generateAttestation({
         authority,
         challenge,
         appId: APP_ID,
-        publicKeyPem: otherKey.publicKeyPem,
-        publicJwk: otherKey.publicJwk,
+        instanceJwk: otherKey.publicJwk,
       });
 
       const response = await postRegistration({ challenge, instanceKey, attestationObject });
@@ -344,78 +342,94 @@ describe("Apple App Attest (Issue #1521)", () => {
   });
 
   /**
-   * What the app embeds as clientDataHash is the client's challenge_binding. An SDK that passes
-   * request_hash as clientDataHash registers once the client says so, and only then.
+   * The App Attest key cannot sign a JWS, so the instance key is a separate key and the attestation
+   * covers it only through clientDataHash. request_hash is the one binding that includes the key,
+   * so iOS takes no other.
    */
   describe("challenge_binding", () => {
-    let requestHashClientId;
+    const clientBody = (binding) => ({
+      client_id: uuidv4(),
+      redirect_uris: [REDIRECT_URI],
+      grant_types: ["authorization_code"],
+      response_types: ["code", "code id_token"],
+      scope: "openid account",
+      client_name: `App Attest Client (${binding})`,
+      token_endpoint_auth_method: "attest_jwt_client_auth",
+      extension: {
+        client_attestation_trust_source: "registered_instance_key",
+        client_instance_registration_policy: "user_bound",
+        client_instance_platform_config: {
+          ios_app_attest: {
+            app_ids: [APP_ID],
+            environment: "production",
+            override_root_certificates: [authority.rootBase64],
+            challenge_binding: binding,
+          },
+        },
+      },
+    });
 
-    beforeAll(async () => {
-      requestHashClientId = uuidv4();
+    const registerClient = async (binding) => {
+      const body = clientBody(binding);
       const response = await postWithJson({
         url: `${backendUrl}/v1/management/tenants/${tenantId}/clients`,
         headers: { Authorization: `Bearer ${systemAccessToken}` },
-        body: {
-          client_id: requestHashClientId,
-          redirect_uris: [REDIRECT_URI],
-          grant_types: ["authorization_code"],
-          response_types: ["code", "code id_token"],
-          scope: "openid account",
-          client_name: "App Attest Client (request_hash binding)",
-          token_endpoint_auth_method: "attest_jwt_client_auth",
-          extension: {
-            client_attestation_trust_source: "registered_instance_key",
-            client_instance_registration_policy: "user_bound",
-            client_instance_platform_config: {
-              ios_app_attest: {
-                app_ids: [APP_ID],
-                environment: "production",
-                override_root_certificates: [authority.rootBase64],
-                challenge_binding: "request_hash",
-              },
-            },
-          },
-        },
+        body,
       });
-      expect(response.status).toBe(201);
-    }, 120000);
+      return { ...response, clientId: body.client_id };
+    };
 
-    /** An attestation whose clientDataHash is request_hash itself, not hashed again. */
-    const attestationWithRequestHash = ({ challenge, instanceKey }) =>
-      generateAttestation({
-        authority,
-        challenge,
-        appId: APP_ID,
-        publicKeyPem: instanceKey.publicKeyPem,
-        publicJwk: instanceKey.publicJwk,
-        clientDataHash: Buffer.from(
-          deriveRequestHash(challenge, instanceKey.publicJwk),
-          "base64url"
-        ),
-      });
+    it("registers when the client names request_hash explicitly", async () => {
+      const clientResponse = await registerClient("request_hash");
+      expect(clientResponse.status).toBe(201);
+      const requestHashClientId = clientResponse.clientId;
 
-    it("registers with request_hash as clientDataHash when the client binds request_hash", async () => {
       const { challenge } = await requestChallenge(requestHashClientId);
       const instanceKey = await generateInstanceKey();
 
       const response = await postRegistration({
         challenge,
         instanceKey,
-        attestationObject: attestationWithRequestHash({ challenge, instanceKey }),
+        attestationObject: generateAttestation({
+          authority,
+          challenge,
+          appId: APP_ID,
+          instanceJwk: instanceKey.publicJwk,
+        }),
         client: requestHashClientId,
       });
 
       expect(response.status).toBe(201);
     }, 120000);
 
-    it("rejects request_hash as clientDataHash under the default binding", async () => {
+    it.each(["challenge", "challenge_text"])(
+      "refuses a client configured with %s, which does not cover the instance key",
+      async (binding) => {
+        const response = await registerClient(binding);
+        console.log(binding, response.status, JSON.stringify(response.data));
+
+        expect(response.status).toBe(400);
+      },
+      120000
+    );
+
+    it("rejects an attestation whose clientDataHash covers the challenge alone", async () => {
       const { challenge } = await requestChallenge();
       const instanceKey = await generateInstanceKey();
 
       const response = await postRegistration({
         challenge,
         instanceKey,
-        attestationObject: attestationWithRequestHash({ challenge, instanceKey }),
+        attestationObject: generateAttestation({
+          authority,
+          challenge,
+          appId: APP_ID,
+          instanceJwk: instanceKey.publicJwk,
+          clientDataHash: crypto
+            .createHash("sha256")
+            .update(Buffer.from(challenge, "base64url"))
+            .digest(),
+        }),
       });
 
       expect(response.status).toBe(400);

@@ -442,7 +442,14 @@
             },
             "ios_app_attest": {
               "type": "object",
-              "description": "Apple App Attest: app_ids (REQUIRED), environment, challenge_binding, override_root_certificates (testing only: replaces the shipped Apple roots)."
+              "description": "Apple App Attest: app_ids (REQUIRED), environment, challenge_binding, override_root_certificates (testing only: replaces the shipped Apple roots). The instance key is a key separate from the App Attest key, which signs only assertions; the attestation covers it through clientDataHash = request_hash.",
+              "properties": {
+                "challenge_binding": {
+                  "type": "string",
+                  "enum": ["request_hash"],
+                  "description": "OPTIONAL. Only request_hash, the default: the one value that includes the instance key."
+                }
+              }
             }
           }
         },

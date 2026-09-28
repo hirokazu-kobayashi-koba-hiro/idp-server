@@ -66,18 +66,14 @@ const generateInstanceJwk = async () => {
 
 const publicJwkOf = (jwk) => ({ kty: jwk.kty, crv: jwk.crv, x: jwk.x, y: jwk.y });
 
-const publicKeyPemOf = (jwk) =>
-  crypto.createPublicKey({ key: publicJwkOf(jwk), format: "jwk" }).export({ type: "spki", format: "pem" });
-
-/** App Attest evidence certifying `jwk` for `challenge`, as the device would send it. */
+/** App Attest evidence for registering `jwk` under `challenge`, as the device would send it. */
 const evidenceFor = ({ challenge, jwk }) =>
   platformEvidence(
     generateAttestation({
       authority,
       challenge,
       appId: APP_ID,
-      publicKeyPem: publicKeyPemOf(jwk),
-      publicJwk: publicJwkOf(jwk),
+      instanceJwk: publicJwkOf(jwk),
     })
   );
 

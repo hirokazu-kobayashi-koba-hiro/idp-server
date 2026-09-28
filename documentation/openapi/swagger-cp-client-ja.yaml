@@ -825,7 +825,13 @@ components:
               enum: [production, development]
               default: production
             challenge_binding:
-              $ref: '#/components/schemas/ChallengeBinding'
+              type: string
+              enum: [request_hash]
+              default: request_hash
+              description: |
+                iOS は request_hash だけ（clientDataHash = request_hash の 32 バイト）。
+                App Attest の鍵は assertion しか署名できず、インスタンス鍵は別の鍵になるため、
+                インスタンス鍵を含む request_hash でしか証明に結びつけられない
             override_root_certificates:
               type: array
               items:
@@ -836,10 +842,10 @@ components:
       enum: [challenge, challenge_text, request_hash]
       default: challenge
       description: |
-        プラットフォーム証明に埋め込む値（Android の attestationChallenge / iOS の clientDataHash）。
-        challenge = チャレンジを base64url デコードしたバイト列（iOS はその SHA-256）、
-        challenge_text = チャレンジの文字列の UTF-8（iOS はその SHA-256）、
-        request_hash = request_hash の 32 バイト（iOS も再ハッシュしない）
+        Android の attestationChallenge に埋め込む値。
+        challenge = チャレンジを base64url デコードしたバイト列、
+        challenge_text = チャレンジの文字列の UTF-8、
+        request_hash = request_hash の 32 バイト
     ClientCreateRequest:
       type: object
       required:
