@@ -65,7 +65,8 @@ public class JsonWebSignature {
       JWTClaimsSet jwtClaimsSet = value.getJWTClaimsSet();
       return new JsonWebTokenClaims(jwtClaimsSet);
     } catch (ParseException e) {
-      throw new RuntimeException(e);
+      throw new JsonWebTokenClaimsInvalidException(
+          "the JWT payload is not a valid claims set: " + e.getMessage(), e);
     }
   }
 

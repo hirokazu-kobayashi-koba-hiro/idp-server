@@ -16,6 +16,7 @@
 
 package org.idp.server.core.openid.token.repository;
 
+import org.idp.server.core.openid.clientinstance.ClientInstanceIdentifier;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.token.OAuthToken;
@@ -28,4 +29,8 @@ public interface OAuthTokenCommandRepository {
   void delete(Tenant tenant, OAuthToken oAuthToken);
 
   void deleteByUserAndClient(Tenant tenant, User user, RequestedClientId clientId);
+
+  /** Deletes the tokens issued to a registered Client Instance, when it is revoked or deleted. */
+  void deleteByClientInstance(
+      Tenant tenant, RequestedClientId clientId, ClientInstanceIdentifier clientInstanceIdentifier);
 }

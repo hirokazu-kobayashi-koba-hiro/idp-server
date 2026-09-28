@@ -17,6 +17,7 @@
 package org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials;
 
 import java.util.Objects;
+import org.idp.server.core.openid.clientinstance.ClientInstance;
 import org.idp.server.core.openid.oauth.clientauthenticator.mtls.ClientCertification;
 import org.idp.server.core.openid.oauth.type.oauth.ClientAuthenticationType;
 import org.idp.server.core.openid.oauth.type.oauth.ClientSecret;
@@ -29,6 +30,7 @@ public class ClientCredentials {
   ClientAuthenticationPublicKey clientAuthenticationPublicKey;
   ClientAssertionJwt clientAssertionJwt;
   ClientCertification clientCertification;
+  ClientInstance clientInstance = new ClientInstance();
 
   public ClientCredentials() {}
 
@@ -45,6 +47,28 @@ public class ClientCredentials {
     this.clientAuthenticationPublicKey = clientAuthenticationPublicKey;
     this.clientAssertionJwt = clientAssertionJwt;
     this.clientCertification = clientCertification;
+  }
+
+  /**
+   * Credentials of a client that authenticated as a registered Client Instance ({@code
+   * client_attestation_trust_source = registered_instance_key}).
+   */
+  public ClientCredentials(
+      RequestedClientId requestedClientId,
+      ClientAuthenticationType clientAuthenticationType,
+      ClientSecret clientSecret,
+      ClientAuthenticationPublicKey clientAuthenticationPublicKey,
+      ClientAssertionJwt clientAssertionJwt,
+      ClientCertification clientCertification,
+      ClientInstance clientInstance) {
+    this(
+        requestedClientId,
+        clientAuthenticationType,
+        clientSecret,
+        clientAuthenticationPublicKey,
+        clientAssertionJwt,
+        clientCertification);
+    this.clientInstance = clientInstance != null ? clientInstance : new ClientInstance();
   }
 
   public RequestedClientId clientId() {
@@ -69,6 +93,25 @@ public class ClientCredentials {
 
   public ClientCertification clientCertification() {
     return clientCertification;
+  }
+
+  /**
+   * The registered Client Instance the client authenticated as. Empty unless the client
+   * authenticated with a self-signed Client Attestation verified by a registered instance key.
+   */
+  public ClientInstance clientInstance() {
+    return clientInstance != null ? clientInstance : new ClientInstance();
+  }
+
+  /**
+   * True when the client authenticated with a Client Attestation.
+   *
+   * <p>Null safe on purpose: a public client is represented by the no-argument constructor, so
+   * {@link #clientAuthenticationType()} is null on that path and reading it directly is how this
+   * broke once already.
+   */
+  public boolean isAttestJwtClientAuth() {
+    return clientAuthenticationType != null && clientAuthenticationType.isAttestJwtClientAuth();
   }
 
   public boolean isTlsClientAuthOrSelfSignedTlsClientAuth() {

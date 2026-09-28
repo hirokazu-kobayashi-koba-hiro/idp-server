@@ -18,6 +18,7 @@ package org.idp.server.core.openid.token;
 
 import java.util.Map;
 import org.idp.server.core.openid.grant_management.AuthorizationGrantedRepository;
+import org.idp.server.core.openid.oauth.clientauthenticator.ClientAuthenticationHandler;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.repository.AuthorizationCodeGrantRepository;
@@ -62,6 +63,9 @@ public class DefaultTokenProtocolProvider implements ProtocolProvider<TokenProto
     Map<GrantType, OAuthTokenCreationService> extentions =
         OAuthTokenCreationServicePluginLoader.load(container);
 
+    ClientAuthenticationHandler clientAuthenticationHandler =
+        container.resolve(ClientAuthenticationHandler.class);
+
     return new DefaultTokenProtocol(
         authorizationRequestRepository,
         authorizationCodeGrantRepository,
@@ -72,6 +76,7 @@ public class DefaultTokenProtocolProvider implements ProtocolProvider<TokenProto
         clientConfigurationQueryRepository,
         passwordCredentialsGrantDelegate,
         jwtBearerUserFindingDelegate,
+        clientAuthenticationHandler,
         extentions);
   }
 }

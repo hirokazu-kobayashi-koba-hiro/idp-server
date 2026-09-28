@@ -18,6 +18,8 @@ package org.idp.server.core.openid.token;
 
 import java.util.Objects;
 import java.util.Optional;
+import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationJwt;
+import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationPopJwt;
 import org.idp.server.core.openid.oauth.clientauthenticator.BackchannelRequestContext;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.AvailableFederation;
@@ -37,9 +39,12 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 public class TokenRequestContext implements BackchannelRequestContext {
 
   Tenant tenant;
+  RequestedClientId requestedClientId;
   ClientSecretBasic clientSecretBasic;
   ClientCert clientCert;
   DPoPProof dpopProof;
+  ClientAttestationJwt clientAttestationJwt;
+  ClientAttestationPopJwt clientAttestationPopJwt;
   String httpMethod;
   String httpUri;
   TokenRequestParameters parameters;
@@ -52,9 +57,12 @@ public class TokenRequestContext implements BackchannelRequestContext {
 
   public TokenRequestContext(
       Tenant tenant,
+      RequestedClientId requestedClientId,
       ClientSecretBasic clientSecretBasic,
       ClientCert clientCert,
       DPoPProof dpopProof,
+      ClientAttestationJwt clientAttestationJwt,
+      ClientAttestationPopJwt clientAttestationPopJwt,
       String httpMethod,
       String httpUri,
       TokenRequestParameters parameters,
@@ -65,9 +73,12 @@ public class TokenRequestContext implements BackchannelRequestContext {
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
     this.tenant = tenant;
+    this.requestedClientId = requestedClientId;
     this.clientSecretBasic = clientSecretBasic;
     this.clientCert = clientCert;
     this.dpopProof = dpopProof;
+    this.clientAttestationJwt = clientAttestationJwt;
+    this.clientAttestationPopJwt = clientAttestationPopJwt;
     this.httpMethod = httpMethod;
     this.httpUri = httpUri;
     this.parameters = parameters;
@@ -79,6 +90,7 @@ public class TokenRequestContext implements BackchannelRequestContext {
     this.clientConfiguration = clientConfiguration;
   }
 
+  @Override
   public Tenant tenant() {
     return tenant;
   }
@@ -201,11 +213,17 @@ public class TokenRequestContext implements BackchannelRequestContext {
     return parameters.authReqId();
   }
 
+  /**
+   * The client identifier the {@link ClientConfiguration} was loaded with.
+   *
+   * <p>Resolved once, by {@code TokenRequest#clientId()}, and carried here rather than derived a
+   * second time. Client authenticators compare the credential they verify against this value —
+   * {@code attest_jwt_client_auth} checks the Client Attestation {@code sub} against it — so a
+   * second derivation with a different priority order would let the configuration and the
+   * authenticated identity name different clients.
+   */
   public RequestedClientId requestedClientId() {
-    if (parameters.hasClientId()) {
-      return parameters.clientId();
-    }
-    return clientSecretBasic.clientId();
+    return requestedClientId;
   }
 
   public ClientIdentifier clientIdentifier() {
@@ -278,6 +296,16 @@ public class TokenRequestContext implements BackchannelRequestContext {
 
   public DPoPProof dpopProof() {
     return dpopProof;
+  }
+
+  @Override
+  public ClientAttestationJwt clientAttestationJwt() {
+    return clientAttestationJwt;
+  }
+
+  @Override
+  public ClientAttestationPopJwt clientAttestationPopJwt() {
+    return clientAttestationPopJwt;
   }
 
   public String httpMethod() {

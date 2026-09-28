@@ -29,6 +29,7 @@ import org.idp.server.platform.jose.JsonWebSignature;
 import org.idp.server.platform.jose.JsonWebSignatureHeader;
 import org.idp.server.platform.jose.JsonWebSignatureVerifier;
 import org.idp.server.platform.jose.JsonWebTokenClaims;
+import org.idp.server.platform.jose.JsonWebTokenClaimsInvalidException;
 import org.idp.server.platform.jose.JwtClockSkewException;
 import org.idp.server.platform.jose.JwtClockSkewValidator;
 import org.idp.server.platform.log.LoggerWrapper;
@@ -189,7 +190,7 @@ public class DPoPProofVerifier {
     // Parameter
     verifySignature(jws, header, jwk);
 
-    JsonWebTokenClaims claims = jws.claims();
+    JsonWebTokenClaims claims = claimsOf(jws);
 
     // Check 3: All required claims (jti, htm, htu, iat) are contained in the JWT
     verifyRequiredClaims(claims);
@@ -317,6 +318,18 @@ public class DPoPProofVerifier {
    *
    * @see <a href="https://www.rfc-editor.org/rfc/rfc9449.html#section-4.2">RFC 9449 Section 4.2</a>
    */
+  /**
+   * The proof is signed with the key it carries, so a valid signature over a payload that is not a
+   * claims set is within anyone's reach: it is a malformed proof, not an internal error.
+   */
+  private JsonWebTokenClaims claimsOf(JsonWebSignature jws) {
+    try {
+      return jws.claims();
+    } catch (JsonWebTokenClaimsInvalidException e) {
+      throw new DPoPProofInvalidException("DPoP proof payload is not a claims set");
+    }
+  }
+
   private void verifyRequiredClaims(JsonWebTokenClaims claims) {
     if (!claims.hasJti() || claims.getJti().isEmpty()) {
       throw new DPoPProofInvalidException("DPoP proof must contain jti claim.");

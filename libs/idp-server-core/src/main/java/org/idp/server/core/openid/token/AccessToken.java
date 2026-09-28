@@ -18,6 +18,8 @@ package org.idp.server.core.openid.token;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
+import org.idp.server.core.openid.clientinstance.ClientInstanceIdentifier;
+import org.idp.server.core.openid.clientinstance.ClientInstanceThumbprint;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.clientauthenticator.mtls.ClientCertificationThumbprint;
@@ -39,6 +41,8 @@ public class AccessToken {
   AuthorizationGrant authorizationGrant;
   ClientCertificationThumbprint clientCertificationThumbprint;
   JwkThumbprint jwkThumbprint;
+  ClientInstanceThumbprint clientInstanceThumbprint;
+  ClientInstanceIdentifier clientInstanceIdentifier;
   AccessTokenCustomClaims customClaims;
   CreatedAt createdAt;
   ExpiresIn expiresIn;
@@ -58,6 +62,66 @@ public class AccessToken {
       CreatedAt createdAt,
       ExpiresIn expiresIn,
       ExpiresAt expiresAt) {
+    this(
+        tenantIdentifier,
+        tokenIssuer,
+        tokenType,
+        accessTokenEntity,
+        authorizationGrant,
+        clientCertificationThumbprint,
+        jwkThumbprint,
+        new ClientInstanceThumbprint(),
+        customClaims,
+        createdAt,
+        expiresIn,
+        expiresAt);
+  }
+
+  public AccessToken(
+      TenantIdentifier tenantIdentifier,
+      TokenIssuer tokenIssuer,
+      TokenType tokenType,
+      AccessTokenEntity accessTokenEntity,
+      AuthorizationGrant authorizationGrant,
+      ClientCertificationThumbprint clientCertificationThumbprint,
+      JwkThumbprint jwkThumbprint,
+      ClientInstanceThumbprint clientInstanceThumbprint,
+      AccessTokenCustomClaims customClaims,
+      CreatedAt createdAt,
+      ExpiresIn expiresIn,
+      ExpiresAt expiresAt) {
+    this(
+        tenantIdentifier,
+        tokenIssuer,
+        tokenType,
+        accessTokenEntity,
+        authorizationGrant,
+        clientCertificationThumbprint,
+        jwkThumbprint,
+        clientInstanceThumbprint,
+        new ClientInstanceIdentifier(),
+        customClaims,
+        createdAt,
+        expiresIn,
+        expiresAt);
+  }
+
+  public AccessToken(
+      TenantIdentifier tenantIdentifier,
+      TokenIssuer tokenIssuer,
+      TokenType tokenType,
+      AccessTokenEntity accessTokenEntity,
+      AuthorizationGrant authorizationGrant,
+      ClientCertificationThumbprint clientCertificationThumbprint,
+      JwkThumbprint jwkThumbprint,
+      ClientInstanceThumbprint clientInstanceThumbprint,
+      ClientInstanceIdentifier clientInstanceIdentifier,
+      AccessTokenCustomClaims customClaims,
+      CreatedAt createdAt,
+      ExpiresIn expiresIn,
+      ExpiresAt expiresAt) {
+    this.clientInstanceThumbprint = clientInstanceThumbprint;
+    this.clientInstanceIdentifier = clientInstanceIdentifier;
     this.tenantIdentifier = tenantIdentifier;
     this.tokenIssuer = tokenIssuer;
     this.tokenType = tokenType;
@@ -117,6 +181,43 @@ public class AccessToken {
 
   public boolean matchJwkThumbprint(JwkThumbprint thumbprint) {
     return jwkThumbprint != null && jwkThumbprint.equals(thumbprint);
+  }
+
+  public ClientInstanceThumbprint clientInstanceThumbprint() {
+    return clientInstanceThumbprint != null
+        ? clientInstanceThumbprint
+        : new ClientInstanceThumbprint();
+  }
+
+  /**
+   * True when this token was issued to a Client Instance, so a refresh has to come from the same
+   * one (draft-ietf-oauth-attestation-based-client-auth Section 10.3).
+   */
+  public boolean hasClientInstanceBinding() {
+    return clientInstanceThumbprint != null && clientInstanceThumbprint.exists();
+  }
+
+  public boolean matchClientInstanceThumbprint(ClientInstanceThumbprint thumbprint) {
+    return clientInstanceThumbprint != null && clientInstanceThumbprint.equals(thumbprint);
+  }
+
+  /**
+   * The registered Client Instance this token was issued to. Empty for a token issued through a
+   * Client Attester ({@code attester_jwks} / {@code x5c}), where no instance is registered and the
+   * key thumbprint is the only binding.
+   */
+  public ClientInstanceIdentifier clientInstanceIdentifier() {
+    return clientInstanceIdentifier != null
+        ? clientInstanceIdentifier
+        : new ClientInstanceIdentifier();
+  }
+
+  public boolean hasClientInstanceIdentifier() {
+    return clientInstanceIdentifier != null && clientInstanceIdentifier.exists();
+  }
+
+  public boolean matchClientInstanceIdentifier(ClientInstanceIdentifier identifier) {
+    return clientInstanceIdentifier != null && clientInstanceIdentifier.equals(identifier);
   }
 
   public AccessTokenCustomClaims customClaims() {

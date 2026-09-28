@@ -77,9 +77,13 @@ identifier.sqlite
 ### Claude Code ###
 .claude/settings.local.json
 .claude/projects/
+.claude/worktrees/
 CLAUDE.local.md
 
 # Allure test reports
 e2e/allure-results/
 e2e/allure-report/
 docker/nginx/ca.srl
+
+# macOS Finder metadata
+.DS_Store

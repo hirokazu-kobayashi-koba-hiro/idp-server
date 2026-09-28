@@ -47,9 +47,13 @@ export const createJwtWithPrivateKey = ({
   const secret = jwkToPem(privateKey, { private: true });
   const options = {
     ...additionalOptions,
-    keyid: privateKey.kid,
     algorithm: algorithm || privateKey.alg,  // Use provided algorithm or fall back to key's algorithm
   };
+  // jsonwebtoken rejects an explicit undefined keyid, so a key without one is left without one.
+  // An attester that publishes its key through x5c has no kid to send.
+  if (privateKey.kid) {
+    options.keyid = privateKey.kid;
+  }
   return createJwt({
     payload,
     secret,

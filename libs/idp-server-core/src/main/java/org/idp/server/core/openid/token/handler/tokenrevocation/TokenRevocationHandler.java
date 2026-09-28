@@ -17,6 +17,7 @@
 package org.idp.server.core.openid.token.handler.tokenrevocation;
 
 import java.util.Map;
+import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationHeaderValidator;
 import org.idp.server.core.openid.oauth.clientauthenticator.ClientAuthenticationHandler;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
@@ -24,6 +25,7 @@ import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.type.oauth.AccessTokenEntity;
 import org.idp.server.core.openid.oauth.type.oauth.RefreshTokenEntity;
+import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.core.openid.token.handler.tokenrevocation.io.TokenRevocationRequest;
 import org.idp.server.core.openid.token.handler.tokenrevocation.io.TokenRevocationRequestStatus;
@@ -47,28 +49,37 @@ public class TokenRevocationHandler {
       OAuthTokenQueryRepository oAuthTokenQueryRepository,
       AuthorizationServerConfigurationQueryRepository
           authorizationServerConfigurationQueryRepository,
-      ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
+      ClientConfigurationQueryRepository clientConfigurationQueryRepository,
+      ClientAuthenticationHandler clientAuthenticationHandler) {
     this.oAuthTokenCommandRepository = oAuthTokenCommandRepository;
     this.oAuthTokenQueryRepository = oAuthTokenQueryRepository;
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
-    this.clientAuthenticationHandler = new ClientAuthenticationHandler();
+    this.clientAuthenticationHandler = clientAuthenticationHandler;
   }
 
   public TokenRevocationResponse handle(TokenRevocationRequest request) {
     TokenRevocationValidator validator = new TokenRevocationValidator(request.toParameters());
     validator.validate();
+    new ClientAttestationHeaderValidator(
+            request.clientAttestationHeaders(), request.clientAttestationPopHeaders())
+        .validate();
 
     Tenant tenant = request.tenant();
     AuthorizationServerConfiguration authorizationServerConfiguration =
         authorizationServerConfigurationQueryRepository.get(tenant);
+    RequestedClientId requestedClientId = request.clientId();
     ClientConfiguration clientConfiguration =
-        clientConfigurationQueryRepository.get(tenant, request.clientId());
+        clientConfigurationQueryRepository.get(tenant, requestedClientId);
     TokenRevocationRequestContext tokenRevocationRequestContext =
         new TokenRevocationRequestContext(
+            tenant,
+            requestedClientId,
             request.clientSecretBasic(),
             request.toClientCert(),
+            request.toClientAttestationJwt(),
+            request.toClientAttestationPopJwt(),
             request.toParameters(),
             authorizationServerConfiguration,
             clientConfiguration);

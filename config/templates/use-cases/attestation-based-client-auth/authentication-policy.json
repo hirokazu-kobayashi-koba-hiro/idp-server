@@ -1,0 +1,169 @@
+{
+  "flow": "oauth",
+  "enabled": true,
+  "policies": [
+    {
+      "description": "device_fido_uaf_authentication",
+      "priority": 10,
+      "conditions": {
+        "acr_values": ["urn:idp:acr:device"]
+      },
+      "available_methods": [
+        "authentication-device-notification",
+        "authentication-device-number-matching-challenge",
+        "authentication-device-number-matching",
+        "authentication-device-deny",
+        "fido-uaf"
+      ],
+      "acr_mapping_rules": {
+        "urn:idp:acr:device": ["fido-uaf"]
+      },
+      "step_definitions": [
+        {
+          "method": "authentication-device-number-matching-challenge",
+          "order": 1,
+          "requires_user": false
+        },
+        {
+          "method": "authentication-device-number-matching",
+          "order": 2,
+          "requires_user": false
+        },
+        {
+          "method": "fido-uaf",
+          "order": 3,
+          "requires_user": true
+        }
+      ],
+      "success_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.authentication-device-number-matching.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            },
+            {
+              "path": "$.fido-uaf-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ]
+        ]
+      },
+      "failure_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.authentication-device-deny.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ],
+          [
+            {
+              "path": "$.authentication-device-number-matching.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ]
+        ]
+      },
+      "lock_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.authentication-device-number-matching.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ]
+        ]
+      },
+      "device_registration_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.fido-uaf-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "description": "password_fallback",
+      "priority": 1,
+      "conditions": {},
+      "acr_mapping_rules": {
+        "urn:idp:acr:mfa": ["password", "email"],
+        "urn:idp:acr:pwd": ["password"],
+        "urn:idp:acr:initial": ["initial-registration"]
+      },
+      "level_of_authentication_scopes": {
+        "transfers": ["fido-uaf"],
+        "account": ["password", "email"]
+      },
+      "available_methods": ["password", "email", "initial-registration", "fido-uaf"],
+      "success_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.password-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ],
+          [
+            {
+              "path": "$.initial-registration.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ]
+        ]
+      },
+      "device_registration_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.password-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            },
+            {
+              "path": "$.email-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ],
+          [
+            {
+              "path": "$.initial-registration.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            },
+            {
+              "path": "$.email-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ]
+        ]
+      }
+    }
+  ]
+}

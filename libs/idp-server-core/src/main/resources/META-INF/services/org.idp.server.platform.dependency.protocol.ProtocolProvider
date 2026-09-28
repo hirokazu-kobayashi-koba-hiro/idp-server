@@ -2,3 +2,5 @@ org.idp.server.core.openid.discovery.DefaultDiscoveryProtocolProvider
 org.idp.server.core.openid.oauth.DefaultOAuthProtocolProvider
 org.idp.server.core.openid.token.DefaultTokenProtocolProvider
 org.idp.server.core.openid.userinfo.DefaultUserinfoProtocolProvider
+org.idp.server.core.openid.clientinstance.registration.DefaultClientInstanceRegistrationProtocolProvider
+org.idp.server.core.openid.oauth.clientattestation.challenge.DefaultClientAttestationChallengeProtocolProvider

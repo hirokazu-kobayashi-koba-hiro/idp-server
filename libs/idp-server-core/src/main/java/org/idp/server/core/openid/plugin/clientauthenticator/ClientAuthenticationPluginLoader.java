@@ -16,11 +16,14 @@
 
 package org.idp.server.core.openid.plugin.clientauthenticator;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.oauth.clientauthenticator.plugin.ClientAuthenticator;
+import org.idp.server.core.openid.oauth.clientauthenticator.plugin.ClientAuthenticatorFactory;
 import org.idp.server.core.openid.oauth.type.oauth.ClientAuthenticationType;
+import org.idp.server.platform.dependency.ApplicationComponentContainer;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.plugin.PluginLoader;
 
@@ -29,7 +32,27 @@ public class ClientAuthenticationPluginLoader extends PluginLoader {
   private static final LoggerWrapper log =
       LoggerWrapper.getLogger(ClientAuthenticationPluginLoader.class);
 
-  public static Map<ClientAuthenticationType, ClientAuthenticator> load() {
+  /**
+   * Loads client authenticators, letting factory-registered ones receive dependencies.
+   *
+   * @param container dependency container supplying factory-registered authenticators
+   */
+  public static Map<ClientAuthenticationType, ClientAuthenticator> load(
+      ApplicationComponentContainer container) {
+    Map<ClientAuthenticationType, ClientAuthenticator> map = loadPlainAuthenticators();
+
+    List<ClientAuthenticatorFactory> factories =
+        new ArrayList<>(loadFromInternalModule(ClientAuthenticatorFactory.class));
+    factories.addAll(loadFromExternalModule(ClientAuthenticatorFactory.class));
+    for (ClientAuthenticatorFactory factory : factories) {
+      map.put(factory.type(), factory.create(container));
+      log.info("Dynamic Registered client authenticator via factory {}", factory.type().name());
+    }
+
+    return map;
+  }
+
+  private static Map<ClientAuthenticationType, ClientAuthenticator> loadPlainAuthenticators() {
     Map<ClientAuthenticationType, ClientAuthenticator> map = new HashMap<>();
 
     List<ClientAuthenticator> internals = loadFromInternalModule(ClientAuthenticator.class);

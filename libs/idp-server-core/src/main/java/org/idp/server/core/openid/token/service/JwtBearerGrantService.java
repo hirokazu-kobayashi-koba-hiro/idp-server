@@ -102,7 +102,7 @@ public class JwtBearerGrantService implements OAuthTokenCreationService, Refresh
 
     try {
       JsonWebSignature jws = assertion.parse();
-      JsonWebTokenClaims claims = jws.claims();
+      JsonWebTokenClaims claims = assertion.claims();
       String issuer = claims.getIss();
       String subject = claims.getSub();
 

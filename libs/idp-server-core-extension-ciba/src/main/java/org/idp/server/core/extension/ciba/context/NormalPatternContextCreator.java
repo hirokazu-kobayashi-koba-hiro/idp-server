@@ -20,6 +20,8 @@ import java.util.Set;
 import org.idp.server.core.extension.ciba.*;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.extension.ciba.request.NormalRequestFactory;
+import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationJwt;
+import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationPopJwt;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.type.mtls.ClientCert;
@@ -37,6 +39,8 @@ public class NormalPatternContextCreator implements CibaRequestContextCreator {
       Tenant tenant,
       ClientSecretBasic clientSecretBasic,
       ClientCert clientCert,
+      ClientAttestationJwt clientAttestationJwt,
+      ClientAttestationPopJwt clientAttestationPopJwt,
       CibaRequestParameters parameters,
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
@@ -63,6 +67,8 @@ public class NormalPatternContextCreator implements CibaRequestContextCreator {
         pattern,
         clientSecretBasic,
         clientCert,
+        clientAttestationJwt,
+        clientAttestationPopJwt,
         parameters,
         new CibaRequestObjectParameters(),
         joseContext,

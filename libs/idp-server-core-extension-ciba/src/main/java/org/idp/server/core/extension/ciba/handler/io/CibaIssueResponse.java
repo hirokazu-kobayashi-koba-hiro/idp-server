@@ -16,6 +16,7 @@
 
 package org.idp.server.core.extension.ciba.handler.io;
 
+import java.util.Map;
 import org.idp.server.core.extension.ciba.CibaRequestContext;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
@@ -39,6 +40,7 @@ public class CibaIssueResponse {
   User user;
   BackchannelAuthenticationErrorResponse errorResponse;
   ContentType contentType;
+  Map<String, String> headers;
 
   public CibaIssueResponse(
       CibaRequestStatus status,
@@ -52,14 +54,27 @@ public class CibaIssueResponse {
     this.user = user;
     this.errorResponse = new BackchannelAuthenticationErrorResponse();
     this.contentType = ContentType.application_json;
+    this.headers = Map.of();
   }
 
   public CibaIssueResponse(
       CibaRequestStatus cibaRequestStatus,
       BackchannelAuthenticationErrorResponse backchannelAuthenticationErrorResponse) {
+    this(cibaRequestStatus, backchannelAuthenticationErrorResponse, Map.of());
+  }
+
+  /**
+   * @param headers response headers an error carries, such as the {@code
+   *     OAuth-Client-Attestation-Challenge} that must accompany {@code use_attestation_challenge}
+   */
+  public CibaIssueResponse(
+      CibaRequestStatus cibaRequestStatus,
+      BackchannelAuthenticationErrorResponse backchannelAuthenticationErrorResponse,
+      Map<String, String> headers) {
     this.status = cibaRequestStatus;
     this.errorResponse = backchannelAuthenticationErrorResponse;
     this.contentType = ContentType.application_json;
+    this.headers = headers;
   }
 
   public int statusCode() {
@@ -118,7 +133,7 @@ public class CibaIssueResponse {
   }
 
   public CibaRequestResponse toErrorResponse() {
-    return new CibaRequestResponse(status, errorResponse);
+    return new CibaRequestResponse(status, errorResponse, headers);
   }
 
   public AcrValues acrValues() {

@@ -44,6 +44,7 @@ SCENARIOS=(
     "scenario-8-authentication-device:デバイス認証"
     "scenario-9-identity-verification-application:本人確認申請"
     "scenario-12-user-search:ユーザー検索"
+    "scenario-14-client-attestation-challenge:Client Attestation Challenge 発行"
 )
 
 # シナリオ名から説明を取得

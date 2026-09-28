@@ -20,6 +20,7 @@ import org.idp.server.core.extension.ciba.repository.BackchannelAuthenticationRe
 import org.idp.server.core.extension.ciba.repository.CibaGrantRepository;
 import org.idp.server.core.openid.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
+import org.idp.server.core.openid.oauth.clientauthenticator.ClientAuthenticationHandler;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
@@ -52,6 +53,9 @@ public class DefaultCibaProtocolProvider implements ProtocolProvider<CibaProtoco
     UserQueryRepository userQueryRepository = container.resolve(UserQueryRepository.class);
     HttpRequestExecutor httpRequestExecutor = container.resolve(HttpRequestExecutor.class);
 
+    ClientAuthenticationHandler clientAuthenticationHandler =
+        container.resolve(ClientAuthenticationHandler.class);
+
     return new DefaultCibaProtocol(
         backchannelAuthenticationRequestRepository,
         cibaGrantRepository,
@@ -60,6 +64,7 @@ public class DefaultCibaProtocolProvider implements ProtocolProvider<CibaProtoco
         oAuthTokenCommandRepository,
         authorizationServerConfigurationQueryRepository,
         clientConfigurationQueryRepository,
-        httpRequestExecutor);
+        httpRequestExecutor,
+        clientAuthenticationHandler);
   }
 }

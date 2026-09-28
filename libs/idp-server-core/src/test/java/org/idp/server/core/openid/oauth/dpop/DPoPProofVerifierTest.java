@@ -18,6 +18,13 @@ package org.idp.server.core.openid.oauth.dpop;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.nio.charset.StandardCharsets;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.Signature;
+import java.security.interfaces.ECPublicKey;
+import java.security.spec.ECGenParameterSpec;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.platform.jose.JsonWebSignature;
@@ -79,6 +86,51 @@ class DPoPProofVerifierTest {
         assertThrows(
             DPoPProofInvalidException.class, () -> verifier.verifyFapiSigningAlgorithm(rs256));
     assertTrue(ex.getMessage().contains("FAPI 2.0"), ex.getMessage());
+  }
+
+  @Test
+  void rejectsAProofWhosePayloadIsNotAClaimsSetAsAnInvalidProof() throws Exception {
+    // Signed with the key the proof carries, so the signature verifies; only the payload is not a
+    // claims set. Anyone can build one, and it is a malformed proof rather than an internal error.
+    KeyPairGenerator generator = KeyPairGenerator.getInstance("EC");
+    generator.initialize(new ECGenParameterSpec("secp256r1"));
+    KeyPair keyPair = generator.generateKeyPair();
+    ECPublicKey publicKey = (ECPublicKey) keyPair.getPublic();
+
+    String header =
+        "{\"typ\":\"dpop+jwt\",\"alg\":\"ES256\",\"jwk\":{\"kty\":\"EC\",\"crv\":\"P-256\",\"x\":\""
+            + coordinate(publicKey.getW().getAffineX().toByteArray())
+            + "\",\"y\":\""
+            + coordinate(publicKey.getW().getAffineY().toByteArray())
+            + "\"}}";
+    String signingInput =
+        b64(header.getBytes(StandardCharsets.UTF_8))
+            + "."
+            + b64("not a json object".getBytes(StandardCharsets.UTF_8));
+    Signature signer = Signature.getInstance("SHA256withECDSAinP1363Format");
+    signer.initSign(keyPair.getPrivate());
+    signer.update(signingInput.getBytes(StandardCharsets.US_ASCII));
+    String proof = signingInput + "." + b64(signer.sign());
+
+    DPoPProofInvalidException exception =
+        assertThrows(
+            DPoPProofInvalidException.class,
+            () ->
+                verifier.verify(
+                    new DPoPProof(proof), "POST", "https://server.example.com/token", null));
+    assertTrue(exception.getMessage().contains("not a claims set"), exception.getMessage());
+  }
+
+  private static String b64(byte[] value) {
+    return Base64.getUrlEncoder().withoutPadding().encodeToString(value);
+  }
+
+  /** A P-256 coordinate as JWK wants it: unsigned, 32 bytes. */
+  private static String coordinate(byte[] twosComplement) {
+    byte[] unsigned = new byte[32];
+    int length = Math.min(twosComplement.length, 32);
+    System.arraycopy(twosComplement, twosComplement.length - length, unsigned, 32 - length, length);
+    return b64(unsigned);
   }
 
   @Test

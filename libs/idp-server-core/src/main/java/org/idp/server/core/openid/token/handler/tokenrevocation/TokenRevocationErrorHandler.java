@@ -38,7 +38,8 @@ import org.idp.server.platform.log.LoggerWrapper;
  *
  * <ul>
  *   <li>TokenRevocationBadRequestException → 400 Bad Request (invalid_request)
- *   <li>ClientUnAuthorizedException → 401 Unauthorized (invalid_client)
+ *   <li>ClientUnAuthorizedException → 401 Unauthorized (invalid_client); 400 for {@code
+ *       use_attestation_challenge}
  *   <li>ClientConfigurationNotFoundException → 400 Bad Request (invalid_client)
  *   <li>ServerConfigurationNotFoundException → 400 Bad Request (invalid_client)
  *   <li>Other exceptions → 500 Internal Server Error (server_error)
@@ -73,16 +74,21 @@ public class TokenRevocationErrorHandler {
     }
 
     // RFC 7009: invalid_client (401)
-    if (exception instanceof ClientUnAuthorizedException) {
+    if (exception instanceof ClientUnAuthorizedException clientUnAuthorized) {
       log.warn(
-          "Token revocation failed: status=unauthorized, error=invalid_client, description={}",
+          "Token revocation failed: status=unauthorized, error={}, description={}",
+          clientUnAuthorized.errorCode(),
           exception.getMessage());
 
       Map<String, Object> contents = new HashMap<>();
-      contents.put("error", "invalid_client");
+      contents.put("error", clientUnAuthorized.errorCode());
       contents.put("error_description", exception.getMessage());
 
-      return new TokenRevocationResponse(UNAUTHORIZED, new OAuthToken(), contents);
+      return new TokenRevocationResponse(
+          clientUnAuthorized.isReportedAsBadRequest() ? BAD_REQUEST : UNAUTHORIZED,
+          new OAuthToken(),
+          contents,
+          clientUnAuthorized.responseHeaders());
     }
 
     // Configuration errors (400)

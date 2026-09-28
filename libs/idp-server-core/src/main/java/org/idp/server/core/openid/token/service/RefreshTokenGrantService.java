@@ -30,6 +30,7 @@ import org.idp.server.core.openid.token.*;
 import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.core.openid.token.repository.OAuthTokenQueryRepository;
 import org.idp.server.core.openid.token.validator.RefreshTokenGrantValidator;
+import org.idp.server.core.openid.token.verifier.RefreshTokenClientInstanceBindingVerifier;
 import org.idp.server.core.openid.token.verifier.RefreshTokenDPoPBindingVerifier;
 import org.idp.server.core.openid.token.verifier.RefreshTokenUserVerifier;
 import org.idp.server.core.openid.token.verifier.RefreshTokenVerifier;
@@ -89,6 +90,11 @@ public class RefreshTokenGrantService implements OAuthTokenCreationService, Refr
         new RefreshTokenDPoPBindingVerifier(
             oAuthToken.accessToken(), dpopResult, clientConfiguration);
     dpopBindingVerifier.verify();
+
+    // Section 10.3: the instance that holds the token is the instance that may refresh it.
+    RefreshTokenClientInstanceBindingVerifier clientInstanceBindingVerifier =
+        new RefreshTokenClientInstanceBindingVerifier(oAuthToken.accessToken(), clientCredentials);
+    clientInstanceBindingVerifier.verify();
 
     AccessToken accessToken =
         accessTokenCreator.refresh(

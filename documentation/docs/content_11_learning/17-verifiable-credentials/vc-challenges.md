@@ -1,5 +1,5 @@
 ---
-sidebar_position: 31
+sidebar_position: 41
 ---
 
 # VC の課題と批判

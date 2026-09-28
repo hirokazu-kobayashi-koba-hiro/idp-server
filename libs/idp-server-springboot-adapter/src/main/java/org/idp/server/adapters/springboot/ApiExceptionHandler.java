@@ -24,6 +24,7 @@ import org.idp.server.platform.datasource.SqlDuplicateKeyException;
 import org.idp.server.platform.datasource.SqlForeignKeyViolationException;
 import org.idp.server.platform.datasource.SqlTransactionConflictException;
 import org.idp.server.platform.exception.*;
+import org.idp.server.platform.jose.JsonWebTokenClaimsInvalidException;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.oauth.OAuthAuthorizationException;
 import org.springframework.http.HttpStatus;
@@ -55,6 +56,18 @@ public class ApiExceptionHandler {
     // Return generic error message to client (no details about the attack)
     Map<String, String> response =
         Map.of("error", "invalid_request", "error_description", "Invalid parameter value");
+    return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+  }
+
+  /**
+   * A JWT whose payload is not a claims set, from a path that did not map it to its own error. It
+   * is a malformed request, never an internal error, and the parser's message is not echoed back.
+   */
+  @ExceptionHandler(JsonWebTokenClaimsInvalidException.class)
+  public ResponseEntity<?> handleException(JsonWebTokenClaimsInvalidException exception) {
+    log.warn(exception.getMessage(), exception);
+    Map<String, String> response =
+        Map.of("error", "invalid_request", "error_description", "The JWT payload is malformed.");
     return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
   }
 
