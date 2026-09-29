@@ -16,7 +16,14 @@
 
 package org.idp.server.core.openid.oauth;
 
-import org.idp.server.platform.json.JsonReadable;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
+import org.idp.server.core.openid.authentication.AuthenticationTransactionAttributes;
+import org.idp.server.platform.random.RandomStringGenerator;
 
 /**
  * Proof that this browser is the one that authenticated.
@@ -56,81 +63,143 @@ import org.idp.server.platform.json.JsonReadable;
  *   <li>at {@code /authorize}, carrying the redirect the code went into — this is what {@code
  *       /complete} requires, so the code can only be delivered to the same browser
  * </ol>
+ *
+ * <h2>Where it is kept</h2>
+ *
+ * <p>On the authentication transaction, in the database — the value's hash, never the value. The
+ * steps that issue and spend a proof already hold that transaction under a row lock, which is what
+ * makes spending it single-use. A cache would have been the obvious place, but the cache is allowed
+ * to be absent; this is not, and a proof that silently could not be read would either lock every
+ * user out or, worse, read as "no proof was ever issued".
  */
-public class AuthenticationProof implements JsonReadable {
+public class AuthenticationProof {
 
   /** The name this travels under, in the authorize body and in the {@code /complete} query. */
   public static final String KEY = "auth_proof";
 
-  String authorizationRequestId;
+  static final String AUTHENTICATED_ATTRIBUTE = "auth_proof";
+  static final String COMPLETION_ATTRIBUTE = "completion_proof";
+
+  String value;
+  String hash;
   String sub;
   String redirectUri;
 
-  public AuthenticationProof() {}
-
-  private AuthenticationProof(String authorizationRequestId, String sub, String redirectUri) {
-    this.authorizationRequestId = authorizationRequestId;
+  private AuthenticationProof(String value, String hash, String sub, String redirectUri) {
+    this.value = value;
+    this.hash = hash;
     this.sub = sub;
     this.redirectUri = redirectUri;
   }
 
   /** The first of the two: what {@code /authorize} asks for. */
-  public static AuthenticationProof authenticated(String authorizationRequestId, String sub) {
-    return new AuthenticationProof(authorizationRequestId, sub, null);
+  public static AuthenticationProof authenticated(String sub) {
+    String value = new RandomStringGenerator(32).generate();
+    return new AuthenticationProof(value, hashOf(value), sub, null);
   }
 
   /** The second of the two: what {@code /complete} asks for, carrying the redirect. */
-  public static AuthenticationProof forCompletion(
-      String authorizationRequestId, String sub, String redirectUri) {
-    return new AuthenticationProof(authorizationRequestId, sub, redirectUri);
+  public static AuthenticationProof forCompletion(String sub, String redirectUri) {
+    String value = new RandomStringGenerator(32).generate();
+    return new AuthenticationProof(value, hashOf(value), sub, redirectUri);
   }
 
-  public String authorizationRequestId() {
-    return authorizationRequestId;
+  /** The first-stage proof stored on these attributes, or an empty one. */
+  public static AuthenticationProof authenticatedOn(
+      AuthenticationTransactionAttributes attributes) {
+    return fromMap(attributes.getValueAsMap(AUTHENTICATED_ATTRIBUTE));
+  }
+
+  /** The second-stage proof stored on these attributes, or an empty one. */
+  public static AuthenticationProof completionOn(AuthenticationTransactionAttributes attributes) {
+    return fromMap(attributes.getValueAsMap(COMPLETION_ATTRIBUTE));
+  }
+
+  /**
+   * Stores this proof, replacing any earlier one of the same stage. Only the latest can be spent:
+   * each browser step issues a new one, and the view keeps the latest.
+   */
+  public AuthenticationTransactionAttributes storeOn(
+      AuthenticationTransactionAttributes attributes) {
+    return attributes.with(stageAttribute(), toMap());
+  }
+
+  /** Removes this stage's proof, which is what spending it means. */
+  public AuthenticationTransactionAttributes spendOn(
+      AuthenticationTransactionAttributes attributes) {
+    return attributes.without(stageAttribute());
+  }
+
+  /** The value handed to the browser. Only a proof just issued has it; a stored one does not. */
+  public String value() {
+    return value;
   }
 
   public String redirectUri() {
     return redirectUri;
   }
 
-  /**
-   * Whether this proof lets {@code sub} mint a code for {@code authorizationRequestIdentifier}.
-   *
-   * <p>Three questions, and all three are about this value. It has to be the first of the two
-   * stages, because the one that carries a redirect belongs to {@code /complete} and accepting it
-   * here would let a caller skip a step. It has to belong to this request, or a proof earned
-   * elsewhere would travel. And it has to belong to this user, because a proof is issued per step
-   * and more than one can exist for a transaction.
-   */
-  public boolean authorizes(String authorizationRequestIdentifier, String sub) {
-    return !hasRedirectUri() && issuedFor(authorizationRequestIdentifier) && issuedTo(sub);
+  public boolean exists() {
+    return hash != null && !hash.isEmpty();
   }
 
   /**
-   * Whether this proof was earned by {@code sub}.
+   * Whether {@code presented} is this first-stage proof, earned by {@code sub}.
    *
-   * <p>A proof is issued per step, so more than one can exist for a transaction. Without this, a
-   * proof earned before the transaction settled on a user would carry over to whoever it settled
-   * on.
+   * <p>A second-stage proof never answers yes: it belongs to {@code /complete}, and accepting it
+   * here would let a caller skip a step. The user is checked because a proof is issued per step,
+   * and one earned before the transaction settled on a user must not carry over to whoever it
+   * settled on.
    */
-  public boolean issuedTo(String sub) {
-    return this.sub != null && this.sub.equals(sub);
+  public boolean authorizes(String presented, String sub) {
+    return exists()
+        && !hasRedirectUri()
+        && this.sub != null
+        && this.sub.equals(sub)
+        && matches(presented);
   }
 
-  /**
-   * Whether this is the second of the two: the one that carries the redirect for {@code /complete}.
-   */
+  /** Whether {@code presented} is this second-stage proof. */
+  public boolean completes(String presented) {
+    return exists() && hasRedirectUri() && matches(presented);
+  }
+
   public boolean hasRedirectUri() {
     return redirectUri != null && !redirectUri.isEmpty();
   }
 
-  /** Whether this proof is the one issued for {@code authorizationRequestIdentifier}. */
-  public boolean issuedFor(String authorizationRequestIdentifier) {
-    return authorizationRequestId != null
-        && authorizationRequestId.equals(authorizationRequestIdentifier);
+  private boolean matches(String presented) {
+    if (presented == null || presented.isEmpty()) {
+      return false;
+    }
+    return MessageDigest.isEqual(
+        hash.getBytes(StandardCharsets.UTF_8), hashOf(presented).getBytes(StandardCharsets.UTF_8));
   }
 
-  public static String cacheKey(String tenantId, String authProof) {
-    return String.format("authentication_proof:%s:%s", tenantId, authProof);
+  private String stageAttribute() {
+    return hasRedirectUri() ? COMPLETION_ATTRIBUTE : AUTHENTICATED_ATTRIBUTE;
+  }
+
+  private Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("hash", hash);
+    if (sub != null) map.put("sub", sub);
+    if (redirectUri != null) map.put("redirect_uri", redirectUri);
+    return map;
+  }
+
+  private static AuthenticationProof fromMap(Map<String, Object> map) {
+    return new AuthenticationProof(
+        null, (String) map.get("hash"), (String) map.get("sub"), (String) map.get("redirect_uri"));
+  }
+
+  private static String hashOf(String value) {
+    try {
+      byte[] hashed =
+          MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8));
+      return Base64.getUrlEncoder().withoutPadding().encodeToString(hashed);
+    } catch (NoSuchAlgorithmException e) {
+      throw new IllegalStateException("SHA-256 is required for auth_proof", e);
+    }
   }
 }

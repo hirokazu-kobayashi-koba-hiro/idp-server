@@ -328,6 +328,34 @@ public class AuthenticationTransaction {
     return authenticationPolicy;
   }
 
+  /**
+   * Whether the browser passed a step only the end-user could, in this transaction.
+   *
+   * <p>Exactly the steps that issue an {@code auth_proof}: a successful interaction that proves
+   * possession, made from the browser. When none was, the whole authentication happened elsewhere —
+   * a device approving a push, say.
+   *
+   * <p>An interaction type with no interactor behind it — a federated sign-in, which the browser
+   * returns from carrying the credentials — counts as a browser step, so anything unrecognised
+   * keeps the proof required.
+   *
+   * @param interactors which interaction types are browser-based; the recorded results do not say
+   */
+  public boolean browserProvedPossession(AuthenticationInteractors interactors) {
+    for (Map.Entry<String, AuthenticationInteractionResult> entry :
+        interactionResults.toMap().entrySet()) {
+      AuthenticationInteractionResult result = entry.getValue();
+      if (result.successCount() == 0 || !result.operationType().provesPossession()) {
+        continue;
+      }
+      AuthenticationInteractionType type = new AuthenticationInteractionType(entry.getKey());
+      if (!interactors.contains(type) || interactors.get(type).isBrowserBased()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public boolean isSuccess() {
     if (isLocked() || isFailure()) {
       return false;
@@ -427,6 +455,17 @@ public class AuthenticationTransaction {
 
   public AuthenticationTransactionAttributes attributes() {
     return attributes;
+  }
+
+  /** A copy of this transaction carrying {@code attributes} instead. */
+  public AuthenticationTransaction withAttributes(AuthenticationTransactionAttributes attributes) {
+    return new AuthenticationTransaction(
+        identifier,
+        authorizationIdentifier,
+        request,
+        authenticationPolicy,
+        interactionResults,
+        attributes);
   }
 
   public boolean hasAttributes() {

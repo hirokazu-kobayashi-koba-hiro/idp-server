@@ -36,6 +36,8 @@ describe("cross-site authorization view: auth_proof", () => {
 
   /** デバイス側で完了する方式（パスワード → FIDO-UAF）を選ばせる acr。 */
   const DEVICE_LAST_ACR = "urn:e2e:cross-site:password-then-fido-uaf";
+  /** ブラウザでの入力が一切なく、デバイスだけで認証する方式（login_hint ＋ FIDO-UAF）を選ばせる acr。 */
+  const DEVICE_ONLY_ACR = "urn:e2e:cross-site:fido-uaf-only";
 
   const authorizations = () => `${backendUrl}/${tenantId}/v1/authorizations`;
 
@@ -159,7 +161,7 @@ describe("cross-site authorization view: auth_proof", () => {
           response_modes_supported: ["query", "fragment"],
           subject_types_supported: ["public"],
           id_token_signing_alg_values_supported: ["RS256", "ES256"],
-          acr_values_supported: [DEVICE_LAST_ACR],
+          acr_values_supported: [DEVICE_LAST_ACR, DEVICE_ONLY_ACR],
           claims_supported: ["sub", "name", "email", "email_verified"],
           extension: {
             access_token_type: "JWT",
@@ -322,6 +324,24 @@ describe("cross-site authorization view: auth_proof", () => {
                 [
                   {
                     path: "$.password-authentication.success_count",
+                    type: "integer",
+                    operation: "gte",
+                    value: 1,
+                  },
+                ],
+              ],
+            },
+          },
+          {
+            description: "fido_uaf_only",
+            priority: 30,
+            conditions: { acr_values: [DEVICE_ONLY_ACR] },
+            available_methods: ["fido-uaf"],
+            success_conditions: {
+              any_of: [
+                [
+                  {
+                    path: "$.fido-uaf-authentication.success_count",
                     type: "integer",
                     operation: "gte",
                     value: 1,
@@ -806,6 +826,101 @@ describe("cross-site authorization view: auth_proof", () => {
       // OP セッションはデバイスの呼び出しで作られている。認可リクエストに紐づけて引けていないと、
       // ここで sid が欠ける。
       expect(idToken.sid).toBeTruthy();
+    });
+  });
+
+  describe("デバイスだけで認証する（login_hint ＋ FIDO-UAF）", () => {
+    // ブラウザは承認を待ってポーリングするだけで、本人しか通せないステップを通らない。proof は一度も
+    // 発行されないので authorize は proof を求めず、始めたブラウザには /complete で束縛する。
+    // 同一サイト構成でこのフローが持つのと同じ強さ。
+    const startDeviceOnlyAuthorization = async () => {
+      const response = await get({
+        url: authorizations(),
+        params: {
+          client_id: clientId,
+          redirect_uri: redirectUri,
+          response_type: "code",
+          scope: "openid profile email",
+          acr_values: DEVICE_ONLY_ACR,
+          login_hint: `sub:${deviceUser.sub}`,
+          state: uuidv4(),
+          nonce: uuidv4(),
+        },
+      });
+      expect(response.status).toBe(302);
+      return new URL(response.headers.location).searchParams.get("id");
+    };
+
+    const approveOnDevice = async (id) => {
+      const transactions = await get({
+        url: `${management}/authentication-transactions?authorization_id=${id}`,
+        headers: managementHeaders,
+      });
+      expect(transactions.status).toBe(200);
+      const transactionId = transactions.data.list[0].id;
+      const interact = (interactionType, body) =>
+        postAuthenticationDeviceInteraction({
+          endpoint: `${backendUrl}/${tenantId}/v1/authentications/{id}/`,
+          id: transactionId,
+          interactionType,
+          body,
+        });
+      expect(
+        (await interact("fido-uaf-authentication-challenge", { device_id: deviceId })).status
+      ).toBe(200);
+      const approved = await interact("fido-uaf-authentication", {});
+      expect(approved.status).toBe(200);
+    };
+
+    it("proof なしで authorize を通り、/complete で始めたブラウザに code が渡る", async () => {
+      const id = await startDeviceOnlyAuthorization();
+      await approveOnDevice(id);
+
+      const authorized = await withoutCookies.post(`${authorizations()}/${id}/authorize`, {});
+      expect(authorized.status).toBe(200);
+      // code は応答に出ず、/complete 用の proof の中にある
+      expect(authorized.data.redirect_uri).toBeUndefined();
+      expect(typeof authorized.data.auth_proof).toBe("string");
+
+      const completed = await complete(id, authorized.data.auth_proof);
+      expect(completed.status).toBe(302);
+
+      const token = await requestToken({
+        endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+        grantType: "authorization_code",
+        code: new URL(completed.headers.location).searchParams.get("code"),
+        redirectUri,
+        clientId,
+        clientSecret,
+      });
+      expect(token.status).toBe(200);
+      const idToken = jwtDecode(token.data.id_token);
+      expect(idToken.sub).toBe(deviceUser.sub);
+      expect(idToken.amr).toEqual(expect.arrayContaining(["fido-uaf"]));
+      expect(idToken.sid).toBeTruthy();
+    });
+
+    it("始めたブラウザ以外は、authorize の結果を /complete に持ち込めない", async () => {
+      const id = await startDeviceOnlyAuthorization();
+      await approveOnDevice(id);
+      const authorized = await withoutCookies.post(`${authorizations()}/${id}/authorize`, {});
+      expect(authorized.status).toBe(200);
+
+      const response = await withoutCookies.get(`${authorizations()}/${id}/complete`, {
+        params: { auth_proof: authorized.data.auth_proof },
+      });
+
+      expect(response.status).toBe(400);
+    });
+
+    it("ブラウザ側の認証を経た認可では、proof なしの authorize は今までどおり拒否される", async () => {
+      // proof が一度発行された認可は、proof を求め続ける。デバイスだけの扱いには落ちない。
+      const id = await startAuthorization();
+      await authenticate(id);
+
+      const response = await withoutCookies.post(`${authorizations()}/${id}/authorize`, {});
+
+      expect(response.status).toBe(400);
     });
   });
 });
