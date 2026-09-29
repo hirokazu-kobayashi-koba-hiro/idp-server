@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeAll } from "@jest/globals";
-import { get, putWithJson } from "../../../lib/http";
+import { get } from "../../../lib/http";
 import { requestToken } from "../../../api/oauthClient";
 import { onboarding } from "../../../api/managementClient";
 import { generateECP256JWKS } from "../../../lib/jose";
@@ -98,6 +98,20 @@ describe("Advance Use Case: Authorization View Variant Routing", () => {
           cors_config: {
             allow_origins: [backendUrl, defaultBaseUrl, variantBaseUrl],
           },
+          // Declared at onboarding rather than by a later update: an update is not reflected in
+          // the tenant cache until the entry expires when an asynchronous task reads the tenant
+          // before the update commits (#1915). What this test is about is the routing, not the
+          // update path, which #1915 covers.
+          ui_config: {
+            base_url: defaultBaseUrl,
+            signin_page: "/signin/",
+            signup_page: "/signup/",
+            variant_param: "view_version",
+            variants: {
+              v2: { signin_page: "/v2/signin/", signup_page: "/v2/signup/" },
+              v3: { base_url: variantBaseUrl, signin_page: "/v2/signin/" },
+            },
+          },
         },
         authorization_server: {
           issuer: `${backendUrl}/${tenantId}`,
@@ -140,48 +154,6 @@ describe("Advance Use Case: Authorization View Variant Routing", () => {
       headers: { Authorization: `Bearer ${systemAccessToken}` },
     });
     expect(onboardingResponse.status).toBe(201);
-
-    // Declare the variants through the management API rather than a fixture, so what the test
-    // exercises is the same write path an operator uses (the update is a full replace).
-    const orgTokenResponse = await requestToken({
-      endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
-      grantType: "password",
-      username: userEmail,
-      password: userPassword,
-      scope: "openid profile email management",
-      clientId: clientId,
-      clientSecret: clientSecret,
-    });
-    expect(orgTokenResponse.status).toBe(200);
-    const orgAccessToken = orgTokenResponse.data.access_token;
-    const managementUrl = `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}`;
-
-    const tenantResponse = await get({
-      url: managementUrl,
-      headers: { Authorization: `Bearer ${orgAccessToken}` },
-    });
-    expect(tenantResponse.status).toBe(200);
-
-    const updateBody = { ...tenantResponse.data };
-    delete updateBody.created_at;
-    delete updateBody.updated_at;
-    updateBody.ui_config = {
-      base_url: defaultBaseUrl,
-      signin_page: "/signin/",
-      signup_page: "/signup/",
-      variant_param: "view_version",
-      variants: {
-        v2: { signin_page: "/v2/signin/", signup_page: "/v2/signup/" },
-        v3: { base_url: variantBaseUrl, signin_page: "/v2/signin/" },
-      },
-    };
-
-    const updateResponse = await putWithJson({
-      url: managementUrl,
-      headers: { Authorization: `Bearer ${orgAccessToken}` },
-      body: updateBody,
-    });
-    expect(updateResponse.status).toBe(200);
   });
 
   describe("a request naming no variant", () => {

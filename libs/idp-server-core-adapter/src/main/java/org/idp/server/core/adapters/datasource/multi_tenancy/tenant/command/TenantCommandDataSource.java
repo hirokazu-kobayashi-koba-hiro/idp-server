@@ -36,18 +36,23 @@ public class TenantCommandDataSource implements TenantCommandRepository {
     executor.insert(tenant);
   }
 
+  /**
+   * Writes first and invalidates the cache after, as the other configuration data sources do.
+   *
+   * <p>Invalidating first leaves a window in which a read of the tenant — within the same request,
+   * such as the audit log publishing after the update — loads the row not yet updated and puts it
+   * back in the cache, where every instance then serves it until the entry expires (Issue #1881).
+   */
   @Override
   public void update(Tenant tenant) {
-    String key = key(tenant.identifier());
-    cacheStore.delete(key);
     executor.update(tenant);
+    cacheStore.delete(key(tenant.identifier()));
   }
 
   @Override
   public void delete(TenantIdentifier tenantIdentifier) {
-    String key = key(tenantIdentifier);
-    cacheStore.delete(key);
     executor.delete(tenantIdentifier);
+    cacheStore.delete(key(tenantIdentifier));
   }
 
   private String key(TenantIdentifier tenantIdentifier) {
