@@ -68,10 +68,21 @@ public class AuthenticationProof implements JsonReadable {
 
   public AuthenticationProof() {}
 
-  public AuthenticationProof(String authorizationRequestId, String sub, String redirectUri) {
+  private AuthenticationProof(String authorizationRequestId, String sub, String redirectUri) {
     this.authorizationRequestId = authorizationRequestId;
     this.sub = sub;
     this.redirectUri = redirectUri;
+  }
+
+  /** The first of the two: what {@code /authorize} asks for. */
+  public static AuthenticationProof authenticated(String authorizationRequestId, String sub) {
+    return new AuthenticationProof(authorizationRequestId, sub, null);
+  }
+
+  /** The second of the two: what {@code /complete} asks for, carrying the redirect. */
+  public static AuthenticationProof forCompletion(
+      String authorizationRequestId, String sub, String redirectUri) {
+    return new AuthenticationProof(authorizationRequestId, sub, redirectUri);
   }
 
   public String authorizationRequestId() {

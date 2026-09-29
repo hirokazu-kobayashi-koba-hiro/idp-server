@@ -28,6 +28,7 @@ import org.idp.server.core.openid.oauth.type.extension.RegisteredRedirectUris;
 import org.idp.server.core.openid.oauth.type.oauth.*;
 import org.idp.server.platform.configuration.Configurable;
 import org.idp.server.platform.json.JsonReadable;
+import org.idp.server.platform.multi_tenancy.tenant.config.UIConfiguration;
 
 /** ClientConfiguration */
 public class ClientConfiguration implements JsonReadable, Configurable {
@@ -241,6 +242,22 @@ public class ClientConfiguration implements JsonReadable, Configurable {
 
   public boolean isSupportedJar() {
     return extension.isSupportedJar();
+  }
+
+  /**
+   * Whether this client's authorization flow runs as if the authorization view were on another
+   * site.
+   *
+   * <p>The tenant declares where its view is ({@code ui_config.cross_site}); a client may override
+   * that either way. The override exists for migration: switching the whole tenant at once changes
+   * the flow for every relying party at the same moment, while this lets one relying party move
+   * first — or hold one back — and be switched back on its own.
+   */
+  public boolean crossSiteAuthorizationView(UIConfiguration tenantUiConfiguration) {
+    if (extension.hasCrossSiteAuthorizationView()) {
+      return extension.isCrossSiteAuthorizationView();
+    }
+    return tenantUiConfiguration.crossSite();
   }
 
   public boolean isRegisteredRequestUri(String requestUri) {

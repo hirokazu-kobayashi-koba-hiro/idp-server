@@ -2,9 +2,13 @@ import { beforeAll, describe, expect, it } from "@jest/globals";
 import { v4 as uuidv4 } from "uuid";
 import { faker } from "@faker-js/faker";
 import { get, postWithJson } from "../../../lib/http";
-import { requestToken } from "../../../api/oauthClient";
+import {
+  postAuthenticationDeviceInteraction,
+  requestToken,
+} from "../../../api/oauthClient";
 import { onboarding } from "../../../api/managementClient";
 import { generateRS256KeyPair } from "../../../lib/jose";
+import jwtDecode from "jwt-decode";
 import { adminServerConfig, backendUrl } from "../../testConfig";
 
 /**
@@ -22,6 +26,13 @@ describe("cross-site authorization view: auth_proof", () => {
   let clientSecret;
   let redirectUri;
   let user;
+  let deviceUser;
+  let deviceId;
+  let management;
+  let managementHeaders;
+
+  /** デバイス側で完了する方式（パスワード → FIDO-UAF）を選ばせる acr。 */
+  const DEVICE_LAST_ACR = "urn:e2e:cross-site:password-then-fido-uaf";
 
   const authorizations = () => `${backendUrl}/${tenantId}/v1/authorizations`;
 
@@ -133,6 +144,7 @@ describe("cross-site authorization view: auth_proof", () => {
           response_modes_supported: ["query", "fragment"],
           subject_types_supported: ["public"],
           id_token_signing_alg_values_supported: ["RS256", "ES256"],
+          acr_values_supported: [DEVICE_LAST_ACR],
           claims_supported: ["sub", "name", "email", "email_verified"],
           extension: {
             access_token_type: "JWT",
@@ -171,7 +183,8 @@ describe("cross-site authorization view: auth_proof", () => {
     });
     expect(adminToken.status).toBe(200);
     const headers = { Authorization: `Bearer ${adminToken.data.access_token}` };
-    const management = `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}`;
+    management = `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}`;
+    managementHeaders = headers;
 
     const passwordConfig = await postWithJson({
       url: `${management}/authentication-configurations`,
@@ -223,6 +236,59 @@ describe("cross-site authorization view: auth_proof", () => {
     });
     expect(emailConfig.status).toBe(201);
 
+    // FIDO-UAF はデバイス側で完了する。サーバー側は mockoon に委譲する。
+    const fidoUafInteraction = (path) => ({
+      execution: {
+        function: "http_request",
+        http_request: {
+          url: `http://host.docker.internal:4000/fido-uaf/${path}`,
+          method: "POST",
+          auth_type: "oauth2",
+          oauth_authorization: {
+            type: "password",
+            token_endpoint: "http://host.docker.internal:4000/token",
+            client_id: "your-client-id",
+            username: "username",
+            password: "password",
+            scope: "application",
+            cache_buffer_seconds: 10,
+            cache_ttl_seconds: 1800,
+            cache_enabled: true,
+          },
+          header_mapping_rules: [
+            { static_value: "application/json", to: "Content-Type" },
+          ],
+          body_mapping_rules: [{ from: "$.request_body", to: "*" }],
+        },
+      },
+      response: {
+        body_mapping_rules: [
+          { from: "$.execution_http_request.response_body", to: "*" },
+        ],
+      },
+    });
+    const fidoUafConfig = await postWithJson({
+      url: `${management}/authentication-configurations`,
+      headers,
+      body: {
+        id: uuidv4(),
+        type: "fido-uaf",
+        attributes: {
+          type: "external",
+          service_name: "mocky",
+          device_id_param: "user_id",
+        },
+        metadata: {},
+        interactions: {
+          "fido-uaf-authentication-challenge": fidoUafInteraction(
+            "authentication-challenge"
+          ),
+          "fido-uaf-authentication": fidoUafInteraction("authentication"),
+        },
+      },
+    });
+    expect(fidoUafConfig.status).toBe(201);
+
     const policy = await postWithJson({
       url: `${management}/authentication-policies`,
       headers,
@@ -249,10 +315,64 @@ describe("cross-site authorization view: auth_proof", () => {
               ],
             },
           },
+          {
+            description: "password_then_fido_uaf",
+            priority: 20,
+            conditions: { acr_values: [DEVICE_LAST_ACR] },
+            available_methods: ["password", "fido-uaf"],
+            success_conditions: {
+              any_of: [
+                [
+                  {
+                    path: "$.password-authentication.success_count",
+                    type: "integer",
+                    operation: "gte",
+                    value: 1,
+                  },
+                  {
+                    path: "$.fido-uaf-authentication.success_count",
+                    type: "integer",
+                    operation: "gte",
+                    value: 1,
+                  },
+                ],
+              ],
+            },
+          },
         ],
       },
     });
     expect(policy.status).toBe(201);
+
+    // 管理 API は body をそのまま User に読み込むので、デバイスはここで持たせる。
+    deviceId = uuidv4();
+    deviceUser = {
+      sub: uuidv4(),
+      provider_id: "idp-server",
+      name: faker.person.fullName(),
+      email: faker.internet.email().toLowerCase(),
+      raw_password: `CrossSiteDevice${timestamp}!`,
+      authentication_devices: [
+        {
+          id: deviceId,
+          app_name: "cross-site-device",
+          platform: "Android",
+          os: "15",
+          model: "Pixel",
+          locale: "ja",
+          notification_channel: "fcm",
+          notification_token: "e2e-dummy-token",
+          available_methods: ["fido-uaf"],
+          priority: 1,
+        },
+      ],
+    };
+    const createDeviceUser = await postWithJson({
+      url: `${management}/users`,
+      headers,
+      body: deviceUser,
+    });
+    expect(createDeviceUser.status).toBe(201);
   }, 120000);
 
   describe("発行", () => {
@@ -359,14 +479,15 @@ describe("cross-site authorization view: auth_proof", () => {
 
     it("redirect_uri を省略したリクエストでも完了できる", async () => {
       // 登録値が 1 つのクライアントは redirect_uri を省略できる。リクエストから読むと null になる。
+      // 省略できるのは OAuth 2.0 のリクエストだけで、openid を付けると OIDC として redirect_uri が
+      // 必須になり、認可リクエストの時点で弾かれて /complete まで届かない。
       const started = await get({
         url: authorizations(),
         params: {
           client_id: clientId,
           response_type: "code",
-          scope: "openid profile email",
+          scope: "profile email",
           state: uuidv4(),
-          nonce: uuidv4(),
         },
       });
       expect(started.status).toBe(302);
@@ -381,6 +502,31 @@ describe("cross-site authorization view: auth_proof", () => {
       expect(
         new URL(response.headers.location).searchParams.get("code")
       ).toBeTruthy();
+    });
+
+    it("ID Token に sid が入る", async () => {
+      // cross-site では OP セッションを指す Cookie がブラウザに届かない。proof がその識別子を
+      // 運べていないと、ここで sid が欠ける。欠けるとバックチャネルログアウトがこのクライアント
+      // を見つけられない。
+      const id = await startAuthorization();
+      const authProof = (await authenticate(id)).data.auth_proof;
+      const completionProof = (await authorize(id, { auth_proof: authProof }))
+        .data.auth_proof;
+      const completed = await complete(id, completionProof);
+      const code = new URL(completed.headers.location).searchParams.get("code");
+
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+        grantType: "authorization_code",
+        code,
+        redirectUri,
+        clientId,
+        clientSecret,
+      });
+      expect(tokenResponse.status).toBe(200);
+
+      const idToken = jwtDecode(tokenResponse.data.id_token);
+      expect(idToken.sid).toBeTruthy();
     });
 
     it("authorize 用の auth_proof は /complete では使えない", async () => {
@@ -410,6 +556,99 @@ describe("cross-site authorization view: auth_proof", () => {
       const response = await get({ url: `${authorizations()}/${id}/complete` });
 
       expect(response.status).toBe(400);
+    });
+  });
+
+  describe("最後の段がデバイスで完了する（パスワード → FIDO-UAF）", () => {
+    // デバイスの呼び出しに返したものは、authorize を呼ぶブラウザには届かない。ブラウザが頼れるのは
+    // 1 段目で受け取った proof だけで、OP セッションはデバイスの呼び出しの中で作られる。
+    const startDeviceLastAuthorization = async () => {
+      const response = await get({
+        url: authorizations(),
+        params: {
+          client_id: clientId,
+          redirect_uri: redirectUri,
+          response_type: "code",
+          scope: "openid profile email",
+          acr_values: DEVICE_LAST_ACR,
+          state: uuidv4(),
+          nonce: uuidv4(),
+        },
+      });
+      expect(response.status).toBe(302);
+      const id = new URL(response.headers.location).searchParams.get("id");
+      expect(id).toBeTruthy();
+      return id;
+    };
+
+    const authenticateOnDevice = async (id) => {
+      const transactions = await get({
+        url: `${management}/authentication-transactions?authorization_id=${id}`,
+        headers: managementHeaders,
+      });
+      expect(transactions.status).toBe(200);
+      const transactionId = transactions.data.list[0].id;
+
+      const interact = (interactionType, body) =>
+        postAuthenticationDeviceInteraction({
+          endpoint: `${backendUrl}/${tenantId}/v1/authentications/{id}/`,
+          id: transactionId,
+          interactionType,
+          body,
+        });
+
+      const challenge = await interact("fido-uaf-authentication-challenge", {
+        device_id: deviceId,
+      });
+      expect(challenge.status).toBe(200);
+      return interact("fido-uaf-authentication", {});
+    };
+
+    it("1 段目の auth_proof で authorize と /complete を通り、ID Token に sid が入る", async () => {
+      const id = await startDeviceLastAuthorization();
+
+      const password = await postWithJson({
+        url: `${authorizations()}/${id}/password-authentication`,
+        body: { username: deviceUser.email, password: deviceUser.raw_password },
+      });
+      expect(password.status).toBe(200);
+      const authProof = password.data.auth_proof;
+      expect(typeof authProof).toBe("string");
+
+      const device = await authenticateOnDevice(id);
+      expect(device.status).toBe(200);
+      // デバイスに返した値はブラウザに届かないので、ここで出しても使い道が無い。
+      expect(device.data?.auth_proof).toBeUndefined();
+
+      const status = await get({
+        url: `${authorizations()}/${id}/authentication-status`,
+      });
+      expect(status.data.status).toBe("success");
+
+      const authorized = await authorize(id, { auth_proof: authProof });
+      expect(authorized.status).toBe(200);
+      const completed = await complete(id, authorized.data.auth_proof);
+      expect(completed.status).toBe(302);
+      const code = new URL(completed.headers.location).searchParams.get("code");
+
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+        grantType: "authorization_code",
+        code,
+        redirectUri,
+        clientId,
+        clientSecret,
+      });
+      expect(tokenResponse.status).toBe(200);
+
+      const idToken = jwtDecode(tokenResponse.data.id_token);
+      expect(idToken.sub).toBe(deviceUser.sub);
+      expect(idToken.amr).toEqual(
+        expect.arrayContaining(["password", "fido-uaf"])
+      );
+      // OP セッションはデバイスの呼び出しで作られている。認可リクエストに紐づけて引けていないと、
+      // ここで sid が欠ける。
+      expect(idToken.sid).toBeTruthy();
     });
   });
 });

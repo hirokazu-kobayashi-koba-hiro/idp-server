@@ -262,6 +262,7 @@ Tenant
 | `available_federations` | List | - | 利用可能フェデレーション |
 | `default_ciba_authentication_interaction_type` | String | `authentication-device-notification-no-action` | CIBAデフォルト認証方式 |
 | `ciba_require_rar` | boolean | false | CIBA RAR必須 |
+| `cross_site_authorization_view` | Boolean | (テナントの `ui_config.cross_site` 継承) | 別サイト認可画面モード（auth_proof / `/complete`）をクライアント単位で上書き。移行用 |
 | `custom_properties` | Map | - | カスタムプロパティ |
 
 ---

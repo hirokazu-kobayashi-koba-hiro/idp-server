@@ -33,11 +33,12 @@ class AuthenticationProofTest {
   private static final String SUB = "3f9d5c81-7b24-4e60-9a3f-8c1d2e0b6a75";
 
   private AuthenticationProof authenticated() {
-    return new AuthenticationProof(REQUEST, SUB, null);
+    return AuthenticationProof.authenticated(REQUEST, SUB);
   }
 
   private AuthenticationProof completion() {
-    return new AuthenticationProof(REQUEST, SUB, "https://rp.example.com/callback?code=abc");
+    return AuthenticationProof.forCompletion(
+        REQUEST, SUB, "https://rp.example.com/callback?code=abc");
   }
 
   @Test
@@ -69,6 +70,6 @@ class AuthenticationProofTest {
   @DisplayName("利用者が定まらないまま発行された proof は使えない")
   void rejectsProofWithoutUser() {
     // sub が無い proof は誰のものとも言えない。null 同士が一致してしまわないこと。
-    assertFalse(new AuthenticationProof(REQUEST, null, null).authorizes(REQUEST, null));
+    assertFalse(AuthenticationProof.authenticated(REQUEST, null).authorizes(REQUEST, null));
   }
 }

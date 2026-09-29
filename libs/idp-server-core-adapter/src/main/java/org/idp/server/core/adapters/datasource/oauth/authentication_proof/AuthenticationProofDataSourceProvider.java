@@ -39,13 +39,13 @@ public class AuthenticationProofDataSourceProvider
     CacheStore cacheStore = container.resolve(CacheStore.class);
 
     // Said once, at startup, rather than per request. Without somewhere to keep a proof, every
-    // authorize call on a tenant with ui_config.cross_site fails with "auth_proof is missing",
+    // authorize call running cross-site fails with "auth_proof is missing",
     // which reads like an attack and is a misconfiguration.
     if (cacheStore instanceof NoOperationCacheStore) {
       log.warn(
           "No cache is configured, so auth_proof cannot be stored. Tenants with"
-              + " ui_config.cross_site enabled will reject every authorize call. Enable the cache"
-              + " or turn cross_site off.");
+              + " ui_config.cross_site, and clients with extension.cross_site_authorization_view,"
+              + " enabled will reject every authorize call. Enable the cache or turn them off.");
     }
 
     return new AuthenticationProofDataSource(cacheStore);

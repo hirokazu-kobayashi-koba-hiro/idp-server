@@ -442,6 +442,46 @@ CIBAリクエスト時に、authorization_details（RAR: Rich Authorization Requ
 **参照仕様**:
 - [RFC 9396: OAuth 2.0 Rich Authorization Requests](https://www.rfc-editor.org/rfc/rfc9396.html)
 
+#### 別サイト認可画面モードの上書き
+
+認可画面が idp-server と別サイトにある構成（テナントの `ui_config.cross_site`）への切り替えを、クライアント単位で行う設定：
+
+```json
+{
+  "extension": {
+    "cross_site_authorization_view": true
+  }
+}
+```
+
+**フィールド説明**:
+- `cross_site_authorization_view`: このクライアントの認可フローを別サイト認可画面モードで動かすか。省略時はテナントの `ui_config.cross_site` に従う
+
+**動作**:
+- `true` のとき、認可画面は認証ステップの応答で受け取る `auth_proof` を `authorize` に付け、最後に `/complete` へトップレベル遷移する
+- `false` のとき、従来どおり `IDP_AUTH_SESSION` Cookie でブラウザを束縛する
+- テナントが `true` でも、`false` を指定したクライアントは従来の経路のまま動く
+
+**使用シーン**:
+- テナント全体を切り替える前に、一部の RP だけで試す
+- テナントを切り替えたあと、対応が遅れている RP だけを従来の経路に残す
+
+:::warning
+認可画面が `auth_proof` に対応している必要があります。対応していない画面で `true` にすると、`authorize` が 400 を返してログインできません。
+:::
+
+**切り替え方**:
+
+使用中のクライアントの設定を切り替えると、その瞬間に認証の途中だった利用者は一度だけ失敗します（切り替え前に認証を終えていると `auth_proof` が発行されていないため、`authorize` が 400 を返す）。次のどちらかで切り替えてください。
+
+- **別クライアントに乗り換える**: `cross_site_authorization_view: true` の新しいクライアントを作成し、RP が `client_id` を切り替える。途中のフローは古いクライアントのまま最後まで進む
+- **メンテナンスで止めて切り替える**: 停止中に途中のフローが無くなる
+
+別クライアントに乗り換える場合、次の点に注意してください。
+
+- 古いクライアントで発行したリフレッシュトークンは、新しいクライアントでは使えない
+- 同意（grant）はクライアントごとに保存されるため、同意画面を出す設定では利用者が再度同意する
+
 ---
 
 ### Federation設定
