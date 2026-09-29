@@ -26,7 +26,6 @@ import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration
 import org.idp.server.core.openid.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.openid.oauth.type.ciba.*;
 import org.idp.server.core.openid.oauth.type.extension.ExpiresAt;
-import org.idp.server.core.openid.oauth.type.oauth.ClientSecretBasic;
 import org.idp.server.core.openid.oauth.type.oauth.ExpiresIn;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.oauth.type.oauth.Scopes;
@@ -57,8 +56,8 @@ public class RequestObjectPatternFactory implements BackchannelAuthenticationReq
   @Override
   public BackchannelAuthenticationRequest create(
       Tenant tenant,
+      RequestedClientId requestedClientId,
       CibaProfile profile,
-      ClientSecretBasic clientSecretBasic,
       CibaRequestParameters parameters,
       JoseContext joseContext,
       Set<String> filteredScopes,
@@ -68,8 +67,6 @@ public class RequestObjectPatternFactory implements BackchannelAuthenticationReq
     CibaRequestObjectParameters requestObjectParameters =
         new CibaRequestObjectParameters(jsonWebTokenClaims.payload());
     Scopes scopes = new Scopes(filteredScopes);
-    RequestedClientId requestedClientId =
-        getClientId(clientSecretBasic, parameters, requestObjectParameters, joseContext);
     IdTokenHint idTokenHint =
         requestObjectParameters.hasIdTokenHint()
             ? requestObjectParameters.idTokenHint()
@@ -139,47 +136,5 @@ public class RequestObjectPatternFactory implements BackchannelAuthenticationReq
     }
 
     return builder.build();
-  }
-
-  /**
-   * Extracts the client_id from available sources in priority order.
-   *
-   * <p>Per RFC 7521 Section 4.2 and FAPI CIBA Profile, client_id can be identified from:
-   *
-   * <ol>
-   *   <li>Request object's client_id claim
-   *   <li>HTTP request parameters
-   *   <li>HTTP Basic Authentication
-   *   <li>Request JWT's iss claim (for FAPI CIBA, iss MUST be the client_id)
-   * </ol>
-   *
-   * @param clientSecretBasic HTTP Basic Authentication credentials
-   * @param parameters HTTP request parameters
-   * @param requestObjectParameters Parsed request JWT claims
-   * @param joseContext Parsed JWT context for extracting iss claim
-   * @return the client_id from the highest priority source
-   */
-  private static RequestedClientId getClientId(
-      ClientSecretBasic clientSecretBasic,
-      CibaRequestParameters parameters,
-      CibaRequestObjectParameters requestObjectParameters,
-      JoseContext joseContext) {
-    // 1. Check request object's client_id claim
-    if (requestObjectParameters.hasClientId()) {
-      return requestObjectParameters.clientId();
-    }
-    // 2. Check HTTP request parameters
-    if (parameters.hasClientId()) {
-      return parameters.clientId();
-    }
-    // 3. Check HTTP Basic Authentication
-    if (clientSecretBasic.exists()) {
-      return clientSecretBasic.clientId();
-    }
-    // 4. Extract from request JWT's iss claim (FAPI CIBA: iss = client_id)
-    if (joseContext.claims().hasIss()) {
-      return new RequestedClientId(joseContext.claims().getIss());
-    }
-    return new RequestedClientId();
   }
 }

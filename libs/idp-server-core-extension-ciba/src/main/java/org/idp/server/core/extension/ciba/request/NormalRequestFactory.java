@@ -23,7 +23,6 @@ import org.idp.server.core.extension.ciba.CibaRequestParameters;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.type.extension.ExpiresAt;
-import org.idp.server.core.openid.oauth.type.oauth.ClientSecretBasic;
 import org.idp.server.core.openid.oauth.type.oauth.ExpiresIn;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.oauth.type.oauth.Scopes;
@@ -37,8 +36,8 @@ public class NormalRequestFactory implements BackchannelAuthenticationRequestFac
   @Override
   public BackchannelAuthenticationRequest create(
       Tenant tenant,
+      RequestedClientId requestedClientId,
       CibaProfile profile,
-      ClientSecretBasic clientSecretBasic,
       CibaRequestParameters parameters,
       JoseContext joseContext,
       Set<String> filteredScopes,
@@ -76,43 +75,8 @@ public class NormalRequestFactory implements BackchannelAuthenticationRequestFac
       builder.add(parameters.authorizationDetails());
     }
 
-    builder.add(getClientId(clientSecretBasic, parameters));
+    builder.add(requestedClientId);
 
     return builder.build();
-  }
-
-  /**
-   * Extracts the client_id from available sources in priority order.
-   *
-   * <p>Per RFC 7521 Section 4.2 and RFC 7523 Section 3, client_id can be identified from:
-   *
-   * <ol>
-   *   <li>HTTP request parameters (explicit client_id)
-   *   <li>HTTP Basic Authentication
-   *   <li>client_assertion JWT's iss claim
-   * </ol>
-   *
-   * @param clientSecretBasic HTTP Basic Authentication credentials
-   * @param parameters HTTP request parameters
-   * @return the client_id from the highest priority source
-   */
-  private static RequestedClientId getClientId(
-      ClientSecretBasic clientSecretBasic, CibaRequestParameters parameters) {
-    // 1. Check HTTP request parameters
-    if (parameters.hasClientId()) {
-      return parameters.clientId();
-    }
-    // 2. Check HTTP Basic Authentication
-    if (clientSecretBasic.exists()) {
-      return clientSecretBasic.clientId();
-    }
-    // 3. Extract from client_assertion JWT's iss claim (RFC 7521/7523)
-    if (parameters.hasClientAssertion()) {
-      String issuer = parameters.clientAssertion().extractIssuer();
-      if (!issuer.isEmpty()) {
-        return new RequestedClientId(issuer);
-      }
-    }
-    return new RequestedClientId();
   }
 }

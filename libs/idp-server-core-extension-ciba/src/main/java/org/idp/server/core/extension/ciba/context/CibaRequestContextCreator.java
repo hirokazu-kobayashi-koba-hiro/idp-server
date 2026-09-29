@@ -28,14 +28,22 @@ import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration
 import org.idp.server.core.openid.oauth.type.OAuthRequestKey;
 import org.idp.server.core.openid.oauth.type.mtls.ClientCert;
 import org.idp.server.core.openid.oauth.type.oauth.ClientSecretBasic;
+import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.platform.jose.JoseContext;
 import org.idp.server.platform.jose.JsonWebTokenClaims;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface CibaRequestContextCreator {
 
+  /**
+   * @param requestedClientId the client the request names, resolved once by {@code
+   *     CibaRequest#clientId()} in the same order as the token endpoint ({@code client_id}, HTTP
+   *     Basic, {@code client_assertion} iss, Client Attestation sub). It is the client that was
+   *     loaded and authenticated, so the request records the same value (Issue #1914).
+   */
   CibaRequestContext create(
       Tenant tenant,
+      RequestedClientId requestedClientId,
       ClientSecretBasic clientSecretBasic,
       ClientCert clientCert,
       ClientAttestationJwt clientAttestationJwt,

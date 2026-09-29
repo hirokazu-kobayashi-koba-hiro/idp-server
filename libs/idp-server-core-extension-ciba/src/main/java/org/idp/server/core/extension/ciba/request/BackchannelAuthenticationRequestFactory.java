@@ -22,15 +22,15 @@ import org.idp.server.core.extension.ciba.CibaProfile;
 import org.idp.server.core.extension.ciba.CibaRequestParameters;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
-import org.idp.server.core.openid.oauth.type.oauth.ClientSecretBasic;
+import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.platform.jose.JoseContext;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface BackchannelAuthenticationRequestFactory {
   BackchannelAuthenticationRequest create(
       Tenant tenant,
+      RequestedClientId requestedClientId,
       CibaProfile profile,
-      ClientSecretBasic clientSecretBasic,
       CibaRequestParameters parameters,
       JoseContext joseContext,
       Set<String> filteredScopes,

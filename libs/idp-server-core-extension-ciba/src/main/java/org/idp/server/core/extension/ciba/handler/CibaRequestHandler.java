@@ -45,6 +45,7 @@ import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigu
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.type.ciba.AuthReqId;
+import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
@@ -109,14 +110,16 @@ public class CibaRequestHandler {
 
     AuthorizationServerConfiguration authorizationServerConfiguration =
         authorizationServerConfigurationQueryRepository.get(tenant);
+    RequestedClientId requestedClientId = request.clientId();
     ClientConfiguration clientConfiguration =
-        clientConfigurationQueryRepository.get(tenant, request.clientId());
+        clientConfigurationQueryRepository.get(tenant, requestedClientId);
     CibaRequestPattern pattern = parameters.analyze();
     CibaRequestContextCreator cibaRequestContextCreator = contextCreators.get(pattern);
 
     CibaRequestContext context =
         cibaRequestContextCreator.create(
             tenant,
+            requestedClientId,
             request.clientSecretBasic(),
             request.toClientCert(),
             request.toClientAttestationJwt(),
