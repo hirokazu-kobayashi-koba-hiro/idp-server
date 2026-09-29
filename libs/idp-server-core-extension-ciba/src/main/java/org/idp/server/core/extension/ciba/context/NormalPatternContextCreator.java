@@ -58,7 +58,6 @@ public class NormalPatternContextCreator implements CibaRequestContextCreator {
             tenant,
             requestedClientId,
             profile,
-            clientSecretBasic,
             parameters,
             joseContext,
             filteredScopes,

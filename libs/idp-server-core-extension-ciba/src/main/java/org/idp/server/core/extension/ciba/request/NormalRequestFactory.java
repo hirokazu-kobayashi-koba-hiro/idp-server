@@ -23,7 +23,6 @@ import org.idp.server.core.extension.ciba.CibaRequestParameters;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.type.extension.ExpiresAt;
-import org.idp.server.core.openid.oauth.type.oauth.ClientSecretBasic;
 import org.idp.server.core.openid.oauth.type.oauth.ExpiresIn;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.oauth.type.oauth.Scopes;
@@ -39,7 +38,6 @@ public class NormalRequestFactory implements BackchannelAuthenticationRequestFac
       Tenant tenant,
       RequestedClientId requestedClientId,
       CibaProfile profile,
-      ClientSecretBasic clientSecretBasic,
       CibaRequestParameters parameters,
       JoseContext joseContext,
       Set<String> filteredScopes,

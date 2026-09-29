@@ -77,7 +77,6 @@ public class RequestObjectPatternContextCreator implements CibaRequestContextCre
               tenant,
               requestedClientId,
               profile,
-              clientSecretBasic,
               parameters,
               joseContext,
               filteredScopes,
