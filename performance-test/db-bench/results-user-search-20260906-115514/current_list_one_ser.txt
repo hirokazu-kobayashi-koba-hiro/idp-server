@@ -1,0 +1,17 @@
+SET
+Limit  (cost=3787.71..78768.99 rows=20 width=24) (actual time=1228.718..1228.719 rows=1 loops=1)
+  Buffers: shared hit=9 read=147850
+  ->  Incremental Sort  (cost=3787.71..374945.04 rows=99 width=24) (actual time=1228.716..1228.717 rows=1 loops=1)
+        Sort Key: created_at DESC, id DESC
+        Presorted Key: created_at
+        Full-sort Groups: 1  Sort Method: quicksort  Average Memory: 25kB  Peak Memory: 25kB
+        Buffers: shared hit=9 read=147850
+        ->  Index Scan using idx_idp_user_tenant_created_at on idp_user  (cost=0.42..374940.58 rows=99 width=24) (actual time=0.169..1228.678 rows=1 loops=1)
+              Index Cond: (tenant_id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'::uuid)
+              Filter: ((preferred_username)::text ~~* '%user00000042@example.com%'::text)
+              Rows Removed by Filter: 999999
+              Buffers: shared hit=1 read=147849
+Planning:
+  Buffers: shared hit=259 read=6
+Planning Time: 1.288 ms
+Execution Time: 1228.760 ms
