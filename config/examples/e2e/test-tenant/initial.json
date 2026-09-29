@@ -296,7 +296,7 @@
     "client_id_alias": "clientSecretPost",
     "client_secret": "clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890",
     "redirect_uris": [
-      "http://localhost:8081/callback","https://www.certification.openid.net/test/a/idp_oidc_basic/callback","https://localhost.emobix.co.uk:8443/test/a/idp_oidc_basic/callback","https://localhost.emobix.co.uk:8443/test/a/idp_oidc_implicit/callback","https://localhost.emobix.co.uk:8443/test/a/idp_oidc_hybrid/callback"
+      "http://localhost:8081/callback","http://localhost:3000/api/auth/callback/idp-server","https://www.certification.openid.net/test/a/idp_oidc_basic/callback","https://localhost.emobix.co.uk:8443/test/a/idp_oidc_basic/callback","https://localhost.emobix.co.uk:8443/test/a/idp_oidc_implicit/callback","https://localhost.emobix.co.uk:8443/test/a/idp_oidc_hybrid/callback"
     ],
     "response_types": [
       "code",
