@@ -11,6 +11,8 @@ declare module "next-auth" {
     accessToken?: string;
     refreshToken?: string;
     idToken?: string;
+    /** Which sign-in was used: "idp-server" or "idp-server-cross-site". */
+    provider?: string;
   }
 }
 
@@ -21,5 +23,6 @@ declare module "next-auth/jwt" {
     accessToken?: string;
     refreshToken?: string;
     idToken?: string;
+    provider?: string;
   }
 }

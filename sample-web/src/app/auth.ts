@@ -8,15 +8,29 @@ export const internalIssuer = process.env.IDP_SERVER_INTERNAL_ISSUER || issuer;
 export const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL;
 
 interface IdpServerOptions {
+  id: string;
+  name: string;
   clientId?: string;
   clientSecret?: string;
   issuer?: string;
+  /** Extra authorization request parameters, e.g. the view variant that selects the view's site. */
+  authorizationParams?: Record<string, string>;
 }
 
-const IdpServer = (options: IdpServerOptions): OAuthConfig<Record<string, unknown>> => ({
+/**
+ * The sign-in with idp-server, parameterised by client.
+ *
+ * Two are registered below so the same app can show both authorization view topologies:
+ * `idp-server` goes through the view on the same site as idp-server, and
+ * `idp-server-cross-site` through the view on another site, with a client configured for that.
+ */
+const IdpServer = ({
+  authorizationParams,
+  ...options
+}: IdpServerOptions): OAuthConfig<Record<string, unknown>> => ({
   ...{
-    id: "idp-server",
-    name: "IdPServer",
+    id: options.id,
+    name: options.name,
     type: "oidc",
     version: "2.0",
     wellKnown: `${internalIssuer}/.well-known/openid-configuration`,
@@ -25,8 +39,9 @@ const IdpServer = (options: IdpServerOptions): OAuthConfig<Record<string, unknow
       url: `${issuer}/v1/authorizations`,
       params: {
         scope: "openid profile phone email address claims:authentication_devices",
-        client_id: process.env.NEXT_PUBLIC_IDP_CLIENT_ID,
+        client_id: options.clientId,
         response_type: "code",
+        ...authorizationParams,
       },
     },
     checks: ["pkce", "state"],
@@ -37,10 +52,10 @@ const IdpServer = (options: IdpServerOptions): OAuthConfig<Record<string, unknow
         const params = new URLSearchParams({
           grant_type: "authorization_code",
           code,
-          redirect_uri: `${frontendUrl}/api/auth/callback/idp-server`,
+          redirect_uri: `${frontendUrl}/api/auth/callback/${options.id}`,
         });
-        const clientId = process.env.NEXT_PUBLIC_IDP_CLIENT_ID as string;
-        const clientSecret = process.env.NEXT_IDP_CLIENT_SECRET as string;
+        const clientId = options.clientId as string;
+        const clientSecret = (options.clientSecret ?? "") as string;
         const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
         const response = await fetch(`${internalIssuer}/v1/tokens`, {
           method: "POST",
@@ -113,9 +128,20 @@ const IdpServer = (options: IdpServerOptions): OAuthConfig<Record<string, unknow
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     IdpServer({
+      id: "idp-server",
+      name: "IdPServer",
       clientId: process.env.NEXT_PUBLIC_IDP_CLIENT_ID,
       clientSecret: process.env.NEXT_IDP_CLIENT_SECRET,
       issuer: internalIssuer,
+    }),
+    IdpServer({
+      id: "idp-server-cross-site",
+      name: "IdPServer (cross-site view)",
+      clientId: process.env.NEXT_PUBLIC_IDP_CROSS_SITE_CLIENT_ID,
+      clientSecret: process.env.NEXT_IDP_CROSS_SITE_CLIENT_SECRET,
+      issuer: internalIssuer,
+      // The tenant's "cross-site" variant serves the view from auth.idp.local.
+      authorizationParams: { view_version: "cross-site" },
     }),
   ],
   callbacks: {
@@ -124,6 +150,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       console.log(token);
       console.log(account);
       if (account) {
+        token.provider = account.provider;
         token.accessToken = account.access_token;
         token.refreshToken = account.refresh_token;
         token.idToken = account.id_token;
@@ -139,6 +166,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       session.accessToken = token.accessToken as string | undefined;
       session.refreshToken = token.refreshToken as string | undefined;
       session.idToken = token.idToken as string | undefined;
+      session.provider = token.provider as string | undefined;
       return session;
     },
   },

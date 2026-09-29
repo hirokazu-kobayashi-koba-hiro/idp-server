@@ -484,6 +484,10 @@ services:
       NEXT_PUBLIC_FRONTEND_URL: "https://sample.local.test"
       NEXT_PUBLIC_IDP_CLIENT_ID: "8a9f5e2c-1b3d-4c6a-9f8e-7d5c3a2b1e4f"
       NEXT_IDP_CLIENT_SECRET: "local-dev-public-secret-32char"
+      # Same tenant, client configured for the cross-site authorization view
+      # (config/examples/standard-oidc-web-app/public-client-cross-site.json)
+      NEXT_PUBLIC_IDP_CROSS_SITE_CLIENT_ID: "3c7e1a52-9b4d-4f0e-8a61-2d5b7c9e4f13"
+      NEXT_IDP_CROSS_SITE_CLIENT_SECRET: "local-dev-public-secret-32char"
       NODE_TLS_REJECT_UNAUTHORIZED: "0"
     extra_hosts:
       - "api.local.test:host-gateway"

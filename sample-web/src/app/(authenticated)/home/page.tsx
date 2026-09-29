@@ -1,4 +1,4 @@
-import { Container, Stack, Typography, Grid, Button, Box } from "@mui/material";
+import { Container, Stack, Typography, Grid, Button, Box, Chip } from "@mui/material";
 import { auth } from "@/app/auth";
 import { redirect } from "next/navigation";
 import UserInfo from "@/components/UserInfo";
@@ -25,9 +25,20 @@ const Home = async () => {
       <Stack spacing={4}>
         {/* Header */}
         <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Typography variant="h4" component="h1">
-            ダッシュボード
-          </Typography>
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Typography variant="h4" component="h1">
+              ダッシュボード
+            </Typography>
+            <Chip
+              label={
+                session.provider === "idp-server-cross-site"
+                  ? "別サイトの認可画面でログイン（auth_proof）"
+                  : "同一サイトの認可画面でログイン（Cookie 束縛）"
+              }
+              color={session.provider === "idp-server-cross-site" ? "secondary" : "default"}
+              size="small"
+            />
+          </Stack>
           <Box sx={{ display: "flex", gap: 2 }}>
             <Button
               href="/api/passkey-registration"
@@ -74,7 +85,15 @@ const Home = async () => {
             >
               セキュリティデモ
             </Button>
-            <LogoutButton idToken={session.idToken} />
+            <LogoutButton
+              idToken={session.idToken}
+              issuer={process.env.NEXT_PUBLIC_IDP_SERVER_ISSUER}
+              clientId={
+                session.provider === "idp-server-cross-site"
+                  ? process.env.NEXT_PUBLIC_IDP_CROSS_SITE_CLIENT_ID
+                  : process.env.NEXT_PUBLIC_IDP_CLIENT_ID
+              }
+            />
           </Box>
         </Stack>
 

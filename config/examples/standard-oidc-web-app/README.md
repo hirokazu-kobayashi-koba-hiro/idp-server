@@ -304,6 +304,25 @@ curl -X POST https://localhost:8443/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df/v1/toke
 | 用途 | 一般的なWebアプリ | 管理画面・API管理ツール |
 
 
+## 認可画面の 2 つの構成を並べて動かす（sample-web）
+
+sample-web のログイン画面には、同じテナントに対するボタンが 2 つあります。
+
+| ボタン | クライアント | 認可画面 | 経路 |
+|---|---|---|---|
+| Sign in with Passkey | `public-client.json` | `auth.local.test`（idp-server と同一サイト） | `IDP_AUTH_SESSION` Cookie で束縛し、認可画面から RP へ直接戻る |
+| Sign in (cross-site view) | `public-client-cross-site.json` | `auth.idp.local`（別サイト） | `auth_proof` で束縛し、`/complete` を経由して RP へ戻る |
+
+2 つ目のクライアントは `extension.cross_site_authorization_view: true` を持ち、認可リクエストに `view_version=cross-site` を付けます。
+テナントの `ui_config.variants.cross-site` がこれを `auth.idp.local` の認可画面へ振り分けます。
+
+```bash
+./update.sh                     # public-tenant.json（variant を含む）を反映
+./setup-cross-site-client.sh    # public-client-cross-site.json を登録（既にあれば更新）
+```
+
+ログイン後のダッシュボードに、どちらの構成でログインしたかが表示されます。
+
 ## 設定項目の詳細説明
 
 ### セッション設定（`session_config`）

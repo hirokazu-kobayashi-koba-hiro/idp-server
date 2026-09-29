@@ -8,7 +8,12 @@
     "ui_config": {
       "base_url": "https://auth.local.test",
       "signin_page": "/auth/",
-      "signup_page": "/auth/"
+      "signup_page": "/auth/",
+      "variants": {
+        "cross-site": {
+          "base_url": "https://auth.idp.local"
+        }
+      }
     },
     "session_config": {
       "cookie_name": "PUBLIC_WEB_SESSION",
@@ -20,6 +25,7 @@
     "cors_config": {
       "allow_origins": [
         "https://auth.local.test",
+        "https://auth.idp.local",
         "https://api.local.test",
         "https://sample.local.test",
         "http://localhost:3000",

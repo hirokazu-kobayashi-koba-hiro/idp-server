@@ -6,6 +6,12 @@ import { useRouter, usePathname } from "next/navigation";
 import { Loading } from "@/components/Loading";
 import { sleep } from "@/functions/sleep";
 
+/**
+ * Pages that choose how to sign in themselves. The cross-site demo offers both sign-ins side by
+ * side, so sending the visitor to one of them automatically would defeat the page.
+ */
+const SELF_SIGN_IN_PATHS = ["/cross-site-demo"];
+
 export default function AuthHandler({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
@@ -31,6 +37,9 @@ export default function AuthHandler({
       return;
     }
     if (status === "loading") {
+      return;
+    }
+    if (pathname && SELF_SIGN_IN_PATHS.includes(pathname)) {
       return;
     }
     signIn("idp-server");

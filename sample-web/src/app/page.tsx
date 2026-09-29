@@ -116,6 +116,16 @@ const Login = () => {
               </Button>
               <Button
                 component={Link}
+                href="/cross-site-demo"
+                variant="outlined"
+                size="small"
+                color="secondary"
+                startIcon={<LoginIcon />}
+              >
+                Cross-site View
+              </Button>
+              <Button
+                component={Link}
                 href="/fido-uaf-auth-demo"
                 variant="outlined"
                 size="small"
