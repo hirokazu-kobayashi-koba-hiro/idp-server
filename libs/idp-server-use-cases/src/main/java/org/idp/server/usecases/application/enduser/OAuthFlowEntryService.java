@@ -76,6 +76,7 @@ import org.idp.server.core.openid.session.OPSession;
 import org.idp.server.core.openid.session.SessionCookieDelegate;
 import org.idp.server.core.openid.session.SessionValidationResult;
 import org.idp.server.platform.datasource.Transaction;
+import org.idp.server.platform.exception.UnauthorizedException;
 import org.idp.server.platform.http.HttpRequestInputs;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -213,6 +214,14 @@ public class OAuthFlowEntryService
       // Register AUTH_SESSION cookie with same expiry as authorization request
       authSessionCookieDelegate.setAuthSessionCookie(
           tenant, authSessionId.value(), requestResponse.oauthAuthorizationRequestExpiresIn());
+
+      // This is a top level navigation, so the OP session cookie is readable here even where the
+      // authorization view is on another site. Everything the view calls next is third-party and
+      // will not see it, so the session is carried on the request instead — that is what lets the
+      // view offer, and complete, sign-in with the existing session.
+      opSessionOpt.ifPresent(
+          opSession ->
+              bindSessionIfCrossSite(tenant, requestResponse.authorizationRequest(), opSession));
     }
 
     return requestResponse;
@@ -235,9 +244,10 @@ public class OAuthFlowEntryService
     Map<String, Object> additionalViewData = new HashMap<>();
     additionalViewData.put("authentication_policy", authenticationPolicy.toMap());
 
-    // Get OPSession from cookie for sessionEnabled check
+    // The session the view may offer to continue with
+    OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
     OPSession opSession =
-        oidcSessionHandler.getOPSessionFromCookie(tenant, sessionCookieDelegate).orElse(null);
+        authenticatingSession(tenant, oAuthProtocol.get(tenant, authorizationRequestIdentifier));
 
     OAuthViewDataRequest oAuthViewDataRequest =
         new OAuthViewDataRequest(
@@ -246,8 +256,6 @@ public class OAuthFlowEntryService
             opSession,
             authenticationTransaction.user(),
             additionalViewData);
-
-    OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
 
     return oAuthProtocol.getViewData(oAuthViewDataRequest, this);
   }
@@ -619,10 +627,24 @@ public class OAuthFlowEntryService
    * </ul>
    *
    * <p>This endpoint is reached by a top level navigation to this server, so its cookies are
-   * first-party here and the session can be written. The browser binding is not read here even so:
-   * that cookie belongs to whoever opened the request, which in the attack is the attacker, and the
-   * browser that authenticated may never have had one. What is checked is the hand-off, which only
-   * the authenticated browser was given.
+   * first-party here: the session can be written, and the browser binding can be read again.
+   *
+   * <h3>Two checks, answering different questions</h3>
+   *
+   * <p>The hand-off says "this is the browser that authenticated"; only that browser was given it.
+   * The browser binding says "this is the browser that started the request". Either alone lets one
+   * direction of attack through:
+   *
+   * <ul>
+   *   <li>Without the hand-off, an attacker who started a request and handed its URL to a victim
+   *       could finish it himself once the victim had authenticated.
+   *   <li>Without the binding, an attacker who ran a request through with his own credentials could
+   *       send a victim here with the hand-off, and this response would write the attacker's OP
+   *       session into the victim's browser.
+   * </ul>
+   *
+   * <p>The binding is checked before the hand-off is consumed. The other way round, a caller with
+   * no binding could spend the hand-off and lock out the browser it was issued to.
    *
    * @param authProof the one-time value {@code /authorize} returned to that browser; the redirect
    *     travels inside it, so this URL carries nothing a caller can point elsewhere
@@ -639,26 +661,27 @@ public class OAuthFlowEntryService
     AuthorizationRequest authorizationRequest =
         oAuthProtocol.get(tenant, authorizationRequestIdentifier);
 
-    // Consumed before anything else. This is the whole authorization of this step: the value was
-    // issued by /authorize to the browser that had already proved it was the one which
-    // authenticated, so holding it is what distinguishes that browser from any other.
-    //
-    // It has to be the second of the two stages. The first is what /authorize itself asks for, and
-    // accepting one here would let a caller skip that step and arrive with the wrong one.
-    AuthenticationProof proof = authenticationProofRepository.claim(tenant, authProof);
-    if (proof == null
-        || !proof.hasRedirectUri()
-        || !proof.issuedFor(authorizationRequestIdentifier.value())) {
-      return OAuthCompleteResponse.error(
-          "invalid_request", "authorization request is not in progress.");
-    }
-
     AuthenticationTransaction authenticationTransaction;
     try {
       authenticationTransaction =
           authenticationTransactionQueryRepository.getForUpdate(
               tenant, authorizationRequestIdentifier.toAuthorizationIdentifier());
     } catch (AuthenticationTransactionNotFoundException e) {
+      return OAuthCompleteResponse.error(
+          "invalid_request", "authorization request is not in progress.");
+    }
+
+    if (!startedByThisBrowser(authenticationTransaction)) {
+      return OAuthCompleteResponse.error(
+          "invalid_request", "this browser did not start the authorization request.");
+    }
+
+    // It has to be the second of the two stages. The first is what /authorize itself asks for, and
+    // accepting one here would let a caller skip that step and arrive with the wrong one.
+    AuthenticationProof proof = authenticationProofRepository.claim(tenant, authProof);
+    if (proof == null
+        || !proof.hasRedirectUri()
+        || !proof.issuedFor(authorizationRequestIdentifier.value())) {
       return OAuthCompleteResponse.error(
           "invalid_request", "authorization request is not in progress.");
     }
@@ -871,9 +894,9 @@ public class OAuthFlowEntryService
     AuthorizationRequest authorizationRequest =
         oAuthProtocol.get(tenant, authorizationRequestIdentifier);
 
-    // Get OPSession from cookie and validate
-    OPSession opSession =
-        oidcSessionHandler.getOPSessionFromCookie(tenant, sessionCookieDelegate).orElse(null);
+    // Same-site from the cookie; cross-site from the request, where the authorization endpoint put
+    // it while the cookie was still readable.
+    OPSession opSession = authenticatingSession(tenant, authorizationRequest);
 
     SessionValidationResult validationResult =
         oidcSessionHandler.validateSessionForAuthorization(
@@ -1074,6 +1097,27 @@ public class OAuthFlowEntryService
     return clientConfigurationQueryRepository
         .get(tenant, requestedClientId)
         .crossSiteAuthorizationView(tenant.uiConfiguration());
+  }
+
+  /**
+   * Whether the browser binding cookie matches the one issued when this request started.
+   *
+   * <p>Asked regardless of topology, unlike {@link #validateAuthSession}: {@code /complete} is a
+   * top level navigation, so the cookie reaches it even where the authorization view is on another
+   * site. A tenant whose policy opts out of the binding is still honoured.
+   */
+  private boolean startedByThisBrowser(AuthenticationTransaction authenticationTransaction) {
+    AuthSessionId cookieAuthSessionId =
+        authSessionCookieDelegate
+            .getAuthSessionId()
+            .map(AuthSessionId::new)
+            .orElse(new AuthSessionId());
+    try {
+      AuthSessionValidator.validate(authenticationTransaction, cookieAuthSessionId);
+      return true;
+    } catch (UnauthorizedException e) {
+      return false;
+    }
   }
 
   /**

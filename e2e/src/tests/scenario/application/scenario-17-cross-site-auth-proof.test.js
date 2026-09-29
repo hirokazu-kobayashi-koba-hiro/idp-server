@@ -1,4 +1,7 @@
 import { beforeAll, describe, expect, it } from "@jest/globals";
+import axios from "axios";
+import { wrapper } from "axios-cookiejar-support";
+import { CookieJar } from "tough-cookie";
 import { v4 as uuidv4 } from "uuid";
 import { faker } from "@faker-js/faker";
 import { get, postWithJson } from "../../../lib/http";
@@ -66,6 +69,18 @@ describe("cross-site authorization view: auth_proof", () => {
       url: `${authorizations()}/${id}/authorize`,
       body: body ?? {},
     });
+
+  /**
+   * Cookie を持たないクライアント。
+   *
+   * `get` / `postWithJson` はすべての呼び出しで 1 つの Cookie jar を共有するので、ブラウザでいえば
+   * 「XHR にも Cookie が付く」状態になる。別サイトの認可画面からの XHR（Safari は Cookie を送らない）や、
+   * 別のブラウザを表すときはこちらを使う。
+   */
+  const withoutCookies = axios.create({
+    maxRedirects: 0,
+    validateStatus: () => true,
+  });
 
   const complete = async (id, authProof) =>
     get({
@@ -554,6 +569,148 @@ describe("cross-site authorization view: auth_proof", () => {
       await authorize(id, { auth_proof: authProof });
 
       const response = await get({ url: `${authorizations()}/${id}/complete` });
+
+      expect(response.status).toBe(400);
+    });
+
+    it("認可リクエストを始めたブラウザ以外からは完了できない", async () => {
+      // 攻撃者が自分の資格情報でここまで進め、proof ② を付けた URL を被害者に踏ませる形。
+      // 通ると、攻撃者の OP セッションが被害者のブラウザに書かれる。
+      const id = await startAuthorization();
+      const authProof = (await authenticate(id)).data.auth_proof;
+      const completionProof = (await authorize(id, { auth_proof: authProof }))
+        .data.auth_proof;
+
+      const response = await withoutCookies.get(`${authorizations()}/${id}/complete`, {
+        params: { auth_proof: completionProof },
+      });
+
+      expect(response.status).toBe(400);
+      expect(response.headers["set-cookie"] ?? []).not.toEqual(
+        expect.arrayContaining([expect.stringMatching(/^IDP_IDENTITY=[^;]+/)])
+      );
+    });
+
+    it("始めたブラウザ以外からの試行で proof ② は失われない", async () => {
+      // 照合は proof を消費する前。順番が逆だと、Cookie を持たない第三者が先に使い切れてしまう。
+      const id = await startAuthorization();
+      const authProof = (await authenticate(id)).data.auth_proof;
+      const completionProof = (await authorize(id, { auth_proof: authProof }))
+        .data.auth_proof;
+
+      await withoutCookies.get(`${authorizations()}/${id}/complete`, {
+        params: { auth_proof: completionProof },
+      });
+
+      expect((await complete(id, completionProof)).status).toBe(302);
+    });
+  });
+
+  describe("既存の OP セッションで続ける（with-session）", () => {
+    /**
+     * 他のテストと Cookie を共有しないブラウザ。共有の jar には前のテストの OP セッションが残っていて、
+     * 「最初のログイン」が既存セッションの再利用になってしまう。
+     *
+     * トップレベル遷移（認可リクエストと /complete）はこの jar で、認可画面からの XHR は
+     * withoutCookies で呼ぶ。別サイトの認可画面を Safari で開いたときと同じ形。
+     */
+    const newBrowser = () =>
+      wrapper(
+        axios.create({
+          jar: new CookieJar(),
+          maxRedirects: 0,
+          validateStatus: () => true,
+        })
+      );
+
+    const startIn = async (browser) => {
+      const response = await browser.get(authorizations(), {
+        params: {
+          client_id: clientId,
+          redirect_uri: redirectUri,
+          response_type: "code",
+          scope: "openid profile email",
+          state: uuidv4(),
+          nonce: uuidv4(),
+        },
+      });
+      expect(response.status).toBe(302);
+      return new URL(response.headers.location).searchParams.get("id");
+    };
+
+    const completeIn = (browser, id, authProof) =>
+      browser.get(`${authorizations()}/${id}/complete`, { params: { auth_proof: authProof } });
+
+    const tokenFrom = async (completed) => {
+      const token = await requestToken({
+        endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+        grantType: "authorization_code",
+        code: new URL(completed.headers.location).searchParams.get("code"),
+        redirectUri,
+        clientId,
+        clientSecret,
+      });
+      expect(token.status).toBe(200);
+      return jwtDecode(token.data.id_token);
+    };
+
+    // 別サイトの認可画面からの XHR には Cookie が付かない。OP セッションが読めるのは認可リクエストの
+    // トップレベル遷移だけなので、そこで認可リクエストに紐づけておき、画面の呼び出しはそれを使う。
+    it("別サイトの画面からでも SSO で完了でき、auth_time は最初のログインのまま", async () => {
+      const browser = newBrowser();
+
+      // 1 回目: 通常のログイン。認証と authorize は Cookie なしの XHR
+      const firstId = await startIn(browser);
+      const firstProof = (
+        await withoutCookies.post(`${authorizations()}/${firstId}/password-authentication`, {
+          username: user.email,
+          password: user.raw_password,
+        })
+      ).data.auth_proof;
+      const firstCompletion = (
+        await withoutCookies.post(`${authorizations()}/${firstId}/authorize`, {
+          auth_proof: firstProof,
+        })
+      ).data.auth_proof;
+      const first = await completeIn(browser, firstId, firstCompletion);
+      expect(first.status).toBe(302);
+      const firstAuthTime = (await tokenFrom(first)).auth_time;
+
+      // 2 回目: 認可リクエストはトップレベル遷移なので、/complete で書かれた OP セッションの Cookie が届く
+      const id = await startIn(browser);
+
+      const viewData = await withoutCookies.get(`${authorizations()}/${id}/view-data`);
+      expect(viewData.status).toBe(200);
+      expect(viewData.data.session_enabled).toBe(true);
+
+      const withSession = await withoutCookies.post(
+        `${authorizations()}/${id}/authorize-with-session`,
+        {}
+      );
+      expect(withSession.status).toBe(200);
+      expect(withSession.data.redirect_uri).toBeUndefined();
+      expect(typeof withSession.data.auth_proof).toBe("string");
+
+      const completed = await completeIn(browser, id, withSession.data.auth_proof);
+      expect(completed.status).toBe(302);
+
+      const idToken = await tokenFrom(completed);
+      expect(idToken.auth_time).toBe(firstAuthTime);
+      expect(idToken.sid).toBeTruthy();
+    });
+
+    it("SSO でも、始めたブラウザ以外からは完了できない", async () => {
+      // 認可リクエスト ID が漏れても、別のブラウザは被害者のセッションで code を受け取れない
+      const id = await startAuthorization();
+      const withSession = await withoutCookies.post(
+        `${authorizations()}/${id}/authorize-with-session`,
+        {}
+      );
+      expect(withSession.status).toBe(200);
+
+      const response = await withoutCookies.get(`${authorizations()}/${id}/complete`, {
+        params: { auth_proof: withSession.data.auth_proof },
+      });
 
       expect(response.status).toBe(400);
     });

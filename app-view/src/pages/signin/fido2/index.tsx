@@ -431,9 +431,15 @@ export default function Login() {
       }
       const body = await response.json();
       console.log(response.status, body);
-      if (body.redirect_uri) {
-        window.location.href = body.redirect_uri;
-      }
+      // Cross-site the code travels inside auth_proof and the browser goes through /complete;
+      // same-site redirect_uri carries it as before.
+      completeAuthorization({
+        backendUrl,
+        tenantId,
+        id,
+        authProof: body.auth_proof,
+        redirectUri: body.redirect_uri,
+      });
     };
     console.log(data);
     if (data && data.session_enabled === true) {

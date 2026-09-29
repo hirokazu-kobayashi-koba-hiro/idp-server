@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { backendUrl } from "@/pages/_app";
+import { completeAuthorization } from "@/auth/completion";
 import { ViewData } from "./types";
 
 /**
@@ -22,8 +23,9 @@ import { ViewData } from "./types";
  * would complete the authorization behind the user's back and skip the consent screen they were
  * about to see.
  *
- * The endpoint answers with the redirect back to the client, so a success navigates away from this
- * page and nothing else needs to render.
+ * The endpoint answers with the way back to the client — the redirect itself on a same-site
+ * deployment, an auth_proof for /complete on a cross-site one — so a success navigates away from
+ * this page and nothing else needs to render.
  */
 export const useSessionAuthorize = (
   tenantId: string,
@@ -55,8 +57,16 @@ export const useSessionAuthorize = (
         return;
       }
       const body = await response.json();
-      if (typeof body?.redirect_uri === "string") {
-        window.location.href = body.redirect_uri;
+      // Cross-site the code travels inside auth_proof and the browser goes through /complete,
+      // where the session cookie is first-party; same-site redirect_uri carries it as before.
+      if (typeof body?.auth_proof === "string" || typeof body?.redirect_uri === "string") {
+        completeAuthorization({
+          backendUrl,
+          tenantId,
+          id,
+          authProof: body.auth_proof,
+          redirectUri: body.redirect_uri,
+        });
         return;
       }
       setAuthorizing(false);
