@@ -26,6 +26,7 @@ import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigu
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.type.mtls.ClientCert;
 import org.idp.server.core.openid.oauth.type.oauth.ClientSecretBasic;
+import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.platform.jose.JoseContext;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -37,6 +38,7 @@ public class NormalPatternContextCreator implements CibaRequestContextCreator {
   @Override
   public CibaRequestContext create(
       Tenant tenant,
+      RequestedClientId requestedClientId,
       ClientSecretBasic clientSecretBasic,
       ClientCert clientCert,
       ClientAttestationJwt clientAttestationJwt,
@@ -54,6 +56,7 @@ public class NormalPatternContextCreator implements CibaRequestContextCreator {
     BackchannelAuthenticationRequest backchannelAuthenticationRequest =
         normalRequestFactory.create(
             tenant,
+            requestedClientId,
             profile,
             clientSecretBasic,
             parameters,
