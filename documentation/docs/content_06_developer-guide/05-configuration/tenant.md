@@ -732,6 +732,7 @@ idp-serverでは、Tenant設定を型安全な6つのConfigurationクラスに�
 | `signin_page` | string | `/auth-views/signin/index.html` | カスタムサインインページのパス |
 | `variant_param` | string | `view_version` | バリアント名を運ぶカスタムパラメータの名前 |
 | `variants` | object | なし | 名前付きバリアント。カナリアリリース用 |
+| `cross_site` | boolean | `false` | 認可画面が idp-server と別サイト（別の登録可能ドメイン）にあることの宣言。`true` で、ブラウザの識別を Cookie から `auth_proof` に切り替え、最後に `/complete` を経由させる。クライアントの `extension.cross_site_authorization_view` で上書きできる |
 
 **バリアント**（`variants`）は、既定の画面と並べて別の画面を走らせ、リクエスト単位で出し分ける仕組みです。各バリアントは `base_url` / `signin_page` / `signup_page` のうち差し替えるものだけを宣言します。
 
@@ -753,6 +754,8 @@ idp-serverでは、Tenant設定を型安全な6つのConfigurationクラスに�
 宣言されていない名前を受け取った場合は既定の画面に落ちます。名前はパスに連結されず、宣言済み候補のキーとしてのみ使われます。
 
 設定手順は [認可画面のカナリアリリース](../../content_05_how-to/phase-3-advanced/02-authorization-view-canary.md) を参照してください。
+
+**別サイト認可画面モード**（`cross_site`）は、`base_url` からは導出せず宣言で有効にします。Cookie の境界はオリジンではなくサイト（eTLD+1）で、`auth.example.com` と `api.example.com` は同一サイトです。有効にする前に、認可画面が `auth_proof` に対応している必要があります。手順は [認可画面を別サイトに置く](../../content_05_how-to/phase-3-advanced/03-authorization-view-cross-site.md) を参照してください。
 
 **実装**: [UIConfiguration.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/tenant/config/UIConfiguration.java)
 

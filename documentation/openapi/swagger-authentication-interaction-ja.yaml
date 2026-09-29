@@ -550,11 +550,18 @@ paths:
             から選択）。クレーム丸ごとではなく**要素単位**の同意です。
 
           ボディ無し（従来どおり）の場合は全要求 scope / クレームを許可します。
+
+          - `auth_proof`: 別サイト認可画面モードで、認証ステップの応答で受け取った値。ブラウザで本人しか
+            通せないステップを経た認可では必須です（無い・使用済み・別の認可リクエスト向け・別の利用者向けの
+            場合は 400）。デバイスだけで認証した認可（`login_hint` ＋ プッシュ承認など）では不要です。
         content:
           application/json:
             schema:
               type: object
               properties:
+                auth_proof:
+                  type: string
+                  description: 認証ステップの応答で受け取った `auth_proof`（別サイト認可画面モードのみ）
                 denied_scopes:
                   type: array
                   items:
@@ -627,12 +634,22 @@ paths:
                   summary: 認可承認成功
                   value:
                     redirect_uri: "https://client.example.com/callback?code=abc123&state=xyz"
+                cross-site:
+                  summary: 認可承認成功（別サイト認可画面モード）
+                  value:
+                    auth_proof: "Q29tcGxldGlvbi1wcm9vZi1leGFtcGxlLXZhbHVl"
         '400':
           description: リクエストが不正
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                auth-proof-missing:
+                  summary: auth_proof が無い・使用済み（別サイト認可画面モード）
+                  value:
+                    error: "invalid_request"
+                    error_description: "auth_proof is missing, already used, or was not issued for this authorization request."
         '401':
           description: |
             AUTH_SESSION cookie の欠落または不一致（フロー乗っ取り対策）。
@@ -661,6 +678,102 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
+  /{tenant-id}/v1/authorizations/{id}/authorize-with-session:
+    post:
+      tags:
+        - 認可リクエスト
+      summary: 既存の OP セッションで認可承認
+      description: |
+        ブラウザに有効な OP セッションがあり、view-data の `session_enabled` が true のときに、
+        再認証せずに認可を承認するAPI。ユーザーと認証情報は OP セッションから取ります。
+
+        別サイト認可画面モードでは、OP セッションは認可リクエスト（トップレベル遷移）の時点で
+        認可リクエストに紐づけられ、この呼び出しはそれを使います（XHR には Cookie が届かないため）。
+        応答は `authorize` と同じく `auth_proof` になり、認可画面は `/complete` へ遷移します。
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/AuthorizationRequestId'
+      responses:
+        '200':
+          description: 認可承認成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationResponse'
+        '400':
+          description: OP セッションが無い、または使えない（max_age 超過、acr_values 不一致など）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: |
+            AUTH_SESSION cookie の欠落または不一致（同一サイト構成のみ。別サイト認可画面モードでは XHR に Cookie が
+            届かないため照合せず、`/complete` で照合します）。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /{tenant-id}/v1/authorizations/{id}/complete:
+    get:
+      tags:
+        - 認可リクエスト
+      summary: 別サイト認可画面モードの完了（トップレベル遷移）
+      description: |
+        別サイト認可画面モードで、認可フローの最後にブラウザをトップレベル遷移させるエンドポイント。
+        `authorize`（または `authorize-with-session`）の応答で受け取った `auth_proof` を付けて開きます。
+        fetch / XHR では呼ばないでください（Cookie が保存されません）。
+
+        次の 2 つを照合し、OP セッションの Cookie を保存してクライアントの `redirect_uri` へ 302 します。
+
+        - `auth_proof`：認証したブラウザか
+        - `IDP_AUTH_SESSION` Cookie：認可リクエストを始めたブラウザか
+
+        遷移先は `auth_proof` の中にあり、URL で指定できるものはありません。
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/AuthorizationRequestId'
+        - name: auth_proof
+          in: query
+          required: true
+          description: '`authorize` の応答で受け取った `auth_proof`'
+          schema:
+            type: string
+      responses:
+        '302':
+          description: クライアントの `redirect_uri` へのリダイレクト（認可コード付き）
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+              example: "https://client.example.com/callback?code=abc123&state=xyz"
+        '400':
+          description: |
+            照合に失敗した。認可リクエストを始めたのと別のブラウザで開いた、`auth_proof` が無い・使用済み、など。
+            ブラウザのトップレベル遷移で開かれますが、JSON で返ります。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                other-browser:
+                  summary: 認可リクエストを始めたブラウザではない
+                  value:
+                    error: "invalid_request"
+                    error_description: "this browser did not start the authorization request."
+                not-in-progress:
+                  summary: auth_proof が無い・使用済み、または認可リクエストが終わっている
+                  value:
+                    error: "invalid_request"
+                    error_description: "authorization request is not in progress."
+                redirect-mismatch:
+                  summary: 遷移先が認可リクエストのものと一致しない
+                  value:
+                    error: "invalid_request"
+                    error_description: "redirect target does not match the authorization request."
 
   /{tenant-id}/v1/authorizations/{id}/deny:
     post:
@@ -1215,6 +1328,16 @@ components:
             status:
               type: string
               description: ユーザーの状態（`REGISTERED`、`IDENTITY_VERIFIED` など）
+        auth_proof:
+          type: string
+          description: |
+            別サイト認可画面モード（テナントの `ui_config.cross_site` またはクライアントの
+            `extension.cross_site_authorization_view`）でのみ返ります。
+
+            ブラウザから呼ばれ、本人しか通せない種類のステップ（パスワード、OTP、FIDO2、サインアップなど）が
+            成功したときに発行される使い捨ての値です。認可リクエスト ID ごとに最新のものを保持し、
+            `authorize` のボディに載せてください。
+          example: "Qm9vZ3lCZWFyLXJhbmRvbS12YWx1ZS1leGFtcGxl"
       additionalProperties: true
 
     ErrorResponse:
@@ -1501,14 +1624,23 @@ components:
         認可承認・認可拒否の応答。画面は `redirect_uri` へ遷移します。
 
         認可承認で、クライアントへリダイレクトで返すエラー（RFC 6749 4.1.2.1）になった場合も、エラーのパラメータを付けた `redirect_uri` を 200 で返します。
-      required:
-        - redirect_uri
+
+        別サイト認可画面モードの認可承認では `redirect_uri` の代わりに `auth_proof` を返します。
       properties:
         redirect_uri:
           type: string
           format: uri
-          description: 遷移先。成功時は認可レスポンスのパラメータ（`code`、`state` など）、拒否時は `error=access_denied` を付けたクライアントの redirect_uri
+          description: |
+            遷移先。成功時は認可レスポンスのパラメータ（`code`、`state` など）、拒否時は `error=access_denied` を付けたクライアントの redirect_uri。
+            別サイト認可画面モードの認可承認では返らず、代わりに `auth_proof` が返ります。
           example: "https://client.example.com/callback?code=abc123&state=xyz"
+        auth_proof:
+          type: string
+          description: |
+            別サイト認可画面モードでのみ返ります。`redirect_uri` の代わりに返る、`/complete` 用の使い捨ての値です。
+            認可コードはこの値の中にあり、応答のボディには出ません。
+            認可画面は `/{tenant-id}/v1/authorizations/{id}/complete?auth_proof=<値>` へトップレベル遷移してください。
+          example: "Q29tcGxldGlvbi1wcm9vZi1leGFtcGxlLXZhbHVl"
 
     # フェデレーション関連スキーマ
     FederationResponse:
@@ -1576,6 +1708,16 @@ components:
         error_description:
           type: string
           description: 失敗時のエラーの説明
+        auth_proof:
+          type: string
+          description: |
+            別サイト認可画面モード（テナントの `ui_config.cross_site` またはクライアントの
+            `extension.cross_site_authorization_view`）でのみ返ります。
+
+            ブラウザから呼ばれ、本人しか通せない種類のステップ（パスワード、OTP、FIDO2、サインアップなど）が
+            成功したときに発行される使い捨ての値です。認可リクエスト ID ごとに最新のものを保持し、
+            `authorize` のボディに載せてください。
+          example: "Qm9vZ3lCZWFyLXJhbmRvbS12YWx1ZS1leGFtcGxl"
 
   responses:
     FederationUpstreamError:

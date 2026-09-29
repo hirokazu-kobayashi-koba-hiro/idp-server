@@ -119,5 +119,6 @@ RP  ->  /v1/authorizations?...&view_version=v2
 
 ## 関連ドキュメント
 
+- [認可画面を別サイトに置く](./03-authorization-view-cross-site.md) - 新しい画面が別サイトにあるとき
 - [テナント設定](../../content_06_developer-guide/05-configuration/tenant.md) - `ui_config` のフィールドリファレンス
 - [テナント設定（How-to）](../phase-1-foundation/03-tenant-setup.md) - テナントの作成
