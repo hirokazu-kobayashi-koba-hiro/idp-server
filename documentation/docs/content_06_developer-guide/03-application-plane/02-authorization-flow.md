@@ -708,12 +708,12 @@ Token Request（省略可能）
 | attributes のキー | 中身 | 書く場所 | 消える場所 |
 |---|---|---|---|
 | `auth_proof` | ① のハッシュと `sub` | 認証ステップ、フェデレーションのコールバック | `authorize` で ② に置き換え |
-| `completion_proof` | ② のハッシュ、`sub`、遷移先（code 付き） | `authorize`、`authorize-with-session` | `/complete` でトランザクションごと削除 |
+| `completion_proof` | ② のハッシュ、`sub`、遷移先（code 付き。`AesCipher` で暗号化） | `authorize`、`authorize-with-session` | `/complete` でトランザクションごと削除 |
 | `op_session_id` | 紐づけた OP セッションの ID | 認可リクエスト、認証成功時 | `/complete` でトランザクションごと削除 |
 
 値そのものは保存しません。`AuthenticationProof` が値を生成して SHA-256 のハッシュだけを `storeOn` で書き、照合（`authorizes` / `completes`）は固定時間の比較です。各段は最新の 1 つだけが有効です。
 
-`authorize` と `/complete` はトランザクションを `getForUpdate`（行ロック）で読むため、同じ proof を同時に使っても通るのは 1 つだけです。トランザクションの `UPDATE` は attributes も書きます（PostgreSQL / MySQL の両方）。
+`authorize` と `/complete` はトランザクションを `getForUpdate`（行ロック）で読むため、同じ proof を同時に使っても通るのは 1 つだけです。`completion_proof` が既にあるトランザクションへの `authorize` / `authorize-with-session` は拒否します（`handedOffForCompletion`）。proof を求めないフローでは、リクエスト ID を知る第三者が呼び直して ② を差し替え、正規のブラウザを締め出せるためです。トランザクションの `UPDATE` は attributes も書きます（PostgreSQL / MySQL の両方）。
 
 ### 処理の流れ
 
@@ -722,7 +722,7 @@ Token Request（省略可能）
 | 認可リクエスト | `request` | ブラウザに OP セッションの Cookie があれば、トランザクションの `op_session_id` に入れる（トップレベル遷移なので読める） |
 | 認証ステップ | `proofForBrowserStep` / `carryCrossSiteBinding` | ブラウザから来て、本人しか通せない種類（`OperationType#provesPossession`）のステップが成功したら ① を発行。認証が成功して作った OP セッションも紐づける |
 | authorize | `presentsAuthenticationProof` / `issueCompletionProof` | ① を照合し、② を発行して応答に載せる。code は ② の中に入れ、応答のボディに出さない |
-| /complete | `complete` / `startedByThisBrowser` | `IDP_AUTH_SESSION` を照合してから ② を照合する。OP セッションの Cookie を書き、② の遷移先へ 302 |
+| /complete | `complete` / `startedByThisBrowser` | `IDP_AUTH_SESSION` を照合してから ② を照合する。OP セッションの Cookie を書き、② の遷移先へ 302。失敗時は RP に戻さず、テナントのエラー画面へ 302（`OAuthCompleteResponse.errorPage`） |
 
 `/complete` の照合は、`IDP_AUTH_SESSION` を先に見ます。先に ② を照合して消費すると、Cookie を持たない呼び出しが ② を使い切り、正規のブラウザを締め出せるためです（② はトランザクションの削除で消えます）。
 

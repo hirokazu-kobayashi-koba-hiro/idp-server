@@ -236,8 +236,8 @@ async function run(scenario: Scenario): Promise<{ steps: Step[]; idToken?: Recor
       "top-level",
       "GET",
       `/v1/authorizations/${id}/complete?auth_proof=${encodeURIComponent(proof1 ?? "")}`,
-      400,
-      "2 段の proof は取り違えられない。① は authorize 専用なので /complete では拒否される。",
+      302,
+      "2 段の proof は取り違えられない。① は authorize 専用なので /complete では拒否され、RP ではなく idp-server のエラー画面へ遷移する。",
     );
     return { steps: browser.steps };
   }
@@ -297,8 +297,8 @@ async function run(scenario: Scenario): Promise<{ steps: Step[]; idToken?: Recor
         "top-level",
         "GET",
         completePath,
-        400,
-        "proof ② も使い捨て。code を二度届けることはできない。",
+        302,
+        "proof ② も使い捨て。code を二度届けることはできず、RP ではなく idp-server のエラー画面へ遷移する。",
       );
       return { steps: browser.steps };
     }

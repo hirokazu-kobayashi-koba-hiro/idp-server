@@ -90,6 +90,18 @@ describe("cross-site authorization view: auth_proof", () => {
       params: { auth_proof: authProof },
     });
 
+  /**
+   * /complete はトップレベル遷移で開かれるので、照合に失敗したらテナントのエラー画面へ 302 する。
+   * RP へは戻さない（code も error も渡さない）。
+   */
+  const expectErrorPage = (response) => {
+    expect(response.status).toBe(302);
+    const location = new URL(response.headers.location);
+    expect(location.pathname).toMatch(/\/error\/?$/);
+    expect(location.searchParams.get("error")).toBe("invalid_request");
+    expect(location.searchParams.get("code")).toBeNull();
+  };
+
   beforeAll(async () => {
     const systemToken = await requestToken({
       endpoint: adminServerConfig.tokenEndpoint,
@@ -570,7 +582,7 @@ describe("cross-site authorization view: auth_proof", () => {
 
       const response = await complete(id, authProof);
 
-      expect(response.status).toBe(400);
+      expectErrorPage(response);
     });
 
     it("一度使った auth_proof は二度使えない", async () => {
@@ -580,7 +592,7 @@ describe("cross-site authorization view: auth_proof", () => {
         .data.auth_proof;
 
       expect((await complete(id, completionProof)).status).toBe(302);
-      expect((await complete(id, completionProof)).status).toBe(400);
+      expectErrorPage(await complete(id, completionProof));
     });
 
     it("auth_proof を付けなければ拒否される", async () => {
@@ -590,7 +602,7 @@ describe("cross-site authorization view: auth_proof", () => {
 
       const response = await get({ url: `${authorizations()}/${id}/complete` });
 
-      expect(response.status).toBe(400);
+      expectErrorPage(response);
     });
 
     it("認可リクエストを始めたブラウザ以外からは完了できない", async () => {
@@ -605,7 +617,7 @@ describe("cross-site authorization view: auth_proof", () => {
         params: { auth_proof: completionProof },
       });
 
-      expect(response.status).toBe(400);
+      expectErrorPage(response);
       expect(response.headers["set-cookie"] ?? []).not.toEqual(
         expect.arrayContaining([expect.stringMatching(/^IDP_IDENTITY=[^;]+/)])
       );
@@ -732,7 +744,7 @@ describe("cross-site authorization view: auth_proof", () => {
         params: { auth_proof: withSession.data.auth_proof },
       });
 
-      expect(response.status).toBe(400);
+      expectErrorPage(response);
     });
   });
 
@@ -910,7 +922,24 @@ describe("cross-site authorization view: auth_proof", () => {
         params: { auth_proof: authorized.data.auth_proof },
       });
 
-      expect(response.status).toBe(400);
+      expectErrorPage(response);
+    });
+
+    it("authorize をもう一度呼んでも、最初の /complete 用 proof は失われない", async () => {
+      // proof を求めない認可では、リクエスト ID を知っていれば authorize を呼べる。呼ぶたびに
+      // /complete 用の proof を差し替えられると、正規のブラウザが締め出される。
+      const id = await startDeviceOnlyAuthorization();
+      await approveOnDevice(id);
+      const first = await withoutCookies.post(`${authorizations()}/${id}/authorize`, {});
+      expect(first.status).toBe(200);
+
+      const second = await withoutCookies.post(`${authorizations()}/${id}/authorize`, {});
+      expect(second.status).toBe(400);
+      expect(second.data.error).toBe("invalid_request");
+
+      const completed = await complete(id, first.data.auth_proof);
+      expect(completed.status).toBe(302);
+      expect(new URL(completed.headers.location).searchParams.get("code")).toBeTruthy();
     });
 
     it("ブラウザ側の認証を経た認可では、proof なしの authorize は今までどおり拒否される", async () => {

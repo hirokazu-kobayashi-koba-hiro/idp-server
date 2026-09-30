@@ -16,47 +16,39 @@
 
 package org.idp.server.core.openid.oauth.io;
 
-import java.util.HashMap;
-import java.util.Map;
+import org.idp.server.core.openid.oauth.type.oauth.Error;
+import org.idp.server.core.openid.oauth.type.oauth.ErrorDescription;
+import org.idp.server.core.openid.oauth.view.OAuthViewUrlResolver;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
  * What the browser gets from the first-party hand-off at the end of an authorization flow.
  *
- * <p>Either a redirect to the client, or an error to show — never a body the authorization view is
- * expected to act on, because by this point the view is no longer driving: the browser has left it.
+ * <p>Always a redirect: this is a top level navigation, so whatever it answers is what the end-user
+ * sees. On success, the client's redirect. On failure, the tenant's error page, as for an
+ * authorization request that cannot be processed — never the client, because the redirect this
+ * hand-off would have trusted is exactly what could not be established, and never a raw body the
+ * end-user would be left looking at.
  */
 public class OAuthCompleteResponse {
 
-  String redirectUri;
-  String error;
-  String errorDescription;
+  String location;
 
-  private OAuthCompleteResponse(String redirectUri, String error, String errorDescription) {
-    this.redirectUri = redirectUri;
-    this.error = error;
-    this.errorDescription = errorDescription;
+  private OAuthCompleteResponse(String location) {
+    this.location = location;
   }
 
   public static OAuthCompleteResponse redirect(String redirectUri) {
-    return new OAuthCompleteResponse(redirectUri, null, null);
+    return new OAuthCompleteResponse(redirectUri);
   }
 
-  public static OAuthCompleteResponse error(String error, String errorDescription) {
-    return new OAuthCompleteResponse(null, error, errorDescription);
+  public static OAuthCompleteResponse errorPage(Tenant tenant, String error, String description) {
+    return new OAuthCompleteResponse(
+        OAuthViewUrlResolver.resolveError(
+            tenant, new Error(error), new ErrorDescription(description)));
   }
 
-  public boolean isRedirect() {
-    return redirectUri != null && !redirectUri.isEmpty();
-  }
-
-  public String redirectUri() {
-    return redirectUri;
-  }
-
-  public Map<String, Object> contents() {
-    Map<String, Object> contents = new HashMap<>();
-    contents.put("error", error);
-    contents.put("error_description", errorDescription);
-    return contents;
+  public String location() {
+    return location;
   }
 }

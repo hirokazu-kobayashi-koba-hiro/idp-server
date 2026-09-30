@@ -650,6 +650,11 @@ paths:
                   value:
                     error: "invalid_request"
                     error_description: "auth_proof is missing, already used, or was not issued for this authorization request."
+                already-authorized:
+                  summary: すでに /complete 用の auth_proof を返した認可（別サイト認可画面モード）
+                  value:
+                    error: "invalid_request"
+                    error_description: "authorization request has already been authorized."
         '401':
           description: |
             AUTH_SESSION cookie の欠落または不一致（フロー乗っ取り対策）。
@@ -743,37 +748,30 @@ paths:
             type: string
       responses:
         '302':
-          description: クライアントの `redirect_uri` へのリダイレクト（認可コード付き）
+          description: |
+            照合に成功すると、クライアントの `redirect_uri` へリダイレクトします（認可コード付き）。
+
+            照合に失敗すると、クライアントには戻さず、テナントのエラー画面（`ui_config.base_url` の `/error/`、
+            未設定ならテナントのドメイン）へリダイレクトします。`error` は `invalid_request` で、
+            `error_description` は次のいずれかです。
+
+            | error_description | 原因 |
+            |---|---|
+            | `this browser did not start the authorization request.` | 認可リクエストを始めたブラウザではない |
+            | `authorization request is not in progress.` | `auth_proof` が無い・使用済み、または認可リクエストが終わっている |
+            | `redirect target does not match the authorization request.` | 遷移先が認可リクエストのものと一致しない |
           headers:
             Location:
               schema:
                 type: string
                 format: uri
-              example: "https://client.example.com/callback?code=abc123&state=xyz"
-        '400':
-          description: |
-            照合に失敗した。認可リクエストを始めたのと別のブラウザで開いた、`auth_proof` が無い・使用済み、など。
-            ブラウザのトップレベル遷移で開かれますが、JSON で返ります。
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
               examples:
-                other-browser:
-                  summary: 認可リクエストを始めたブラウザではない
-                  value:
-                    error: "invalid_request"
-                    error_description: "this browser did not start the authorization request."
-                not-in-progress:
-                  summary: auth_proof が無い・使用済み、または認可リクエストが終わっている
-                  value:
-                    error: "invalid_request"
-                    error_description: "authorization request is not in progress."
-                redirect-mismatch:
-                  summary: 遷移先が認可リクエストのものと一致しない
-                  value:
-                    error: "invalid_request"
-                    error_description: "redirect target does not match the authorization request."
+                success:
+                  summary: 照合に成功した
+                  value: "https://client.example.com/callback?code=abc123&state=xyz"
+                error:
+                  summary: 照合に失敗した
+                  value: "https://auth.example-login.com/error/?error=invalid_request&error_description=authorization request is not in progress.&tenant_id=67e7eae6-62b0-4500-9eff-87459f63fc66"
 
   /{tenant-id}/v1/authorizations/{id}/deny:
     post:

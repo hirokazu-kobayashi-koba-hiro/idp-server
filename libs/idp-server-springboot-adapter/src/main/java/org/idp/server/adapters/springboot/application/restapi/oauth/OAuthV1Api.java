@@ -18,7 +18,6 @@ package org.idp.server.adapters.springboot.application.restapi.oauth;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
-import java.net.URI;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
@@ -325,13 +324,10 @@ public class OAuthV1Api implements ParameterTransformable, SecurityHeaderConfigu
     HttpHeaders httpHeaders = createSecurityHeaders();
     httpHeaders.setCacheControl("no-store, private");
 
-    if (response.isRedirect()) {
-      httpHeaders.setLocation(URI.create(response.redirectUri()));
-      return new ResponseEntity<>(httpHeaders, HttpStatus.FOUND);
-    }
-
-    httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-    return new ResponseEntity<>(response.contents(), httpHeaders, HttpStatus.BAD_REQUEST);
+    // Always a redirect, to the client or to the tenant's error page. Added as given, as the
+    // authorization endpoint does: the error page URL is built the same way.
+    httpHeaders.add(HttpHeaders.LOCATION, response.location());
+    return new ResponseEntity<>(httpHeaders, HttpStatus.FOUND);
   }
 
   @PostMapping("/{id}/authorize")

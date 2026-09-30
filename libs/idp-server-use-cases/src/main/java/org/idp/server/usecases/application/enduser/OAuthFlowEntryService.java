@@ -59,6 +59,7 @@ import org.idp.server.core.openid.oauth.*;
 import org.idp.server.core.openid.oauth.AuthenticationProof;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
+import org.idp.server.core.openid.oauth.exception.OAuthRequestNotFoundException;
 import org.idp.server.core.openid.oauth.io.*;
 import org.idp.server.core.openid.oauth.io.OAuthAuthenticationStatusResponse;
 import org.idp.server.core.openid.oauth.io.OAuthAuthenticationStatusStatus;
@@ -75,6 +76,7 @@ import org.idp.server.core.openid.session.OIDCSessionHandler;
 import org.idp.server.core.openid.session.OPSession;
 import org.idp.server.core.openid.session.SessionCookieDelegate;
 import org.idp.server.core.openid.session.SessionValidationResult;
+import org.idp.server.platform.crypto.AesCipher;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.exception.UnauthorizedException;
 import org.idp.server.platform.http.HttpRequestInputs;
@@ -112,6 +114,7 @@ public class OAuthFlowEntryService
   UserLifecycleEventPublisher userLifecycleEventPublisher;
   OIDCSessionHandler oidcSessionHandler;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
+  AesCipher aesCipher;
 
   public OAuthFlowEntryService(
       OAuthProtocols oAuthProtocols,
@@ -129,7 +132,8 @@ public class OAuthFlowEntryService
       OAuthFlowEventPublisher eventPublisher,
       UserLifecycleEventPublisher userLifecycleEventPublisher,
       OIDCSessionHandler oidcSessionHandler,
-      ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
+      ClientConfigurationQueryRepository clientConfigurationQueryRepository,
+      AesCipher aesCipher) {
     this.oAuthProtocols = oAuthProtocols;
     this.sessionCookieDelegate = sessionCookieDelegate;
     this.authSessionCookieDelegate = authSessionCookieDelegate;
@@ -146,6 +150,7 @@ public class OAuthFlowEntryService
     this.userLifecycleEventPublisher = userLifecycleEventPublisher;
     this.oidcSessionHandler = oidcSessionHandler;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
+    this.aesCipher = aesCipher;
   }
 
   @Override
@@ -539,6 +544,9 @@ public class OAuthFlowEntryService
     // A flow with no browser step that proves possession had nothing to earn one with — the
     // authentication happened on a device. It is bound to the browser that started it at /complete
     // instead.
+    if (handedOffForCompletion(tenant, authorizationRequest, authenticationTransaction)) {
+      return alreadyAuthorized();
+    }
     if (crossSiteAuthorizationView(tenant, authorizationRequest)
         // Read from the transaction, not the proof store: a cache that cannot answer must not
         // turn into "no browser step" and waive the proof.
@@ -679,8 +687,16 @@ public class OAuthFlowEntryService
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
-    AuthorizationRequest authorizationRequest =
-        oAuthProtocol.get(tenant, authorizationRequestIdentifier);
+
+    // Reached again after it already completed — the back button, a reload — once the request
+    // is gone. The end-user is shown the error page rather than whatever the lookup would throw.
+    AuthorizationRequest authorizationRequest;
+    try {
+      authorizationRequest = oAuthProtocol.get(tenant, authorizationRequestIdentifier);
+    } catch (OAuthRequestNotFoundException e) {
+      return OAuthCompleteResponse.errorPage(
+          tenant, "invalid_request", "authorization request is not in progress.");
+    }
 
     AuthenticationTransaction authenticationTransaction;
     try {
@@ -688,13 +704,13 @@ public class OAuthFlowEntryService
           authenticationTransactionQueryRepository.getForUpdate(
               tenant, authorizationRequestIdentifier.toAuthorizationIdentifier());
     } catch (AuthenticationTransactionNotFoundException e) {
-      return OAuthCompleteResponse.error(
-          "invalid_request", "authorization request is not in progress.");
+      return OAuthCompleteResponse.errorPage(
+          tenant, "invalid_request", "authorization request is not in progress.");
     }
 
     if (!startedByThisBrowser(authenticationTransaction)) {
-      return OAuthCompleteResponse.error(
-          "invalid_request", "this browser did not start the authorization request.");
+      return OAuthCompleteResponse.errorPage(
+          tenant, "invalid_request", "this browser did not start the authorization request.");
     }
 
     // It has to be the second of the two stages. The first is what /authorize itself asks for, and
@@ -702,18 +718,18 @@ public class OAuthFlowEntryService
     //
     // Spent by deleting the transaction below; a second arrival finds nothing to complete.
     AuthenticationProof proof =
-        AuthenticationProof.completionOn(attributesOf(authenticationTransaction));
+        AuthenticationProof.completionOn(attributesOf(authenticationTransaction), aesCipher);
     if (!proof.completes(authProof)) {
-      return OAuthCompleteResponse.error(
-          "invalid_request", "authorization request is not in progress.");
+      return OAuthCompleteResponse.errorPage(
+          tenant, "invalid_request", "authorization request is not in progress.");
     }
 
     // The redirect target is taken from the proof, never from the query string, so there is
     // nothing here for a caller to point somewhere else.
     RedirectUri to = new RedirectUri(proof.redirectUri());
     if (!registeredRedirectUri(tenant, authorizationRequest).addressesSameTarget(to)) {
-      return OAuthCompleteResponse.error(
-          "invalid_request", "redirect target does not match the authorization request.");
+      return OAuthCompleteResponse.errorPage(
+          tenant, "invalid_request", "redirect target does not match the authorization request.");
     }
 
     if (authenticationTransaction.isSuccess()) {
@@ -776,8 +792,8 @@ public class OAuthFlowEntryService
       return null;
     }
     if (!result.hasUser()) {
-      // 誰のものか言えない proof は authorize が受け取らない。発行しないのと結果は同じで、
-      // こちらは sub を読みに行かない分だけ落ちない。
+      // A proof that cannot say whose it is would be refused by /authorize anyway. Not issuing one
+      // has the same outcome, without reading a sub that is not there.
       return null;
     }
     return AuthenticationProof.authenticated(result.user().sub());
@@ -809,7 +825,7 @@ public class OAuthFlowEntryService
       attributes = attributes.withOpSessionId(createdSession.id().value());
     }
     if (proof != null) {
-      attributes = proof.storeOn(attributes);
+      attributes = proof.storeOn(attributes, aesCipher);
     }
     authenticationTransactionCommandRepository.update(
         tenant, authenticationTransaction.withAttributes(attributes));
@@ -865,8 +881,8 @@ public class OAuthFlowEntryService
       String sub,
       OAuthAuthorizeResponse authorize) {
 
-    // 応答に直接聞く。contents() は authProof の有無で中身が変わるので、そこから読むと
-    // 呼ぶ順番に依存する。
+    // Asked of the response directly. contents() changes with whether an auth proof is set, so
+    // reading the redirect from there would depend on the order of the calls.
     String target = authorize.redirectUriValue();
     if (target == null || target.isEmpty()) {
       return;
@@ -875,8 +891,34 @@ public class OAuthFlowEntryService
     attributes = AuthenticationProof.authenticatedOn(attributes).spendOn(attributes);
     AuthenticationProof completion = AuthenticationProof.forCompletion(sub, target);
     authenticationTransactionCommandRepository.update(
-        tenant, authenticationTransaction.withAttributes(completion.storeOn(attributes)));
+        tenant,
+        authenticationTransaction.withAttributes(completion.storeOn(attributes, aesCipher)));
     authorize.withAuthProof(completion.value());
+  }
+
+  /**
+   * Whether this authorization has already been authorized and is waiting for {@code /complete}.
+   *
+   * <p>Cross-site the transaction stays until {@code /complete}, and for flows that ask for no
+   * proof at {@code /authorize} — device-only authentication, sign-in with an existing session —
+   * anyone holding the request id can call it. Authorizing again would mint another code and
+   * replace the hand-off the browser was given, locking that browser out. The first hand-off
+   * stands.
+   */
+  private boolean handedOffForCompletion(
+      Tenant tenant,
+      AuthorizationRequest authorizationRequest,
+      AuthenticationTransaction authenticationTransaction) {
+    return crossSiteAuthorizationView(tenant, authorizationRequest)
+        && AuthenticationProof.completionOn(attributesOf(authenticationTransaction), aesCipher)
+            .exists();
+  }
+
+  private OAuthAuthorizeResponse alreadyAuthorized() {
+    return new OAuthAuthorizeResponse(
+        OAuthAuthorizeStatus.BAD_REQUEST,
+        "invalid_request",
+        "authorization request has already been authorized.");
   }
 
   private AuthenticationTransactionAttributes attributesOf(
@@ -945,6 +987,10 @@ public class OAuthFlowEntryService
     AuthorizationRequest authorizationRequest =
         oAuthProtocol.get(tenant, authorizationRequestIdentifier);
 
+    if (handedOffForCompletion(tenant, authorizationRequest, authenticationTransaction)) {
+      return alreadyAuthorized();
+    }
+
     // Same-site from the cookie; cross-site from the request, where the authorization endpoint put
     // it while the cookie was still readable.
     OPSession opSession =
@@ -989,10 +1035,9 @@ public class OAuthFlowEntryService
       userRegistrator.registerOrUpdate(tenant, user);
 
       // Same rule as the interactive path: cross-site, the code does not travel in this response.
-      // The caller reached this point by presenting an OP session cookie, so it is already the
-      // browser the session belongs to and there is no separate proof to ask for — but the
-      // redirect still has to be made from a first-party navigation, or the session cookie is
-      // never refreshed and the flow leaves nothing behind.
+      // Nothing here identifies the caller — the session was bound to the transaction at the
+      // authorization request, and this XHR carries no cookie — so the code is handed off, and
+      // /complete delivers it only to the browser holding the binding cookie of the request.
       if (crossSiteAuthorizationView(tenant, authorizationRequest)) {
         issueCompletionProof(tenant, authenticationTransaction, user.sub(), authorize);
       }
@@ -1177,8 +1222,10 @@ public class OAuthFlowEntryService
    *
    * <p>Skipped where the authorization view is on another site, because the call carrying this
    * check is then third-party and the cookie is not sent — the check could only ever fail, which is
-   * why it had to be turned off per tenant to make such a deployment work at all. Those deployments
-   * are bound by the hand-off instead, which {@code /authorize} requires in its place.
+   * why the binding had to be turned off in the authentication policy ({@code
+   * auth_session_binding_required}) to make such a deployment work at all. Those deployments are
+   * bound by the hand-off instead, which {@code /authorize} requires in its place, and by the
+   * cookie again at {@code /complete}, where it does arrive.
    *
    * @param authenticationTransaction the transaction to validate against
    * @throws org.idp.server.platform.exception.UnauthorizedException if validation fails

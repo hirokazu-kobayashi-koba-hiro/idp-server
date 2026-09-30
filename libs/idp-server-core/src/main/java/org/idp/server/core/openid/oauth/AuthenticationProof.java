@@ -23,6 +23,8 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionAttributes;
+import org.idp.server.platform.crypto.AesCipher;
+import org.idp.server.platform.crypto.EncryptedData;
 import org.idp.server.platform.random.RandomStringGenerator;
 
 /**
@@ -71,6 +73,9 @@ import org.idp.server.platform.random.RandomStringGenerator;
  * makes spending it single-use. A cache would have been the obvious place, but the cache is allowed
  * to be absent; this is not, and a proof that silently could not be read would either lock every
  * user out or, worse, read as "no proof was ever issued".
+ *
+ * <p>The second stage carries the redirect, and the redirect carries the authorization code — and,
+ * for a hybrid response type, tokens. It is stored encrypted, as tokens are elsewhere.
  */
 public class AuthenticationProof {
 
@@ -110,9 +115,10 @@ public class AuthenticationProof {
     return fromMap(attributes.getValueAsMap(AUTHENTICATED_ATTRIBUTE));
   }
 
-  /** The second-stage proof stored on these attributes, or an empty one. */
-  public static AuthenticationProof completionOn(AuthenticationTransactionAttributes attributes) {
-    return fromMap(attributes.getValueAsMap(COMPLETION_ATTRIBUTE));
+  /** The second-stage proof stored on these attributes, with its redirect decrypted. */
+  public static AuthenticationProof completionOn(
+      AuthenticationTransactionAttributes attributes, AesCipher cipher) {
+    return fromMap(attributes.getValueAsMap(COMPLETION_ATTRIBUTE), cipher);
   }
 
   /**
@@ -120,8 +126,8 @@ public class AuthenticationProof {
    * each browser step issues a new one, and the view keeps the latest.
    */
   public AuthenticationTransactionAttributes storeOn(
-      AuthenticationTransactionAttributes attributes) {
-    return attributes.with(stageAttribute(), toMap());
+      AuthenticationTransactionAttributes attributes, AesCipher cipher) {
+    return attributes.with(stageAttribute(), toMap(cipher));
   }
 
   /** Removes this stage's proof, which is what spending it means. */
@@ -180,17 +186,28 @@ public class AuthenticationProof {
     return hasRedirectUri() ? COMPLETION_ATTRIBUTE : AUTHENTICATED_ATTRIBUTE;
   }
 
-  private Map<String, Object> toMap() {
+  private Map<String, Object> toMap(AesCipher cipher) {
     Map<String, Object> map = new HashMap<>();
     map.put("hash", hash);
     if (sub != null) map.put("sub", sub);
-    if (redirectUri != null) map.put("redirect_uri", redirectUri);
+    if (hasRedirectUri()) map.put("redirect_uri", cipher.encrypt(redirectUri).toMap());
     return map;
   }
 
   private static AuthenticationProof fromMap(Map<String, Object> map) {
+    return new AuthenticationProof(null, (String) map.get("hash"), (String) map.get("sub"), null);
+  }
+
+  private static AuthenticationProof fromMap(Map<String, Object> map, AesCipher cipher) {
+    String redirectUri = null;
+    if (map.get("redirect_uri") instanceof Map<?, ?> encrypted) {
+      redirectUri =
+          cipher.decrypt(
+              new EncryptedData(
+                  (String) encrypted.get("cipher_text"), (String) encrypted.get("iv")));
+    }
     return new AuthenticationProof(
-        null, (String) map.get("hash"), (String) map.get("sub"), (String) map.get("redirect_uri"));
+        null, (String) map.get("hash"), (String) map.get("sub"), redirectUri);
   }
 
   private static String hashOf(String value) {

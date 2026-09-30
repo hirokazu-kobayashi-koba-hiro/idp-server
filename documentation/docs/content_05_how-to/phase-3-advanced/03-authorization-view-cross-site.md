@@ -132,9 +132,17 @@ idp-server 付属の認可画面（app-view）は対応済みです。自作の�
 
 ## 注意点
 
-**`/complete` のエラーは JSON で返ります。** `/complete` はブラウザのトップレベル遷移で開かれますが、照合に失敗すると `400` と `{"error": "invalid_request", ...}` を返します。認可リクエストを始めたのと別のブラウザで開いた、同じ URL を二度開いた、などが原因です。
+**`/complete` の照合に失敗すると、テナントのエラー画面へ遷移します。** RP には戻りません。遷移先は `ui_config.base_url` の `/error/` で、`error=invalid_request` と `error_description` が付きます。認可リクエストを始めたのと別のブラウザで開いた、同じ URL を二度開いた、などが原因です。
 
-**deny（キャンセル）はブラウザに束縛されません。** 認証前のキャンセルにも使うため `auth_proof` を求められず、`IDP_AUTH_SESSION` も XHR には届きません。認可リクエスト ID を知っていれば取り消せます（code や OP セッションは出ません）（[#1913](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues/1913)）。
+**`authorize` は 1 回しか呼べません。** 一度 `/complete` 用の `auth_proof` を返した認可に、もう一度 `authorize`（または `authorize-with-session`）を呼ぶと 400 になります。最初に受け取った値で `/complete` へ遷移してください。
+
+**認証ステップは、認可リクエストを始めたブラウザに束縛されません。** 認証ステップは XHR なので `IDP_AUTH_SESSION` が届かず、始めたブラウザの照合は `/complete` だけで行います。認可リクエスト ID が第三者に知られた場合の保護は、同一サイト構成より弱くなります。
+
+**`auth_session_binding_required: false` の認証ポリシーでは、`/complete` の `IDP_AUTH_SESSION` の照合も行われません。** デバイスだけで認証するフローと既存の OP セッションで続けるフローでは、この照合が唯一のブラウザの束縛です。
+
+**deny（キャンセル）はブラウザに束縛されません。** 認証前のキャンセルにも使うため `auth_proof` を求められず、`IDP_AUTH_SESSION` も XHR には届きません。認可リクエスト ID を知っていれば取り消せます（code や OP セッションは出ません）。
+
+認証ステップと deny の束縛は [#1913](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues/1913) で扱います。
 
 **キャッシュ（Redis）が止まっていてもログインは成立します。** `auth_proof` は認証トランザクション（DB）に保存されるためです。ただし OP セッション自体は Redis に保存されるため、停止中は ID Token に `sid` が付かず、SSO とバックチャネルログアウトが効きません。これは同一サイト構成でも同じです。
 

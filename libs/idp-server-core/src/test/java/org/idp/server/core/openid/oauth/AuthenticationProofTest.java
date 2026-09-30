@@ -18,7 +18,9 @@ package org.idp.server.core.openid.oauth;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.Base64;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionAttributes;
+import org.idp.server.platform.crypto.AesCipher;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -33,13 +35,15 @@ class AuthenticationProofTest {
 
   private static final String SUB = "3f9d5c81-7b24-4e60-9a3f-8c1d2e0b6a75";
   private static final String REDIRECT = "https://rp.example.com/callback?code=abc";
+  private static final AesCipher CIPHER =
+      new AesCipher(Base64.getEncoder().encodeToString(new byte[32]));
 
   @Test
   @DisplayName("認証で得た proof は、同じ利用者なら authorize を通る")
   void acceptsTheProofItWasIssuedFor() {
     AuthenticationProof issued = AuthenticationProof.authenticated(SUB);
     AuthenticationTransactionAttributes stored =
-        issued.storeOn(new AuthenticationTransactionAttributes());
+        issued.storeOn(new AuthenticationTransactionAttributes(), CIPHER);
 
     assertTrue(AuthenticationProof.authenticatedOn(stored).authorizes(issued.value(), SUB));
   }
@@ -50,7 +54,7 @@ class AuthenticationProofTest {
     // DB を読めても proof として使える値は手に入らない。
     AuthenticationProof issued = AuthenticationProof.authenticated(SUB);
     AuthenticationTransactionAttributes stored =
-        issued.storeOn(new AuthenticationTransactionAttributes());
+        issued.storeOn(new AuthenticationTransactionAttributes(), CIPHER);
 
     assertFalse(stored.toMap().toString().contains(issued.value()));
     assertNull(AuthenticationProof.authenticatedOn(stored).value());
@@ -60,7 +64,8 @@ class AuthenticationProofTest {
   @DisplayName("でたらめな値や空の値は通らない")
   void rejectsAnotherValue() {
     AuthenticationTransactionAttributes stored =
-        AuthenticationProof.authenticated(SUB).storeOn(new AuthenticationTransactionAttributes());
+        AuthenticationProof.authenticated(SUB)
+            .storeOn(new AuthenticationTransactionAttributes(), CIPHER);
     AuthenticationProof proof = AuthenticationProof.authenticatedOn(stored);
 
     assertFalse(proof.authorizes("not-the-proof", SUB));
@@ -73,7 +78,7 @@ class AuthenticationProofTest {
   void rejectsAnotherUser() {
     AuthenticationProof issued = AuthenticationProof.authenticated(SUB);
     AuthenticationTransactionAttributes stored =
-        issued.storeOn(new AuthenticationTransactionAttributes());
+        issued.storeOn(new AuthenticationTransactionAttributes(), CIPHER);
 
     assertFalse(
         AuthenticationProof.authenticatedOn(stored)
@@ -86,7 +91,7 @@ class AuthenticationProofTest {
     // sub が無い proof は誰のものとも言えない。null 同士が一致してしまわないこと。
     AuthenticationProof issued = AuthenticationProof.authenticated(null);
     AuthenticationTransactionAttributes stored =
-        issued.storeOn(new AuthenticationTransactionAttributes());
+        issued.storeOn(new AuthenticationTransactionAttributes(), CIPHER);
 
     assertFalse(AuthenticationProof.authenticatedOn(stored).authorizes(issued.value(), null));
   }
@@ -97,7 +102,7 @@ class AuthenticationProofTest {
     AuthenticationProof first = AuthenticationProof.authenticated(SUB);
     AuthenticationProof second = AuthenticationProof.authenticated(SUB);
     AuthenticationTransactionAttributes stored =
-        second.storeOn(first.storeOn(new AuthenticationTransactionAttributes()));
+        second.storeOn(first.storeOn(new AuthenticationTransactionAttributes(), CIPHER), CIPHER);
 
     assertFalse(AuthenticationProof.authenticatedOn(stored).authorizes(first.value(), SUB));
     assertTrue(AuthenticationProof.authenticatedOn(stored).authorizes(second.value(), SUB));
@@ -108,7 +113,7 @@ class AuthenticationProofTest {
   void spentProofIsGone() {
     AuthenticationProof issued = AuthenticationProof.authenticated(SUB);
     AuthenticationTransactionAttributes stored =
-        issued.storeOn(new AuthenticationTransactionAttributes());
+        issued.storeOn(new AuthenticationTransactionAttributes(), CIPHER);
     AuthenticationTransactionAttributes spent =
         AuthenticationProof.authenticatedOn(stored).spendOn(stored);
 
@@ -120,9 +125,9 @@ class AuthenticationProofTest {
   void completionCarriesTheRedirect() {
     AuthenticationProof issued = AuthenticationProof.forCompletion(SUB, REDIRECT);
     AuthenticationTransactionAttributes stored =
-        issued.storeOn(new AuthenticationTransactionAttributes());
+        issued.storeOn(new AuthenticationTransactionAttributes(), CIPHER);
 
-    AuthenticationProof proof = AuthenticationProof.completionOn(stored);
+    AuthenticationProof proof = AuthenticationProof.completionOn(stored, CIPHER);
     assertTrue(proof.completes(issued.value()));
     assertEquals(REDIRECT, proof.redirectUri());
   }
@@ -134,9 +139,22 @@ class AuthenticationProofTest {
     AuthenticationProof authenticated = AuthenticationProof.authenticated(SUB);
     AuthenticationProof completion = AuthenticationProof.forCompletion(SUB, REDIRECT);
     AuthenticationTransactionAttributes stored =
-        completion.storeOn(authenticated.storeOn(new AuthenticationTransactionAttributes()));
+        completion.storeOn(
+            authenticated.storeOn(new AuthenticationTransactionAttributes(), CIPHER), CIPHER);
 
-    assertFalse(AuthenticationProof.completionOn(stored).completes(authenticated.value()));
+    assertFalse(AuthenticationProof.completionOn(stored, CIPHER).completes(authenticated.value()));
     assertFalse(AuthenticationProof.authenticatedOn(stored).authorizes(completion.value(), SUB));
+  }
+
+  @Test
+  @DisplayName("完了用の proof の遷移先（code を含む）は暗号化して保存される")
+  void completionRedirectIsEncrypted() {
+    // 遷移先には認可コードが入り、hybrid ならトークンも入る。平文で DB に残さない。
+    AuthenticationTransactionAttributes stored =
+        AuthenticationProof.forCompletion(SUB, REDIRECT)
+            .storeOn(new AuthenticationTransactionAttributes(), CIPHER);
+
+    assertFalse(stored.toMap().toString().contains("code=abc"));
+    assertEquals(REDIRECT, AuthenticationProof.completionOn(stored, CIPHER).redirectUri());
   }
 }
