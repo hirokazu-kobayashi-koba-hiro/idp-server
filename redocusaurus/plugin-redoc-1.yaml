@@ -319,6 +319,20 @@ paths:
                       （ボディに新しい秘密は含まれません）
         '400':
           $ref: '#/components/responses/ClientInstanceInvalidRequest'
+        '409':
+          description: |
+            同じ利用者の登録が同時に走り、後から来た方が一意制約で止まった。登録は取り消され、チャレンジも未使用に戻るので、
+            同じチャレンジと ID トークンで再送できる（再送した登録が新しいインスタンスになる）。
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: invalid_request
+                  error_description:
+                    type: string
         '500':
           $ref: '#/components/responses/ClientInstanceServerError'
 components:

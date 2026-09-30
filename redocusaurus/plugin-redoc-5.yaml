@@ -1157,6 +1157,23 @@ components:
           type: string
           default: /auth-views/signin/index.html
           description: カスタムサインインページのパス
+        cross_site:
+          type: boolean
+          default: false
+          description: >
+            認可画面が idp-server と別サイト（別の登録可能ドメイン）にあることの宣言。
+
+            `base_url` からは導出しません（Cookie の境界はオリジンではなくサイトのため）。
+
+
+            `true` のとき、ブラウザの識別を Cookie から使い捨ての値 `auth_proof` に切り替え、
+
+            認可フローの最後に `/{tenant-id}/v1/authorizations/{id}/complete`
+            をトップレベル遷移で経由させます。
+
+            認可画面が `auth_proof` に対応している必要があります。
+
+            クライアントの `extension.cross_site_authorization_view` で上書きできます。
         variant_param:
           type: string
           default: view_version
