@@ -17,6 +17,7 @@
 package org.idp.server.adapters.springboot.application.restapi.userinfo;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.idp.server.adapters.springboot.application.restapi.FapiInteractionIdConfigurable;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
 import org.idp.server.adapters.springboot.application.restapi.SecurityHeaderConfigurable;
 import org.idp.server.core.openid.userinfo.UserinfoApi;
@@ -33,7 +34,8 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("{tenant-id}/v1/userinfo")
-public class UserinfoV1Api implements ParameterTransformable, SecurityHeaderConfigurable {
+public class UserinfoV1Api
+    implements ParameterTransformable, SecurityHeaderConfigurable, FapiInteractionIdConfigurable {
 
   UserinfoApi userinfoApi;
 
@@ -43,7 +45,9 @@ public class UserinfoV1Api implements ParameterTransformable, SecurityHeaderConf
 
   @GetMapping
   public ResponseEntity<?> get(
-      @PathVariable("tenant-id") TenantIdentifier tenantId, HttpServletRequest httpServletRequest) {
+      @PathVariable("tenant-id") TenantIdentifier tenantId,
+      @RequestHeader(required = false, value = FAPI_INTERACTION_ID_HEADER) String fapiInteractionId,
+      HttpServletRequest httpServletRequest) {
 
     HttpRequestInputs inputs = transformInputs(null, httpServletRequest);
     RequestAttributes requestAttributes = transform(httpServletRequest);
@@ -52,6 +56,7 @@ public class UserinfoV1Api implements ParameterTransformable, SecurityHeaderConf
 
     HttpHeaders httpHeaders = createSecurityHeaders();
     httpHeaders.setCacheControl("no-store, private");
+    addFapiInteractionId(httpHeaders, fapiInteractionId);
     httpHeaders.setContentType(MediaType.APPLICATION_JSON);
     applyWwwAuthenticateIfUnauthorized(
         httpHeaders, response.statusCode(), response.response(), inputs.authorizationHeader());
@@ -61,7 +66,9 @@ public class UserinfoV1Api implements ParameterTransformable, SecurityHeaderConf
 
   @PostMapping
   public ResponseEntity<?> post(
-      @PathVariable("tenant-id") TenantIdentifier tenantId, HttpServletRequest httpServletRequest) {
+      @PathVariable("tenant-id") TenantIdentifier tenantId,
+      @RequestHeader(required = false, value = FAPI_INTERACTION_ID_HEADER) String fapiInteractionId,
+      HttpServletRequest httpServletRequest) {
 
     HttpRequestInputs inputs = transformInputs(null, httpServletRequest);
     RequestAttributes requestAttributes = transform(httpServletRequest);
@@ -70,6 +77,7 @@ public class UserinfoV1Api implements ParameterTransformable, SecurityHeaderConf
 
     HttpHeaders httpHeaders = createSecurityHeaders();
     httpHeaders.setCacheControl("no-store, private");
+    addFapiInteractionId(httpHeaders, fapiInteractionId);
     httpHeaders.setContentType(MediaType.APPLICATION_JSON);
     applyWwwAuthenticateIfUnauthorized(
         httpHeaders, response.statusCode(), response.response(), inputs.authorizationHeader());

@@ -26,6 +26,7 @@ import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.log.TenantLoggingContext;
 import org.idp.server.platform.multi_tenancy.tenant.MissingRequiredTenantIdentifierException;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.type.RequestAttributes;
 
 /**
  * Tenant-aware entry service proxy with RLS (Row-Level Security) support.
@@ -110,6 +111,7 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
         TenantLoggingContext.setTenant(tenantIdentifier);
 
         resolveUserContext(args);
+        resolveFapiInteractionId(args);
 
         String clientId = resolveClientIdAsString(args);
         if (clientId != null) {
@@ -168,6 +170,7 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
         TenantLoggingContext.setTenant(tenantIdentifier);
 
         resolveUserContext(args);
+        resolveFapiInteractionId(args);
 
         String clientId = resolveClientIdAsString(args);
         if (clientId != null) {
@@ -252,6 +255,15 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
             TenantLoggingContext.setUserName(preferredUsername);
           }
         }
+      }
+    }
+  }
+
+  protected void resolveFapiInteractionId(Object[] args) {
+    for (Object arg : args) {
+      if (arg instanceof RequestAttributes requestAttributes && requestAttributes.exists()) {
+        TenantLoggingContext.setFapiInteractionId(
+            requestAttributes.headerValue("x-fapi-interaction-id"));
       }
     }
   }

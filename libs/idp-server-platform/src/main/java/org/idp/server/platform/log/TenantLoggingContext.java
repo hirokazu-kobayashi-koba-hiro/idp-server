@@ -30,6 +30,7 @@ public class TenantLoggingContext {
   private static final String USER_EX_SUB_KEY = "user_ex_sub";
   private static final String USER_NAME_KEY = "user_name";
   private static final String LOG_TYPE_KEY = "log_type";
+  private static final String FAPI_INTERACTION_ID_KEY = "fapi_interaction_id";
 
   public static void setRequestId() {
     MDC.put(REQUEST_ID_KEY, UUID.randomUUID().toString());
@@ -133,6 +134,16 @@ public class TenantLoggingContext {
 
   public static void clearLogType() {
     MDC.remove(LOG_TYPE_KEY);
+  }
+
+  /**
+   * FAPI 1.0 Baseline 6.2.1-12: shall log the value of x-fapi-interaction-id in the log entry.
+   * Carried in the MDC so every log line of the request has it.
+   */
+  public static void setFapiInteractionId(String fapiInteractionId) {
+    if (Objects.nonNull(fapiInteractionId) && !fapiInteractionId.isEmpty()) {
+      MDC.put(FAPI_INTERACTION_ID_KEY, fapiInteractionId);
+    }
   }
 
   public static void clearAll() {

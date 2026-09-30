@@ -106,6 +106,11 @@ public class RequestAttributes implements BasicAuthConvertable {
     return jsonNodeWrapper.getNode(key);
   }
 
+  /** The value of a request header, matched case-insensitively; empty when absent. */
+  public String headerValue(String headerName) {
+    return getHeaderValueCaseInsensitive(getJsonNode("headers"), headerName);
+  }
+
   public BasicAuth basicAuth() {
     JsonNodeWrapper headersNode = getJsonNode("headers");
     String authorization = getHeaderValueCaseInsensitive(headersNode, "authorization");
