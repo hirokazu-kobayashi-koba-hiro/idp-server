@@ -860,7 +860,9 @@ paths:
                     id: "4b0e1b4a-6a39-4b5b-9d5e-2f1f2c8c6a11"
                     tenant_id: "67e7eae6-62b0-4500-9eff-87459f63fc66"
         '400':
-          description: コールバックパラメータが不正
+          description: |
+            コールバックが不正（外部 IdP のエラー応答、`state` の不一致、SSO セッションの期限切れなど）。
+            外部 IdP が返した 4xx のうち、下に個別に挙げていないものもこのステータスで返します。
           content:
             application/json:
               schema:
@@ -873,7 +875,7 @@ paths:
                     error_description: "Invalid authorization code"
         '401':
           description: |
-            AUTH_SESSION cookie の欠落または不一致（フロー乗っ取り対策）。
+            AUTH_SESSION cookie の欠落または不一致（フロー乗っ取り対策）、または外部 IdP（UserInfo など）が返した 401。
 
             このエンドポイントは `AUTH_SESSION` cookie を検証します。ブラウザ/SPAの通常フローでは
             cookie が存在するため正常に処理されますが、cookie 消失時や別ブラウザ・別セッションからの
@@ -893,12 +895,29 @@ paths:
                   value:
                     error: "invalid_request"
                     error_description: "auth_session_mismatch: AUTH_SESSION cookie does not match. This authorization request may have been initiated by a different browser session."
+        '403':
+          $ref: '#/components/responses/FederationUpstreamError'
+        '404':
+          $ref: '#/components/responses/FederationUpstreamError'
+        '408':
+          $ref: '#/components/responses/FederationUpstreamError'
+        '409':
+          $ref: '#/components/responses/FederationUpstreamError'
+        '429':
+          $ref: '#/components/responses/FederationUpstreamError'
         '500':
-          description: サーバーエラー
+          description: |
+            サーバーエラー。外部 IdP が返した 5xx のうち、下に個別に挙げていないものもこのステータスで返します。
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          $ref: '#/components/responses/FederationUpstreamError'
+        '503':
+          $ref: '#/components/responses/FederationUpstreamError'
+        '504':
+          $ref: '#/components/responses/FederationUpstreamError'
 
 components:
   parameters:
@@ -1559,6 +1578,17 @@ components:
           description: 失敗時のエラーの説明
 
   responses:
+    FederationUpstreamError:
+      description: |
+        外部 IdP（トークンエンドポイント、JWKS、UserInfo）が返したエラーを、ステータスと本文のまま返します。
+
+        そのまま返すステータスは 401 / 403 / 404 / 408 / 409 / 429 / 502 / 503 / 504 です。それ以外の 4xx は 400、5xx は 500 として返します（`FederationInteractionStatus`）。
+      content:
+        application/json:
+          schema:
+            type: object
+            description: 外部 IdP の応答の本文
+            additionalProperties: true
     TooManyRequests:
       description: |
         レート制限超過。
