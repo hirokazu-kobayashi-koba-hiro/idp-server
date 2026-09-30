@@ -60,7 +60,7 @@ public class OAuthDenyResponse {
 
   public Map<String, Object> contents() {
     if (status.isError()) {
-      return Map.of("error", error, "errorDescription", errorDescription);
+      return Map.of("error", error, "error_description", errorDescription);
     }
     return Map.of("redirect_uri", redirectUriValue());
   }
