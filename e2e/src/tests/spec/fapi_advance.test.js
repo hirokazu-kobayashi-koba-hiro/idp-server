@@ -617,12 +617,11 @@ describe("Financial-grade API Security Profile 1.0 - Part 2: Advanced", () => {
       await get({
         url: `${serverConfig.authorizationEndpoint}?${new URLSearchParams(params).toString()}`,
       });
-    const expectNotRedirectedTo = (response, uri) => {
-      if (response.status === 302) {
-        expect(response.headers.location.startsWith(uri)).toBe(false);
-      } else {
-        expect(response.status).toBeGreaterThanOrEqual(400);
-      }
+    // Shown on the authorization server's error page. The page quotes the refused redirect_uri in
+    // error_description, so the destination is checked up to the query.
+    const expectErrorPage = (response) => {
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toMatch(/^[^?]*\/error\/\?error=invalid_request&/);
     };
 
     it("Baseline 5.2.2-8/10. shall require redirect URIs to be pre-registered and the value of redirect_uri to exactly match one of them, also without the openid scope (JARM);", async () => {
@@ -631,7 +630,7 @@ describe("Financial-grade API Security Profile 1.0 - Part 2: Advanced", () => {
         request: requestObjectWithoutOpenid({}),
       });
       console.log(response.status, response.headers.location);
-      expectNotRedirectedTo(response, unregisteredRedirectUri);
+      expectErrorPage(response);
       expect(decodeURIComponent(response.headers.location ?? "")).toContain(
         "exactly match one of the pre-registered redirect URIs"
       );
@@ -643,6 +642,7 @@ describe("Financial-grade API Security Profile 1.0 - Part 2: Advanced", () => {
         request: requestObjectWithoutOpenid({ redirect_uri: undefined }),
       });
       console.log(response.status, response.headers.location);
+      expectErrorPage(response);
       expect(decodeURIComponent(response.headers.location ?? "")).toContain(
         "shall require the redirect_uri in the authorization request"
       );
@@ -663,7 +663,7 @@ describe("Financial-grade API Security Profile 1.0 - Part 2: Advanced", () => {
         code_challenge_method: "S256",
       });
       console.log(response.status, response.headers.location);
-      expectNotRedirectedTo(response, unregisteredRedirectUri);
+      expectErrorPage(response);
     });
   });
 

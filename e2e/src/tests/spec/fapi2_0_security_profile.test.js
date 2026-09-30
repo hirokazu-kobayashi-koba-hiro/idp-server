@@ -815,11 +815,12 @@ describe("FAPI 2.0 Security Profile Final", () => {
       });
 
       /**
-       * The same rejection without the openid scope. A request that is not an OpenID Connect request
-       * is verified on the OAuth 2.0 path, which had only the response_type and scope checks and let
-       * an unregistered redirect_uri through (Issue #1902).
+       * FAPI 2.0 5.3.2.2-6 only requires the parameter; the pre-registration and exact match are
+       * OAuth 2.0's (RFC 6749 3.1.2.3), applied here because FAPI 2.0 must not expose open
+       * redirectors. A request without the openid scope is verified on the OAuth 2.0 path, which had
+       * only the response_type and scope checks (Issue #1902).
        */
-      it("MUST reject PAR with unregistered redirect_uri, without the openid scope", async () => {
+      it("RFC 6749 3.1.2.3. the authorization server MUST compare and match the value received against at least one of the registered redirection URIs, also for a pushed authorization request without the openid scope", async () => {
         const codeChallenge = calculateCodeChallengeWithS256(generateCodeVerifier(64));
         const response = await pushAuthorizations({
           endpoint: serverConfig.pushedAuthorizationEndpoint,
@@ -903,15 +904,10 @@ describe("FAPI 2.0 Security Profile Final", () => {
           });
 
           console.log("direct (", scope, "):", response.status, response.headers.location);
-          if (response.status === 302) {
-            // The error page quotes the refused redirect_uri in error_description; what matters is
-            // that the redirect does not go there.
-            expect(
-              response.headers.location.startsWith("https://attacker.example.com/"),
-            ).toBe(false);
-          } else {
-            expect(response.status).toBeGreaterThanOrEqual(400);
-          }
+          // Shown on the authorization server's error page. The page quotes the refused redirect_uri
+          // in error_description, so the destination is checked up to the query.
+          expect(response.status).toBe(302);
+          expect(response.headers.location).toMatch(/^[^?]*\/error\/\?error=invalid_request&/);
         }
       });
     });

@@ -93,10 +93,10 @@ public class FapiSecurity20Verifier implements AuthorizationRequestVerifier {
 
   @Override
   public void verify(OAuthRequestContext context) {
-    // FAPI 2.0 Section 5.3.2.2-6: redirect_uri required in pushed authorization requests, and
-    // registered (OAuth 2.0). Checked first, ahead of any error reported by redirecting (such as
-    // the
-    // PAR requirement below), on both the OIDC and non-OIDC request paths (Issue #1902).
+    // FAPI 2.0 Section 5.3.2.2-6 requires redirect_uri in pushed authorization requests; the
+    // pre-registration and exact match come from OAuth 2.0 (RFC 6749 3.1.2.3) and the ban on open
+    // redirectors. Checked first, ahead of any error reported by redirecting (such as the PAR
+    // requirement below), on both the OIDC and non-OIDC request paths (Issue #1902).
     redirectUriVerifier.verify(context);
 
     // OAuth 2.0 / OIDC base requirements
