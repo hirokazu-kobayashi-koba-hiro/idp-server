@@ -28,7 +28,7 @@ import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
 import org.idp.server.core.openid.oauth.type.oauth.ClientAuthenticationType;
 import org.idp.server.core.openid.oauth.type.oauth.RedirectUri;
 import org.idp.server.core.openid.oauth.verifier.AuthorizationRequestVerifier;
-import org.idp.server.core.openid.oauth.verifier.base.OAuthRequestBaseVerifier;
+import org.idp.server.core.openid.oauth.verifier.OAuth2RequestVerifier;
 import org.idp.server.core.openid.oauth.verifier.base.OidcRequestBaseVerifier;
 import org.idp.server.platform.jose.JoseContext;
 import org.idp.server.platform.jose.JsonWebTokenClaims;
@@ -56,9 +56,9 @@ import org.idp.server.platform.jose.JsonWebTokenClaims;
  * <p><b>Inherited from Baseline (unchanged):</b>
  *
  * <ul>
- *   <li>5.2.2-8: redirect_uri pre-registration → covered by {@link OidcRequestBaseVerifier}
- *   <li>5.2.2-9: redirect_uri parameter required → covered by {@link OidcRequestBaseVerifier}
- *   <li>5.2.2-10: redirect_uri exact match → covered by {@link OidcRequestBaseVerifier}
+ *   <li>5.2.2-8: redirect_uri pre-registration → {@link FapiRedirectUriVerifier}
+ *   <li>5.2.2-9: redirect_uri parameter required → {@link FapiRedirectUriVerifier}
+ *   <li>5.2.2-10: redirect_uri exact match → {@link FapiRedirectUriVerifier}
  *   <li>5.2.2-20: redirect_uri https scheme required
  *   <li>5.2.2.2: nonce required when openid scope
  *   <li>5.2.2.3: state required when no openid scope
@@ -93,7 +93,8 @@ public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
 
   private static final long SIXTY_MINUTES_IN_MILLIS = 60 * 60 * 1000L;
 
-  OAuthRequestBaseVerifier oAuthRequestBaseVerifier = new OAuthRequestBaseVerifier();
+  OAuth2RequestVerifier oAuth2RequestVerifier = new OAuth2RequestVerifier();
+  FapiRedirectUriVerifier redirectUriVerifier = new FapiRedirectUriVerifier("FAPI Advance profile");
   OidcRequestBaseVerifier oidcRequestBaseVerifier = new OidcRequestBaseVerifier();
 
   public AuthorizationProfile profile() {
@@ -128,21 +129,19 @@ public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
   public void verify(OAuthRequestContext context) {
     throwIfExceptionInvalidConfig(context);
 
-    // RFC 6749 3.1.2: redirect_uri MUST NOT include a fragment component. Checked before the base
-    // delegation so it is enforced ahead of any redirectable error (Section 3.1.2.4), covering both
-    // the OIDC and non-OIDC (JARM) request paths.
-    oAuthRequestBaseVerifier.throwExceptionIfRedirectUriContainsFragment(context);
+    // --- Inherited from Baseline (unchanged) ---
+    // 5.2.2-8/9/10: redirect_uri pre-registration, required, exact match (and no fragment, RFC 6749
+    // 3.1.2). Checked before the base delegation, ahead of any error reported by redirecting, on
+    // both the OIDC and non-OIDC (JARM) request paths (Issue #1902).
+    redirectUriVerifier.verify(context);
 
     // --- OAuth 2.0 / OIDC base requirements ---
     if (context.isOidcRequest()) {
       oidcRequestBaseVerifier.verify(context);
     } else {
-      oAuthRequestBaseVerifier.verify(context);
+      oAuth2RequestVerifier.verify(context);
     }
 
-    // --- Inherited from Baseline (unchanged) ---
-    // 5.2.2-8/9/10: redirect_uri pre-registration, required, exact match
-    //   → covered by OidcRequestBaseVerifier / OAuthRequestBaseVerifier above
     // 5.2.2-20: redirect_uri https scheme required
     throwExceptionIfNotHttpsRedirectUri(context);
     // 5.2.2.2: nonce required when openid scope

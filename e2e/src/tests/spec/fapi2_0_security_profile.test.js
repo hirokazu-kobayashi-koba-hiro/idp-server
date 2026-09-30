@@ -813,6 +813,107 @@ describe("FAPI 2.0 Security Profile Final", () => {
           response.data.error,
         );
       });
+
+      /**
+       * The same rejection without the openid scope. A request that is not an OpenID Connect request
+       * is verified on the OAuth 2.0 path, which had only the response_type and scope checks and let
+       * an unregistered redirect_uri through (Issue #1902).
+       */
+      it("MUST reject PAR with unregistered redirect_uri, without the openid scope", async () => {
+        const codeChallenge = calculateCodeChallengeWithS256(generateCodeVerifier(64));
+        const response = await pushAuthorizations({
+          endpoint: serverConfig.pushedAuthorizationEndpoint,
+          clientId: privateKeyJwtClient.clientId,
+          clientAssertion: createClientAssertion({
+            client: privateKeyJwtClient,
+            issuer: serverConfig.issuer,
+          }),
+          clientAssertionType:
+            "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+          responseType: "code",
+          scope: privateKeyJwtClient.fapi20Scope,
+          redirectUri: "https://attacker.example.com/steal-code",
+          state: "fapi2-open-redirect-oauth",
+          codeChallenge,
+          codeChallengeMethod: "S256",
+        });
+
+        console.log("open-redirect (oauth):", response.status, JSON.stringify(response.data));
+        expect(response.status).toBe(400);
+        expect(response.data.error).toBe("invalid_request");
+        expect(response.data.error_description).toContain(
+          "exactly match one of the pre-registered redirect URIs",
+        );
+      });
+
+      /**
+       * §5.3.2.2-6: "shall require the redirect_uri parameter in pushed authorization requests".
+       * Without the openid scope, a missing redirect_uri used to fall back to the first registered
+       * one.
+       */
+      it("MUST require the redirect_uri parameter in pushed authorization requests, without the openid scope", async () => {
+        const codeChallenge = calculateCodeChallengeWithS256(generateCodeVerifier(64));
+        const response = await pushAuthorizations({
+          endpoint: serverConfig.pushedAuthorizationEndpoint,
+          clientId: privateKeyJwtClient.clientId,
+          clientAssertion: createClientAssertion({
+            client: privateKeyJwtClient,
+            issuer: serverConfig.issuer,
+          }),
+          clientAssertionType:
+            "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+          responseType: "code",
+          scope: privateKeyJwtClient.fapi20Scope,
+          state: "fapi2-missing-redirect-uri-oauth",
+          codeChallenge,
+          codeChallengeMethod: "S256",
+        });
+
+        console.log("missing redirect_uri (oauth):", response.status, JSON.stringify(response.data));
+        expect(response.status).toBe(400);
+        expect(response.data.error).toBe("invalid_request");
+        expect(response.data.error_description).toContain(
+          "shall require the redirect_uri in the authorization request",
+        );
+      });
+
+      /**
+       * A direct authorization request is refused because FAPI 2.0 requires PAR. That refusal is
+       * an error the authorization server may report by redirecting, so it must never be sent to a
+       * redirect_uri that is not registered: with only a client_id, anyone could otherwise make the
+       * authorization endpoint redirect to a URL of their choosing (Issue #1902).
+       */
+      it("MUST NOT redirect to an unregistered redirect_uri when refusing a direct authorization request", async () => {
+        for (const scope of [
+          privateKeyJwtClient.fapi20Scope,
+          "openid " + privateKeyJwtClient.fapi20Scope,
+        ]) {
+          const params = new URLSearchParams({
+            response_type: "code",
+            client_id: privateKeyJwtClient.clientId,
+            scope,
+            state: "fapi2-direct-open-redirect",
+            nonce: "fapi2-direct-open-redirect",
+            redirect_uri: "https://attacker.example.com/steal-code",
+            code_challenge: calculateCodeChallengeWithS256(generateCodeVerifier(64)),
+            code_challenge_method: "S256",
+          });
+          const response = await get({
+            url: `${serverConfig.authorizationEndpoint}?${params.toString()}`,
+          });
+
+          console.log("direct (", scope, "):", response.status, response.headers.location);
+          if (response.status === 302) {
+            // The error page quotes the refused redirect_uri in error_description; what matters is
+            // that the redirect does not go there.
+            expect(
+              response.headers.location.startsWith("https://attacker.example.com/"),
+            ).toBe(false);
+          } else {
+            expect(response.status).toBeGreaterThanOrEqual(400);
+          }
+        }
+      });
     });
 
     /**
