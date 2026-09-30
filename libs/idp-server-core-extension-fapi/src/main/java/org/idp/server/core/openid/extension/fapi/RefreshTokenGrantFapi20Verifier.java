@@ -32,6 +32,7 @@ public class RefreshTokenGrantFapi20Verifier implements RefreshTokenGrantVerifie
 
   Fapi20ClientAuthenticationVerifier clientAuthenticationVerifier =
       new Fapi20ClientAuthenticationVerifier();
+  DPoPProofVerifier dpopProofVerifier = new DPoPProofVerifier();
 
   @Override
   public AuthorizationProfile profile() {
@@ -57,7 +58,7 @@ public class RefreshTokenGrantFapi20Verifier implements RefreshTokenGrantVerifie
   void throwExceptionIfInvalidDPoPSigningAlgorithm(TokenRequestContext tokenRequestContext) {
     DPoPProof dpopProof = tokenRequestContext.dpopProof();
     if (dpopProof != null && dpopProof.exists()) {
-      new DPoPProofVerifier().verifyFapiSigningAlgorithm(dpopProof);
+      dpopProofVerifier.verifyFapiSigningAlgorithm(dpopProof);
     }
   }
 }

@@ -31,6 +31,7 @@ public class TenantLoggingContext {
   private static final String USER_NAME_KEY = "user_name";
   private static final String LOG_TYPE_KEY = "log_type";
   private static final String FAPI_INTERACTION_ID_KEY = "fapi_interaction_id";
+  private static final int FAPI_INTERACTION_ID_MAX_LENGTH = 128;
 
   public static void setRequestId() {
     MDC.put(REQUEST_ID_KEY, UUID.randomUUID().toString());
@@ -139,10 +140,18 @@ public class TenantLoggingContext {
   /**
    * FAPI 1.0 Baseline 6.2.1-12: shall log the value of x-fapi-interaction-id in the log entry.
    * Carried in the MDC so every log line of the request has it.
+   *
+   * <p>The value comes from the client and is expected to be an RFC 4122 UUID (6.2.1-11); it is cut
+   * at {@value #FAPI_INTERACTION_ID_MAX_LENGTH} characters so an oversized header cannot bloat
+   * every log line.
    */
   public static void setFapiInteractionId(String fapiInteractionId) {
     if (Objects.nonNull(fapiInteractionId) && !fapiInteractionId.isEmpty()) {
-      MDC.put(FAPI_INTERACTION_ID_KEY, fapiInteractionId);
+      String value =
+          fapiInteractionId.length() > FAPI_INTERACTION_ID_MAX_LENGTH
+              ? fapiInteractionId.substring(0, FAPI_INTERACTION_ID_MAX_LENGTH)
+              : fapiInteractionId;
+      MDC.put(FAPI_INTERACTION_ID_KEY, value);
     }
   }
 
