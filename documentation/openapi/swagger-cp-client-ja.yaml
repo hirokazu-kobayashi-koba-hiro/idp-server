@@ -293,7 +293,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+security:
+- BearerAuth: []
 components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 組織の admin tenant が発行した、組織の管理者のアクセストークン
   parameters:
     TenantId:
       name: tenant-id
@@ -695,6 +703,31 @@ components:
               type: integer
               minimum: 1
               description: OPTIONAL. Duration of refresh tokens in seconds
+            refresh_token_strategy:
+              type: string
+              enum:
+              - FIXED
+              - EXTENDS
+              description: |
+                OPTIONAL. リフレッシュ時のリフレッシュトークンの有効期限の扱い。未設定ならテナント（`extension.refresh_token_strategy`）の値を使う。
+
+                - `FIXED`: 最初に発行したときの有効期限のまま
+                - `EXTENDS`: リフレッシュのたびに、その時点から `refresh_token_duration` 延ばす
+
+                大文字・小文字は区別しない。どちらにも当たらない値は `FIXED` として扱う。
+            rotate_refresh_token:
+              type: boolean
+              description: OPTIONAL. リフレッシュのたびにリフレッシュトークンの値を新しくするか。未設定ならテナント（`extension.rotate_refresh_token`）の値を使う。FAPI 2.0 では false にする（5.3.2.1-9）
+            id_token_duration:
+              type: integer
+              minimum: 1
+              description: OPTIONAL. ID トークンの有効期間（秒）。未設定ならテナント（`extension.id_token_duration`）の値を使う
+            access_token_type:
+              type: string
+              enum:
+              - opaque
+              - jwt
+              description: OPTIONAL. 発行するアクセストークンの形式。未設定ならテナント（`extension.access_token_type`）の値を使う。`opaque` 以外は JWT として扱う
             supported_jar:
               type: boolean
               default: false
@@ -730,8 +763,12 @@ components:
               enum:
               - authentication-device-notification-no-action
               - authentication-device-notification
-              default: authentication-device-notification
+              default: authentication-device-notification-no-action
               description: OPTIONAL. Default CIBA authentication interaction type
+            ciba_require_rar:
+              type: boolean
+              default: false
+              description: OPTIONAL. true のとき、このクライアントのバックチャネル認証リクエストに authorization_details（RFC 9396）を必須にする。無ければ invalid_request
             custom_properties:
               type: object
               additionalProperties: true
@@ -1106,6 +1143,31 @@ components:
               type: integer
               minimum: 1
               description: OPTIONAL. Duration of refresh tokens in seconds
+            refresh_token_strategy:
+              type: string
+              enum:
+              - FIXED
+              - EXTENDS
+              description: |
+                OPTIONAL. リフレッシュ時のリフレッシュトークンの有効期限の扱い。未設定ならテナント（`extension.refresh_token_strategy`）の値を使う。
+
+                - `FIXED`: 最初に発行したときの有効期限のまま
+                - `EXTENDS`: リフレッシュのたびに、その時点から `refresh_token_duration` 延ばす
+
+                大文字・小文字は区別しない。どちらにも当たらない値は `FIXED` として扱う。
+            rotate_refresh_token:
+              type: boolean
+              description: OPTIONAL. リフレッシュのたびにリフレッシュトークンの値を新しくするか。未設定ならテナント（`extension.rotate_refresh_token`）の値を使う。FAPI 2.0 では false にする（5.3.2.1-9）
+            id_token_duration:
+              type: integer
+              minimum: 1
+              description: OPTIONAL. ID トークンの有効期間（秒）。未設定ならテナント（`extension.id_token_duration`）の値を使う
+            access_token_type:
+              type: string
+              enum:
+              - opaque
+              - jwt
+              description: OPTIONAL. 発行するアクセストークンの形式。未設定ならテナント（`extension.access_token_type`）の値を使う。`opaque` 以外は JWT として扱う
             supported_jar:
               type: boolean
               default: false
@@ -1143,6 +1205,26 @@ components:
               - authentication-device-notification
               default: authentication-device-notification-no-action
               description: OPTIONAL. Default CIBA authentication interaction type
+            ciba_require_rar:
+              type: boolean
+              default: false
+              description: OPTIONAL. true のとき、このクライアントのバックチャネル認証リクエストに authorization_details（RFC 9396）を必須にする。無ければ invalid_request
+            custom_properties:
+              type: object
+              additionalProperties: true
+              description: 'OPTIONAL. 任意のキー・バリューデータ。
+
+                認可画面のview-data APIレスポンスにclient_custom_propertiesとして反映されます。
+
+                アプリ固有のUI設定、フィーチャーフラグ、ブランディング情報などに利用できます。
+
+                '
+              example:
+                app_label: my-custom-app
+                feature_flags:
+                  dark_mode: true
+                  beta_features: false
+                max_sessions: 5
     ClientUpdateRequest:
       type: object
       properties:
@@ -1397,6 +1479,31 @@ components:
               type: integer
               minimum: 1
               description: OPTIONAL. Duration of refresh tokens in seconds
+            refresh_token_strategy:
+              type: string
+              enum:
+              - FIXED
+              - EXTENDS
+              description: |
+                OPTIONAL. リフレッシュ時のリフレッシュトークンの有効期限の扱い。未設定ならテナント（`extension.refresh_token_strategy`）の値を使う。
+
+                - `FIXED`: 最初に発行したときの有効期限のまま
+                - `EXTENDS`: リフレッシュのたびに、その時点から `refresh_token_duration` 延ばす
+
+                大文字・小文字は区別しない。どちらにも当たらない値は `FIXED` として扱う。
+            rotate_refresh_token:
+              type: boolean
+              description: OPTIONAL. リフレッシュのたびにリフレッシュトークンの値を新しくするか。未設定ならテナント（`extension.rotate_refresh_token`）の値を使う。FAPI 2.0 では false にする（5.3.2.1-9）
+            id_token_duration:
+              type: integer
+              minimum: 1
+              description: OPTIONAL. ID トークンの有効期間（秒）。未設定ならテナント（`extension.id_token_duration`）の値を使う
+            access_token_type:
+              type: string
+              enum:
+              - opaque
+              - jwt
+              description: OPTIONAL. 発行するアクセストークンの形式。未設定ならテナント（`extension.access_token_type`）の値を使う。`opaque` 以外は JWT として扱う
             supported_jar:
               type: boolean
               default: false
@@ -1434,3 +1541,23 @@ components:
               - authentication-device-notification
               default: authentication-device-notification-no-action
               description: OPTIONAL. Default CIBA authentication interaction type
+            ciba_require_rar:
+              type: boolean
+              default: false
+              description: OPTIONAL. true のとき、このクライアントのバックチャネル認証リクエストに authorization_details（RFC 9396）を必須にする。無ければ invalid_request
+            custom_properties:
+              type: object
+              additionalProperties: true
+              description: 'OPTIONAL. 任意のキー・バリューデータ。
+
+                認可画面のview-data APIレスポンスにclient_custom_propertiesとして反映されます。
+
+                アプリ固有のUI設定、フィーチャーフラグ、ブランディング情報などに利用できます。
+
+                '
+              example:
+                app_label: my-custom-app
+                feature_flags:
+                  dark_mode: true
+                  beta_features: false
+                max_sessions: 5
