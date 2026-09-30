@@ -32,6 +32,7 @@ import org.idp.server.core.openid.token.repository.OAuthTokenQueryRepository;
 import org.idp.server.core.openid.token.validator.RefreshTokenGrantValidator;
 import org.idp.server.core.openid.token.verifier.RefreshTokenClientInstanceBindingVerifier;
 import org.idp.server.core.openid.token.verifier.RefreshTokenDPoPBindingVerifier;
+import org.idp.server.core.openid.token.verifier.RefreshTokenGrantProfileVerifier;
 import org.idp.server.core.openid.token.verifier.RefreshTokenUserVerifier;
 import org.idp.server.core.openid.token.verifier.RefreshTokenVerifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -41,6 +42,7 @@ public class RefreshTokenGrantService implements OAuthTokenCreationService, Refr
   OAuthTokenCommandRepository oAuthTokenCommandRepository;
   OAuthTokenQueryRepository oAuthTokenQueryRepository;
   AccessTokenCreator accessTokenCreator;
+  RefreshTokenGrantProfileVerifier profileVerifier;
 
   public RefreshTokenGrantService(
       OAuthTokenCommandRepository oAuthTokenCommandRepository,
@@ -48,6 +50,7 @@ public class RefreshTokenGrantService implements OAuthTokenCreationService, Refr
     this.oAuthTokenCommandRepository = oAuthTokenCommandRepository;
     this.oAuthTokenQueryRepository = oAuthTokenQueryRepository;
     this.accessTokenCreator = AccessTokenCreator.getInstance();
+    this.profileVerifier = new RefreshTokenGrantProfileVerifier();
   }
 
   @Override
@@ -70,6 +73,7 @@ public class RefreshTokenGrantService implements OAuthTokenCreationService, Refr
     RefreshTokenVerifier refreshTokenVerifier =
         new RefreshTokenVerifier(context, oAuthToken, clientCredentials);
     refreshTokenVerifier.verify();
+    profileVerifier.verify(context, oAuthToken, clientCredentials);
 
     TokenUserFindingDelegate delegate = context.refreshTokenGrantDelegate();
     User user = delegate.findUser(tenant, oAuthToken.subject());

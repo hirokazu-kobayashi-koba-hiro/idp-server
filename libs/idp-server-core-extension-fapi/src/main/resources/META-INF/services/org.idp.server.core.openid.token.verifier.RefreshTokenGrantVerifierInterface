@@ -1,0 +1,3 @@
+org.idp.server.core.openid.extension.fapi.RefreshTokenGrantFapiBaselineVerifier
+org.idp.server.core.openid.extension.fapi.RefreshTokenGrantFapiAdvanceVerifier
+org.idp.server.core.openid.extension.fapi.RefreshTokenGrantFapi20Verifier

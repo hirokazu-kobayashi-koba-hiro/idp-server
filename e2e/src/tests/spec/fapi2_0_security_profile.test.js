@@ -582,7 +582,8 @@ describe("FAPI 2.0 Security Profile Final", () => {
      * issued access token は cnf.jkt (DPoP-bound, RFC 9449 §6) を持つこと。
      */
     describe("MUST authenticate clients via private_key_jwt (happy path)", () => {
-      it("MUST issue DPoP-bound access token end-to-end via private_key_jwt + auth code flow", async () => {
+      /** PAR → authorization (email + SMS 2FA) → token endpoint with private_key_jwt + DPoP. */
+      const issueDpopBoundTokens = async () => {
         const testUser = {
           email: faker.internet.email(),
           name: faker.person.fullName(),
@@ -726,6 +727,12 @@ describe("FAPI 2.0 Security Profile Final", () => {
         expect(tokenResponse.data.token_type).toBe("DPoP");
         expect(tokenResponse.data.access_token).toBeDefined();
 
+        return { tokenResponse, dpopKeyPair, expectedJkt };
+      };
+
+      it("MUST issue DPoP-bound access token end-to-end via private_key_jwt + auth code flow", async () => {
+        const { tokenResponse, expectedJkt } = await issueDpopBoundTokens();
+
         // Step 4: access_token は DPoP-bound (cnf.jkt) を持つ
         const [, payloadB64] = tokenResponse.data.access_token.split(".");
         const accessTokenPayload = JSON.parse(
@@ -735,6 +742,53 @@ describe("FAPI 2.0 Security Profile Final", () => {
         expect(accessTokenPayload.cnf.jkt).toBe(expectedJkt);
         // private_key_jwt なので mTLS の x5t#S256 は無い
         expect(accessTokenPayload.cnf["x5t#S256"]).toBeUndefined();
+      });
+
+      /**
+       * §5.3.2.1-8 holds for every client authentication assertion, so the refresh token request is
+       * held to it as well; its profile is decided from the scopes of the grant it refreshes.
+       */
+      it("shall only accept its issuer identifier value (as defined in [RFC8414]) as a string in the aud claim received in client authentication assertions; also at the refresh token request", async () => {
+        const { tokenResponse, dpopKeyPair } = await issueDpopBoundTokens();
+        expect(tokenResponse.data.refresh_token).toBeDefined();
+
+        const refresh = async (clientAssertion) =>
+          await requestToken({
+            endpoint: serverConfig.tokenEndpoint,
+            grantType: "refresh_token",
+            refreshToken: tokenResponse.data.refresh_token,
+            clientId: privateKeyJwtClient.clientId,
+            clientAssertion,
+            clientAssertionType: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+            additionalHeaders: {
+              DPoP: await createDPoPProof({
+                privateKey: dpopKeyPair.privateKey,
+                publicJwk: dpopKeyPair.publicJwk,
+                htm: "POST",
+                htu: serverConfig.tokenEndpoint,
+              }),
+            },
+          });
+
+        const withTokenEndpointAud = await refresh(
+          createCustomClientAssertion({
+            client: privateKeyJwtClient,
+            issuer: serverConfig.issuer,
+            overrides: { aud: serverConfig.tokenEndpoint },
+          }),
+        );
+        console.log("refresh aud=token_endpoint:", withTokenEndpointAud.status, JSON.stringify(withTokenEndpointAud.data));
+        expect(withTokenEndpointAud.status).toBe(401);
+        expect(withTokenEndpointAud.data.error).toBe("invalid_client");
+        expect(withTokenEndpointAud.data.error_description).toContain(
+          "client assertion aud must be the AS issuer identifier",
+        );
+
+        const withIssuerAud = await refresh(
+          createClientAssertion({ client: privateKeyJwtClient, issuer: serverConfig.issuer }),
+        );
+        console.log("refresh aud=issuer:", withIssuerAud.status, JSON.stringify(withIssuerAud.data));
+        expect(withIssuerAud.status).toBe(200);
       });
     });
 

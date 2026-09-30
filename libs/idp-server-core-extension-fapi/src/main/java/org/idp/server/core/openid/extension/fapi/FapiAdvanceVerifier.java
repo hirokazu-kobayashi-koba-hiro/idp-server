@@ -20,6 +20,7 @@ import java.util.Date;
 import java.util.List;
 import org.idp.server.core.openid.oauth.AuthorizationProfile;
 import org.idp.server.core.openid.oauth.OAuthRequestContext;
+import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.exception.OAuthBadRequestException;
@@ -93,9 +94,14 @@ public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
 
   private static final long SIXTY_MINUTES_IN_MILLIS = 60 * 60 * 1000L;
 
+  /** 8.6.1: the JWE key management algorithm that shall not be used. */
+  static final String RSA1_5 = "RSA1_5";
+
   OAuth2RequestVerifier oAuth2RequestVerifier = new OAuth2RequestVerifier();
   FapiRedirectUriVerifier redirectUriVerifier = new FapiRedirectUriVerifier("FAPI Advance profile");
   OidcRequestBaseVerifier oidcRequestBaseVerifier = new OidcRequestBaseVerifier();
+  FapiAdvanceClientAuthenticationVerifier clientAuthenticationVerifier =
+      new FapiAdvanceClientAuthenticationVerifier();
 
   public AuthorizationProfile profile() {
     return AuthorizationProfile.FAPI_ADVANCE;
@@ -125,6 +131,17 @@ public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
    * @see <a href="https://www.rfc-editor.org/rfc/rfc9126">RFC 9126 - OAuth 2.0 Pushed Authorization
    *     Requests</a>
    */
+  /**
+   * Pushed authorization request: the client has authenticated, so the profile's client
+   * authentication requirements (5.2.2-14/16, 8.6 and Baseline 5.2.2-5/6/19) are checked first and
+   * reported as invalid_client.
+   */
+  @Override
+  public void verify(OAuthRequestContext context, ClientCredentials clientCredentials) {
+    clientAuthenticationVerifier.verify(context.clientConfiguration(), clientCredentials);
+    verify(context);
+  }
+
   @Override
   public void verify(OAuthRequestContext context) {
     throwIfExceptionInvalidConfig(context);
@@ -163,6 +180,8 @@ public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
     // 8.6: signing algorithm restrictions (PS256/ES256 only, skipped for PAR)
     if (!context.isPushedRequest()) {
       throwExceptionIfInvalidSigningAlgorithm(context);
+      // 8.6.1: RSA1_5 key management for an encrypted request object
+      throwExceptionIfRsa15EncryptedRequestObject(context);
     }
     // 5.2.2-2: response_type restriction (code id_token or code+jwt)
     throwExceptionIfInvalidResponseTypeAndResponseMode(context);
@@ -182,6 +201,15 @@ public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
     AuthorizationServerConfiguration authorizationServerConfiguration =
         context.serverConfiguration();
     ClientConfiguration clientConfiguration = context.clientConfiguration();
+    // 8.6.1: RSA1_5 key management for the ID Token and JARM responses encrypted to the client
+    throwExceptionIfRsa15EncryptedResponse(
+        "id_token_encrypted_response_alg",
+        clientConfiguration.idTokenEncryptedResponseAlg(),
+        context);
+    throwExceptionIfRsa15EncryptedResponse(
+        "authorization_encrypted_response_alg",
+        clientConfiguration.authorizationEncryptedResponseAlg(),
+        context);
     if (context.isJwtMode()) {
       if (!clientConfiguration.hasAuthorizationSignedResponseAlg()) {
         throw new OAuthBadRequestException(
@@ -466,6 +494,34 @@ public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
               "When FAPI Advance profile, request object signing algorithm must be PS256 or ES256 (Section 8.6). Current algorithm: %s",
               algorithm),
           context);
+    }
+  }
+
+  /** 8.6.1: shall not use RSA1_5, for a request object the client encrypted. */
+  void throwExceptionIfRsa15EncryptedRequestObject(OAuthRequestContext context) {
+    JoseContext joseContext = context.joseContext();
+    if (!joseContext.hasJsonWebEncryption()) {
+      return;
+    }
+    String algorithm = joseContext.jsonWebEncryption().algorithm();
+    if (RSA1_5.equals(algorithm)) {
+      throw new OAuthRedirectableBadRequestException(
+          "invalid_request_object",
+          "When FAPI Advance profile, request object must not be encrypted with RSA1_5 (Section 8.6.1)",
+          context);
+    }
+  }
+
+  /** 8.6.1: shall not use RSA1_5, for a response the authorization server encrypts. */
+  void throwExceptionIfRsa15EncryptedResponse(
+      String metadataName, String algorithm, OAuthRequestContext context) {
+    if (RSA1_5.equals(algorithm)) {
+      throw new OAuthBadRequestException(
+          "unauthorized_client",
+          String.format(
+              "When FAPI Advance profile, client config %s must not be RSA1_5 (Section 8.6.1)",
+              metadataName),
+          context.tenant());
     }
   }
 

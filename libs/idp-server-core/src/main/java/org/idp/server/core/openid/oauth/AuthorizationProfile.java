@@ -16,6 +16,9 @@
 
 package org.idp.server.core.openid.oauth;
 
+import java.util.Set;
+import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
+
 /** AuthorizationProfile */
 public enum AuthorizationProfile {
   OAUTH2,
@@ -24,6 +27,31 @@ public enum AuthorizationProfile {
   FAPI_ADVANCE,
   FAPI_2_0,
   UNDEFINED;
+
+  /**
+   * Decides the profile from the scopes of a request. The FAPI profiles are selected by the scopes
+   * the tenant assigns to them ({@code fapi20_scopes}, {@code fapi_advance_scopes}, {@code
+   * fapi_baseline_scopes}), in that order of precedence.
+   *
+   * <p>Used for an authorization request and again for a refresh token request, which carries no
+   * profile of its own and is decided from the scopes of the grant it refreshes.
+   */
+  public static AuthorizationProfile of(
+      Set<String> scopes, AuthorizationServerConfiguration authorizationServerConfiguration) {
+    if (authorizationServerConfiguration.hasFapi20Scope(scopes)) {
+      return FAPI_2_0;
+    }
+    if (authorizationServerConfiguration.hasFapiAdvanceScope(scopes)) {
+      return FAPI_ADVANCE;
+    }
+    if (authorizationServerConfiguration.hasFapiBaselineScope(scopes)) {
+      return FAPI_BASELINE;
+    }
+    if (scopes.contains("openid")) {
+      return OIDC;
+    }
+    return OAUTH2;
+  }
 
   public boolean isOAuth2() {
     return this == OAUTH2;

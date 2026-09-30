@@ -18,6 +18,7 @@ package org.idp.server.core.openid.extension.fapi;
 
 import org.idp.server.core.openid.oauth.AuthorizationProfile;
 import org.idp.server.core.openid.oauth.OAuthRequestContext;
+import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
 import org.idp.server.core.openid.oauth.exception.OAuthBadRequestException;
 import org.idp.server.core.openid.oauth.exception.OAuthRedirectableBadRequestException;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
@@ -72,9 +73,22 @@ public class FapiBaselineVerifier implements AuthorizationRequestVerifier {
   FapiRedirectUriVerifier redirectUriVerifier =
       new FapiRedirectUriVerifier("FAPI Baseline profile");
   OidcRequestBaseVerifier oidcRequestBaseVerifier = new OidcRequestBaseVerifier();
+  FapiBaselineClientAuthenticationVerifier clientAuthenticationVerifier =
+      new FapiBaselineClientAuthenticationVerifier();
 
   public AuthorizationProfile profile() {
     return AuthorizationProfile.FAPI_BASELINE;
+  }
+
+  /**
+   * Pushed authorization request: the client has authenticated, so the profile's client
+   * authentication requirements (5.2.2-3/4/5/6/19) are checked first and reported as
+   * invalid_client.
+   */
+  @Override
+  public void verify(OAuthRequestContext context, ClientCredentials clientCredentials) {
+    clientAuthenticationVerifier.verify(context.clientConfiguration(), clientCredentials);
+    verify(context);
   }
 
   @Override
