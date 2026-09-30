@@ -20,6 +20,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Base64;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionAttributes;
+import org.idp.server.core.openid.oauth.type.oauth.RedirectUri;
+import org.idp.server.core.openid.oauth.type.oauth.Subject;
 import org.idp.server.platform.crypto.AesCipher;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,8 +35,9 @@ import org.junit.jupiter.api.Test;
  */
 class AuthenticationProofTest {
 
-  private static final String SUB = "3f9d5c81-7b24-4e60-9a3f-8c1d2e0b6a75";
-  private static final String REDIRECT = "https://rp.example.com/callback?code=abc";
+  private static final Subject SUB = new Subject("3f9d5c81-7b24-4e60-9a3f-8c1d2e0b6a75");
+  private static final RedirectUri REDIRECT =
+      new RedirectUri("https://rp.example.com/callback?code=abc");
   private static final AesCipher CIPHER =
       new AesCipher(Base64.getEncoder().encodeToString(new byte[32]));
 
@@ -82,18 +85,19 @@ class AuthenticationProofTest {
 
     assertFalse(
         AuthenticationProof.authenticatedOn(stored)
-            .authorizes(issued.value(), "8a1c7e35-2d90-4f61-b7e2-9c4d05a3f118"));
+            .authorizes(issued.value(), new Subject("8a1c7e35-2d90-4f61-b7e2-9c4d05a3f118")));
   }
 
   @Test
   @DisplayName("利用者が定まらないまま発行された proof は使えない")
   void rejectsProofWithoutUser() {
     // sub が無い proof は誰のものとも言えない。null 同士が一致してしまわないこと。
-    AuthenticationProof issued = AuthenticationProof.authenticated(null);
+    AuthenticationProof issued = AuthenticationProof.authenticated(new Subject());
     AuthenticationTransactionAttributes stored =
         issued.storeOn(new AuthenticationTransactionAttributes(), CIPHER);
 
-    assertFalse(AuthenticationProof.authenticatedOn(stored).authorizes(issued.value(), null));
+    assertFalse(
+        AuthenticationProof.authenticatedOn(stored).authorizes(issued.value(), new Subject()));
   }
 
   @Test
@@ -129,7 +133,7 @@ class AuthenticationProofTest {
 
     AuthenticationProof proof = AuthenticationProof.completionOn(stored, CIPHER);
     assertTrue(proof.completes(issued.value()));
-    assertEquals(REDIRECT, proof.redirectUri());
+    assertEquals(REDIRECT.value(), proof.redirectUri().value());
   }
 
   @Test
@@ -155,6 +159,7 @@ class AuthenticationProofTest {
             .storeOn(new AuthenticationTransactionAttributes(), CIPHER);
 
     assertFalse(stored.toMap().toString().contains("code=abc"));
-    assertEquals(REDIRECT, AuthenticationProof.completionOn(stored, CIPHER).redirectUri());
+    assertEquals(
+        REDIRECT.value(), AuthenticationProof.completionOn(stored, CIPHER).redirectUri().value());
   }
 }

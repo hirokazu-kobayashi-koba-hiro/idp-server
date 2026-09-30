@@ -23,6 +23,8 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionAttributes;
+import org.idp.server.core.openid.oauth.type.oauth.RedirectUri;
+import org.idp.server.core.openid.oauth.type.oauth.Subject;
 import org.idp.server.platform.crypto.AesCipher;
 import org.idp.server.platform.crypto.EncryptedData;
 import org.idp.server.platform.random.RandomStringGenerator;
@@ -87,10 +89,10 @@ public class AuthenticationProof {
 
   String value;
   String hash;
-  String sub;
-  String redirectUri;
+  Subject sub;
+  RedirectUri redirectUri;
 
-  private AuthenticationProof(String value, String hash, String sub, String redirectUri) {
+  private AuthenticationProof(String value, String hash, Subject sub, RedirectUri redirectUri) {
     this.value = value;
     this.hash = hash;
     this.sub = sub;
@@ -98,13 +100,13 @@ public class AuthenticationProof {
   }
 
   /** The first of the two: what {@code /authorize} asks for. */
-  public static AuthenticationProof authenticated(String sub) {
+  public static AuthenticationProof authenticated(Subject sub) {
     String value = new RandomStringGenerator(32).generate();
-    return new AuthenticationProof(value, hashOf(value), sub, null);
+    return new AuthenticationProof(value, hashOf(value), sub, new RedirectUri());
   }
 
   /** The second of the two: what {@code /complete} asks for, carrying the redirect. */
-  public static AuthenticationProof forCompletion(String sub, String redirectUri) {
+  public static AuthenticationProof forCompletion(Subject sub, RedirectUri redirectUri) {
     String value = new RandomStringGenerator(32).generate();
     return new AuthenticationProof(value, hashOf(value), sub, redirectUri);
   }
@@ -141,7 +143,7 @@ public class AuthenticationProof {
     return value;
   }
 
-  public String redirectUri() {
+  public RedirectUri redirectUri() {
     return redirectUri;
   }
 
@@ -157,11 +159,12 @@ public class AuthenticationProof {
    * and one earned before the transaction settled on a user must not carry over to whoever it
    * settled on.
    */
-  public boolean authorizes(String presented, String sub) {
+  public boolean authorizes(String presented, Subject sub) {
     return exists()
         && !hasRedirectUri()
-        && this.sub != null
-        && this.sub.equals(sub)
+        && this.sub.exists()
+        && sub != null
+        && this.sub.value().equals(sub.value())
         && matches(presented);
   }
 
@@ -171,7 +174,7 @@ public class AuthenticationProof {
   }
 
   public boolean hasRedirectUri() {
-    return redirectUri != null && !redirectUri.isEmpty();
+    return redirectUri.exists();
   }
 
   private boolean matches(String presented) {
@@ -189,25 +192,27 @@ public class AuthenticationProof {
   private Map<String, Object> toMap(AesCipher cipher) {
     Map<String, Object> map = new HashMap<>();
     map.put("hash", hash);
-    if (sub != null) map.put("sub", sub);
-    if (hasRedirectUri()) map.put("redirect_uri", cipher.encrypt(redirectUri).toMap());
+    if (sub.exists()) map.put("sub", sub.value());
+    if (hasRedirectUri()) map.put("redirect_uri", cipher.encrypt(redirectUri.value()).toMap());
     return map;
   }
 
   private static AuthenticationProof fromMap(Map<String, Object> map) {
-    return new AuthenticationProof(null, (String) map.get("hash"), (String) map.get("sub"), null);
+    return new AuthenticationProof(
+        null, (String) map.get("hash"), new Subject((String) map.get("sub")), new RedirectUri());
   }
 
   private static AuthenticationProof fromMap(Map<String, Object> map, AesCipher cipher) {
-    String redirectUri = null;
+    RedirectUri redirectUri = new RedirectUri();
     if (map.get("redirect_uri") instanceof Map<?, ?> encrypted) {
       redirectUri =
-          cipher.decrypt(
-              new EncryptedData(
-                  (String) encrypted.get("cipher_text"), (String) encrypted.get("iv")));
+          new RedirectUri(
+              cipher.decrypt(
+                  new EncryptedData(
+                      (String) encrypted.get("cipher_text"), (String) encrypted.get("iv"))));
     }
     return new AuthenticationProof(
-        null, (String) map.get("hash"), (String) map.get("sub"), redirectUri);
+        null, (String) map.get("hash"), new Subject((String) map.get("sub")), redirectUri);
   }
 
   private static String hashOf(String value) {

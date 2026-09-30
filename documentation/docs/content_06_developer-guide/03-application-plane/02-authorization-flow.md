@@ -699,7 +699,7 @@ Token Request（省略可能）
 
 ### モードの判定
 
-`OAuthFlowEntryService#crossSiteAuthorizationView` が、認可リクエスト（または認証トランザクション）のクライアントで判定します。判定そのものは `ClientConfiguration#crossSiteAuthorizationView(UIConfiguration)` にあり、クライアントの `extension.cross_site_authorization_view` があればそれ、無ければテナントの `ui_config.cross_site` です。
+`OAuthFlowEntryService#bindingFor` が、認可リクエスト（または認証トランザクション）のクライアントで判定し、`CrossSiteAuthorizationBinding` を作ります。判定は 1 リクエストにつき 1 回で、以降の判断はすべてこのオブジェクトに聞きます。判定そのものは `ClientConfiguration#crossSiteAuthorizationView(UIConfiguration)` にあり、クライアントの `extension.cross_site_authorization_view` があればそれ、無ければテナントの `ui_config.cross_site` です。
 
 ### 状態の置き場所
 
@@ -713,18 +713,22 @@ Token Request（省略可能）
 
 値そのものは保存しません。`AuthenticationProof` が値を生成して SHA-256 のハッシュだけを `storeOn` で書き、照合（`authorizes` / `completes`）は固定時間の比較です。各段は最新の 1 つだけが有効です。
 
-`authorize` と `/complete` はトランザクションを `getForUpdate`（行ロック）で読むため、同じ proof を同時に使っても通るのは 1 つだけです。`completion_proof` が既にあるトランザクションへの `authorize` / `authorize-with-session` は拒否します（`handedOffForCompletion`）。proof を求めないフローでは、リクエスト ID を知る第三者が呼び直して ② を差し替え、正規のブラウザを締め出せるためです。トランザクションの `UPDATE` は attributes も書きます（PostgreSQL / MySQL の両方）。
+`authorize` と `/complete` はトランザクションを `getForUpdate`（行ロック）で読むため、同じ proof を同時に使っても通るのは 1 つだけです。`completion_proof` が既にあるトランザクションへの `authorize` / `authorize-with-session` は拒否します（`CrossSiteAuthorizationBinding#handedOffForCompletion`）。proof を求めないフローでは、リクエスト ID を知る第三者が呼び直して ② を差し替え、正規のブラウザを締め出せるためです。トランザクションの `UPDATE` は attributes も書きます（PostgreSQL / MySQL の両方）。
 
 ### 処理の流れ
 
-| 段階 | メソッド | やること |
+束縛の判断は core の `CrossSiteAuthorizationBinding` にまとめてあります。値についての判断だけを持ち、トランザクション・Cookie・セッションの読み書きは呼び出し側（`OAuthFlowEntryService`）が行います。そのため、判断のすべての分岐を単体テストで確かめられます。
+
+| 段階 | `CrossSiteAuthorizationBinding` のメソッド | やること |
 |---|---|---|
-| 認可リクエスト | `request` | ブラウザに OP セッションの Cookie があれば、トランザクションの `op_session_id` に入れる（トップレベル遷移なので読める） |
-| 認証ステップ | `proofForBrowserStep` / `carryCrossSiteBinding` | ブラウザから来て、本人しか通せない種類（`OperationType#provesPossession`）のステップが成功したら ① を発行。認証が成功して作った OP セッションも紐づける |
-| authorize | `presentsAuthenticationProof` / `issueCompletionProof` | ① を照合し、② を発行して応答に載せる。code は ② の中に入れ、応答のボディに出さない |
-| /complete | `complete` / `startedByThisBrowser` | `IDP_AUTH_SESSION` を照合してから ② を照合する。OP セッションの Cookie を書き、② の遷移先へ 302。失敗時は RP に戻さず、テナントのエラー画面へ 302（`OAuthCompleteResponse.errorPage`） |
+| 認可リクエスト | `bindSession` | ブラウザに OP セッションの Cookie があれば、トランザクションの `op_session_id` に入れる（トップレベル遷移なので読める） |
+| 認証ステップ | `proofForStep` / `proofForFederation` / `carry` | ブラウザから来て、本人しか通せない種類（`OperationType#provesPossession`）のステップが成功したら ① を発行。認証が成功して作った OP セッションも紐づける |
+| authorize | `gateAuthorize` / `handOff` | 進めてよいかを判定する（② を渡し済み・① が無い・同一サイトなので Cookie を照合・進める）。進めたら ① を消費して ② を発行し、応答に載せる。code は ② の中に入れ、応答のボディに出さない |
+| /complete | `checkCompletion` | `IDP_AUTH_SESSION` を照合し、② を照合し、② の中の遷移先をリクエストの redirect_uri と照合する（この順）。OP セッションの Cookie を書き、② の遷移先へ 302。失敗時は RP に戻さず、テナントのエラー画面へ 302（`OAuthCompleteResponse.errorPage`） |
 
 `/complete` の照合は、`IDP_AUTH_SESSION` を先に見ます。先に ② を照合して消費すると、Cookie を持たない呼び出しが ② を使い切り、正規のブラウザを締め出せるためです（② はトランザクションの削除で消えます）。
+
+`checkCompletion` は、トランザクションに `authSessionId` が無ければ拒否します。proof を求めないフロー（デバイスだけの認証、既存の OP セッションでの続行）では、これが唯一のブラウザの束縛なので、欠けを「照合するものが無い」とは扱いません。認証ポリシーが `auth_session_binding_required: false` なら照合は行いませんが、警告をログに出します。
 
 ### proof を求めない場合
 
@@ -734,7 +738,7 @@ Token Request（省略可能）
 
 ### OP セッションの引き当て
 
-`authenticatingSession` は、同一サイト構成では Cookie から、別サイト認可画面モードではトランザクションの `op_session_id` から OP セッションを引きます。`view-data`（`session_enabled`）、`authorize`（`sid` の発行）、`authorize-with-session`、`/complete`（セッションの再利用）がこれを使います。
+`OAuthFlowEntryService#authenticatingSession` は、同一サイト構成では Cookie から、別サイト認可画面モードでは `CrossSiteAuthorizationBinding#boundSessionId`（トランザクションの `op_session_id`）から OP セッションを引きます。`view-data`（`session_enabled`）、`authorize`（`sid` の発行）、`authorize-with-session`、`/complete`（セッションの再利用）がこれを使います。
 
 ### 認可画面側（app-view）
 
@@ -749,6 +753,7 @@ Token Request（省略可能）
 | テスト | 確かめていること |
 |---|---|
 | `e2e/src/tests/scenario/application/scenario-17-cross-site-auth-proof.test.js` | 発行条件、使い捨て、段の取り違え、別のユーザー・別のリクエスト、`/complete` の二重照合、デバイスで終わる / デバイスだけのフロー、SSO |
+| `CrossSiteAuthorizationBindingTest` | proof の発行条件、authorize の関門、② の受け渡し、`/complete` の照合（束縛の欠け・opt-out・別のブラウザ・段の取り違え・遷移先の不一致） |
 | `AuthenticationProofTest` / `AuthenticationTransactionBrowserPossessionTest` | proof の保存と照合、proof を求めるかの判断 |
 | `e2e/src/tests/browser/safari_cross_site_demo.test.js` | Safari 実機での一周と SSO（`SAFARI_E2E=1` のときだけ動く） |
 

@@ -38,11 +38,13 @@ describe("cross-site authorization view: auth_proof", () => {
   const DEVICE_LAST_ACR = "urn:e2e:cross-site:password-then-fido-uaf";
   /** ブラウザでの入力が一切なく、デバイスだけで認証する方式（login_hint ＋ FIDO-UAF）を選ばせる acr。 */
   const DEVICE_ONLY_ACR = "urn:e2e:cross-site:fido-uaf-only";
+  /** 認証ポリシーでブラウザの束縛を外している（auth_session_binding_required: false）方式を選ばせる acr。 */
+  const NO_BINDING_ACR = "urn:e2e:cross-site:password-without-binding";
 
   const authorizations = () => `${backendUrl}/${tenantId}/v1/authorizations`;
 
   /** 認可リクエストを開始し、認可画面に渡される id を取り出す。 */
-  const startAuthorization = async () => {
+  const startAuthorization = async (extraParams = {}) => {
     const response = await get({
       url: authorizations(),
       params: {
@@ -52,6 +54,7 @@ describe("cross-site authorization view: auth_proof", () => {
         scope: "openid profile email",
         state: uuidv4(),
         nonce: uuidv4(),
+        ...extraParams,
       },
     });
     expect(response.status).toBe(302);
@@ -173,7 +176,7 @@ describe("cross-site authorization view: auth_proof", () => {
           response_modes_supported: ["query", "fragment"],
           subject_types_supported: ["public"],
           id_token_signing_alg_values_supported: ["RS256", "ES256"],
-          acr_values_supported: [DEVICE_LAST_ACR, DEVICE_ONLY_ACR],
+          acr_values_supported: [DEVICE_LAST_ACR, DEVICE_ONLY_ACR, NO_BINDING_ACR],
           claims_supported: ["sub", "name", "email", "email_verified"],
           extension: {
             access_token_type: "JWT",
@@ -354,6 +357,25 @@ describe("cross-site authorization view: auth_proof", () => {
                 [
                   {
                     path: "$.fido-uaf-authentication.success_count",
+                    type: "integer",
+                    operation: "gte",
+                    value: 1,
+                  },
+                ],
+              ],
+            },
+          },
+          {
+            description: "password_without_binding",
+            priority: 40,
+            conditions: { acr_values: [NO_BINDING_ACR] },
+            available_methods: ["password"],
+            auth_session_binding_required: false,
+            success_conditions: {
+              any_of: [
+                [
+                  {
+                    path: "$.password-authentication.success_count",
                     type: "integer",
                     operation: "gte",
                     value: 1,
@@ -635,6 +657,39 @@ describe("cross-site authorization view: auth_proof", () => {
       });
 
       expect((await complete(id, completionProof)).status).toBe(302);
+    });
+  });
+
+  describe("認証ポリシーで束縛を外している（auth_session_binding_required: false）", () => {
+    // 別サイト構成は、以前はこの opt-out を立てないと動かなかった。/complete は opt-out を尊重する
+    // （別の理由で外しているテナントもありうる）ので、別サイト構成に移したら true に戻すのが前提になる。
+    const authorizeWithoutBinding = async () => {
+      const id = await startAuthorization({ acr_values: NO_BINDING_ACR });
+      const authProof = (await authenticate(id)).data.auth_proof;
+      expect(typeof authProof).toBe("string");
+      const authorized = await authorize(id, { auth_proof: authProof });
+      expect(authorized.status).toBe(200);
+      return { id, completionProof: authorized.data.auth_proof };
+    };
+
+    it("始めたブラウザからは今までどおり完了できる", async () => {
+      const { id, completionProof } = await authorizeWithoutBinding();
+
+      const completed = await complete(id, completionProof);
+
+      expect(completed.status).toBe(302);
+      expect(new URL(completed.headers.location).searchParams.get("code")).toBeTruthy();
+    });
+
+    it("始めたブラウザ以外からも完了できてしまう（opt-out を尊重した結果。戻すのは運用側）", async () => {
+      const { id, completionProof } = await authorizeWithoutBinding();
+
+      const completed = await withoutCookies.get(`${authorizations()}/${id}/complete`, {
+        params: { auth_proof: completionProof },
+      });
+
+      expect(completed.status).toBe(302);
+      expect(new URL(completed.headers.location).searchParams.get("code")).toBeTruthy();
     });
   });
 
