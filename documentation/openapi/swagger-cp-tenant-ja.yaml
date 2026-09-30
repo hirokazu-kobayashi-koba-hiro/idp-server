@@ -1074,6 +1074,8 @@ components:
               type: array
               items:
                 type: array
+                minItems: 1
+                description: 条件のグループ。空のグループは読み取れない条件として扱われ、変更は拒否されます
                 items:
                   type: object
                   required:
