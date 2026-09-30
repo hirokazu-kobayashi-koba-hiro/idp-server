@@ -44,4 +44,9 @@ public enum ClientAssertionType {
   public boolean isDefined() {
     return this != undefined;
   }
+
+  /** RFC 7523 Section 2.2: the only assertion type defined for JWT client authentication. */
+  public boolean isJwtBearer() {
+    return this == jwt_bearer;
+  }
 }

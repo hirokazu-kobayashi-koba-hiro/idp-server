@@ -102,6 +102,12 @@ class PrivateKeyJwtAuthenticator
           clientId,
           "request does not contain client_assertion_type");
     }
+    if (!parameters.clientAssertionType().isJwtBearer()) {
+      throw new ClientUnAuthorizedException(
+          ClientAuthenticationType.private_key_jwt.name(),
+          clientId,
+          "client_assertion_type must be urn:ietf:params:oauth:client-assertion-type:jwt-bearer");
+    }
   }
 
   JoseContext parseOrThrowExceptionIfUnMatchClientAssertion(BackchannelRequestContext context) {

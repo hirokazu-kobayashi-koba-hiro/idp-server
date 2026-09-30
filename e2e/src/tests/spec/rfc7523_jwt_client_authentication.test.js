@@ -544,4 +544,40 @@ describe("RFC 7523: JSON Web Token (JWT) Profile for OAuth 2.0 Client Authentica
       });
     });
   });
+
+  /**
+   * RFC 7523 Section 2.2:
+   *
+   * "The value of the "client_assertion_type" is
+   *  "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"."
+   *
+   * An assertion sent with any other type is not a JWT client authentication and is refused as
+   * invalid_client.
+   */
+  describe("Section 2.2: Using JWTs for Client Authentication", () => {
+    it.each([
+      ["private_key_jwt", privateKeyJwtClient],
+      ["client_secret_jwt", clientSecretJwtClient],
+    ])("The value of the \"client_assertion_type\" is \"urn:ietf:params:oauth:client-assertion-type:jwt-bearer\". (%s)", async (_, client) => {
+      const code = await getAuthorizationCode(client);
+      const clientAssertion = createClientAssertion({ client, issuer: serverConfig.issuer });
+
+      const response = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code,
+        grantType: "authorization_code",
+        redirectUri: client.redirectUri,
+        clientId: client.clientId,
+        clientAssertion,
+        clientAssertionType: "urn:ietf:params:oauth:client-assertion-type:saml2-bearer",
+      });
+
+      console.log(response.status, response.data);
+      expect(response.status).toBe(401);
+      expect(response.data.error).toBe("invalid_client");
+      expect(response.data.error_description).toContain(
+        "client_assertion_type must be urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+      );
+    });
+  });
 });
