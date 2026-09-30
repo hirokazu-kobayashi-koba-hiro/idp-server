@@ -1,6 +1,7 @@
 import { describe, expect, it, xit } from "@jest/globals";
 
 import { getJwks, getUserinfo, inspectToken, requestToken } from "../../api/oauthClient";
+import { get } from "../../lib/http";
 import {
   clientSecretPostClient,
   publicClient,
@@ -581,6 +582,88 @@ describe("Financial-grade API Security Profile 1.0 - Part 2: Advanced", () => {
 
       expect(decodedResponse.payload.error).toEqual("invalid_request_object");
       expect(decodedResponse.payload.error_description).toEqual("When FAPI Advance profile, shall require the request object to contain an nbf claim that is no longer than 60 minutes in the past");
+    });
+
+    /**
+     * Part 2 5.2.2: "shall support the provisions specified in clause 5.2.2 of Financial-grade API
+     * Security Profile 1.0 - Part 1: Baseline", which include 5.2.2-8/9/10 (redirect_uri
+     * pre-registered, required and exactly matched). A request without the openid scope (JARM) is
+     * verified on the OAuth 2.0 path, which had none of them (Issue #1902). The errors must be shown
+     * by the authorization server, never redirected to the unregistered redirect_uri.
+     */
+    const unregisteredRedirectUri = "https://attacker.example.com/steal-code";
+    const requestObjectWithoutOpenid = (overrides) =>
+      createJwtWithPrivateKey({
+        payload: {
+          response_type: "code",
+          response_mode: "jwt",
+          state: "fapi-advance-oauth",
+          scope: selfSignedTlsAuthClient.fapiAdvanceScope,
+          redirect_uri: unregisteredRedirectUri,
+          client_id: selfSignedTlsAuthClient.clientId,
+          aud: serverConfig.issuer,
+          iss: selfSignedTlsAuthClient.clientId,
+          code_challenge: calculateCodeChallengeWithS256(generateCodeVerifier(64)),
+          code_challenge_method: "S256",
+          exp: toEpocTime({ adjusted: 3000 }),
+          iat: toEpocTime({}),
+          nbf: toEpocTime({}),
+          jti: generateJti(),
+          ...overrides,
+        },
+        privateKey: selfSignedTlsAuthClient.requestKey,
+      });
+    const authorize = async (params) =>
+      await get({
+        url: `${serverConfig.authorizationEndpoint}?${new URLSearchParams(params).toString()}`,
+      });
+    // Shown on the authorization server's error page. The page quotes the refused redirect_uri in
+    // error_description, so the destination is checked up to the query.
+    const expectErrorPage = (response) => {
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toMatch(/^[^?]*\/error\/\?error=invalid_request&/);
+    };
+
+    it("Baseline 5.2.2-8/10. shall require redirect URIs to be pre-registered and the value of redirect_uri to exactly match one of them, also without the openid scope (JARM);", async () => {
+      const response = await authorize({
+        client_id: selfSignedTlsAuthClient.clientId,
+        request: requestObjectWithoutOpenid({}),
+      });
+      console.log(response.status, response.headers.location);
+      expectErrorPage(response);
+      expect(decodeURIComponent(response.headers.location ?? "")).toContain(
+        "exactly match one of the pre-registered redirect URIs"
+      );
+    });
+
+    it("Baseline 5.2.2-9. shall require the redirect_uri in the authorization request, also without the openid scope (JARM);", async () => {
+      const response = await authorize({
+        client_id: selfSignedTlsAuthClient.clientId,
+        request: requestObjectWithoutOpenid({ redirect_uri: undefined }),
+      });
+      console.log(response.status, response.headers.location);
+      expectErrorPage(response);
+      expect(decodeURIComponent(response.headers.location ?? "")).toContain(
+        "shall require the redirect_uri in the authorization request"
+      );
+    });
+
+    it("Baseline 5.2.2-8/10. an error of a request without a request object is not redirected to an unregistered redirect_uri, without the openid scope (JARM);", async () => {
+      // Refused for missing the request object (5.2.2-1), an error the authorization server may
+      // report by redirecting. With only a client_id, anyone could otherwise make the authorization
+      // endpoint redirect to a URL of their choosing.
+      const response = await authorize({
+        response_type: "code",
+        response_mode: "jwt",
+        client_id: selfSignedTlsAuthClient.clientId,
+        scope: selfSignedTlsAuthClient.fapiAdvanceScope,
+        state: "fapi-advance-direct",
+        redirect_uri: unregisteredRedirectUri,
+        code_challenge: calculateCodeChallengeWithS256(generateCodeVerifier(64)),
+        code_challenge_method: "S256",
+      });
+      console.log(response.status, response.headers.location);
+      expectErrorPage(response);
     });
   });
 

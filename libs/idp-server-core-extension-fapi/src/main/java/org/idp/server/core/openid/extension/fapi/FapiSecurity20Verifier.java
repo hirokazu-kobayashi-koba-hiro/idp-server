@@ -30,7 +30,7 @@ import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
 import org.idp.server.core.openid.oauth.type.oauth.ClientAuthenticationType;
 import org.idp.server.core.openid.oauth.type.oauth.RedirectUri;
 import org.idp.server.core.openid.oauth.verifier.AuthorizationRequestVerifier;
-import org.idp.server.core.openid.oauth.verifier.base.OAuthRequestBaseVerifier;
+import org.idp.server.core.openid.oauth.verifier.OAuth2RequestVerifier;
 import org.idp.server.core.openid.oauth.verifier.base.OidcRequestBaseVerifier;
 
 /**
@@ -81,7 +81,9 @@ public class FapiSecurity20Verifier implements AuthorizationRequestVerifier {
   static final Set<String> ALLOWED_CLIENT_ASSERTION_ALGORITHMS =
       Set.of("PS256", "PS384", "PS512", "ES256", "ES384", "ES512", "EdDSA");
 
-  OAuthRequestBaseVerifier oAuthRequestBaseVerifier = new OAuthRequestBaseVerifier();
+  OAuth2RequestVerifier oAuth2RequestVerifier = new OAuth2RequestVerifier();
+  FapiRedirectUriVerifier redirectUriVerifier =
+      new FapiRedirectUriVerifier("FAPI 2.0 Security Profile");
   OidcRequestBaseVerifier oidcRequestBaseVerifier = new OidcRequestBaseVerifier();
 
   @Override
@@ -91,11 +93,17 @@ public class FapiSecurity20Verifier implements AuthorizationRequestVerifier {
 
   @Override
   public void verify(OAuthRequestContext context) {
+    // FAPI 2.0 Section 5.3.2.2-6 requires redirect_uri in pushed authorization requests; the
+    // pre-registration and exact match come from OAuth 2.0 (RFC 6749 3.1.2.3) and the ban on open
+    // redirectors. Checked first, ahead of any error reported by redirecting (such as the PAR
+    // requirement below), on both the OIDC and non-OIDC request paths (Issue #1902).
+    redirectUriVerifier.verify(context);
+
     // OAuth 2.0 / OIDC base requirements
     if (context.isOidcRequest()) {
       oidcRequestBaseVerifier.verify(context);
     } else {
-      oAuthRequestBaseVerifier.verify(context);
+      oAuth2RequestVerifier.verify(context);
     }
 
     // FAPI 2.0 Section 5.3.2.2.3: PAR usage required

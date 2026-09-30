@@ -18,14 +18,13 @@ package org.idp.server.core.openid.extension.fapi;
 
 import org.idp.server.core.openid.oauth.AuthorizationProfile;
 import org.idp.server.core.openid.oauth.OAuthRequestContext;
-import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.exception.OAuthBadRequestException;
 import org.idp.server.core.openid.oauth.exception.OAuthRedirectableBadRequestException;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
 import org.idp.server.core.openid.oauth.type.oauth.ClientAuthenticationType;
 import org.idp.server.core.openid.oauth.type.oauth.RedirectUri;
 import org.idp.server.core.openid.oauth.verifier.AuthorizationRequestVerifier;
-import org.idp.server.core.openid.oauth.verifier.base.OAuthRequestBaseVerifier;
+import org.idp.server.core.openid.oauth.verifier.OAuth2RequestVerifier;
 import org.idp.server.core.openid.oauth.verifier.base.OidcRequestBaseVerifier;
 
 /**
@@ -43,8 +42,10 @@ import org.idp.server.core.openid.oauth.verifier.base.OidcRequestBaseVerifier;
  * <p>FAPI 1.0 Baseline Section 5.2.2 states: "In addition to the requirements in OAuth 2.0 and
  * OIDC, the authorization server SHALL ..."
  *
- * <p>This verifier delegates OAuth 2.0 / OIDC base validations to {@link OAuthRequestBaseVerifier}
- * and {@link OidcRequestBaseVerifier}, then applies Baseline-specific requirements on top.
+ * <p>This verifier delegates OAuth 2.0 / OIDC base validations to {@link OAuth2RequestVerifier} and
+ * {@link OidcRequestBaseVerifier}, then applies Baseline-specific requirements on top. The
+ * redirect_uri requirements (5.2.2-8/9/10) are in {@link FapiRedirectUriVerifier}, shared with
+ * Advanced and FAPI 2.0.
  *
  * <p>Requirements verified by this class:
  *
@@ -67,7 +68,9 @@ import org.idp.server.core.openid.oauth.verifier.base.OidcRequestBaseVerifier;
  */
 public class FapiBaselineVerifier implements AuthorizationRequestVerifier {
 
-  OAuthRequestBaseVerifier oAuthRequestBaseVerifier = new OAuthRequestBaseVerifier();
+  OAuth2RequestVerifier oAuth2RequestVerifier = new OAuth2RequestVerifier();
+  FapiRedirectUriVerifier redirectUriVerifier =
+      new FapiRedirectUriVerifier("FAPI Baseline profile");
   OidcRequestBaseVerifier oidcRequestBaseVerifier = new OidcRequestBaseVerifier();
 
   public AuthorizationProfile profile() {
@@ -76,56 +79,17 @@ public class FapiBaselineVerifier implements AuthorizationRequestVerifier {
 
   @Override
   public void verify(OAuthRequestContext context) {
-    throwExceptionIfUnregisteredRedirectUri(context);
-    throwExceptionIfNotContainsRedirectUri(context);
-    oAuthRequestBaseVerifier.throwExceptionIfRedirectUriContainsFragment(context);
-    throwExceptionUnMatchRedirectUri(context);
+    redirectUriVerifier.verify(context);
     throwExceptionIfNotHttpsRedirectUri(context);
     if (context.isOidcRequest()) {
       oidcRequestBaseVerifier.verify(context);
     } else {
-      oAuthRequestBaseVerifier.verify(context);
+      oAuth2RequestVerifier.verify(context);
     }
     throwExceptionIfClientSecretPostOrClientSecretBasic(context);
     throwExceptionIfNotS256CodeChallengeMethod(context);
     throwExceptionIfHasOpenidScopeAndNotContainsNonce(context);
     throwExceptionIfNotHasOpenidScopeAndNotContainsState(context);
-  }
-
-  /** shall require redirect URIs to be pre-registered; */
-  void throwExceptionIfUnregisteredRedirectUri(OAuthRequestContext context) {
-    ClientConfiguration clientConfiguration = context.clientConfiguration();
-    if (!clientConfiguration.hasRedirectUri()) {
-      throw new OAuthBadRequestException(
-          "invalid_request",
-          "When FAPI Baseline profile, shall require redirect URIs to be pre-registered",
-          context.tenant());
-    }
-  }
-
-  /** shall require the redirect_uri in the authorization request; */
-  void throwExceptionIfNotContainsRedirectUri(OAuthRequestContext context) {
-    if (!context.hasRedirectUriInRequest()) {
-      throw new OAuthBadRequestException(
-          "invalid_request",
-          "When FAPI Baseline profile, shall require the redirect_uri in the authorization request",
-          context.tenant());
-    }
-  }
-
-  /**
-   * shall require the value of redirect_uri to exactly match one of the pre-registered redirect
-   * URIs;
-   */
-  void throwExceptionUnMatchRedirectUri(OAuthRequestContext context) {
-    if (!context.isRegisteredRedirectUri()) {
-      throw new OAuthBadRequestException(
-          "invalid_request",
-          String.format(
-              "When FAPI Baseline profile, shall require the value of redirect_uri to exactly match one of the pre-registered redirect URIs (%s)",
-              context.redirectUri().value()),
-          context.tenant());
-    }
   }
 
   /** shall require redirect URIs to use the https scheme; */
