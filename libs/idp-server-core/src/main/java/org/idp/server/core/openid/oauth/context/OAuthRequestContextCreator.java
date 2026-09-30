@@ -42,20 +42,7 @@ public interface OAuthRequestContextCreator {
   default AuthorizationProfile analyze(
       Set<String> filteredScopes,
       AuthorizationServerConfiguration authorizationServerConfiguration) {
-
-    if (authorizationServerConfiguration.hasFapi20Scope(filteredScopes)) {
-      return AuthorizationProfile.FAPI_2_0;
-    }
-    if (authorizationServerConfiguration.hasFapiAdvanceScope(filteredScopes)) {
-      return AuthorizationProfile.FAPI_ADVANCE;
-    }
-    if (authorizationServerConfiguration.hasFapiBaselineScope(filteredScopes)) {
-      return AuthorizationProfile.FAPI_BASELINE;
-    }
-    if (filteredScopes.contains("openid")) {
-      return AuthorizationProfile.OIDC;
-    }
-    return AuthorizationProfile.OAUTH2;
+    return AuthorizationProfile.of(filteredScopes, authorizationServerConfiguration);
   }
 
   default Set<String> filterScopes(

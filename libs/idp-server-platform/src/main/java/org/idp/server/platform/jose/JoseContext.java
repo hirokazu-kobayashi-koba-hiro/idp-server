@@ -25,6 +25,7 @@ public class JoseContext {
   JsonWebTokenClaims claims = new JsonWebTokenClaims();
   JsonWebSignatureVerifier jwsVerifier = new JsonWebSignatureVerifier();
   JsonWebKey jsonWebKey = new JsonWebKey();
+  JsonWebEncryption jsonWebEncryption = new JsonWebEncryption();
 
   public JoseContext() {}
 
@@ -37,6 +38,17 @@ public class JoseContext {
     this.claims = claims;
     this.jwsVerifier = jwsVerifier;
     this.jsonWebKey = jsonWebKey;
+  }
+
+  /** A nested JWT that arrived encrypted: the signed JWT inside and the JWE it was carried in. */
+  public JoseContext(
+      JsonWebEncryption jsonWebEncryption,
+      JsonWebSignature jsonWebSignature,
+      JsonWebTokenClaims claims,
+      JsonWebSignatureVerifier jwsVerifier,
+      JsonWebKey jsonWebKey) {
+    this(jsonWebSignature, claims, jwsVerifier, jsonWebKey);
+    this.jsonWebEncryption = jsonWebEncryption;
   }
 
   public JsonWebSignature jsonWebSignature() {
@@ -63,6 +75,15 @@ public class JoseContext {
     if (hasJsonWebSignature()) {
       jwsVerifier.verify(jsonWebSignature);
     }
+  }
+
+  /** The JWE the JWT arrived in; empty unless it was encrypted. */
+  public JsonWebEncryption jsonWebEncryption() {
+    return jsonWebEncryption;
+  }
+
+  public boolean hasJsonWebEncryption() {
+    return jsonWebEncryption.exists();
   }
 
   public boolean hasJsonWebSignature() {

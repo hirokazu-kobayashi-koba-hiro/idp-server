@@ -4,15 +4,16 @@ import { getJwks, getUserinfo, inspectToken, requestToken } from "../../api/oaut
 import { get } from "../../lib/http";
 import {
   clientSecretPostClient,
+  privateKeyJwtClient,
   publicClient,
   selfSignedTlsAuthClient,
   serverConfig,
 } from "../testConfig";
-import { requestAuthorizations, certThumbprint } from "../../oauth/request";
+import { pushAuthorizations, requestAuthorizations, certThumbprint } from "../../oauth/request";
 import { encodedClientCert } from "../../api/cert/clientCert";
 import { createJwtWithNoneSignature, createJwtWithPrivateKey, generateJti, verifyAndDecodeJwt } from "../../lib/jose";
 import {
-  calculateCodeChallengeWithS256, generateCodeVerifier
+  calculateCodeChallengeWithS256, createClientAssertion, generateCodeVerifier
 } from "../../lib/oauth";
 import { toEpocTime } from "../../lib/util";
 
@@ -664,6 +665,48 @@ describe("Financial-grade API Security Profile 1.0 - Part 2: Advanced", () => {
       });
       console.log(response.status, response.headers.location);
       expectErrorPage(response);
+    });
+  });
+
+  describe("8.6.  Algorithm considerations", () => {
+    /**
+     * The client authentication requirements hold for every request the client authenticates, so a
+     * pushed authorization request is held to them before the request itself is verified.
+     */
+    it("1. shall use PS256 or ES256 algorithms; also for the client assertion of a pushed authorization request", async () => {
+      const response = await pushAuthorizations({
+        endpoint: serverConfig.pushedAuthorizationEndpoint,
+        clientId: privateKeyJwtClient.clientId,
+        // Signed with the client's RS256 key.
+        clientAssertion: createClientAssertion({
+          client: privateKeyJwtClient,
+          issuer: serverConfig.issuer,
+        }),
+        clientAssertionType: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+        responseType: "code id_token",
+        scope: "openid " + privateKeyJwtClient.fapiAdvanceScope,
+        redirectUri: privateKeyJwtClient.redirectUri,
+        state: "fapi-advance-par-rs256",
+        nonce: "fapi-advance-par-rs256",
+        codeChallenge: calculateCodeChallengeWithS256(generateCodeVerifier(64)),
+        codeChallengeMethod: "S256",
+      });
+      console.log(response.status, response.data);
+      // The PAR endpoint reports every failed client authentication with 400 (RFC 6749 5.2 requires
+      // 401 only when the client authenticated through the Authorization header).
+      expect(response.status).toBe(400);
+      expect(response.data.error).toEqual("invalid_client");
+      expect(response.data.error_description).toContain(
+        "client assertion signing algorithm must be PS256 or ES256"
+      );
+    });
+  });
+
+  describe("8.6.1.  Encryption algorithm considerations", () => {
+    xit("1. shall not use the RSA1_5 algorithm.", async () => {
+      // The test tenants have no RSA encryption key to encrypt a request object to; covered by
+      // FapiAdvanceVerifierRsa15Test (request object JWE and the client's
+      // id_token_encrypted_response_alg / authorization_encrypted_response_alg).
     });
   });
 

@@ -57,6 +57,11 @@ public class JsonWebEncryption {
     return value.getHeader().getKeyID();
   }
 
+  /** The key management algorithm of the JWE header ({@code alg}), e.g. {@code RSA-OAEP}. */
+  public String algorithm() {
+    return value.getHeader().getAlgorithm().getName();
+  }
+
   public JsonWebTokenClaims claims() {
     try {
       JWTClaimsSet jwtClaimsSet = value.getJWTClaimsSet();

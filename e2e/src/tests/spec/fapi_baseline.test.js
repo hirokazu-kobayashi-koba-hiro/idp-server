@@ -1,6 +1,6 @@
 import { describe, expect, it } from "@jest/globals";
 
-import { getJwks, inspectToken, requestToken } from "../../api/oauthClient";
+import { getJwks, getUserinfo, inspectToken, requestToken } from "../../api/oauthClient";
 import {
   clientSecretBasicClient, clientSecretPostClient, privateKeyJwtClient,
   selfSignedTlsAuthClient,
@@ -13,6 +13,48 @@ import {
   createInvalidClientAssertionWithPrivateKey, generateCodeVerifier
 } from "../../lib/oauth";
 import { toEpocTime } from "../../lib/util";
+
+/**
+ * Runs the FAPI Baseline authorization code flow with the privateKeyJwt client (RSA 2048) and
+ * returns the issued tokens. "privateKeyJwt" is the client's client_id_alias, used as client_id and
+ * as the iss / sub of the client assertion (Issue #1921).
+ */
+const issueBaselineTokens = async () => {
+  const codeVerifier = generateCodeVerifier(64);
+  const { authorizationResponse } = await requestAuthorizations({
+    endpoint: serverConfig.authorizationEndpoint,
+    responseType: "code",
+    state: "aiueo",
+    scope: "openid profile phone email " + privateKeyJwtClient.fapiBaselineScope,
+    redirectUri: privateKeyJwtClient.redirectUri,
+    clientId: privateKeyJwtClient.clientId,
+    nonce: "nonce",
+    codeChallenge: calculateCodeChallengeWithS256(codeVerifier),
+    codeChallengeMethod: "S256",
+  });
+  expect(authorizationResponse.code).not.toBeNull();
+
+  const tokenResponse = await requestToken({
+    endpoint: serverConfig.tokenEndpoint,
+    code: authorizationResponse.code,
+    grantType: "authorization_code",
+    redirectUri: privateKeyJwtClient.redirectUri,
+    clientId: privateKeyJwtClient.clientId,
+    codeVerifier,
+    clientAssertion: createInvalidClientAssertionWithPrivateKey({
+      client: privateKeyJwtClient,
+      issuer: serverConfig.issuer,
+      invalidPrivateKey: privateKeyJwtClient.clientSecretKey,
+    }),
+    clientAssertionType: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+  });
+  console.log(tokenResponse.data);
+  expect(tokenResponse.status).toBe(200);
+  return {
+    accessToken: tokenResponse.data.access_token,
+    refreshToken: tokenResponse.data.refresh_token,
+  };
+};
 
 describe("Financial-grade API Security Profile 1.0 - Part 1: Baseline", () => {
   it("success", async () => {
@@ -171,9 +213,51 @@ describe("Financial-grade API Security Profile 1.0 - Part 1: Baseline", () => {
           "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
       });
       console.log(tokenResponse.data);
-      expect(tokenResponse.status).toBe(400);
-      expect(tokenResponse.data.error).toEqual("unauthorized_client");
-      expect(tokenResponse.data.error_description).toEqual("When FAPI Baseline profile, shall require and use a key of size 2048 bits or larger for RSA algorithms");
+      expect(tokenResponse.status).toBe(401);
+      expect(tokenResponse.data.error).toEqual("invalid_client");
+      expect(tokenResponse.data.error_description).toContain("When FAPI Baseline profile, shall require and use a key of size 2048 bits or larger for RSA algorithms");
+    });
+
+    /**
+     * The client authentication requirements hold for every request the client authenticates, so a
+     * refresh token request is held to the same key size as the authorization code request (the
+     * profile of the refresh is decided from the scopes of the grant it refreshes).
+     */
+    it("5. shall require and use a key of size 2048 bits or larger for RSA algorithms; also for the refresh token request", async () => {
+      const { refreshToken } = await issueBaselineTokens();
+
+      const refreshWithSmallKey = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "refresh_token",
+        refreshToken,
+        clientId: privateKeyJwtClient.clientId,
+        clientAssertion: createInvalidClientAssertionWithPrivateKey({
+          client: privateKeyJwtClient,
+          issuer: serverConfig.issuer,
+          invalidPrivateKey: privateKeyJwtClient.clientSecretKeyWith2040,
+        }),
+        clientAssertionType: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+      });
+      console.log(refreshWithSmallKey.data);
+      expect(refreshWithSmallKey.status).toBe(401);
+      expect(refreshWithSmallKey.data.error).toEqual("invalid_client");
+      expect(refreshWithSmallKey.data.error_description).toContain("When FAPI Baseline profile, shall require and use a key of size 2048 bits or larger for RSA algorithms");
+
+      const refreshWithValidKey = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "refresh_token",
+        refreshToken,
+        clientId: privateKeyJwtClient.clientId,
+        clientAssertion: createInvalidClientAssertionWithPrivateKey({
+          client: privateKeyJwtClient,
+          issuer: serverConfig.issuer,
+          invalidPrivateKey: privateKeyJwtClient.clientSecretKey,
+        }),
+        clientAssertionType: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+      });
+      console.log(refreshWithValidKey.data);
+      expect(refreshWithValidKey.status).toBe(200);
+      expect(refreshWithValidKey.data.access_token).toBeDefined();
     });
 
     it("6. shall require and use a key of size 160 bits or larger for elliptic curve algorithms;", async () => {
@@ -337,6 +421,39 @@ describe("Financial-grade API Security Profile 1.0 - Part 1: Baseline", () => {
       console.log(error);
       expect(error.error).toEqual("invalid_request");
       expect(error.error_description).toContain("When FAPI Baseline profile, shall shall require redirect URIs to use the https scheme");
+    });
+  });
+
+  describe("6.2.1.  Protected resources provisions", () => {
+    /** The UserInfo Endpoint is a protected resource of the authorization server. */
+    it("11. shall set the response header x-fapi-interaction-id to the value received from the corresponding FAPI client request header or to a RFC4122 UUID value if the request header was not provided to track the interaction, e.g., x-fapi-interaction-id: c770aef3-6784-41f7-8e0e-ff5f97bddb3a;", async () => {
+      const { accessToken } = await issueBaselineTokens();
+
+      const interactionId = "c770aef3-6784-41f7-8e0e-ff5f97bddb3a";
+      const echoed = await getUserinfo({
+        endpoint: serverConfig.userinfoEndpoint,
+        authorizationHeader: {
+          Authorization: `Bearer ${accessToken}`,
+          "x-fapi-interaction-id": interactionId,
+        },
+      });
+      console.log(echoed.status, echoed.headers["x-fapi-interaction-id"]);
+      expect(echoed.status).toBe(200);
+      expect(echoed.headers["x-fapi-interaction-id"]).toEqual(interactionId);
+
+      const generated = await getUserinfo({
+        endpoint: serverConfig.userinfoEndpoint,
+        authorizationHeader: { Authorization: `Bearer ${accessToken}` },
+      });
+      console.log(generated.status, generated.headers["x-fapi-interaction-id"]);
+      expect(generated.status).toBe(200);
+      expect(generated.headers["x-fapi-interaction-id"]).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
+      );
+    });
+
+    xit("12. shall log the value of x-fapi-interaction-id in the log entry;", async () => {
+      // Carried in the MDC as fapi_interaction_id (TenantLoggingContext); not observable from E2E.
     });
   });
 

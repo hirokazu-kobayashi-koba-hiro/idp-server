@@ -15,33 +15,32 @@
  */
 package org.idp.server.core.openid.extension.fapi;
 
-import org.idp.server.core.openid.grant_management.grant.AuthorizationCodeGrant;
 import org.idp.server.core.openid.oauth.AuthorizationProfile;
 import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
-import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
+import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.core.openid.token.TokenRequestContext;
-import org.idp.server.core.openid.token.verifier.AuthorizationCodeGrantBaseVerifier;
-import org.idp.server.core.openid.token.verifier.AuthorizationCodeGrantVerifierInterface;
+import org.idp.server.core.openid.token.verifier.RefreshTokenGrantVerifierInterface;
 
-public class AuthorizationCodeGrantFapiBaselineVerifier
-    implements AuthorizationCodeGrantVerifierInterface {
+/**
+ * FAPI 1.0 Advanced requirements on a refresh token request. The client authentication requirements
+ * apply to every request the client authenticates, so a refresh token request is held to the same
+ * ones as the authorization code request.
+ */
+public class RefreshTokenGrantFapiAdvanceVerifier implements RefreshTokenGrantVerifierInterface {
 
-  AuthorizationCodeGrantBaseVerifier baseVerifier = new AuthorizationCodeGrantBaseVerifier();
-  FapiBaselineClientAuthenticationVerifier clientAuthenticationVerifier =
-      new FapiBaselineClientAuthenticationVerifier();
+  FapiAdvanceClientAuthenticationVerifier clientAuthenticationVerifier =
+      new FapiAdvanceClientAuthenticationVerifier();
 
   @Override
   public AuthorizationProfile profile() {
-    return AuthorizationProfile.FAPI_BASELINE;
+    return AuthorizationProfile.FAPI_ADVANCE;
   }
 
   @Override
   public void verify(
       TokenRequestContext tokenRequestContext,
-      AuthorizationRequest authorizationRequest,
-      AuthorizationCodeGrant authorizationCodeGrant,
+      OAuthToken oAuthToken,
       ClientCredentials clientCredentials) {
-    baseVerifier.verify(tokenRequestContext, authorizationRequest, authorizationCodeGrant);
     clientAuthenticationVerifier.verify(
         tokenRequestContext.clientConfiguration(), clientCredentials);
   }
