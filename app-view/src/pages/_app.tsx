@@ -3,9 +3,11 @@ import { CssBaseline } from "@mui/material";
 import { ThemeProvider } from "@mui/material/styles";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Inter } from "next/font/google";
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
+import { useRouter } from "next/router";
 import { createAppTheme } from "@/theme/theme";
 import { installAuthProofRelay } from "@/auth/authProof";
+import { withoutViewBinding } from "@/auth/viewBinding";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +50,15 @@ export default function App({ Component, pageProps }: AppProps) {
   const [tenantId, setTenantId] = useState<string>("");
   const [userId, setUserId] = useState<string>("");
   const [email, setEmail] = useState<string>("");
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!router.isReady) return;
+    const cleaned = withoutViewBinding(router.asPath);
+    if (cleaned !== null) {
+      router.replace(cleaned, undefined, { shallow: true, scroll: false });
+    }
+  }, [router, router.isReady]);
 
   return (
     <AppContext.Provider

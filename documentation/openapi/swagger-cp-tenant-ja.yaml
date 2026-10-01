@@ -1462,7 +1462,7 @@ components:
           description: 統計データ記録を有効化
         detail_scrub_keys:
           type: string
-          default: authorization,cookie,password,secret,token,access_token,refresh_token,api_key,api_secret
+          default: authorization,cookie,password,secret,token,access_token,refresh_token,api_key,api_secret,auth_proof,x-view-binding
           description: スクラブするキー（カンマ区切り）
     SecurityEventUserAttributeConfiguration:
       type: object

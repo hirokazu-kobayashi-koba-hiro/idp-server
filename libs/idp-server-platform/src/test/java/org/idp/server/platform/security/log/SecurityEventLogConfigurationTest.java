@@ -33,12 +33,14 @@ class SecurityEventLogConfigurationTest {
     List<String> result = config.getDetailScrubKeys();
 
     // Then
-    assertEquals(9, result.size());
+    assertEquals(11, result.size());
     assertTrue(result.contains("authorization"));
     assertTrue(result.contains("cookie"));
     assertTrue(result.contains("password"));
     assertTrue(result.contains("secret"));
     assertTrue(result.contains("token"));
+    assertTrue(result.contains("auth_proof"));
+    assertTrue(result.contains("x-view-binding"));
     assertTrue(config.hasDetailScrubKeys());
   }
 
@@ -52,7 +54,7 @@ class SecurityEventLogConfigurationTest {
     List<String> result = config.getDetailScrubKeys();
 
     // Then
-    assertEquals(9, result.size());
+    assertEquals(11, result.size());
     assertTrue(result.contains("authorization"));
     assertTrue(result.contains("cookie"));
     assertTrue(result.contains("password"));
@@ -72,7 +74,7 @@ class SecurityEventLogConfigurationTest {
     List<String> result = config.getDetailScrubKeys();
 
     // Then
-    assertEquals(9, result.size()); // 4 configured + 1 additional essential (token)
+    assertEquals(11, result.size()); // 4 configured + 1 additional essential (token)
     assertTrue(result.contains("authorization"));
     assertTrue(result.contains("cookie"));
     assertTrue(result.contains("password"));
@@ -91,7 +93,7 @@ class SecurityEventLogConfigurationTest {
     List<String> result = config.getDetailScrubKeys();
 
     // Then
-    assertEquals(10, result.size()); // 1 configured + 5 essential keys
+    assertEquals(12, result.size()); // 1 configured + 5 essential keys
     assertTrue(result.contains("custom_key"));
     assertTrue(result.contains("authorization"));
     assertTrue(result.contains("cookie"));
@@ -114,7 +116,7 @@ class SecurityEventLogConfigurationTest {
     List<String> result = config.getDetailScrubKeys();
 
     // Then
-    assertEquals(14, result.size());
+    assertEquals(16, result.size());
     assertTrue(result.contains("authorization"));
     assertTrue(result.contains("cookie"));
     assertTrue(result.contains("set-cookie"));

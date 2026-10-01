@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.idp.server.core.openid.authentication.AuthSessionId;
-import org.idp.server.core.openid.authentication.AuthSessionValidator;
 import org.idp.server.core.openid.authentication.Authentication;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionRequest;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionRequestResult;
@@ -78,7 +77,6 @@ import org.idp.server.core.openid.session.SessionCookieDelegate;
 import org.idp.server.core.openid.session.SessionValidationResult;
 import org.idp.server.platform.crypto.AesCipher;
 import org.idp.server.platform.datasource.Transaction;
-import org.idp.server.platform.exception.UnauthorizedException;
 import org.idp.server.platform.http.HttpRequestInputs;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -1099,12 +1097,9 @@ public class OAuthFlowEntryService
   }
 
   /**
-   * Whether a call from the authorization view comes from the browser that started the request.
-   *
-   * <p>Same-site, the browser binding cookie answers it, as it always has. Where the view is on
-   * another site the cookie does not reach these calls, and the view presents the value issued to
-   * it at the authorization request instead (see {@link
-   * CrossSiteAuthorizationBinding#issueViewBinding}).
+   * Verifies that a call from the authorization view comes from the browser that started the
+   * request. This reads what the call carries, the browser binding cookie and the view's value in a
+   * header, and leaves the rule to {@link CrossSiteAuthorizationBinding#verifyViewCall}.
    *
    * @param binding how this request binds to the browser, decided once per request by the caller
    * @param authenticationTransaction the transaction to validate against
@@ -1115,22 +1110,12 @@ public class OAuthFlowEntryService
       CrossSiteAuthorizationBinding binding,
       AuthenticationTransaction authenticationTransaction,
       RequestAttributes requestAttributes) {
-    if (!binding.crossSite()) {
-      AuthSessionId cookieAuthSessionId =
-          authSessionCookieDelegate
-              .getAuthSessionId()
-              .map(AuthSessionId::new)
-              .orElse(new AuthSessionId());
-      AuthSessionValidator.validate(authenticationTransaction, cookieAuthSessionId);
-      return;
-    }
+    AuthSessionId cookieAuthSessionId =
+        authSessionCookieDelegate.getAuthSessionId().map(AuthSessionId::new).orElse(null);
     String presented =
         requestAttributes != null
             ? requestAttributes.headerValue(CrossSiteAuthorizationBinding.VIEW_BINDING_HEADER)
             : null;
-    if (!binding.viewCallFromStartingBrowser(authenticationTransaction, null, presented)) {
-      throw new UnauthorizedException(
-          "view_binding_mismatch: The authorization view did not present the value issued for this authorization request. Please restart the authorization flow.");
-    }
+    binding.verifyViewCall(authenticationTransaction, cookieAuthSessionId, presented);
   }
 }

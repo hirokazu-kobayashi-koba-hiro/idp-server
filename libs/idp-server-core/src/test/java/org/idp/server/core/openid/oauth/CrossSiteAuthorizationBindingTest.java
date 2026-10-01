@@ -43,6 +43,7 @@ import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.oauth.type.oauth.RedirectUri;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.platform.crypto.AesCipher;
+import org.idp.server.platform.exception.UnauthorizedException;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
@@ -89,7 +90,8 @@ class CrossSiteAuthorizationBindingTest {
       CrossSiteAuthorizationBinding.ViewBinding issued =
           crossSite.issueViewBinding(transaction(Map.of(), STARTED_WITH));
 
-      assertTrue(crossSite.viewCallFromStartingBrowser(issued.transaction(), null, issued.value()));
+      assertDoesNotThrow(
+          () -> crossSite.verifyViewCall(issued.transaction(), null, issued.value()));
     }
 
     @Test
@@ -98,18 +100,23 @@ class CrossSiteAuthorizationBindingTest {
       CrossSiteAuthorizationBinding.ViewBinding issued =
           crossSite.issueViewBinding(transaction(Map.of(), STARTED_WITH));
 
-      assertFalse(crossSite.viewCallFromStartingBrowser(issued.transaction(), null, null));
-      assertFalse(crossSite.viewCallFromStartingBrowser(issued.transaction(), null, ""));
-      assertFalse(
-          crossSite.viewCallFromStartingBrowser(issued.transaction(), null, "not-the-value"));
+      assertThrows(
+          UnauthorizedException.class,
+          () -> crossSite.verifyViewCall(issued.transaction(), null, null));
+      assertThrows(
+          UnauthorizedException.class,
+          () -> crossSite.verifyViewCall(issued.transaction(), null, ""));
+      assertThrows(
+          UnauthorizedException.class,
+          () -> crossSite.verifyViewCall(issued.transaction(), null, "not-the-value"));
     }
 
     @Test
     @DisplayName("値を発行していないトランザクションは通さない")
     void transactionWithoutValueRejected() {
-      assertFalse(
-          crossSite.viewCallFromStartingBrowser(
-              transaction(Map.of(), STARTED_WITH), null, "anything"));
+      assertThrows(
+          UnauthorizedException.class,
+          () -> crossSite.verifyViewCall(transaction(Map.of(), STARTED_WITH), null, "anything"));
     }
 
     @Test
@@ -121,8 +128,11 @@ class CrossSiteAuthorizationBindingTest {
           crossSite.issueViewBinding(first.transaction());
 
       assertNotEquals(first.value(), second.value());
-      assertFalse(crossSite.viewCallFromStartingBrowser(second.transaction(), null, first.value()));
-      assertTrue(crossSite.viewCallFromStartingBrowser(second.transaction(), null, second.value()));
+      assertThrows(
+          UnauthorizedException.class,
+          () -> crossSite.verifyViewCall(second.transaction(), null, first.value()));
+      assertDoesNotThrow(
+          () -> crossSite.verifyViewCall(second.transaction(), null, second.value()));
     }
 
     @Test
@@ -135,13 +145,33 @@ class CrossSiteAuthorizationBindingTest {
     }
 
     @Test
-    @DisplayName("同一サイト構成では発行せず、Cookie で照合する")
+    @DisplayName("同一サイト構成では発行せず、Cookie で照合する（Cookie の照合のエラーのまま）")
     void sameSiteUsesCookie() {
       AuthenticationTransaction transaction = transaction(Map.of(), STARTED_WITH);
 
       assertNull(sameSite.issueViewBinding(transaction));
-      assertTrue(sameSite.viewCallFromStartingBrowser(transaction, STARTED_WITH, null));
-      assertFalse(sameSite.viewCallFromStartingBrowser(transaction, new AuthSessionId(), null));
+      assertDoesNotThrow(() -> sameSite.verifyViewCall(transaction, STARTED_WITH, null));
+      UnauthorizedException missing =
+          assertThrows(
+              UnauthorizedException.class, () -> sameSite.verifyViewCall(transaction, null, null));
+      assertTrue(missing.getMessage().startsWith("auth_session_mismatch"));
+      assertThrows(
+          UnauthorizedException.class,
+          () ->
+              sameSite.verifyViewCall(
+                  transaction, new AuthSessionId("auth-session-of-browser-b"), null));
+    }
+
+    @Test
+    @DisplayName("別サイト構成の拒否は view_binding_mismatch")
+    void crossSiteRejectionNamesViewBinding() {
+      UnauthorizedException rejected =
+          assertThrows(
+              UnauthorizedException.class,
+              () ->
+                  crossSite.verifyViewCall(
+                      transaction(Map.of(), STARTED_WITH), STARTED_WITH, null));
+      assertTrue(rejected.getMessage().startsWith("view_binding_mismatch"));
     }
 
     @Test
@@ -153,7 +183,7 @@ class CrossSiteAuthorizationBindingTest {
               STARTED_WITH,
               JSON.read("{\"auth_session_binding_required\": false}", AuthenticationPolicy.class));
 
-      assertTrue(crossSite.viewCallFromStartingBrowser(transaction, null, null));
+      assertDoesNotThrow(() -> crossSite.verifyViewCall(transaction, null, null));
     }
   }
 

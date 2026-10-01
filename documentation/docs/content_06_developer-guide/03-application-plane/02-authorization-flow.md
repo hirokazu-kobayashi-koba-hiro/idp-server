@@ -734,7 +734,7 @@ Token Request（省略可能）
 
 ### 認可画面からの呼び出しの照合
 
-同一サイト構成では、認可画面からの呼び出しを `IDP_AUTH_SESSION` で照合します（`OAuthFlowEntryService#validateViewCall`）。別サイト構成ではこの Cookie が届かないので、認可リクエストで渡した `view_binding` を `x-view-binding` ヘッダーで受け取り、`CrossSiteAuthorizationBinding#viewCallFromStartingBrowser` でハッシュと照合します。対象は view-data、authentication-status、認証ステップ（ブラウザから呼ぶもの）、フェデレーション、`authorize`、`authorize-with-session`、`deny` です。値が無い・違う・トランザクションに値が無い場合は 401 です。
+同一サイト構成では、認可画面からの呼び出しを `IDP_AUTH_SESSION` で照合します（`OAuthFlowEntryService#validateViewCall`）。別サイト構成ではこの Cookie が届かないので、認可リクエストで渡した `view_binding` を `x-view-binding` ヘッダーで受け取り、`CrossSiteAuthorizationBinding#verifyViewCall` でハッシュと照合します（同一サイト構成の Cookie の照合もここにまとめています）。対象は view-data、authentication-status、認証ステップ（ブラウザから呼ぶもの）、フェデレーション、`authorize`、`authorize-with-session`、`deny` です。値が無い・違う・トランザクションに値が無い場合は 401 です。
 
 認可リクエスト ID は束縛の根拠にしません。PAR では `request_uri` から ID が分かるためです。`view_binding` は認可リクエストを訪れるたびに作り直すので、有効なのは最後に `IDP_AUTH_SESSION` を受け取ったブラウザの値だけです。
 

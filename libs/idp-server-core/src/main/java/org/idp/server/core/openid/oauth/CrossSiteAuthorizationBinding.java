@@ -187,34 +187,41 @@ public class CrossSiteAuthorizationBinding {
   }
 
   /**
-   * Whether a call from the authorization view comes from the browser that started the request.
+   * Verifies that a call from the authorization view comes from the browser that started the
+   * request.
    *
-   * <p>Same-site this is the browser binding cookie, as it has always been. Where the view is on
-   * another site the cookie does not arrive, and the view presents the value issued at the
-   * authorization request instead. A transaction with no such value is refused rather than let
-   * through. A policy that opts out of the binding is honoured for both, as it always was for the
-   * cookie.
+   * <p>Same-site this is the browser binding cookie, as it has always been, with the cookie's own
+   * error. Where the view is on another site the cookie does not arrive, and the view presents the
+   * value issued at the authorization request instead. A transaction with no such value is refused
+   * rather than let through. A policy that opts out of the binding is honoured for both, as it
+   * always was for the cookie.
    *
    * @param cookieAuthSessionId the browser binding cookie, where it arrives
    * @param presentedViewBinding the value the view presented, or null
+   * @throws UnauthorizedException if the call is not from the browser that started the request
    */
-  public boolean viewCallFromStartingBrowser(
+  public void verifyViewCall(
       AuthenticationTransaction transaction,
       AuthSessionId cookieAuthSessionId,
       String presentedViewBinding) {
     AuthenticationPolicy authenticationPolicy = transaction.authenticationPolicy();
     if (authenticationPolicy != null && !authenticationPolicy.authSessionBindingRequired()) {
-      return true;
+      return;
     }
     if (!crossSite) {
-      try {
-        AuthSessionValidator.validate(
-            transaction, cookieAuthSessionId != null ? cookieAuthSessionId : new AuthSessionId());
-        return true;
-      } catch (UnauthorizedException e) {
-        return false;
-      }
+      AuthSessionValidator.validate(
+          transaction, cookieAuthSessionId != null ? cookieAuthSessionId : new AuthSessionId());
+      return;
     }
+    if (!presentsIssuedViewBinding(transaction, presentedViewBinding)) {
+      throw new UnauthorizedException(
+          "view_binding_mismatch: The authorization view did not present the value issued for this authorization request. Please restart the authorization flow.");
+    }
+  }
+
+  /** Whether the presented value is the one issued to this transaction, compared by its hash. */
+  private boolean presentsIssuedViewBinding(
+      AuthenticationTransaction transaction, String presentedViewBinding) {
     String stored =
         attributesOf(transaction)
             .getValueOrEmpty(AuthenticationTransactionAttributes.VIEW_BINDING_KEY);

@@ -1026,7 +1026,7 @@ Set-Cookie: IDP_AUTH_SESSION=xxx; Path=/idp-admin/{tenant_id}/
 | `statistics_enabled` | boolean | `false` | 統計データ記録を有効化 |
 | `detail_scrub_keys` | string | (必須キー) | スクラブするキー（カンマ区切り） |
 
-**デフォルトでスクラブされるキー**: `authorization`, `cookie`, `password`, `secret`, `token`, `access_token`, `refresh_token`, `api_key`, `api_secret`
+**デフォルトでスクラブされるキー**: `authorization`, `cookie`, `password`, `secret`, `token`, `access_token`, `refresh_token`, `api_key`, `api_secret`, `auth_proof`, `x-view-binding`
 
 **プライバシー推奨設定**:
 - 本番環境: `include_user_pii: false`, `include_user_detail: false`
