@@ -146,6 +146,8 @@ idp-server 付属の認可画面（app-view）は対応済みです。自作の�
 
 **認可画面からの呼び出しは、`view_binding` で始めたブラウザに束縛されます。** 同一サイト構成で `IDP_AUTH_SESSION` が担っていた照合です。認可リクエスト ID を知っていても、値を持たない呼び出しは 401 になります。PAR で同じ認可リクエストを開き直した場合は、最後に開いたブラウザの値だけが有効です。
 
+**ブラウザでの入力が無いフローでは、承認した人が認可を始めた本人かどうかを、デバイス側の確認に任せます。** `login_hint` を指定してデバイスのプッシュ承認だけで認証する構成などでは、`authorize` は `auth_proof` を求めず、束縛は始めたブラウザへのもの（`view_binding` と `/complete` の `IDP_AUTH_SESSION`）だけになります。同一サイト構成でも同じで、idp-server はこのフローでデバイス側の確認を強制しません。この構成を使う場合は、認証ポリシーに [ナンバーマッチング](../../content_06_developer-guide/05-configuration/authn/number-matching.md) を組み込み、認可画面に表示したコードをデバイスで入力させることを推奨します。
+
 **`auth_session_binding_required: false` の認証ポリシーでは、`view_binding` と `/complete` の `IDP_AUTH_SESSION` の照合も行われません。**別サイト認可画面モードでは `false` にする必要はないので、`true` にしてください（切り替え方の 4）。
 
 **`auth_proof` は `/complete` の URL（クエリ文字列）に載ります。** 使い捨てで、`IDP_AUTH_SESSION` の照合もあるため単体では使えませんが、アクセスログやプロキシのログに残ります。ログのマスク対象に `auth_proof` を加えることを推奨します。
