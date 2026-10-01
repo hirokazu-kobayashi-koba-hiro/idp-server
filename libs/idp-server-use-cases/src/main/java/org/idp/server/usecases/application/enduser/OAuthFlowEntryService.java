@@ -831,8 +831,17 @@ public class OAuthFlowEntryService
     AuthorizationRequest authorizationRequest =
         oAuthProtocol.get(tenant, authorizationRequestIdentifier);
 
-    if (binding.handedOffForCompletion(authenticationTransaction)) {
-      return alreadyAuthorized();
+    switch (binding.gateAuthorizeWithSession(authenticationTransaction)) {
+      case ALREADY_HANDED_OFF -> {
+        return alreadyAuthorized();
+      }
+      case SIGNED_IN_DURING_FLOW -> {
+        return new OAuthAuthorizeResponse(
+            OAuthAuthorizeStatus.BAD_REQUEST,
+            "invalid_request",
+            "a sign-in has already taken place in this authorization request; authorize with the auth_proof it returned.");
+      }
+      case CHECK_BROWSER_COOKIE, PROCEED, PROOF_REJECTED -> {}
     }
 
     // Same-site from the cookie; cross-site from the request, where the authorization endpoint put

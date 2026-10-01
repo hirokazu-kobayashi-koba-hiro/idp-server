@@ -803,6 +803,31 @@ describe("cross-site authorization view: auth_proof", () => {
     });
   });
 
+  describe("サインインのあとの authorize-with-session", () => {
+    it("この認可でサインインしたあとは、ID だけを持つ呼び出しから authorize-with-session で横取りできない", async () => {
+      // サインインで作られたセッションもトランザクションに紐づく。それを使って authorize-with-session を
+      // 通すと、proof を出さずに ② が手に入る。サインインのあとは proof 付きの authorize だけが code を出す。
+      const id = await startAuthorization();
+      const authProof = (await authenticate(id)).data.auth_proof;
+      expect(typeof authProof).toBe("string");
+
+      const hijack = await withoutCookies.post(
+        `${authorizations()}/${id}/authorize-with-session`,
+        {}
+      );
+      expect(hijack.status).toBe(400);
+      expect(hijack.data.auth_proof).toBeUndefined();
+      expect(hijack.data.error_description).toContain("a sign-in has already taken place");
+
+      // 正規のブラウザは、受け取った proof でそのまま進める
+      const authorized = await authorize(id, { auth_proof: authProof });
+      expect(authorized.status).toBe(200);
+      const completed = await complete(id, authorized.data.auth_proof);
+      expect(completed.status).toBe(302);
+      expect(new URL(completed.headers.location).searchParams.get("code")).toBeTruthy();
+    });
+  });
+
   describe("最後の段がデバイスで完了する（パスワード → FIDO-UAF）", () => {
     // デバイスの呼び出しに返したものは、authorize を呼ぶブラウザには届かない。ブラウザが頼れるのは
     // 1 段目で受け取った proof だけで、OP セッションはデバイスの呼び出しの中で作られる。

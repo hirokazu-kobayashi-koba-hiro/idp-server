@@ -231,6 +231,79 @@ class CrossSiteAuthorizationBindingTest {
   }
 
   @Nested
+  @DisplayName("authorize-with-session の関門")
+  class GateAuthorizeWithSession {
+
+    @Test
+    @DisplayName("同一サイト構成は Cookie の照合に回す")
+    void sameSiteChecksCookie() {
+      assertEquals(
+          CrossSiteAuthorizationBinding.AuthorizeGate.CHECK_BROWSER_COOKIE,
+          sameSite.gateAuthorizeWithSession(browserAuthenticated()));
+    }
+
+    @Test
+    @DisplayName("認可リクエストで紐づけたセッションだけなら続けられる（SSO）")
+    void sessionBoundAtRequestProceeds() {
+      AuthenticationTransaction bound =
+          crossSite.bindSession(transaction(Map.of(), STARTED_WITH), "op-session-of-starter");
+
+      assertEquals(
+          CrossSiteAuthorizationBinding.AuthorizeGate.PROCEED,
+          crossSite.gateAuthorizeWithSession(bound));
+    }
+
+    @Test
+    @DisplayName("この認可でサインインが成功していたら拒否する（そのセッションは呼び出し元を示さない）")
+    void signedInDuringFlowRejected() {
+      AuthenticationTransaction carried =
+          crossSite.carry(browserAuthenticated(), "op-session-of-whoever-signed-in", null);
+
+      assertEquals(
+          CrossSiteAuthorizationBinding.AuthorizeGate.SIGNED_IN_DURING_FLOW,
+          crossSite.gateAuthorizeWithSession(carried));
+    }
+
+    @Test
+    @DisplayName("デバイスでのサインインでも拒否する")
+    void deviceSignInRejected() {
+      AuthenticationTransaction transaction =
+          transaction(Map.of(FIDO_UAF, result("AUTHENTICATION", 1)), STARTED_WITH);
+
+      assertEquals(
+          CrossSiteAuthorizationBinding.AuthorizeGate.SIGNED_IN_DURING_FLOW,
+          crossSite.gateAuthorizeWithSession(transaction));
+    }
+
+    @Test
+    @DisplayName("失敗しただけなら続けられる")
+    void failedAttemptOnlyProceeds() {
+      AuthenticationTransaction transaction =
+          transaction(Map.of(PASSWORD, result("AUTHENTICATION", 0)), STARTED_WITH);
+
+      assertEquals(
+          CrossSiteAuthorizationBinding.AuthorizeGate.PROCEED,
+          crossSite.gateAuthorizeWithSession(transaction));
+    }
+
+    @Test
+    @DisplayName("/complete 用の proof を渡したあとは通さない")
+    void handedOffRejected() {
+      AuthenticationTransaction handedOff =
+          crossSite
+              .handOff(
+                  crossSite.bindSession(transaction(Map.of(), STARTED_WITH), "op-session"),
+                  user(),
+                  TARGET)
+              .transaction();
+
+      assertEquals(
+          CrossSiteAuthorizationBinding.AuthorizeGate.ALREADY_HANDED_OFF,
+          crossSite.gateAuthorizeWithSession(handedOff));
+    }
+  }
+
+  @Nested
   @DisplayName("/complete への受け渡し")
   class HandOff {
 

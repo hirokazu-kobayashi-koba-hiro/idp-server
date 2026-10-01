@@ -204,6 +204,39 @@ public class CrossSiteAuthorizationBinding {
   }
 
   /**
+   * Whether {@code /authorize-with-session} may continue with the session bound to the transaction.
+   *
+   * <p>Cross-site, only the session bound at the authorization request can be trusted here: that
+   * one was read from the cookie of the browser that started the request, in a top level
+   * navigation, which is the same browser {@code /complete} binds to. A session created by a
+   * sign-in step during this flow is also carried onto the transaction, but on a call that may not
+   * have come from that browser — it says who signed in, not who is asking. Continuing with it here
+   * would hand the sign-in to whoever holds the request id, with nothing asked of them. Once a
+   * sign-in has happened in this flow, the code is minted by {@code /authorize}, which asks for the
+   * proof the signing-in browser was given.
+   */
+  public AuthorizeGate gateAuthorizeWithSession(AuthenticationTransaction transaction) {
+    if (handedOffForCompletion(transaction)) {
+      return AuthorizeGate.ALREADY_HANDED_OFF;
+    }
+    if (!crossSite) {
+      return AuthorizeGate.CHECK_BROWSER_COOKIE;
+    }
+    if (signedInDuringThisFlow(transaction)) {
+      return AuthorizeGate.SIGNED_IN_DURING_FLOW;
+    }
+    return AuthorizeGate.PROCEED;
+  }
+
+  private static boolean signedInDuringThisFlow(AuthenticationTransaction transaction) {
+    if (transaction.isSuccess()) {
+      return true;
+    }
+    return transaction.interactionResults().toMap().values().stream()
+        .anyMatch(result -> result.successCount() > 0 && result.operationType().provesPossession());
+  }
+
+  /**
    * Whether this authorization has already been authorized and is waiting for {@code /complete}.
    *
    * <p>Cross-site the transaction stays until {@code /complete}, and for flows that ask for no
@@ -326,6 +359,11 @@ public class CrossSiteAuthorizationBinding {
     PROOF_REJECTED,
     /** Same-site: the caller checks the {@code IDP_AUTH_SESSION} cookie as usual. */
     CHECK_BROWSER_COOKIE,
+    /**
+     * Cross-site, {@code /authorize-with-session} after a sign-in in this flow: the session bound
+     * to the transaction may be the one that sign-in created, which does not identify the caller.
+     */
+    SIGNED_IN_DURING_FLOW,
     /** Cross-site, and nothing more is asked here. */
     PROCEED
   }

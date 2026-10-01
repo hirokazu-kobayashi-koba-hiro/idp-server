@@ -724,6 +724,7 @@ Token Request（省略可能）
 | 認可リクエスト | `bindSession` | ブラウザに OP セッションの Cookie があれば、トランザクションの `op_session_id` に入れる（トップレベル遷移なので読める） |
 | 認証ステップ | `proofForStep` / `proofForFederation` / `carry` | ブラウザから来て、本人しか通せない種類（`OperationType#provesPossession`）のステップが成功したら ① を発行。認証が成功して作った OP セッションも紐づける |
 | authorize | `gateAuthorize` / `handOff` | 進めてよいかを判定する（② を渡し済み・① が無い・同一サイトなので Cookie を照合・進める）。進めたら ① を消費して ② を発行し、応答に載せる。code は ② の中に入れ、応答のボディに出さない |
+| authorize-with-session | `gateAuthorizeWithSession` / `handOff` | 認可リクエストで紐づけた OP セッションで続ける。この認可でサインインが成功していたら拒否する（下記） |
 | /complete | `checkCompletion` | `IDP_AUTH_SESSION` を照合し、② を照合し、② の中の遷移先をリクエストの redirect_uri と照合する（この順）。OP セッションの Cookie を書き、② の遷移先へ 302。失敗時は RP に戻さず、テナントのエラー画面へ 302（`OAuthCompleteResponse.errorPage`） |
 
 `/complete` の照合は、`IDP_AUTH_SESSION` を先に見ます。先に ② を照合して消費すると、Cookie を持たない呼び出しが ② を使い切り、正規のブラウザを締め出せるためです（② はトランザクションの削除で消えます）。
@@ -735,6 +736,10 @@ Token Request（省略可能）
 ブラウザでの入力が一度も無いフロー（`login_hint` ＋ デバイスのプッシュ承認など）では ① が発行されません。`authorize` は `AuthenticationTransaction#browserProvedPossession(AuthenticationInteractors)` で、成功したステップにブラウザ由来で本人しか通せない種類のものがあったかを判断し、無ければ ① を求めません。このとき始めたブラウザには `/complete` の `IDP_AUTH_SESSION` で束縛します。
 
 判断は DB のトランザクションから読みます。インタラクターの無い種類（フェデレーション）はブラウザのステップとして数え、分からないものは ① を求める側に倒します。
+
+### サインインのあとの authorize-with-session
+
+`op_session_id` には、認可リクエストで紐づけたセッション（始めたブラウザの Cookie から読んだもの）と、サインインの成功で作ったセッション（`carry`）の両方が入ります。後者は、サインインした人を示しますが、呼び出し元がそのブラウザだとは言えません。そのため `gateAuthorizeWithSession` は、この認可でサインインが成功していれば（`isSuccess`、または本人しか通せない種類のステップの成功）`authorize-with-session` を拒否し、① を求める `authorize` だけが code を出すようにしています。正規の SSO（サインインのステップが無い）は影響を受けません。
 
 ### OP セッションの引き当て
 
@@ -753,7 +758,7 @@ Token Request（省略可能）
 | テスト | 確かめていること |
 |---|---|
 | `e2e/src/tests/scenario/application/scenario-17-cross-site-auth-proof.test.js` | 発行条件、使い捨て、段の取り違え、別のユーザー・別のリクエスト、`/complete` の二重照合、デバイスで終わる / デバイスだけのフロー、SSO |
-| `CrossSiteAuthorizationBindingTest` | proof の発行条件、authorize の関門、② の受け渡し、`/complete` の照合（束縛の欠け・opt-out・別のブラウザ・段の取り違え・遷移先の不一致） |
+| `CrossSiteAuthorizationBindingTest` | proof の発行条件、authorize と authorize-with-session の関門、② の受け渡し、`/complete` の照合（束縛の欠け・opt-out・別のブラウザ・段の取り違え・遷移先の不一致） |
 | `AuthenticationProofTest` / `AuthenticationTransactionBrowserPossessionTest` | proof の保存と照合、proof を求めるかの判断 |
 | `e2e/src/tests/browser/safari_cross_site_demo.test.js` | Safari 実機での一周と SSO（`SAFARI_E2E=1` のときだけ動く） |
 
