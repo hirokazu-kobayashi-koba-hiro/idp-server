@@ -57,16 +57,23 @@ const signUp = async () => {
       view_version: "cross-site",
     },
   });
-  const id = new URL(started.headers.location).searchParams.get("id");
-  const registered = await http.post(`${authorizations}/${id}/initial-registration`, {
-    email,
-    password,
-    name: "Safari Demo",
-  });
+  const view = new URL(started.headers.location);
+  const id = view.searchParams.get("id");
+  // 別サイトの認可画面は、URL の fragment で渡された値をヘッダーで付けて呼ぶ
+  const headers = {
+    "x-view-binding": new URLSearchParams(view.hash.replace(/^#/, "")).get("view_binding"),
+  };
+  const registered = await http.post(
+    `${authorizations}/${id}/initial-registration`,
+    { email, password, name: "Safari Demo" },
+    { headers }
+  );
   expect(registered.status).toBe(200);
-  const authorized = await http.post(`${authorizations}/${id}/authorize`, {
-    auth_proof: registered.data.auth_proof,
-  });
+  const authorized = await http.post(
+    `${authorizations}/${id}/authorize`,
+    { auth_proof: registered.data.auth_proof },
+    { headers }
+  );
   expect(authorized.status).toBe(200);
   return { email, password };
 };

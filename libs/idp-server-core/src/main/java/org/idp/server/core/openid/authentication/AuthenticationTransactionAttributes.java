@@ -30,6 +30,13 @@ public class AuthenticationTransactionAttributes {
    */
   public static final String OP_SESSION_ID_KEY = "op_session_id";
 
+  /**
+   * Key for the hash of the value handed to the authorization view of this request only, where the
+   * view is on another site: it stands in for the browser binding cookie on the view's calls, which
+   * the cookie never reaches.
+   */
+  public static final String VIEW_BINDING_KEY = "view_binding";
+
   Map<String, Object> values;
 
   public AuthenticationTransactionAttributes() {

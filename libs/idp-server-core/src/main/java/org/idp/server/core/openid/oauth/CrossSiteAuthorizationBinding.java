@@ -16,6 +16,8 @@
 
 package org.idp.server.core.openid.oauth;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import org.idp.server.core.openid.authentication.AuthSessionId;
 import org.idp.server.core.openid.authentication.AuthSessionValidator;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionRequestResult;
@@ -30,6 +32,7 @@ import org.idp.server.core.openid.oauth.type.oauth.Subject;
 import org.idp.server.platform.crypto.AesCipher;
 import org.idp.server.platform.exception.UnauthorizedException;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.random.RandomStringGenerator;
 
 /**
  * How an authorization binds to the browser, decided once per request.
@@ -49,6 +52,12 @@ public class CrossSiteAuthorizationBinding {
   private static final LoggerWrapper log =
       LoggerWrapper.getLogger(CrossSiteAuthorizationBinding.class);
 
+  /** The header the authorization view presents its value in. */
+  public static final String VIEW_BINDING_HEADER = "x-view-binding";
+
+  /** The name the value travels under in the fragment of the authorization view's URL. */
+  public static final String VIEW_BINDING_PARAMETER = "view_binding";
+
   boolean crossSite;
   AesCipher aesCipher;
 
@@ -65,17 +74,6 @@ public class CrossSiteAuthorizationBinding {
   /** Whether the authorization view is on another site. */
   public boolean crossSite() {
     return crossSite;
-  }
-
-  /**
-   * Whether the {@code IDP_AUTH_SESSION} cookie is checked on the view's own calls.
-   *
-   * <p>Not where the view is on another site: those calls are third-party and the cookie is not
-   * sent, so the check could only ever fail. Those deployments are bound by the proofs instead, and
-   * by the cookie again at {@code /complete}.
-   */
-  public boolean checksBrowserCookieOnViewCalls() {
-    return !crossSite;
   }
 
   /**
@@ -157,6 +155,75 @@ public class CrossSiteAuthorizationBinding {
       return transaction;
     }
     return transaction.withAttributes(attributesOf(transaction).withOpSessionId(opSessionId));
+  }
+
+  /**
+   * Issues the value that identifies this request's authorization view, at the authorization
+   * request.
+   *
+   * <p>The authorization request is a top level navigation in the browser that starts the flow, so
+   * whatever it returns goes to that browser alone. Every call the view makes afterwards is
+   * third-party where it is on another site, and carries no cookie; the view presents this value
+   * instead. Only its hash is kept. A new one is issued on every visit, so it always belongs to the
+   * browser that holds the latest browser binding cookie.
+   *
+   * <p>Without it, nothing would tie the view's calls to the browser that started the request but
+   * the request id staying unknown to everyone else — and a pushed authorization request hands that
+   * id to whoever pushed it.
+   *
+   * @return the transaction to store and the value to hand to the view, or null same-site
+   */
+  public ViewBinding issueViewBinding(AuthenticationTransaction transaction) {
+    if (!crossSite) {
+      return null;
+    }
+    String value = new RandomStringGenerator(32).generate();
+    AuthenticationTransactionAttributes attributes =
+        attributesOf(transaction)
+            .with(
+                AuthenticationTransactionAttributes.VIEW_BINDING_KEY,
+                AuthenticationProof.hashOf(value));
+    return new ViewBinding(transaction.withAttributes(attributes), value);
+  }
+
+  /**
+   * Whether a call from the authorization view comes from the browser that started the request.
+   *
+   * <p>Same-site this is the browser binding cookie, as it has always been. Where the view is on
+   * another site the cookie does not arrive, and the view presents the value issued at the
+   * authorization request instead. A transaction with no such value is refused rather than let
+   * through. A policy that opts out of the binding is honoured for both, as it always was for the
+   * cookie.
+   *
+   * @param cookieAuthSessionId the browser binding cookie, where it arrives
+   * @param presentedViewBinding the value the view presented, or null
+   */
+  public boolean viewCallFromStartingBrowser(
+      AuthenticationTransaction transaction,
+      AuthSessionId cookieAuthSessionId,
+      String presentedViewBinding) {
+    AuthenticationPolicy authenticationPolicy = transaction.authenticationPolicy();
+    if (authenticationPolicy != null && !authenticationPolicy.authSessionBindingRequired()) {
+      return true;
+    }
+    if (!crossSite) {
+      try {
+        AuthSessionValidator.validate(
+            transaction, cookieAuthSessionId != null ? cookieAuthSessionId : new AuthSessionId());
+        return true;
+      } catch (UnauthorizedException e) {
+        return false;
+      }
+    }
+    String stored =
+        attributesOf(transaction)
+            .getValueOrEmpty(AuthenticationTransactionAttributes.VIEW_BINDING_KEY);
+    if (stored.isEmpty() || presentedViewBinding == null || presentedViewBinding.isEmpty()) {
+      return false;
+    }
+    return MessageDigest.isEqual(
+        stored.getBytes(StandardCharsets.UTF_8),
+        AuthenticationProof.hashOf(presentedViewBinding).getBytes(StandardCharsets.UTF_8));
   }
 
   /**
@@ -367,6 +434,9 @@ public class CrossSiteAuthorizationBinding {
     /** Cross-site, and nothing more is asked here. */
     PROCEED
   }
+
+  /** The transaction carrying the view binding's hash, and the value handed to the view. */
+  public record ViewBinding(AuthenticationTransaction transaction, String value) {}
 
   /**
    * The transaction carrying the proof for {@code /complete}, and the value handed to the browser.

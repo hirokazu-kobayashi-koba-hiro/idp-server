@@ -80,6 +80,84 @@ class CrossSiteAuthorizationBindingTest {
               new AuthenticationInteractionType(FIDO_UAF), interactor(FIDO_UAF, false)));
 
   @Nested
+  @DisplayName("認可画面に渡す値（view binding）")
+  class ViewBinding {
+
+    @Test
+    @DisplayName("発行した値を出せば、始めたブラウザからの呼び出しとして通る")
+    void issuedValuePasses() {
+      CrossSiteAuthorizationBinding.ViewBinding issued =
+          crossSite.issueViewBinding(transaction(Map.of(), STARTED_WITH));
+
+      assertTrue(crossSite.viewCallFromStartingBrowser(issued.transaction(), null, issued.value()));
+    }
+
+    @Test
+    @DisplayName("値が無い・違う呼び出しは通さない")
+    void missingOrWrongValueRejected() {
+      CrossSiteAuthorizationBinding.ViewBinding issued =
+          crossSite.issueViewBinding(transaction(Map.of(), STARTED_WITH));
+
+      assertFalse(crossSite.viewCallFromStartingBrowser(issued.transaction(), null, null));
+      assertFalse(crossSite.viewCallFromStartingBrowser(issued.transaction(), null, ""));
+      assertFalse(
+          crossSite.viewCallFromStartingBrowser(issued.transaction(), null, "not-the-value"));
+    }
+
+    @Test
+    @DisplayName("値を発行していないトランザクションは通さない")
+    void transactionWithoutValueRejected() {
+      assertFalse(
+          crossSite.viewCallFromStartingBrowser(
+              transaction(Map.of(), STARTED_WITH), null, "anything"));
+    }
+
+    @Test
+    @DisplayName("発行し直すと、前の値は通らない")
+    void reissuedValueReplacesEarlier() {
+      AuthenticationTransaction transaction = transaction(Map.of(), STARTED_WITH);
+      CrossSiteAuthorizationBinding.ViewBinding first = crossSite.issueViewBinding(transaction);
+      CrossSiteAuthorizationBinding.ViewBinding second =
+          crossSite.issueViewBinding(first.transaction());
+
+      assertNotEquals(first.value(), second.value());
+      assertFalse(crossSite.viewCallFromStartingBrowser(second.transaction(), null, first.value()));
+      assertTrue(crossSite.viewCallFromStartingBrowser(second.transaction(), null, second.value()));
+    }
+
+    @Test
+    @DisplayName("値そのものはトランザクションに残さない（ハッシュだけ）")
+    void onlyHashIsStored() {
+      CrossSiteAuthorizationBinding.ViewBinding issued =
+          crossSite.issueViewBinding(transaction(Map.of(), STARTED_WITH));
+
+      assertFalse(issued.transaction().attributes().toMap().toString().contains(issued.value()));
+    }
+
+    @Test
+    @DisplayName("同一サイト構成では発行せず、Cookie で照合する")
+    void sameSiteUsesCookie() {
+      AuthenticationTransaction transaction = transaction(Map.of(), STARTED_WITH);
+
+      assertNull(sameSite.issueViewBinding(transaction));
+      assertTrue(sameSite.viewCallFromStartingBrowser(transaction, STARTED_WITH, null));
+      assertFalse(sameSite.viewCallFromStartingBrowser(transaction, new AuthSessionId(), null));
+    }
+
+    @Test
+    @DisplayName("ポリシーで束縛を外していれば通す（opt-out を尊重する）")
+    void optOutHonoured() {
+      AuthenticationTransaction transaction =
+          transaction(
+              Map.of(),
+              STARTED_WITH,
+              JSON.read("{\"auth_session_binding_required\": false}", AuthenticationPolicy.class));
+
+      assertTrue(crossSite.viewCallFromStartingBrowser(transaction, null, null));
+    }
+  }
+
+  @Nested
   @DisplayName("認証ステップの proof")
   class ProofForStep {
 

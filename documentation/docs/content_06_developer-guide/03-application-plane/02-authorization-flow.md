@@ -710,6 +710,7 @@ Token Request（省略可能）
 | `auth_proof` | ① のハッシュと `sub` | 認証ステップ、フェデレーションのコールバック | `authorize` で ② に置き換え |
 | `completion_proof` | ② のハッシュ、`sub`、遷移先（code 付き。`AesCipher` で暗号化） | `authorize`、`authorize-with-session` | `/complete` でトランザクションごと削除 |
 | `op_session_id` | 紐づけた OP セッションの ID | 認可リクエスト、認証成功時 | `/complete` でトランザクションごと削除 |
+| `view_binding` | 認可画面に渡した値のハッシュ | 認可リクエスト（訪れるたびに作り直す） | `/complete` でトランザクションごと削除 |
 
 値そのものは保存しません。`AuthenticationProof` が値を生成して SHA-256 のハッシュだけを `storeOn` で書き、照合（`authorizes` / `completes`）は固定時間の比較です。各段は最新の 1 つだけが有効です。
 
@@ -721,7 +722,7 @@ Token Request（省略可能）
 
 | 段階 | `CrossSiteAuthorizationBinding` のメソッド | やること |
 |---|---|---|
-| 認可リクエスト | `bindSession` | ブラウザに OP セッションの Cookie があれば、トランザクションの `op_session_id` に入れる（トップレベル遷移なので読める） |
+| 認可リクエスト | `bindSession` / `issueViewBinding` | ブラウザに OP セッションの Cookie があれば、トランザクションの `op_session_id` に入れる（トップレベル遷移なので読める）。認可画面に渡す値（`view_binding`）を作り、ハッシュをトランザクションに、値を認可画面の URL の fragment に入れる |
 | 認証ステップ | `proofForStep` / `proofForFederation` / `carry` | ブラウザから来て、本人しか通せない種類（`OperationType#provesPossession`）のステップが成功したら ① を発行。認証が成功して作った OP セッションも紐づける |
 | authorize | `gateAuthorize` / `handOff` | 進めてよいかを判定する（② を渡し済み・① が無い・同一サイトなので Cookie を照合・進める）。進めたら ① を消費して ② を発行し、応答に載せる。code は ② の中に入れ、応答のボディに出さない |
 | authorize-with-session | `gateAuthorizeWithSession` / `handOff` | 認可リクエストで紐づけた OP セッションで続ける。この認可でサインインが成功していたら拒否する（下記） |
@@ -731,9 +732,15 @@ Token Request（省略可能）
 
 `checkCompletion` は、トランザクションに `authSessionId` が無ければ拒否します。proof を求めないフロー（デバイスだけの認証、既存の OP セッションでの続行）では、これが唯一のブラウザの束縛なので、欠けを「照合するものが無い」とは扱いません。認証ポリシーが `auth_session_binding_required: false` なら照合は行いませんが、警告をログに出します。
 
+### 認可画面からの呼び出しの照合
+
+同一サイト構成では、認可画面からの呼び出しを `IDP_AUTH_SESSION` で照合します（`OAuthFlowEntryService#validateViewCall`）。別サイト構成ではこの Cookie が届かないので、認可リクエストで渡した `view_binding` を `x-view-binding` ヘッダーで受け取り、`CrossSiteAuthorizationBinding#viewCallFromStartingBrowser` でハッシュと照合します。対象は view-data、authentication-status、認証ステップ（ブラウザから呼ぶもの）、フェデレーション、`authorize`、`authorize-with-session`、`deny` です。値が無い・違う・トランザクションに値が無い場合は 401 です。
+
+認可リクエスト ID は束縛の根拠にしません。PAR では `request_uri` から ID が分かるためです。`view_binding` は認可リクエストを訪れるたびに作り直すので、有効なのは最後に `IDP_AUTH_SESSION` を受け取ったブラウザの値だけです。
+
 ### proof を求めない場合
 
-ブラウザでの入力が一度も無いフロー（`login_hint` ＋ デバイスのプッシュ承認など）では ① が発行されません。`authorize` は `AuthenticationTransaction#browserProvedPossession(AuthenticationInteractors)` で、成功したステップにブラウザ由来で本人しか通せない種類のものがあったかを判断し、無ければ ① を求めません。このとき始めたブラウザには `/complete` の `IDP_AUTH_SESSION` で束縛します。
+ブラウザでの入力が一度も無いフロー（`login_hint` ＋ デバイスのプッシュ承認など）では ① が発行されません。`authorize` は `AuthenticationTransaction#browserProvedPossession(AuthenticationInteractors)` で、成功したステップにブラウザ由来で本人しか通せない種類のものがあったかを判断し、無ければ ① を求めません。このとき始めたブラウザには、`authorize` の `view_binding` と `/complete` の `IDP_AUTH_SESSION` で束縛します。
 
 判断は DB のトランザクションから読みます。インタラクターの無い種類（フェデレーション）はブラウザのステップとして数え、分からないものは ① を求める側に倒します。
 
@@ -749,7 +756,8 @@ Token Request（省略可能）
 
 | ファイル | 役割 |
 |---|---|
-| `app-view/src/auth/authProof.ts` | fetch をラップし、応答の `auth_proof` を認可リクエスト ID ごとに `sessionStorage` へ保持し、`authorize` のボディに載せる |
+| `app-view/src/auth/viewBinding.ts` | URL の fragment から `view_binding` を取り出して `sessionStorage` に置き、アドレスバーから消す |
+| `app-view/src/auth/authProof.ts` | fetch をラップし、idp-server の呼び出しに `x-view-binding` を付ける。応答の `auth_proof` を認可リクエスト ID ごとに `sessionStorage` へ保持し、`authorize` のボディに載せる |
 | `app-view/src/auth/completion.ts` | `auth_proof` があれば `/complete` へ、無ければ `redirect_uri` へ遷移する |
 | `app-view/src/auth/useSessionAuthorize.ts` | `authorize-with-session` の応答も `completion.ts` に渡す |
 

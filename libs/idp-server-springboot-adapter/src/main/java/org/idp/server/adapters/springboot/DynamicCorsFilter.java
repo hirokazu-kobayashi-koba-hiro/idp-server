@@ -89,7 +89,7 @@ public class DynamicCorsFilter extends OncePerRequestFilter {
       response.setHeader("Access-Control-Allow-Origin", allowOrigin);
       response.setHeader(
           "Access-Control-Allow-Credentials", String.valueOf(corsConfiguration.allowCredentials()));
-      response.setHeader("Access-Control-Allow-Headers", corsConfiguration.allowHeaders());
+      response.setHeader("Access-Control-Allow-Headers", corsConfiguration.effectiveAllowHeaders());
       response.setHeader("Access-Control-Allow-Methods", corsConfiguration.allowMethods());
 
       if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {

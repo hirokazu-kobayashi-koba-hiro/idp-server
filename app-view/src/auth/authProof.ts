@@ -1,3 +1,9 @@
+import {
+  VIEW_BINDING_HEADER,
+  captureViewBinding,
+  viewBindingFor,
+} from "./viewBinding";
+
 /**
  * Carries the one-time value that proves this browser is the one that authenticated.
  *
@@ -143,8 +149,24 @@ const withAuthProof = (
   };
 };
 
+/**
+ * Adds the view's value to a call idp-server needs to tie to the browser that started the
+ * authorization. Only where the view was given one, that is, where it is on another site.
+ */
+const withViewBinding = (
+  init: RequestInit | undefined,
+  viewBinding: string,
+): RequestInit => {
+  const headers = new Headers(init?.headers);
+  headers.set(VIEW_BINDING_HEADER, viewBinding);
+  return { ...init, headers };
+};
+
+const AUTHORIZATIONS = /\/v1\/authorizations\//;
+
 export const installAuthProofRelay = () => {
   if (typeof window === "undefined") return;
+  captureViewBinding();
   const flag = "__idpAuthProofRelay";
   if ((window as unknown as Record<string, unknown>)[flag]) return;
   (window as unknown as Record<string, unknown>)[flag] = true;
@@ -154,7 +176,11 @@ export const installAuthProofRelay = () => {
     const url = urlOf(input);
     const id = requestIdOf(url);
     const authProof = id && AUTHORIZE.test(url) ? take(id) : undefined;
-    const request = authProof ? withAuthProof(init, authProof) : init;
+    let request = authProof ? withAuthProof(init, authProof) : init;
+    const viewBinding = AUTHORIZATIONS.test(url)
+      ? viewBindingFor(id)
+      : undefined;
+    if (viewBinding) request = withViewBinding(request, viewBinding);
     const response = await original(input, request);
     if (id) await remember(response, id);
     return response;

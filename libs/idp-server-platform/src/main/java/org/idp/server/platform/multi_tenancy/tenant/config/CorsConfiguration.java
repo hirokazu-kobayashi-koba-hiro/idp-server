@@ -17,9 +17,12 @@
 package org.idp.server.platform.multi_tenancy.tenant.config;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * CORS (Cross-Origin Resource Sharing) configuration
@@ -69,6 +72,35 @@ public class CorsConfiguration {
    */
   public String allowHeaders() {
     return allowHeaders;
+  }
+
+  /**
+   * Request headers idp-server's own authorization view sends, allowed whatever the tenant
+   * configured. {@code x-view-binding} is how a view served from another site identifies itself on
+   * its calls; leaving it to each tenant's {@code allow_headers} would break that mode for every
+   * tenant whose list was stored before the header existed.
+   */
+  static final List<String> ALWAYS_ALLOWED_HEADERS = List.of("x-view-binding");
+
+  /** The configured {@code allow_headers}, with the headers idp-server always needs added. */
+  public String effectiveAllowHeaders() {
+    String configured = allowHeaders != null ? allowHeaders : "";
+    Set<String> present = new HashSet<>();
+    for (String header : configured.split(",")) {
+      if (!header.isBlank()) {
+        present.add(header.trim().toLowerCase(Locale.ROOT));
+      }
+    }
+    StringBuilder builder = new StringBuilder(configured.trim());
+    for (String header : ALWAYS_ALLOWED_HEADERS) {
+      if (!present.contains(header)) {
+        if (builder.length() > 0) {
+          builder.append(", ");
+        }
+        builder.append(header);
+      }
+    }
+    return builder.toString();
   }
 
   /**

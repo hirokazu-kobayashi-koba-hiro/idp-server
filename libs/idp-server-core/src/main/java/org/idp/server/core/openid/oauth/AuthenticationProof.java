@@ -215,7 +215,7 @@ public class AuthenticationProof {
         null, (String) map.get("hash"), new Subject((String) map.get("sub")), redirectUri);
   }
 
-  private static String hashOf(String value) {
+  static String hashOf(String value) {
     try {
       byte[] hashed =
           MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8));

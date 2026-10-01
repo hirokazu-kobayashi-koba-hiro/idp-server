@@ -154,6 +154,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/TenantId'
         - $ref: '#/components/parameters/AuthorizationRequestId'
+        - $ref: '#/components/parameters/ViewBinding'
         - $ref: '#/components/parameters/InteractionType'
       requestBody:
         description: |
@@ -298,6 +299,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/TenantId'
         - $ref: '#/components/parameters/AuthorizationRequestId'
+        - $ref: '#/components/parameters/ViewBinding'
       responses:
         '200':
           description: |
@@ -450,6 +452,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/TenantId'
         - $ref: '#/components/parameters/AuthorizationRequestId'
+        - $ref: '#/components/parameters/ViewBinding'
       responses:
         '200':
           description: |
@@ -536,6 +539,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/TenantId'
         - $ref: '#/components/parameters/AuthorizationRequestId'
+        - $ref: '#/components/parameters/ViewBinding'
       requestBody:
         required: false
         description: |
@@ -699,6 +703,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/TenantId'
         - $ref: '#/components/parameters/AuthorizationRequestId'
+        - $ref: '#/components/parameters/ViewBinding'
       responses:
         '200':
           description: 認可承認成功
@@ -786,6 +791,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/TenantId'
         - $ref: '#/components/parameters/AuthorizationRequestId'
+        - $ref: '#/components/parameters/ViewBinding'
       responses:
         '200':
           description: 認可拒否成功
@@ -856,6 +862,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/TenantId'
         - $ref: '#/components/parameters/AuthorizationRequestId'
+        - $ref: '#/components/parameters/ViewBinding'
         - $ref: '#/components/parameters/FederationType'
         - $ref: '#/components/parameters/SsoProviderName'
       responses:
@@ -937,6 +944,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/TenantId'
         - $ref: '#/components/parameters/FederationType'
+        - $ref: '#/components/parameters/ViewBinding'
       requestBody:
         required: true
         description: |
@@ -1032,6 +1040,18 @@ paths:
 
 components:
   parameters:
+    ViewBinding:
+      name: x-view-binding
+      in: header
+      required: false
+      description: |
+        別サイト認可画面モード（`ui_config.cross_site` / クライアントの `cross_site_authorization_view`）でのみ必須。
+        認可リクエストの応答で、認可画面の URL の fragment（`#view_binding=<値>`）に渡された値。
+        認可画面からの呼び出しが、認可リクエストを始めたブラウザからのものかを確かめるために使う
+        （同一サイト構成で `IDP_AUTH_SESSION` Cookie が担う照合の代わり）。
+        値が無い・違う場合は 401。認可リクエストを訪れるたびに作り直され、最後のものだけが有効。
+      schema:
+        type: string
     TenantId:
       name: tenant-id
       in: path

@@ -66,6 +66,11 @@ class BrowserStandIn {
   steps: Step[] = [];
   /** idp-server's cookies as this browser holds them, name to value. */
   jar = new Map<string, string>();
+  /**
+   * The value idp-server handed the authorization view in the fragment of its URL. A cross-site
+   * view presents it on its calls in place of the cookie that does not reach them.
+   */
+  viewBinding?: string;
 
   constructor(readonly topology: Topology) {}
 
@@ -93,6 +98,9 @@ class BrowserStandIn {
     const firstParty = this.firstParty(kind);
     const withCookie = firstParty && this.jar.size > 0;
     if (withCookie) headers.Cookie = this.cookieHeader();
+    if (kind === "xhr" && this.topology === "cross-site" && this.viewBinding) {
+      headers["x-view-binding"] = this.viewBinding;
+    }
     if (body instanceof URLSearchParams) {
       headers["Content-Type"] = "application/x-www-form-urlencoded";
     } else if (body) {
@@ -212,7 +220,10 @@ async function run(scenario: Scenario): Promise<{ steps: Step[]; idToken?: Recor
     "トップレベル遷移なので Cookie は first-party。IDP_AUTH_SESSION がブラウザに保存され、認可画面へ 302 する。",
   );
   const viewUrl = start.response.headers.get("location") ?? "";
-  const id = new URL(viewUrl, internalIssuer).searchParams.get("id");
+  const viewLocation = new URL(viewUrl, internalIssuer);
+  const id = viewLocation.searchParams.get("id");
+  browser.viewBinding =
+    new URLSearchParams(viewLocation.hash.replace(/^#/, "")).get("view_binding") ?? undefined;
   if (!id) return { steps: browser.steps };
 
   // 2. The view signs the user up. An XHR from the view.

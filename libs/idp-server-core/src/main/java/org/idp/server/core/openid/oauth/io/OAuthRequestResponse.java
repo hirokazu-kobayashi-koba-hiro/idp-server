@@ -44,6 +44,20 @@ public class OAuthRequestResponse {
   String error;
   String errorDescription;
 
+  /**
+   * Hands {@code value} to the authorization view in the fragment of the URL it is sent to.
+   *
+   * <p>A fragment is not sent to any server — neither to the view's nor in a Referer — so the value
+   * reaches only the script running in the browser that made this request.
+   */
+  public void handToViewInFragment(String key, String value) {
+    if (frontUrl == null || frontUrl.isEmpty() || value == null || value.isEmpty()) {
+      return;
+    }
+    String separator = frontUrl.contains("#") ? "&" : "#";
+    this.frontUrl = frontUrl + separator + key + "=" + value;
+  }
+
   public OAuthRequestResponse() {}
 
   public OAuthRequestResponse(

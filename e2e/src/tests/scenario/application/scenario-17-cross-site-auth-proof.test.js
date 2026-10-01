@@ -58,7 +58,7 @@ describe("cross-site authorization view: auth_proof", () => {
       },
     });
     expect(response.status).toBe(302);
-    const id = new URL(response.headers.location).searchParams.get("id");
+    const id = idFromView(response.headers.location);
     expect(id).toBeTruthy();
     return id;
   };
@@ -66,12 +66,14 @@ describe("cross-site authorization view: auth_proof", () => {
   const authenticate = async (id) =>
     postWithJson({
       url: `${authorizations()}/${id}/password-authentication`,
+      headers: viewHeaders(id),
       body: { username: user.email, password: user.raw_password },
     });
 
   const authorize = async (id, body) =>
     postWithJson({
       url: `${authorizations()}/${id}/authorize`,
+      headers: viewHeaders(id),
       body: body ?? {},
     });
 
@@ -86,6 +88,35 @@ describe("cross-site authorization view: auth_proof", () => {
     maxRedirects: 0,
     validateStatus: () => true,
   });
+
+  /**
+   * 認可画面に渡された値。認可リクエストの応答（302）の Location の fragment に載ってくる。
+   * 別サイトの認可画面は、Cookie の代わりにこの値をヘッダーで付けて idp-server を呼ぶ。
+   */
+  const viewBindings = new Map();
+  const idFromView = (location) => {
+    const url = new URL(location);
+    const id = url.searchParams.get("id");
+    const value = new URLSearchParams(url.hash.replace(/^#/, "")).get("view_binding");
+    if (id && value) viewBindings.set(id, value);
+    return id;
+  };
+  const viewHeaders = (id) =>
+    viewBindings.has(id) ? { "x-view-binding": viewBindings.get(id) } : {};
+  const idOfUrl = (url) => url.match(/\/v1\/authorizations\/([0-9a-f-]{36})\//)?.[1];
+  /** 別サイトの認可画面からの XHR。Cookie は付かないが、その画面に渡された値を付ける。 */
+  const asView = {
+    get: (url, config = {}) =>
+      withoutCookies.get(url, {
+        ...config,
+        headers: { ...(config.headers ?? {}), ...viewHeaders(idOfUrl(url)) },
+      }),
+    post: (url, body, config = {}) =>
+      withoutCookies.post(url, body, {
+        ...config,
+        headers: { ...(config.headers ?? {}), ...viewHeaders(idOfUrl(url)) },
+      }),
+  };
 
   const complete = async (id, authProof) =>
     get({
@@ -451,6 +482,7 @@ describe("cross-site authorization view: auth_proof", () => {
       // 誰でも呼べる種類のステップ。ここで proof を出すと、ID を知っているだけで手に入る。
       const response = await postWithJson({
         url: `${authorizations()}/${id}/email-authentication-challenge`,
+        headers: viewHeaders(id),
         body: { email: user.email },
       });
 
@@ -560,7 +592,7 @@ describe("cross-site authorization view: auth_proof", () => {
         },
       });
       expect(started.status).toBe(302);
-      const id = new URL(started.headers.location).searchParams.get("id");
+      const id = idFromView(started.headers.location);
 
       const authProof = (await authenticate(id)).data.auth_proof;
       const completionProof = (await authorize(id, { auth_proof: authProof }))
@@ -722,7 +754,7 @@ describe("cross-site authorization view: auth_proof", () => {
         },
       });
       expect(response.status).toBe(302);
-      return new URL(response.headers.location).searchParams.get("id");
+      return idFromView(response.headers.location);
     };
 
     const completeIn = (browser, id, authProof) =>
@@ -749,13 +781,13 @@ describe("cross-site authorization view: auth_proof", () => {
       // 1 回目: 通常のログイン。認証と authorize は Cookie なしの XHR
       const firstId = await startIn(browser);
       const firstProof = (
-        await withoutCookies.post(`${authorizations()}/${firstId}/password-authentication`, {
+        await asView.post(`${authorizations()}/${firstId}/password-authentication`, {
           username: user.email,
           password: user.raw_password,
         })
       ).data.auth_proof;
       const firstCompletion = (
-        await withoutCookies.post(`${authorizations()}/${firstId}/authorize`, {
+        await asView.post(`${authorizations()}/${firstId}/authorize`, {
           auth_proof: firstProof,
         })
       ).data.auth_proof;
@@ -766,11 +798,11 @@ describe("cross-site authorization view: auth_proof", () => {
       // 2 回目: 認可リクエストはトップレベル遷移なので、/complete で書かれた OP セッションの Cookie が届く
       const id = await startIn(browser);
 
-      const viewData = await withoutCookies.get(`${authorizations()}/${id}/view-data`);
+      const viewData = await asView.get(`${authorizations()}/${id}/view-data`);
       expect(viewData.status).toBe(200);
       expect(viewData.data.session_enabled).toBe(true);
 
-      const withSession = await withoutCookies.post(
+      const withSession = await asView.post(
         `${authorizations()}/${id}/authorize-with-session`,
         {}
       );
@@ -786,10 +818,21 @@ describe("cross-site authorization view: auth_proof", () => {
       expect(idToken.sid).toBeTruthy();
     });
 
-    it("SSO でも、始めたブラウザ以外からは完了できない", async () => {
-      // 認可リクエスト ID が漏れても、別のブラウザは被害者のセッションで code を受け取れない
+    it("SSO でも、認可リクエスト ID だけを持つ呼び出しは authorize-with-session を呼べない", async () => {
+      // 認可リクエスト ID が漏れても、認可画面に渡された値が無ければ呼べない
       const id = await startAuthorization();
       const withSession = await withoutCookies.post(
+        `${authorizations()}/${id}/authorize-with-session`,
+        {}
+      );
+
+      expect(withSession.status).toBe(401);
+      expect(withSession.data.auth_proof).toBeUndefined();
+    });
+
+    it("SSO で ② を得ても、始めたブラウザ以外からは完了できない", async () => {
+      const id = await startAuthorization();
+      const withSession = await asView.post(
         `${authorizations()}/${id}/authorize-with-session`,
         {}
       );
@@ -815,9 +858,14 @@ describe("cross-site authorization view: auth_proof", () => {
         `${authorizations()}/${id}/authorize-with-session`,
         {}
       );
-      expect(hijack.status).toBe(400);
+      expect(hijack.status).toBe(401);
       expect(hijack.data.auth_proof).toBeUndefined();
-      expect(hijack.data.error_description).toContain("a sign-in has already taken place");
+
+      // 認可画面自身からでも、サインインのあとは authorize-with-session では進めない
+      const fromView = await asView.post(`${authorizations()}/${id}/authorize-with-session`, {});
+      expect(fromView.status).toBe(400);
+      expect(fromView.data.auth_proof).toBeUndefined();
+      expect(fromView.data.error_description).toContain("a sign-in has already taken place");
 
       // 正規のブラウザは、受け取った proof でそのまま進める
       const authorized = await authorize(id, { auth_proof: authProof });
@@ -845,7 +893,7 @@ describe("cross-site authorization view: auth_proof", () => {
         },
       });
       expect(response.status).toBe(302);
-      const id = new URL(response.headers.location).searchParams.get("id");
+      const id = idFromView(response.headers.location);
       expect(id).toBeTruthy();
       return id;
     };
@@ -878,6 +926,7 @@ describe("cross-site authorization view: auth_proof", () => {
 
       const password = await postWithJson({
         url: `${authorizations()}/${id}/password-authentication`,
+        headers: viewHeaders(id),
         body: { username: deviceUser.email, password: deviceUser.raw_password },
       });
       expect(password.status).toBe(200);
@@ -891,6 +940,7 @@ describe("cross-site authorization view: auth_proof", () => {
 
       const status = await get({
         url: `${authorizations()}/${id}/authentication-status`,
+        headers: viewHeaders(id),
       });
       expect(status.data.status).toBe("success");
 
@@ -940,7 +990,7 @@ describe("cross-site authorization view: auth_proof", () => {
         },
       });
       expect(response.status).toBe(302);
-      return new URL(response.headers.location).searchParams.get("id");
+      return idFromView(response.headers.location);
     };
 
     const approveOnDevice = async (id) => {
@@ -968,7 +1018,7 @@ describe("cross-site authorization view: auth_proof", () => {
       const id = await startDeviceOnlyAuthorization();
       await approveOnDevice(id);
 
-      const authorized = await withoutCookies.post(`${authorizations()}/${id}/authorize`, {});
+      const authorized = await asView.post(`${authorizations()}/${id}/authorize`, {});
       expect(authorized.status).toBe(200);
       // code は応答に出ず、/complete 用の proof の中にある
       expect(authorized.data.redirect_uri).toBeUndefined();
@@ -992,10 +1042,20 @@ describe("cross-site authorization view: auth_proof", () => {
       expect(idToken.sid).toBeTruthy();
     });
 
+    it("認可リクエスト ID だけを持つ呼び出しは authorize を呼べない", async () => {
+      const id = await startDeviceOnlyAuthorization();
+      await approveOnDevice(id);
+
+      const authorized = await withoutCookies.post(`${authorizations()}/${id}/authorize`, {});
+
+      expect(authorized.status).toBe(401);
+      expect(authorized.data.auth_proof).toBeUndefined();
+    });
+
     it("始めたブラウザ以外は、authorize の結果を /complete に持ち込めない", async () => {
       const id = await startDeviceOnlyAuthorization();
       await approveOnDevice(id);
-      const authorized = await withoutCookies.post(`${authorizations()}/${id}/authorize`, {});
+      const authorized = await asView.post(`${authorizations()}/${id}/authorize`, {});
       expect(authorized.status).toBe(200);
 
       const response = await withoutCookies.get(`${authorizations()}/${id}/complete`, {
@@ -1010,10 +1070,10 @@ describe("cross-site authorization view: auth_proof", () => {
       // /complete 用の proof を差し替えられると、正規のブラウザが締め出される。
       const id = await startDeviceOnlyAuthorization();
       await approveOnDevice(id);
-      const first = await withoutCookies.post(`${authorizations()}/${id}/authorize`, {});
+      const first = await asView.post(`${authorizations()}/${id}/authorize`, {});
       expect(first.status).toBe(200);
 
-      const second = await withoutCookies.post(`${authorizations()}/${id}/authorize`, {});
+      const second = await asView.post(`${authorizations()}/${id}/authorize`, {});
       expect(second.status).toBe(400);
       expect(second.data.error).toBe("invalid_request");
 
@@ -1027,9 +1087,111 @@ describe("cross-site authorization view: auth_proof", () => {
       const id = await startAuthorization();
       await authenticate(id);
 
-      const response = await withoutCookies.post(`${authorizations()}/${id}/authorize`, {});
+      const response = await asView.post(`${authorizations()}/${id}/authorize`, {});
 
       expect(response.status).toBe(400);
+    });
+  });
+
+  describe("認可画面に渡された値（view binding）", () => {
+    it("認可リクエストの応答で、認可画面の URL の fragment に渡される", async () => {
+      const response = await get({
+        url: authorizations(),
+        params: {
+          client_id: clientId,
+          redirect_uri: redirectUri,
+          response_type: "code",
+          scope: "openid profile email",
+          state: uuidv4(),
+          nonce: uuidv4(),
+        },
+      });
+
+      expect(response.status).toBe(302);
+      const location = new URL(response.headers.location);
+      expect(new URLSearchParams(location.hash.slice(1)).get("view_binding")).toBeTruthy();
+      // クエリには載せない（サーバーのログや Referer に残さない）
+      expect(location.searchParams.get("view_binding")).toBeNull();
+    });
+
+    it("値を付けない認証のステップは拒否され、proof も出ない", async () => {
+      const id = await startAuthorization();
+
+      const response = await withoutCookies.post(`${authorizations()}/${id}/password-authentication`, {
+        username: user.email,
+        password: user.raw_password,
+      });
+
+      expect(response.status).toBe(401);
+      expect(response.data?.auth_proof).toBeUndefined();
+    });
+
+    it("別の認可リクエストに渡された値は使えない", async () => {
+      const id = await startAuthorization();
+      const otherId = await startAuthorization();
+
+      const response = await withoutCookies.post(
+        `${authorizations()}/${id}/password-authentication`,
+        { username: user.email, password: user.raw_password },
+        { headers: { "x-view-binding": viewBindings.get(otherId) } }
+      );
+
+      expect(response.status).toBe(401);
+    });
+
+    it("PAR で同じ認可リクエストを開き直すと、前に開いたブラウザの値は使えなくなる", async () => {
+      // PAR を送った側は request_uri から認可リクエスト ID を知っている。ID は束縛の根拠にならないので、
+      // 値は開くたびに作り直し、最後に開いたブラウザ（最後に IDP_AUTH_SESSION を受け取ったブラウザ）の
+      // ものだけを有効にする。
+      const pushed = await withoutCookies.post(
+        `${authorizations()}/push`,
+        new URLSearchParams({
+          client_id: clientId,
+          client_secret: clientSecret,
+          response_type: "code",
+          scope: "openid profile email",
+          redirect_uri: redirectUri,
+          state: uuidv4(),
+          nonce: uuidv4(),
+        }).toString(),
+        { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
+      );
+      expect(pushed.status).toBe(201);
+
+      const open = async () => {
+        const response = await withoutCookies.get(authorizations(), {
+          params: { client_id: clientId, request_uri: pushed.data.request_uri },
+        });
+        expect(response.status).toBe(302);
+        const location = new URL(response.headers.location);
+        return {
+          id: location.searchParams.get("id"),
+          value: new URLSearchParams(location.hash.slice(1)).get("view_binding"),
+        };
+      };
+      const first = await open();
+      const second = await open();
+      expect(second.id).toBe(first.id);
+      expect(second.value).not.toBe(first.value);
+
+      const signIn = (value) =>
+        withoutCookies.post(
+          `${authorizations()}/${first.id}/password-authentication`,
+          { username: user.email, password: user.raw_password },
+          { headers: { "x-view-binding": value } }
+        );
+      expect((await signIn(first.value)).status).toBe(401);
+      expect((await signIn(second.value)).status).toBe(200);
+    });
+
+    it("値を付けない deny は拒否される", async () => {
+      const id = await startAuthorization();
+
+      const denied = await withoutCookies.post(`${authorizations()}/${id}/deny`, {});
+
+      expect(denied.status).toBe(401);
+      const fromView = await asView.post(`${authorizations()}/${id}/deny`, {});
+      expect(fromView.status).toBe(200);
     });
   });
 });
