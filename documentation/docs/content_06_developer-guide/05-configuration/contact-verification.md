@@ -72,7 +72,7 @@
 |---|---|
 | `$.request_body` | 上記のボディ |
 | `$.request_attributes` | IPアドレス・User-Agent など |
-| `$.user` | 認証済みユーザーの許可リスト射影（`sub` / `email` / `phone_number` / 名前 / `roles` / `custom_properties`） |
+| `$.user` | 認証済みユーザーの許可リスト射影（`sub` / `provider_id` / `external_user_id` / `email` / `phone_number` / 名前 / `roles` / `custom_properties`。[External API認証](./authn/external-api.md) と共通） |
 | `$.interaction` | challenge で保持した値（`previous_interaction` を書いた場合） |
 | `$.execution_http_requests` | チェーン中の各結果（チェーンのみ） |
 

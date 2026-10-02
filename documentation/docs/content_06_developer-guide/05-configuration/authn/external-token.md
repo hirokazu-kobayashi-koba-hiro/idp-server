@@ -182,7 +182,7 @@ External Token認証で受け付けるリクエストの構造：
 |------|------------|------|
 | `$.request_body` | 常に | interaction のリクエストボディ |
 | `$.request_attributes` | 常に | `ip_address` / `user_agent` / `resource` / `action` / `request_url` / `headers` |
-| `$.user` | **`external-api-authentication` の interaction でのみ**、かつユーザーが確立しているとき | 許可リスト投影（`sub` / `email` / `name` / `roles` / `custom_properties` 等）|
+| `$.user` | **`external-api-authentication` / `password-authentication` / SMS / メールの interaction でのみ**（`external-token` では使えない）、かつユーザーが確立しているとき | 許可リスト投影（`sub` / `email` / `name` / `roles` / `custom_properties` 等）|
 | `$.interaction` | `previous_interaction` を設定したときのみ | 前のインタラクションの保存データ |
 | `$.execution_http_requests` | **2本目以降のリクエストのみ** | それまでの結果 |
 
