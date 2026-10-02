@@ -174,12 +174,19 @@ $.request_attributes    → HTTP リクエスト属性
                           ip_address / user_agent / resource / action / request_url / headers
 $.interaction           → previous_interaction で取得した前のインタラクションの保存データ
                           ※ $.previous_interaction ではない
-$.user                  → 認証済みユーザーの許可リスト投影（external-api-authentication のみ）
+$.user                  → 認証済みユーザーの許可リスト投影（下記の interactor のみ）
 ```
 
-**送信ボディでは** `$.user` は `external-api-authentication` の interaction でのみ注入される（`ExternalApiAuthenticationInteractor:204` の `setTransactionUser` が唯一の設定元）。他の interactor（password 等）では**キー自体が存在しない**ため、書いても解決しない。`user_mapping_rules` は注入条件が違う（後述）。
+**送信ボディでは** `$.user` は次の interactor の execution でだけ注入される（`AuthenticationExecutionRequest#setTransactionUser`）。
 
-公開されるのは `sub` / `provider_id` / `email` / `phone_number` / `name` / `given_name` / `family_name` / `middle_name` / `roles` / `custom_properties` のみ。パスワードハッシュ・認証情報・`verified_claims` は含まれない。1要素目ではユーザーが未確立のため空になる。
+- `external-api-authentication`
+- `password-authentication`（外部委譲）
+- `sms-authentication-challenge` / `sms-authentication`
+- `email-authentication-challenge` / `email-authentication`
+
+連絡先の確認・変更の外部委譲（`ContactVerificationExchange`）も同じ許可リストを使う。上記以外（`external-token` 等）では**キー自体が存在しない**ため、書いても解決しない。`user_mapping_rules` は注入条件が違う（後述）。
+
+公開されるのは `sub` / `provider_id` / `external_user_id` / `email` / `phone_number` / `name` / `given_name` / `family_name` / `middle_name` / `roles` / `custom_properties` のみ。パスワードハッシュ・認証情報・`verified_claims` は含まれない。1要素目ではユーザーが未確立のため空になる。
 
 ```json
 "http_request": {

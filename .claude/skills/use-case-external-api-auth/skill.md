@@ -288,7 +288,7 @@ MFA 2段階目で `user_resolve` を使う場合、`identity_match_field` の設
 - CIBA / login_hint フロー: 1回目の interaction から
 - 真の1段階目（そのinteractionが初めてユーザーを解決）: 空（エラーにはならず、何も送信されない）
 
-**送信できる属性（allow-list）**: `sub` / `provider_id` / `email` / `phone_number` / `name` / `given_name` / `family_name` / `middle_name` / `roles` / `custom_properties.*`。`hashed_password` / `credentials` / `verified_claims` 等の機微情報は送信不可（fail-safe）。各属性は `body_mapping_rules` で明示的にマッピングした場合のみ送信される。姓名分割を要求する外部API（SEON の `user_firstname`/`user_lastname` 等）には `$.user.given_name`/`$.user.family_name` を使う。
+**送信できる属性（allow-list）**: `sub` / `provider_id` / `external_user_id` / `email` / `phone_number` / `name` / `given_name` / `family_name` / `middle_name` / `roles` / `custom_properties.*`。`hashed_password` / `credentials` / `verified_claims` 等の機微情報は送信不可（fail-safe）。各属性は `body_mapping_rules` で明示的にマッピングした場合のみ送信される。姓名分割を要求する外部API（SEON の `user_firstname`/`user_lastname` 等）には `$.user.given_name`/`$.user.family_name` を使う。
 
 **ヒアリング**: 外部APIに認証済みユーザー属性を送りたいか？ → はい なら、送る属性（sub/email 等）と送信先 interaction（通常はMFA 2段階目のリスク判定等）を確認。
 
