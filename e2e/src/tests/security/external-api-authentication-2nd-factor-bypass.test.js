@@ -502,6 +502,31 @@ describe("Security: External API Authentication 2nd Factor Bypass Prevention", (
               ],
             },
           },
+          // Issue #1930: a later step calling the external system that established the user names
+          // the user by that system's own id. The echo mock reflects `user_id` as received_sub.
+          risk_check_external_user_id: {
+            execution: {
+              function: "http_request",
+              http_request: {
+                url: `${mockApiBaseUrl}/e2e/echo-user-context`,
+                method: "POST",
+                header_mapping_rules: [
+                  { static_value: "application/json", to: "Content-Type" },
+                ],
+                body_mapping_rules: [
+                  { from: "$.user.external_user_id", to: "user_id" },
+                ],
+              },
+            },
+            response: {
+              body_mapping_rules: [
+                {
+                  from: "$.execution_http_request.response_body.received_sub",
+                  to: "echoed_external_user_id",
+                },
+              ],
+            },
+          },
         },
       },
     });
@@ -732,6 +757,54 @@ describe("Security: External API Authentication 2nd Factor Bypass Prevention", (
     expect(riskResp.data.echoed_email).toBe(testUserAEmail);
     expect(riskResp.data.echoed_sub).toBe(testUserASub);
     expect(riskResp.data.echoed_name).toBe("User A");
+  });
+
+  it("should forward the user's external_user_id ($.user.external_user_id) to the external API (Issue #1930)", async () => {
+    // A user known to an external system: created with provider_id / external_user_id, as a user
+    // resolved from that system would be stored.
+    const externalUserId = `ext-${Date.now()}`;
+    const email = `user-ext-${Date.now()}@sec-ext-api.example.com`;
+    const password = "UserExtPass_1!";
+    const createUserResp = await postWithJson({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/users`,
+      headers: { Authorization: `Bearer ${mgmtAccessToken}` },
+      body: {
+        sub: uuidv4(),
+        provider_id: "idp-server",
+        external_user_id: externalUserId,
+        name: "External User",
+        email,
+        email_verified: true,
+        raw_password: password,
+      },
+    });
+    expect(createUserResp.status).toBe(201);
+
+    const authResp = await getAuthorizations({
+      endpoint: `${backendUrl}/${tenantId}/v1/authorizations`,
+      clientId,
+      responseType: "code",
+      state: `ext-user-id-${Date.now()}`,
+      scope: "openid profile email",
+      redirectUri,
+      prompt: "login",
+    });
+    expect(authResp.status).toBe(302);
+    const authId = convertNextAction(authResp.headers.location).params.get("id");
+
+    const passwordResp = await postAuthentication({
+      endpoint: `${backendUrl}/${tenantId}/v1/authorizations/{id}/password-authentication`,
+      id: authId,
+      body: { username: email, password },
+    });
+    expect(passwordResp.status).toBe(200);
+
+    const riskResp = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/external-api-authentication`,
+      body: { interaction: "risk_check_external_user_id" },
+    });
+    expect(riskResp.status).toBe(200);
+    expect(riskResp.data.echoed_external_user_id).toBe(externalUserId);
   });
 
   it("should NOT egress allow-list-excluded user fields ($.user.hashed_password / $.user.verified_claims) (Issue #1439)", async () => {

@@ -146,6 +146,7 @@ idp-server が受け取ったリクエスト自体から取れる値です。RP 
 |------|------|
 | `$.user.sub` | 内部ユーザーID |
 | `$.user.provider_id` | プロバイダーID |
+| `$.user.external_user_id` | 外部ユーザーID（設定されている場合） |
 | `$.user.email` | メールアドレス |
 | `$.user.phone_number` | 電話番号 |
 | `$.user.name` | 氏名（フルネーム） |

@@ -40,11 +40,18 @@ import org.idp.server.core.openid.identity.UserRole;
  * authentication API legitimately needs, and it is fail-safe: a newly added {@link User} field
  * stays hidden until it is deliberately added here.
  *
- * <p><b>What is exposed:</b> {@code sub}, {@code provider_id}, the {@code email} / {@code
- * phone_number} identifiers, the {@code name} plus its {@code given_name} / {@code family_name} /
- * {@code middle_name} parts (so a fraud API that wants split name fields can be fed), {@code roles}
- * (as names) and tenant-managed {@code custom_properties}. Egress is still opt-in per field: an
- * attribute only leaves the process if the tenant admin writes a mapping rule for it.
+ * <p><b>What is exposed:</b> {@code sub}, {@code provider_id} with {@code external_user_id}, the
+ * {@code email} / {@code phone_number} identifiers, the {@code name} plus its {@code given_name} /
+ * {@code family_name} / {@code middle_name} parts (so a fraud API that wants split name fields can
+ * be fed), {@code roles} (as names) and tenant-managed {@code custom_properties}. Egress is still
+ * opt-in per field: an attribute only leaves the process if the tenant admin writes a mapping rule
+ * for it.
+ *
+ * <p>{@code external_user_id} is the user's id in the external system that established it, so a
+ * later step calling that same system can name the user in its own terms (Issue #1930). Sent back
+ * there it reveals nothing new; sent to a different system it becomes a key that links the user
+ * across the two, which is the same consideration as {@code email} and is governed the same way —
+ * by the mapping rule the admin writes.
  *
  * <p><b>What is never exposed:</b> credentials and secrets ({@code hashed_password}, {@code
  * credentials}), {@code verified_claims} (regulated identity-verification data), and
@@ -64,6 +71,7 @@ public class ExternalRequestUserContextCreator {
     }
     map.put("sub", user.sub());
     map.put("provider_id", user.providerId());
+    if (user.hasExternalUserId()) map.put("external_user_id", user.externalUserId());
     if (user.hasEmail()) map.put("email", user.email());
     if (user.hasPhoneNumber()) map.put("phone_number", user.phoneNumber());
     if (user.hasName()) map.put("name", user.name());

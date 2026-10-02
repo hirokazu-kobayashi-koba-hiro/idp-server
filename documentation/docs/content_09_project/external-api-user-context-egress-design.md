@@ -26,6 +26,13 @@
 
 `ExternalRequestUserContextCreator.create()` は許可キーだけを `put` する。`hashed_password` / `credentials` / `verified_claims` / `status` / `permissions` は「除外リスト」ではなく**そもそも積まれない**。`User` に新フィールドが増えても、ここに明示追加しない限り自動露出しない。回帰は E2E（`external-api-authentication-2nd-factor-bypass.test.js`）のネガティブテストで固定済み。
 
+### `external_user_id` は後から加えた（#1930）
+
+当初のリストは、リスク判定サービスが要求する形式を基準に選んだため、`external_user_id` が入っていなかった。一方で `identity_match_field: $.external_user_id` は「外部システム連携の2段階目」として案内しており、その2段階目のリクエストで外部システム側の ID を送れない食い違いがあった。
+
+- 送り先が、その ID を発行した外部システム自身なら、新たに外へ出る情報はない
+- 別のシステムへ送れば、システムをまたいで利用者を突き合わせる鍵になりうる。ただし、マッピングルールに書いた項目しか送られない点は `email` / `phone_number` と同じなので、同じ扱いにした
+
 ---
 
 ## 2. `$.user.*` は「ユーザー確立後」限定 + thin-user の既知ギャップ（未対応）
