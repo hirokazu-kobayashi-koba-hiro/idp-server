@@ -42,6 +42,35 @@ export CONFORMANCE_SUITE_DIR=/path/to/conformance-suite
 ./oidc-conformance-suite/oidcc/run.sh               # 両テナント
 ```
 
+## 別サイト認可画面モードで流す
+
+両テナントの認可画面は idp-server と別サイト（`auth.idp.local` / `auth-cp.idp.local`）にある。
+既定の設定はセッション Cookie が `SameSite=None` で、Chromium がサードパーティ Cookie を送るため、
+別サイト認可画面モード（`view_binding` / `auth_proof` / `/complete`）を使わずに通る。
+モードで通すときは `../lib/switch-view.sh` でテナントを切り替える。
+
+```bash
+./oidc-conformance-suite/lib/switch-view.sh e8c169c2-019f-46c9-af39-7be12ec51e4d cross-site
+./oidc-conformance-suite/lib/switch-view.sh 76ec54ab-8923-468d-b04b-0d8d0a5eaade cross-site
+./oidc-conformance-suite/oidcc/run.sh
+# 戻す（切り替え前の設定を lib/.view-backup/ に保存してある）
+./oidc-conformance-suite/lib/switch-view.sh e8c169c2-019f-46c9-af39-7be12ec51e4d same-site
+./oidc-conformance-suite/lib/switch-view.sh 76ec54ab-8923-468d-b04b-0d8d0a5eaade same-site
+```
+
+`cross-site` は `ui_config.cross_site: true` にし、セッション Cookie を `SameSite=Lax` にする。
+`Lax` の Cookie はどのブラウザでも別サイトからの XHR に付かないので、Safari がサードパーティ Cookie を
+落とすのと同じ状態になる（`/complete` はトップレベルの GET なので届く）。これで通れば、Cookie に
+頼らずモードで通ったことになる。ブラウザ側でサードパーティ Cookie を落とす方法
+（`--test-third-party-cookie-phaseout`、プロファイルの設定）は、ドライバの Chromium では効かなかった。
+
+実測（2026-10-03）は、両テナントとも PASSED 30 / REVIEW 3 / WARNING 2 / FAILED 0。WARNING は
+後述の `userinfo-post-body` と `codereuse-30seconds`。
+
+FAPI 系のテナントは、この方法では流せない。ログインに使うパスキーの RP ID が `local.test` で、
+`auth.idp.local` の画面からは使えないため（WebAuthn は RP ID が画面のオリジンのドメインに含まれる
+ことを求める）。
+
 ## 認証方式が FAPI 系と違う
 
 oidcc テナントの認証は **email + password の 1 段**（financial-grade は email OTP → Passkey の 2 段）。
