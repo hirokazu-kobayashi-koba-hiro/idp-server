@@ -14,6 +14,7 @@ import { SmsStep } from "./steps/SmsStep";
 import { Fido2Step } from "./steps/Fido2Step";
 import { Fido2AuthStep } from "./steps/Fido2AuthStep";
 import { FidoUafStep } from "./steps/FidoUafStep";
+import { AttributeVerificationStep } from "./steps/AttributeVerificationStep";
 
 /**
  * Whether a step verifies an existing credential rather than registering a new one, based on the
@@ -54,9 +55,13 @@ const resolveStepComponent = (
     case "fido2":
       // Established user → authenticate an existing passkey; new / initial user → register one
       // (unless the policy forces a mode). See shouldFido2Authenticate.
-      return shouldFido2Authenticate(step, userStatus) ? Fido2AuthStep : Fido2Step;
+      return shouldFido2Authenticate(step, userStatus)
+        ? Fido2AuthStep
+        : Fido2Step;
     case "fido-uaf":
       return FidoUafStep;
+    case "attribute-verification":
+      return AttributeVerificationStep;
     default:
       return undefined;
   }
@@ -72,7 +77,11 @@ export const StepRenderer = ({
   ...props
 }: StepRendererProps) => {
   const [userStatus] = useAtom(authUserStatusAtom);
-  const Component = resolveStepComponent(props.step, userStatus, passwordRegister);
+  const Component = resolveStepComponent(
+    props.step,
+    userStatus,
+    passwordRegister,
+  );
   if (!Component) {
     return (
       <Typography color="text.secondary" variant="body2">

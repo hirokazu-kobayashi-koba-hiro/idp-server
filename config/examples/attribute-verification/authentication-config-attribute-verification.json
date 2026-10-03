@@ -1,0 +1,36 @@
+{
+  "id": "77777777-0008-7777-7777-777777777777",
+  "type": "attribute-verification",
+  "attributes": {},
+  "metadata": {
+    "description": "identity-verified: the account must be identity-verified. kba: date of birth and the last 4 digits of the phone number"
+  },
+  "interactions": {
+    "identity-verified": {
+      "execution": {
+        "details": {
+          "conditions": {
+            "any_of": [
+              [
+                { "path": "$.user.status", "type": "string", "operation": "eq", "value": "IDENTITY_VERIFIED" }
+              ]
+            ]
+          },
+          "error": "identity_verification_required"
+        }
+      }
+    },
+    "kba": {
+      "execution": {
+        "details": {
+          "fields": [
+            { "input": "birthdate", "user_attribute": "birthdate", "normalize": "date" },
+            { "input": "phone_last4", "user_attribute": "phone_number", "normalize": "digits", "suffix_length": 4 }
+          ],
+          "max_attempts": 5,
+          "lockout_seconds": 900
+        }
+      }
+    }
+  }
+}

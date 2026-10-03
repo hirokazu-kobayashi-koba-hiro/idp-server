@@ -7,10 +7,19 @@ const METHOD_LABELS: Record<string, string> = {
   sms: "SMS",
   fido2: "Passkey",
   "fido-uaf": "Device",
+  "attribute-verification": "Verification",
 };
 
-const labelFor = (step: StepView): string =>
-  METHOD_LABELS[step.method] ?? step.method;
+const labelFor = (step: StepView): string => {
+  // Two attribute-verification steps read the same by method; the account check reads apart.
+  if (
+    step.method === "attribute-verification" &&
+    step.hints?.kind === "conditions"
+  ) {
+    return "Account check";
+  }
+  return METHOD_LABELS[step.method] ?? step.method;
+};
 
 type Props = {
   steps: StepView[];

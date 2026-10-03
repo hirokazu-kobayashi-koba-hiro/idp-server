@@ -72,7 +72,8 @@ export default function AuthPage() {
   // default; it is hidden only when the step explicitly disables registration.
   const canRegister = effectiveStep?.registration_mode !== "disabled";
   const isPasswordStep = effectiveStep?.method === "password";
-  const canPickAnother = availableMethods.length >= 2 && selectedMethod !== null;
+  const canPickAnother =
+    availableMethods.length >= 2 && selectedMethod !== null;
 
   // Federated sign-in belongs on the initial identification step (1st factor).
   const federations = viewData?.available_federations ?? [];
@@ -82,7 +83,8 @@ export default function AuthPage() {
     effectiveStep?.requires_user === false &&
     federations.length > 0;
 
-  if (!router.isReady || isLoading || authorizingWithSession) return <Loading />;
+  if (!router.isReady || isLoading || authorizingWithSession)
+    return <Loading />;
 
   const title = isComplete
     ? "You're all set"
@@ -137,6 +139,9 @@ export default function AuthPage() {
           </>
         )}
         <StepRenderer
+          // One instance per step: two steps of the same method (named attribute-verification
+          // interactions) must not carry each other's input or messages.
+          key={`${effectiveStep.order}-${effectiveStep.method}-${effectiveStep.interaction ?? ""}`}
           tenantId={tenantId}
           id={id}
           step={effectiveStep}

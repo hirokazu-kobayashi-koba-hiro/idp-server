@@ -14,15 +14,27 @@ import {
  * A `challenge` also records a success_count (the code was sent), so it must be excluded — the step
  * is only complete once the matching `authentication` / `registration` succeeds. Using
  * `interaction_results` (not `authentication_methods`) is required because the latter excludes
- * registration operations, which the signup flow relies on.
+ * registration operations, which the signup flow relies on — and `verification` (attribute
+ * verification, which is deliberately not an authentication method).
  */
-const TERMINAL_OPERATIONS = new Set(["authentication", "registration"]);
+const TERMINAL_OPERATIONS = new Set([
+  "authentication",
+  "registration",
+  "verification",
+]);
 
 /** Interaction method that bootstraps account creation for a 1st-factor identify step. */
 const INITIAL_REGISTRATION = "initial-registration";
 
 /** Methods the UI can render; others in available_methods are ignored for step derivation. */
-const KNOWN_METHODS = new Set(["password", "email", "sms", "fido2", "fido-uaf"]);
+const KNOWN_METHODS = new Set([
+  "password",
+  "email",
+  "sms",
+  "fido2",
+  "fido-uaf",
+  "attribute-verification",
+]);
 
 const singleStep = (method: string): StepDefinition => ({
   method,
@@ -36,6 +48,27 @@ const singleStep = (method: string): StepDefinition => ({
  * `available_methods`: a single password authentication step.
  */
 const DEFAULT_STEPS: StepDefinition[] = [singleStep("password")];
+
+/**
+ * Named interactions that completed, as `method:interaction` keys, read from the per-interaction
+ * breakdown. A method running several named interactions (attribute-verification) reports one
+ * result for the method, so its steps can only be told apart here.
+ */
+const computeCompletedInteractions = (status?: AuthStatus): Set<string> => {
+  const completed = new Set<string>();
+  const results = status?.interaction_results;
+  if (!results) return completed;
+  for (const result of Object.values(results)) {
+    if (!TERMINAL_OPERATIONS.has((result.operation_type ?? "").toLowerCase())) {
+      continue;
+    }
+    for (const [name, breakdown] of Object.entries(result.interactions ?? {})) {
+      if (breakdown.success_count > 0)
+        completed.add(`${result.method}:${name}`);
+    }
+  }
+  return completed;
+};
 
 const computeCompletedMethods = (status?: AuthStatus): Set<string> => {
   const completed = new Set<string>();
@@ -114,7 +147,9 @@ export const useAuthFlow = (tenantId?: string, id?: string) => {
 
   const availableMethods = (
     viewData?.authentication_policy?.available_methods ?? []
-  ).filter((method) => method !== "initial-registration" && KNOWN_METHODS.has(method));
+  ).filter(
+    (method) => method !== "initial-registration" && KNOWN_METHODS.has(method),
+  );
 
   // Step source: explicit step_definitions win. Otherwise derive from available_methods — exactly
   // one method becomes a single step, several methods are offered via a picker (steps stay empty),
@@ -129,16 +164,36 @@ export const useAuthFlow = (tenantId?: string, id?: string) => {
           : [];
 
   const completedMethods = computeCompletedMethods(status);
+  const completedInteractions = computeCompletedInteractions(status);
   const flowStatus: FlowStatus | string = status?.status ?? "in_progress";
 
+  // A step naming an interaction is done only when that interaction is: two steps of the same
+  // method must not both complete when either one succeeds.
+  const isCompleted = (step: StepDefinition): boolean =>
+    step.interaction
+      ? completedInteractions.has(`${step.method}:${step.interaction}`)
+      : acceptingMethods(step).some((m) => completedMethods.has(m));
+
+  const hintsFor = (
+    step: StepDefinition,
+  ): Record<string, unknown> | undefined => {
+    const methodHints = viewData?.authentication_step_hints?.[step.method];
+    if (!step.interaction) return methodHints;
+    const byInteraction = methodHints?.interactions as
+      | Record<string, Record<string, unknown>>
+      | undefined;
+    return byInteraction?.[step.interaction];
+  };
+
   const firstIncompleteOrder = definitions.find(
-    (step) => !acceptingMethods(step).some((m) => completedMethods.has(m)),
+    (step) => !isCompleted(step),
   )?.order;
 
   const steps: StepView[] = definitions.map((step) => ({
     ...step,
-    completed: acceptingMethods(step).some((m) => completedMethods.has(m)),
+    completed: isCompleted(step),
     current: step.order === firstIncompleteOrder,
+    hints: hintsFor(step),
   }));
 
   // step_definitions takes priority over the policy's success_conditions: when steps are defined,

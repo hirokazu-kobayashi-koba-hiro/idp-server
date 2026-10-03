@@ -12,7 +12,9 @@ export type RegistrationMode = "allowed" | "required" | "disabled";
 
 /** One step in `authentication_policy.step_definitions` (mirrors AuthenticationStepDefinition). */
 export type StepDefinition = {
-  method: string; // "password" | "email" | "fido2" | "fido-uaf" | "sms"
+  method: string; // "password" | "email" | "fido2" | "fido-uaf" | "sms" | "attribute-verification"
+  /** Narrows the step to one named interaction of the method (attribute-verification, #1813). */
+  interaction?: string;
   order: number;
   requires_user?: boolean; // false = 1st factor (identify), true = 2nd factor (verify)
   allow_registration?: boolean;
@@ -68,6 +70,11 @@ export type ViewData = {
   claim_values?: Record<string, ClaimValue[]>;
   authentication_policy?: AuthenticationPolicy;
   /**
+   * Per-method settings a step needs to render, beyond the policy — the inputs an attribute
+   * verification asks for, for instance. Keyed by method; absent for methods with nothing to add.
+   */
+  authentication_step_hints?: Record<string, Record<string, unknown>>;
+  /**
    * True when the existing OP session can complete this authorization without re-authenticating.
    *
    * The server decides this (`OAuthViewDataCreator.isSessionEnabled`): it is false when there is no
@@ -90,12 +97,16 @@ export type InteractionResult = {
   success_count: number;
   failure_count: number;
   interaction_time?: string;
+  /** Per-interaction breakdown, for methods that run named interactions. */
+  interactions?: Record<string, InteractionResult>;
 };
 
 /** A step augmented with progress derived from the server status. */
 export type StepView = StepDefinition & {
   completed: boolean;
   current: boolean;
+  /** What the server says this step needs beyond the policy (view-data `authentication_step_hints`). */
+  hints?: Record<string, unknown>;
 };
 
 export type FlowStatus = "in_progress" | "success" | "failure" | "locked";

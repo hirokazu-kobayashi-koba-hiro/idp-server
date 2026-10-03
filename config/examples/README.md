@@ -14,6 +14,7 @@ idp-server のユースケース別サンプル設定集です。各ディレク
 | [passwordless-fido2](./passwordless-fido2/) | パスワードレス認証（FIDO2/WebAuthn） | FIDO2 OR パスワード |
 | [ekyc](./ekyc/) | 身元確認（Identity Verification） | パスワード + verified_claims |
 | [third-party](./third-party/) | サードパーティ連携（Web/Mobile/M2M） | パスワード + Client Credentials |
+| [attribute-verification](./attribute-verification/) | 認証の途中での利用者の確認（身元確認済みか、生年月日などの照合） | パスワード + 属性照合 |
 
 ## クイックスタート
 
@@ -54,7 +55,7 @@ bash run-all-tests.sh login-password-only mfa-email
 
 # 利用可能なユースケース
 #   login-password-only, login-social, mfa-email,
-#   passwordless-fido2, ekyc, third-party
+#   passwordless-fido2, ekyc, third-party, attribute-verification
 ```
 
 ## ファイル構成

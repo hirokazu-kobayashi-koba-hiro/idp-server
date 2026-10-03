@@ -18,6 +18,8 @@ package org.idp.server.authentication.interactors.attribute_verification;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.platform.mapper.ValueFunctionChain;
 
 /**
@@ -63,6 +65,20 @@ public class AttributeVerificationField {
   /** The registered attribute it is compared against (see {@link VerifiableUserAttributes}). */
   public String userAttribute() {
     return userAttribute;
+  }
+
+  /**
+   * How the authorization view should ask for this field. Only settings: which input, what it is
+   * compared against and in what form — never the registered value.
+   */
+  public Map<String, Object> toViewHint() {
+    Map<String, Object> hint = new HashMap<>();
+    hint.put("input", input);
+    hint.put("user_attribute", userAttribute);
+    // The view picks an input type from this; custom functions give it nothing to go on.
+    hint.put("normalize", normalization != null ? normalization : "custom");
+    hint.put("suffix_length", suffixLength);
+    return hint;
   }
 
   /**
