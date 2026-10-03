@@ -758,6 +758,13 @@ components:
                 - id
                 - type
               description: OPTIONAL. List of available federation configurations
+            cross_site_authorization_view:
+              type: boolean
+              description: |
+                OPTIONAL. このクライアントの認可フローを別サイト認可画面モードで動かすか。
+                省略時はテナントの `ui_config.cross_site` に従い、指定すればそれより優先されます。
+                `true` のとき、認可画面は認証ステップの応答で受け取る `auth_proof` を `authorize` に付け、
+                最後に `/{tenant-id}/v1/authorizations/{id}/complete` へトップレベル遷移します。
             default_ciba_authentication_interaction_type:
               type: string
               enum:
@@ -1198,6 +1205,13 @@ components:
                 - id
                 - type
               description: OPTIONAL. List of available federation configurations
+            cross_site_authorization_view:
+              type: boolean
+              description: |
+                OPTIONAL. このクライアントの認可フローを別サイト認可画面モードで動かすか。
+                省略時はテナントの `ui_config.cross_site` に従い、指定すればそれより優先されます。
+                `true` のとき、認可画面は認証ステップの応答で受け取る `auth_proof` を `authorize` に付け、
+                最後に `/{tenant-id}/v1/authorizations/{id}/complete` へトップレベル遷移します。
             default_ciba_authentication_interaction_type:
               type: string
               enum:
@@ -1534,6 +1548,13 @@ components:
                 - id
                 - type
               description: OPTIONAL. List of available federation configurations
+            cross_site_authorization_view:
+              type: boolean
+              description: |
+                OPTIONAL. このクライアントの認可フローを別サイト認可画面モードで動かすか。
+                省略時はテナントの `ui_config.cross_site` に従い、指定すればそれより優先されます。
+                `true` のとき、認可画面は認証ステップの応答で受け取る `auth_proof` を `authorize` に付け、
+                最後に `/{tenant-id}/v1/authorizations/{id}/complete` へトップレベル遷移します。
             default_ciba_authentication_interaction_type:
               type: string
               enum:

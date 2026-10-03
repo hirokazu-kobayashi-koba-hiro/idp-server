@@ -5,12 +5,16 @@ import { Button, CircularProgress } from "@mui/material";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { signOut } from "next-auth/react";
 
-const issuer = process.env.NEXT_PUBLIC_IDP_SERVER_ISSUER;
-const clientId = process.env.NEXT_PUBLIC_IDP_CLIENT_ID;
 const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL;
 
 interface LogoutButtonProps {
   idToken?: string;
+  /**
+   * The client the session was signed in with. Passed from the server rather than read here:
+   * NEXT_PUBLIC_* is inlined at build time, and the container image is built without them.
+   */
+  clientId?: string;
+  issuer?: string;
 }
 
 /**
@@ -27,7 +31,7 @@ interface LogoutButtonProps {
  *
  * @see https://openid.net/specs/openid-connect-rpinitiated-1_0.html
  */
-const LogoutButton = ({ idToken }: LogoutButtonProps) => {
+const LogoutButton = ({ idToken, clientId, issuer }: LogoutButtonProps) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogout = async () => {

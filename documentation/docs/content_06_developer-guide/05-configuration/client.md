@@ -442,6 +442,27 @@ CIBAリクエスト時に、authorization_details（RAR: Rich Authorization Requ
 **参照仕様**:
 - [RFC 9396: OAuth 2.0 Rich Authorization Requests](https://www.rfc-editor.org/rfc/rfc9396.html)
 
+#### 別サイト認可画面モードの上書き
+
+認可画面が idp-server と別サイトにある構成（テナントの `ui_config.cross_site`）を、クライアント単位で上書きする設定：
+
+```json
+{
+  "extension": {
+    "cross_site_authorization_view": true
+  }
+}
+```
+
+**フィールド説明**:
+- `cross_site_authorization_view`: このクライアントの認可フローを別サイト認可画面モードで動かすか。省略時はテナントの `ui_config.cross_site` に従う。`false` を指定すると、テナントが `true` でもこのクライアントは従来の経路で動く
+
+:::warning
+認可画面が `auth_proof` に対応している必要があります。対応していない画面で `true` にすると、`authorize` が 400 を返してログインできません。使用中のクライアントで切り替えると、その瞬間に認証の途中だった利用者が一度だけ失敗するため、別クライアントへの乗り換えかメンテナンスで切り替えてください。
+:::
+
+仕組み、自作の認可画面の要件、切り替え手順は [認可画面を別サイトに置く](../../content_05_how-to/phase-3-advanced/03-authorization-view-cross-site.md) を参照してください。
+
 ---
 
 ### Federation設定

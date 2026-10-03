@@ -58,7 +58,9 @@ public class SecurityEventLogConfiguration {
           "access_token",
           "refresh_token",
           "api_key",
-          "api_secret");
+          "api_secret",
+          "auth_proof",
+          "x-view-binding");
 
   public SecurityEventLogConfiguration() {
     this.format = SecurityEventLogFormatter.Format.STRUCTURED_JSON;

@@ -29,6 +29,10 @@ public class AuthenticationInteractors {
     this.values = values;
   }
 
+  public boolean contains(AuthenticationInteractionType type) {
+    return values.containsKey(type);
+  }
+
   public AuthenticationInteractor get(AuthenticationInteractionType type) {
     AuthenticationInteractor interactor = values.get(type);
 

@@ -693,6 +693,83 @@ Token Request（省略可能）
 
 ---
 
+## 別サイト認可画面モード（cross_site）
+
+認可画面が idp-server と別サイトにあると、認可画面からの XHR はサードパーティになり、Safari は Cookie を送りも保存もしません。このモードでは、Cookie に頼っていた「ブラウザの識別」と「OP セッションの保存」を置き換えます。仕組みと設定は [認可画面を別サイトに置く](../../content_05_how-to/phase-3-advanced/03-authorization-view-cross-site.md) を参照してください。ここでは実装の読み方を説明します。
+
+### モードの判定
+
+`OAuthFlowEntryService#bindingFor` が、認可リクエスト（または認証トランザクション）のクライアントで判定し、`CrossSiteAuthorizationBinding` を作ります。判定は 1 リクエストにつき 1 回で、以降の判断はすべてこのオブジェクトに聞きます。判定そのものは `ClientConfiguration#crossSiteAuthorizationView(UIConfiguration)` にあり、クライアントの `extension.cross_site_authorization_view` があればそれ、無ければテナントの `ui_config.cross_site` です。
+
+### 状態の置き場所
+
+`auth_proof` と、紐づけた OP セッションは、**認証トランザクションの attributes**（DB）に置きます。キャッシュには置きません。キャッシュは落ちても動く前提のものなので、ログインに必須の状態を置くと、Redis が止まったときにログインできなくなるためです。
+
+| attributes のキー | 中身 | 書く場所 | 消える場所 |
+|---|---|---|---|
+| `auth_proof` | ① のハッシュと `sub` | 認証ステップ、フェデレーションのコールバック | `authorize` で ② に置き換え |
+| `completion_proof` | ② のハッシュ、`sub`、遷移先（code 付き。`AesCipher` で暗号化） | `authorize`、`authorize-with-session` | `/complete` でトランザクションごと削除 |
+| `op_session_id` | 紐づけた OP セッションの ID | 認可リクエスト、認証成功時 | `/complete` でトランザクションごと削除 |
+| `view_binding` | 認可画面に渡した値のハッシュ | 認可リクエスト（訪れるたびに作り直す） | `/complete` でトランザクションごと削除 |
+
+値そのものは保存しません。`AuthenticationProof` が値を生成して SHA-256 のハッシュだけを `storeOn` で書き、照合（`authorizes` / `completes`）は固定時間の比較です。各段は最新の 1 つだけが有効です。
+
+`authorize` と `/complete` はトランザクションを `getForUpdate`（行ロック）で読むため、同じ proof を同時に使っても通るのは 1 つだけです。`completion_proof` が既にあるトランザクションへの `authorize` / `authorize-with-session` は拒否します（`CrossSiteAuthorizationBinding#handedOffForCompletion`）。proof を求めないフローでは、リクエスト ID を知る第三者が呼び直して ② を差し替え、正規のブラウザを締め出せるためです。トランザクションの `UPDATE` は attributes も書きます（PostgreSQL / MySQL の両方）。
+
+### 処理の流れ
+
+束縛の判断は core の `CrossSiteAuthorizationBinding` にまとめてあります。値についての判断だけを持ち、トランザクション・Cookie・セッションの読み書きは呼び出し側（`OAuthFlowEntryService`）が行います。そのため、判断のすべての分岐を単体テストで確かめられます。
+
+| 段階 | `CrossSiteAuthorizationBinding` のメソッド | やること |
+|---|---|---|
+| 認可リクエスト | `bindSession` / `issueViewBinding` | ブラウザに OP セッションの Cookie があれば、トランザクションの `op_session_id` に入れる（トップレベル遷移なので読める）。認可画面に渡す値（`view_binding`）を作り、ハッシュをトランザクションに、値を認可画面の URL の fragment に入れる |
+| 認証ステップ | `proofForStep` / `proofForFederation` / `carry` | ブラウザから来て、本人しか通せない種類（`OperationType#provesPossession`）のステップが成功したら ① を発行。認証が成功して作った OP セッションも紐づける |
+| authorize | `gateAuthorize` / `handOff` | 進めてよいかを判定する（② を渡し済み・① が無い・同一サイトなので Cookie を照合・進める）。進めたら ① を消費して ② を発行し、応答に載せる。code は ② の中に入れ、応答のボディに出さない |
+| authorize-with-session | `gateAuthorizeWithSession` / `handOff` | 認可リクエストで紐づけた OP セッションで続ける。この認可でサインインが成功していたら拒否する（下記） |
+| /complete | `checkCompletion` | `IDP_AUTH_SESSION` を照合し、② を照合し、② の中の遷移先をリクエストの redirect_uri と照合する（この順）。OP セッションの Cookie を書き、② の遷移先へ 302。失敗時は RP に戻さず、テナントのエラー画面へ 302（`OAuthCompleteResponse.errorPage`） |
+
+`/complete` の照合は、`IDP_AUTH_SESSION` を先に見ます。先に ② を照合して消費すると、Cookie を持たない呼び出しが ② を使い切り、正規のブラウザを締め出せるためです（② はトランザクションの削除で消えます）。
+
+`checkCompletion` は、トランザクションに `authSessionId` が無ければ拒否します。proof を求めないフロー（デバイスだけの認証、既存の OP セッションでの続行）では、これが唯一のブラウザの束縛なので、欠けを「照合するものが無い」とは扱いません。認証ポリシーが `auth_session_binding_required: false` なら照合は行いませんが、警告をログに出します。
+
+### 認可画面からの呼び出しの照合
+
+同一サイト構成では、認可画面からの呼び出しを `IDP_AUTH_SESSION` で照合します（`OAuthFlowEntryService#validateViewCall`）。別サイト構成ではこの Cookie が届かないので、認可リクエストで渡した `view_binding` を `x-view-binding` ヘッダーで受け取り、`CrossSiteAuthorizationBinding#verifyViewCall` でハッシュと照合します（同一サイト構成の Cookie の照合もここにまとめています）。対象は view-data、authentication-status、認証ステップ（ブラウザから呼ぶもの）、フェデレーション、`authorize`、`authorize-with-session`、`deny` です。値が無い・違う・トランザクションに値が無い場合は 401 です。
+
+認可リクエスト ID は束縛の根拠にしません。PAR では `request_uri` から ID が分かるためです。`view_binding` は認可リクエストを訪れるたびに作り直すので、有効なのは最後に `IDP_AUTH_SESSION` を受け取ったブラウザの値だけです。
+
+### proof を求めない場合
+
+ブラウザでの入力が一度も無いフロー（`login_hint` ＋ デバイスのプッシュ承認など）では ① が発行されません。`authorize` は `AuthenticationTransaction#browserProvedPossession(AuthenticationInteractors)` で、成功したステップにブラウザ由来で本人しか通せない種類のものがあったかを判断し、無ければ ① を求めません。このとき始めたブラウザには、`authorize` の `view_binding` と `/complete` の `IDP_AUTH_SESSION` で束縛します。
+
+判断は DB のトランザクションから読みます。インタラクターの無い種類（フェデレーション）はブラウザのステップとして数え、分からないものは ① を求める側に倒します。
+
+### サインインのあとの authorize-with-session
+
+`op_session_id` には、認可リクエストで紐づけたセッション（始めたブラウザの Cookie から読んだもの）と、サインインの成功で作ったセッション（`carry`）の両方が入ります。後者は、サインインした人を示しますが、呼び出し元がそのブラウザだとは言えません。そのため `gateAuthorizeWithSession` は、この認可でサインインが成功していれば（`isSuccess`、または本人しか通せない種類のステップの成功）`authorize-with-session` を拒否し、① を求める `authorize` だけが code を出すようにしています。正規の SSO（サインインのステップが無い）は影響を受けません。
+
+### OP セッションの引き当て
+
+`OAuthFlowEntryService#authenticatingSession` は、同一サイト構成では Cookie から、別サイト認可画面モードでは `CrossSiteAuthorizationBinding#boundSessionId`（トランザクションの `op_session_id`）から OP セッションを引きます。`view-data`（`session_enabled`）、`authorize`（`sid` の発行）、`authorize-with-session`、`/complete`（セッションの再利用）がこれを使います。
+
+### 認可画面側（app-view）
+
+| ファイル | 役割 |
+|---|---|
+| `app-view/src/auth/viewBinding.ts` | URL の fragment から `view_binding` を取り出して `sessionStorage` に置き、アドレスバーから消す |
+| `app-view/src/auth/authProof.ts` | fetch をラップし、idp-server の呼び出しに `x-view-binding` を付ける。応答の `auth_proof` を認可リクエスト ID ごとに `sessionStorage` へ保持し、`authorize` のボディに載せる |
+| `app-view/src/auth/completion.ts` | `auth_proof` があれば `/complete` へ、無ければ `redirect_uri` へ遷移する |
+| `app-view/src/auth/useSessionAuthorize.ts` | `authorize-with-session` の応答も `completion.ts` に渡す |
+
+### テスト
+
+| テスト | 確かめていること |
+|---|---|
+| `e2e/src/tests/scenario/application/scenario-17-cross-site-auth-proof.test.js` | 発行条件、使い捨て、段の取り違え、別のユーザー・別のリクエスト、`/complete` の二重照合、デバイスで終わる / デバイスだけのフロー、SSO |
+| `CrossSiteAuthorizationBindingTest` | proof の発行条件、authorize と authorize-with-session の関門、② の受け渡し、`/complete` の照合（束縛の欠け・opt-out・別のブラウザ・段の取り違え・遷移先の不一致） |
+| `AuthenticationProofTest` / `AuthenticationTransactionBrowserPossessionTest` | proof の保存と照合、proof を求めるかの判断 |
+| `e2e/src/tests/browser/safari_cross_site_demo.test.js` | Safari 実機での一周と SSO（`SAFARI_E2E=1` のときだけ動く） |
+
 ## データのライフサイクル
 
 ### Authorization Code の一生

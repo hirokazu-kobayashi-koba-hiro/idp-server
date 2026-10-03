@@ -24,6 +24,19 @@ public class AuthenticationTransactionAttributes {
   /** Key for storing authSessionId to prevent authorization flow hijacking attacks. */
   public static final String AUTH_SESSION_ID_KEY = "auth_session_id";
 
+  /**
+   * Key for the OP session this authorization belongs to, where the authorization view is on
+   * another site and the cookie that would point at it never reaches the calls in between.
+   */
+  public static final String OP_SESSION_ID_KEY = "op_session_id";
+
+  /**
+   * Key for the hash of the value handed to the authorization view of this request only, where the
+   * view is on another site: it stands in for the browser binding cookie on the view's calls, which
+   * the cookie never reaches.
+   */
+  public static final String VIEW_BINDING_KEY = "view_binding";
+
   Map<String, Object> values;
 
   public AuthenticationTransactionAttributes() {
@@ -65,6 +78,40 @@ public class AuthenticationTransactionAttributes {
    */
   public boolean hasAuthSessionId() {
     return authSessionId().exists();
+  }
+
+  /** The OP session bound to this authorization, or empty when none is. */
+  public String opSessionId() {
+    return getValueOrEmpty(OP_SESSION_ID_KEY);
+  }
+
+  public boolean hasOpSessionId() {
+    return !opSessionId().isEmpty();
+  }
+
+  public AuthenticationTransactionAttributes withOpSessionId(String opSessionId) {
+    return with(OP_SESSION_ID_KEY, opSessionId);
+  }
+
+  /** A copy with {@code key} set. These attributes are never changed in place. */
+  public AuthenticationTransactionAttributes with(String key, Object value) {
+    Map<String, Object> copied = new HashMap<>(values);
+    copied.put(key, value);
+    return new AuthenticationTransactionAttributes(copied);
+  }
+
+  /** A copy without {@code key}. */
+  public AuthenticationTransactionAttributes without(String key) {
+    Map<String, Object> copied = new HashMap<>(values);
+    copied.remove(key);
+    return new AuthenticationTransactionAttributes(copied);
+  }
+
+  /** A nested object stored under {@code key}, or an empty map when there is none. */
+  @SuppressWarnings("unchecked")
+  public Map<String, Object> getValueAsMap(String key) {
+    Object value = values.get(key);
+    return value instanceof Map<?, ?> map ? (Map<String, Object>) map : Map.of();
   }
 
   public Map<String, Object> toMap() {

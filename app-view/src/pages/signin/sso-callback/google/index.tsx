@@ -2,6 +2,8 @@ import { Loading } from "@/components/Loading";
 import { useRouter } from "next/router";
 import { useQuery } from "@tanstack/react-query";
 import { backendUrl } from "@/pages/_app";
+import { completeAuthorization } from "@/auth/completion";
+import { rememberAuthProof } from "@/auth/authProof";
 import { Stack, Typography } from "@mui/material";
 import { BaseLayout } from "@/components/layout/BaseLayout";
 import { useState } from "react";
@@ -35,7 +37,14 @@ const SsoCallback = () => {
         throw new Error(response.status.toString());
       }
 
-      const { id, tenant_id: tenantId } = await response.json();
+      const {
+        id,
+        tenant_id: tenantId,
+        auth_proof: authProof,
+      } = await response.json();
+
+      // 認可リクエスト ID がこの応答で初めて分かるので、URL からは預け先を決められない。
+      rememberAuthProof(id, authProof);
 
       const authorizeResponse = await fetch(
         `${backendUrl}/${tenantId}/v1/authorizations/${id}/authorize`,
@@ -52,8 +61,14 @@ const SsoCallback = () => {
       );
       const body = await authorizeResponse.json();
       console.log(authorizeResponse.status, body);
-      if (body.redirect_uri) {
-        window.location.href = body.redirect_uri;
+      if (body.auth_proof || body.redirect_uri) {
+        completeAuthorization({
+          backendUrl,
+          tenantId,
+          id,
+          authProof: body.auth_proof,
+          redirectUri: body.redirect_uri,
+        });
         return;
       }
       setMessage("failed social login. server occurred unexpected error");

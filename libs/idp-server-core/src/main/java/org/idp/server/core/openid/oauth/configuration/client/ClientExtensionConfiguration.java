@@ -45,6 +45,7 @@ public class ClientExtensionConfiguration implements JsonReadable {
   String clientAttestationAttesterJwks;
   List<String> clientAttestationTrustedRootCertificates = new ArrayList<>();
   Map<String, Object> clientInstancePlatformConfig = new HashMap<>();
+  Boolean crossSiteAuthorizationView;
   Map<String, Object> customProperties = new HashMap<>();
 
   public ClientExtensionConfiguration() {}
@@ -251,6 +252,18 @@ public class ClientExtensionConfiguration implements JsonReadable {
     return cibaRequireRar;
   }
 
+  /**
+   * Returns {@code true} if a client-level cross_site_authorization_view override is configured.
+   */
+  public boolean hasCrossSiteAuthorizationView() {
+    return crossSiteAuthorizationView != null;
+  }
+
+  /** Returns the client-level cross_site_authorization_view override. */
+  public boolean isCrossSiteAuthorizationView() {
+    return crossSiteAuthorizationView;
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     if (hasAccessTokenDuration()) map.put("access_token_duration", accessTokenDuration);
@@ -284,6 +297,8 @@ public class ClientExtensionConfiguration implements JsonReadable {
     if (hasClientAttestationTrustedRootCertificates())
       map.put(
           "client_attestation_trusted_root_certificates", clientAttestationTrustedRootCertificates);
+    if (hasCrossSiteAuthorizationView())
+      map.put("cross_site_authorization_view", crossSiteAuthorizationView);
     if (hasCustomProperties()) map.put("custom_properties", customProperties);
     return map;
   }

@@ -141,6 +141,7 @@ public class MysqlExecutor implements AuthenticationTransactionCommandSqlExecuto
                 authentication_device_id = ?,
                 authentication_device_payload = ?,
                 interactions = ?,
+                attributes = ?,
                 updated_at = now()
                 WHERE id = ?
                 AND tenant_id = ?
@@ -167,6 +168,14 @@ public class MysqlExecutor implements AuthenticationTransactionCommandSqlExecuto
 
     if (authenticationTransaction.hasInteractions()) {
       params.add(jsonConverter.write(authenticationTransaction.interactionResultsAsMapObject()));
+    } else {
+      params.add(null);
+    }
+
+    // Written on update too: the cross-site authorization flow keeps its browser binding here
+    // (auth_proof hashes, the bound OP session) and changes it as the flow advances.
+    if (authenticationTransaction.hasAttributes()) {
+      params.add(jsonConverter.write(authenticationTransaction.attributes().toMap()));
     } else {
       params.add(null);
     }

@@ -1,0 +1,23 @@
+{
+  "client_id": "3c7e1a52-9b4d-4f0e-8a61-2d5b7c9e4f13",
+  "client_id_alias": "local-public-web-app-cross-site",
+  "client_secret": "local-dev-public-secret-32char",
+  "redirect_uris": [
+    "http://localhost:3010/api/auth/callback/idp-server-cross-site",
+    "https://sample.local.test/api/auth/callback/idp-server-cross-site"
+  ],
+  "response_types": [
+    "code"
+  ],
+  "grant_types": [
+    "authorization_code",
+    "refresh_token"
+  ],
+  "scope": "openid profile email",
+  "client_name": "Local Development Public Web Application (cross-site view)",
+  "token_endpoint_auth_method": "none",
+  "application_type": "web",
+  "extension": {
+    "cross_site_authorization_view": true
+  }
+}

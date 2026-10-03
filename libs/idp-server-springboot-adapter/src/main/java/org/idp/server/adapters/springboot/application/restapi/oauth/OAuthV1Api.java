@@ -30,6 +30,7 @@ import org.idp.server.core.openid.federation.FederationType;
 import org.idp.server.core.openid.federation.io.FederationCallbackRequest;
 import org.idp.server.core.openid.federation.io.FederationRequestResponse;
 import org.idp.server.core.openid.federation.sso.SsoProvider;
+import org.idp.server.core.openid.oauth.AuthenticationProof;
 import org.idp.server.core.openid.oauth.OAuthFlowApi;
 import org.idp.server.core.openid.oauth.io.*;
 import org.idp.server.core.openid.oauth.io.OAuthAuthenticationStatusResponse;
@@ -292,6 +293,41 @@ public class OAuthV1Api implements ParameterTransformable, SecurityHeaderConfigu
             authAuthorizeResponse.contents(), httpHeaders, HttpStatus.INTERNAL_SERVER_ERROR);
       }
     }
+  }
+
+  /**
+   * First-party hand-off at the end of the authorization flow.
+   *
+   * <p>A GET, so the browser arrives by top level navigation. Everything before this runs as XHR
+   * from the authorization view, which is third-party whenever that view is served from another
+   * site — and a third-party request neither carries this server's cookies nor keeps the ones it
+   * sets. Both things the flow depends on, the browser binding and the OP session, are therefore
+   * handled here rather than on the XHR.
+   *
+   * <p>{@code auth_proof} is the one-time value the authorize step returned to the browser that
+   * finished authenticating. Holding it is what separates that browser from an attacker who merely
+   * opened the request and holds the binding cookie. The redirect target travels inside it, so this
+   * URL carries nothing a caller can point elsewhere.
+   */
+  @GetMapping("/{id}/complete")
+  public ResponseEntity<?> complete(
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @PathVariable("id") AuthorizationRequestIdentifier authorizationRequestIdentifier,
+      @RequestParam(value = AuthenticationProof.KEY, required = false) String authProof,
+      HttpServletRequest httpServletRequest) {
+
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+    OAuthCompleteResponse response =
+        oAuthFlowApi.complete(
+            tenantIdentifier, authorizationRequestIdentifier, authProof, requestAttributes);
+
+    HttpHeaders httpHeaders = createSecurityHeaders();
+    httpHeaders.setCacheControl("no-store, private");
+
+    // Always a redirect, to the client or to the tenant's error page. Added as given, as the
+    // authorization endpoint does: the error page URL is built the same way.
+    httpHeaders.add(HttpHeaders.LOCATION, response.location());
+    return new ResponseEntity<>(httpHeaders, HttpStatus.FOUND);
   }
 
   @PostMapping("/{id}/authorize")

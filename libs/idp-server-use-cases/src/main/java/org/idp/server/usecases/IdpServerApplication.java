@@ -758,7 +758,9 @@ public class IdpServerApplication {
             authenticationPolicyConfigurationQueryRepository,
             oAuthFLowEventPublisher,
             userLifecycleEventPublisher,
-            oidcSessionHandler);
+            oidcSessionHandler,
+            clientConfigurationQueryRepository,
+            aesCipher);
     this.rawOAuthFlowApi = oAuthFlowEntryService;
     this.oAuthFlowApi =
         TenantAwareEntryServiceProxy.createProxy(

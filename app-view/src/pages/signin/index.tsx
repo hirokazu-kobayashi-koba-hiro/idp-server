@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { useQuery } from "@tanstack/react-query";
 import { backendUrl } from "@/pages/_app";
+import { completeAuthorization } from "@/auth/completion";
 import { Loading } from "@/components/Loading";
 import { Email, Lock, Visibility, VisibilityOff, Key } from "@mui/icons-material";
 import { useMediaQuery, useTheme } from "@mui/material";
@@ -119,9 +120,15 @@ export default function SignIn() {
       }
       const body = await response.json();
       console.log(response.status, body);
-      if (body.redirect_uri) {
-        window.location.href = body.redirect_uri;
-      }
+      // Cross-site the code travels inside auth_proof and the browser goes through /complete;
+      // same-site redirect_uri carries it as before.
+      completeAuthorization({
+        backendUrl,
+        tenantId,
+        id,
+        authProof: body.auth_proof,
+        redirectUri: body.redirect_uri,
+      });
     };
     console.log(data);
     if (data && data.session_enabled === true) {

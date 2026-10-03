@@ -1,0 +1,2 @@
+# switch-view.sh が切り替え前のテナント設定を保存する（環境ごとの状態）
+.view-backup/

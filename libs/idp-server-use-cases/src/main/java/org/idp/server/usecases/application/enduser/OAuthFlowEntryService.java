@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.idp.server.core.openid.authentication.AuthSessionId;
-import org.idp.server.core.openid.authentication.AuthSessionValidator;
 import org.idp.server.core.openid.authentication.Authentication;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionRequest;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionRequestResult;
@@ -32,6 +31,7 @@ import org.idp.server.core.openid.authentication.AuthenticationInteractors;
 import org.idp.server.core.openid.authentication.AuthenticationTransaction;
 import org.idp.server.core.openid.authentication.AuthenticationUserStatusGuard;
 import org.idp.server.core.openid.authentication.AuthorizationIdentifier;
+import org.idp.server.core.openid.authentication.exception.AuthenticationTransactionNotFoundException;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfiguration;
 import org.idp.server.core.openid.authentication.repository.AuthenticationPolicyConfigurationQueryRepository;
@@ -54,19 +54,28 @@ import org.idp.server.core.openid.identity.hint.UserHintRelatedParams;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.oauth.*;
+import org.idp.server.core.openid.oauth.AuthenticationProof;
+import org.idp.server.core.openid.oauth.CrossSiteAuthorizationBinding;
+import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
+import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
+import org.idp.server.core.openid.oauth.exception.OAuthRequestNotFoundException;
 import org.idp.server.core.openid.oauth.io.*;
 import org.idp.server.core.openid.oauth.io.OAuthAuthenticationStatusResponse;
 import org.idp.server.core.openid.oauth.io.OAuthAuthenticationStatusStatus;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequestIdentifier;
+import org.idp.server.core.openid.oauth.response.RedirectUriDecidable;
 import org.idp.server.core.openid.oauth.type.StandardAuthFlow;
 import org.idp.server.core.openid.oauth.type.extension.OAuthDenyReason;
+import org.idp.server.core.openid.oauth.type.oauth.RedirectUri;
+import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.session.AuthSessionCookieDelegate;
 import org.idp.server.core.openid.session.ClientSessionIdentifier;
 import org.idp.server.core.openid.session.OIDCSessionHandler;
 import org.idp.server.core.openid.session.OPSession;
 import org.idp.server.core.openid.session.SessionCookieDelegate;
 import org.idp.server.core.openid.session.SessionValidationResult;
+import org.idp.server.platform.crypto.AesCipher;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.http.HttpRequestInputs;
 import org.idp.server.platform.log.LoggerWrapper;
@@ -83,7 +92,8 @@ import org.idp.server.platform.type.RequestAttributes;
  * ClientSession for session management, similar to Keycloak's UserSession/ClientSession pattern.
  */
 @Transaction
-public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
+public class OAuthFlowEntryService
+    implements OAuthFlowApi, OAuthUserDelegate, RedirectUriDecidable {
 
   private static final LoggerWrapper log = LoggerWrapper.getLogger(OAuthFlowEntryService.class);
 
@@ -101,6 +111,8 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
   OAuthFlowEventPublisher eventPublisher;
   UserLifecycleEventPublisher userLifecycleEventPublisher;
   OIDCSessionHandler oidcSessionHandler;
+  ClientConfigurationQueryRepository clientConfigurationQueryRepository;
+  AesCipher aesCipher;
 
   public OAuthFlowEntryService(
       OAuthProtocols oAuthProtocols,
@@ -117,7 +129,9 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
           authenticationPolicyConfigurationQueryRepository,
       OAuthFlowEventPublisher eventPublisher,
       UserLifecycleEventPublisher userLifecycleEventPublisher,
-      OIDCSessionHandler oidcSessionHandler) {
+      OIDCSessionHandler oidcSessionHandler,
+      ClientConfigurationQueryRepository clientConfigurationQueryRepository,
+      AesCipher aesCipher) {
     this.oAuthProtocols = oAuthProtocols;
     this.sessionCookieDelegate = sessionCookieDelegate;
     this.authSessionCookieDelegate = authSessionCookieDelegate;
@@ -133,6 +147,8 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
     this.eventPublisher = eventPublisher;
     this.userLifecycleEventPublisher = userLifecycleEventPublisher;
     this.oidcSessionHandler = oidcSessionHandler;
+    this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
+    this.aesCipher = aesCipher;
   }
 
   @Override
@@ -193,6 +209,27 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
               authenticationPolicyConfiguration,
               authSessionId,
               resolvedUser);
+
+      // This is a top level navigation, so the OP session cookie is readable here even where the
+      // authorization view is on another site. Everything the view calls next is third-party and
+      // will not see it, so the session is carried on the transaction instead — that is what lets
+      // the view offer, and complete, sign-in with the existing session.
+      CrossSiteAuthorizationBinding binding =
+          bindingFor(tenant, requestResponse.authorizationRequest());
+      if (opSessionOpt.isPresent()) {
+        authenticationTransaction =
+            binding.bindSession(authenticationTransaction, opSessionOpt.get().id().value());
+      }
+      // The value the view presents on its calls in place of the browser binding cookie, which
+      // does not reach them where the view is on another site. Handed over in the fragment of the
+      // view's URL: it reaches only the browser that made this request.
+      CrossSiteAuthorizationBinding.ViewBinding viewBinding =
+          binding.issueViewBinding(authenticationTransaction);
+      if (viewBinding != null) {
+        authenticationTransaction = viewBinding.transaction();
+        requestResponse.handToViewInFragment(
+            CrossSiteAuthorizationBinding.VIEW_BINDING_PARAMETER, viewBinding.value());
+      }
       authenticationTransactionCommandRepository.register(tenant, authenticationTransaction);
 
       // Register AUTH_SESSION cookie with same expiry as authorization request
@@ -213,16 +250,18 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
         authenticationTransactionQueryRepository.get(
             tenant, authorizationRequestIdentifier.toAuthorizationIdentifier());
 
+    CrossSiteAuthorizationBinding binding = bindingFor(tenant, authenticationTransaction);
+
     // Validate AUTH_SESSION cookie to prevent information disclosure
-    validateAuthSession(authenticationTransaction);
+    validateViewCall(binding, authenticationTransaction, requestAttributes);
 
     AuthenticationPolicy authenticationPolicy = authenticationTransaction.authenticationPolicy();
     Map<String, Object> additionalViewData = new HashMap<>();
     additionalViewData.put("authentication_policy", authenticationPolicy.toMap());
 
-    // Get OPSession from cookie for sessionEnabled check
-    OPSession opSession =
-        oidcSessionHandler.getOPSessionFromCookie(tenant, sessionCookieDelegate).orElse(null);
+    // The session the view may offer to continue with
+    OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
+    OPSession opSession = authenticatingSession(binding, tenant, authenticationTransaction);
 
     OAuthViewDataRequest oAuthViewDataRequest =
         new OAuthViewDataRequest(
@@ -231,8 +270,6 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
             opSession,
             authenticationTransaction.user(),
             additionalViewData);
-
-    OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
 
     return oAuthProtocol.getViewData(oAuthViewDataRequest, this);
   }
@@ -248,7 +285,10 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
         authenticationTransactionQueryRepository.get(
             tenant, authorizationRequestIdentifier.toAuthorizationIdentifier());
 
-    validateAuthSession(authenticationTransaction);
+    validateViewCall(
+        bindingFor(tenant, authenticationTransaction),
+        authenticationTransaction,
+        requestAttributes);
 
     return new OAuthAuthenticationStatusResponse(
         OAuthAuthenticationStatusStatus.OK,
@@ -297,12 +337,13 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
         oAuthProtocol.get(tenant, authorizationRequestIdentifier);
 
     AuthenticationInteractor authenticationInteractor = authenticationInteractors.get(type);
+    CrossSiteAuthorizationBinding binding = bindingFor(tenant, authorizationRequest);
 
     // Validate AUTH_SESSION cookie to prevent session fixation attacks
     // Skip validation for device-based interactors (e.g., push notification) as they don't have the
     // cookie
     if (authenticationInteractor.isBrowserBased()) {
-      validateAuthSession(lockedTransaction);
+      validateViewCall(binding, lockedTransaction, requestAttributes);
     }
 
     // #1377: reject a non-active user before onAuthenticationSuccess() creates an OP session /
@@ -324,10 +365,10 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
         result.response(),
         requestAttributes);
 
+    OPSession createdSession = null;
     if (updatedTransaction.isSuccess()) {
-      // Get existing session from cookie for session switch policy handling
-      OPSession existingSession =
-          oidcSessionHandler.getOPSessionFromCookie(tenant, sessionCookieDelegate).orElse(null);
+      // Existing session for session switch policy handling
+      OPSession existingSession = authenticatingSession(binding, tenant, updatedTransaction);
 
       // Create or reuse OPSession based on session switch policy
       Authentication authentication = updatedTransaction.authentication();
@@ -339,7 +380,20 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
               updatedTransaction.interactionResults().toStorageMap(),
               existingSession,
               requestAttributes);
+      // This runs on an XHR from the authorization view. Where that view is on another site the
+      // request is third-party, and Safari drops the Set-Cookie outright — which is why /complete
+      // writes the cookie again from a first-party top level navigation. The write is kept here so
+      // that an authorization view which has not been updated to go through /complete still ends
+      // up with a session on a same-site deployment; there, /complete finds this cookie and reuses
+      // the session rather than creating a second one.
       oidcSessionHandler.registerSessionCookies(tenant, opSession, sessionCookieDelegate);
+      createdSession = opSession;
+    }
+
+    AuthenticationProof proof = binding.proofForStep(authenticationInteractor, result);
+    storeIfChanged(tenant, binding.carry(updatedTransaction, sessionIdOf(createdSession), proof));
+    if (proof != null) {
+      result.withAuthProof(proof.value());
     }
 
     if (updatedTransaction.isLocked() && result.hasUser()) {
@@ -380,7 +434,8 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
             tenant, authorizationRequestIdentifier.toAuthorizationIdentifier());
 
     // Validate AUTH_SESSION cookie to prevent session fixation attacks
-    validateAuthSession(authenticationTransaction);
+    validateViewCall(
+        bindingFor(tenant, authorizationRequest), authenticationTransaction, requestAttributes);
 
     FederationInteractor federationInteractor = federationInteractors.get(federationType);
 
@@ -424,17 +479,19 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
         authenticationTransactionQueryRepository.getForUpdate(
             tenant, result.authorizationRequestIdentifier().toAuthorizationIdentifier());
 
+    CrossSiteAuthorizationBinding binding = bindingFor(tenant, authorizationRequest);
+
     // Validate AUTH_SESSION cookie to prevent session fixation attacks
-    validateAuthSession(authenticationTransaction);
+    validateViewCall(binding, authenticationTransaction, requestAttributes);
 
     AuthenticationTransaction updatedTransaction = authenticationTransaction.updateWith(result);
     authenticationTransactionCommandRepository.update(tenant, updatedTransaction);
 
     // Create OPSession for federated authentication
+    OPSession createdSession = null;
     if (updatedTransaction.isSuccess()) {
-      // Get existing session from cookie for session switch policy handling
-      OPSession existingSession =
-          oidcSessionHandler.getOPSessionFromCookie(tenant, sessionCookieDelegate).orElse(null);
+      // Existing session for session switch policy handling
+      OPSession existingSession = authenticatingSession(binding, tenant, updatedTransaction);
 
       Authentication authentication = updatedTransaction.authentication();
       OPSession opSession =
@@ -445,7 +502,24 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
               updatedTransaction.interactionResults().toStorageMap(),
               existingSession,
               requestAttributes);
+      // This runs on an XHR from the authorization view. Where that view is on another site the
+      // request is third-party, and Safari drops the Set-Cookie outright — which is why /complete
+      // writes the cookie again from a first-party top level navigation. The write is kept here so
+      // that an authorization view which has not been updated to go through /complete still ends
+      // up with a session on a same-site deployment; there, /complete finds this cookie and reuses
+      // the session rather than creating a second one.
       oidcSessionHandler.registerSessionCookies(tenant, opSession, sessionCookieDelegate);
+      createdSession = opSession;
+    }
+
+    // Federated sign-in ends in this response, which the browser reads on its way back from the
+    // external provider. Issued on the step rather than on the transaction, for the same reason as
+    // a local interaction: a device step may still follow, and the proof has to be with the
+    // browser before that happens.
+    AuthenticationProof proof = binding.proofForFederation(result.hasUser() ? result.user() : null);
+    storeIfChanged(tenant, binding.carry(updatedTransaction, sessionIdOf(createdSession), proof));
+    if (proof != null) {
+      result.withAuthProof(proof.value());
     }
 
     eventPublisher.publish(
@@ -469,8 +543,30 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
         authenticationTransactionQueryRepository.getForUpdate(
             tenant, authorizationRequestIdentifier.toAuthorizationIdentifier());
 
-    // Validate AUTH_SESSION cookie to prevent session fixation attacks
-    validateAuthSession(authenticationTransaction);
+    // Which browser is calling. The code is minted below and leaves in this very response, so
+    // whatever answers that question has to answer it here — not at /complete, which an attacker
+    // holding the request id would never need to reach.
+    //
+    // A flow with no browser step that proves possession had nothing to earn one with — the
+    // authentication happened on a device. It is bound to the browser that started it at /complete
+    // instead.
+    CrossSiteAuthorizationBinding binding = bindingFor(tenant, authorizationRequest);
+    validateViewCall(binding, authenticationTransaction, requestAttributes);
+    switch (binding.gateAuthorize(
+        authenticationTransaction,
+        authenticationInteractors,
+        params != null ? params.get(AuthenticationProof.KEY) : null)) {
+      case ALREADY_HANDED_OFF -> {
+        return alreadyAuthorized();
+      }
+      case PROOF_REJECTED -> {
+        return new OAuthAuthorizeResponse(
+            OAuthAuthorizeStatus.BAD_REQUEST,
+            "invalid_request",
+            "auth_proof is missing, already used, or was not issued for this authorization request.");
+      }
+      case CHECK_BROWSER_COOKIE, PROCEED, SIGNED_IN_DURING_FLOW -> {}
+    }
 
     User user = authenticationTransaction.user();
     // Policy-enforced (level-of-authentication) denied scopes, plus any the end-user declined on
@@ -493,13 +589,12 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
     // consent decides what a token carries, never what the user has.
     oAuthAuthorizeRequest.setGrantedClaimValues(params.get("granted_claim_values"));
 
-    // Create ClientSession for OIDC Session Management
-    oidcSessionHandler
-        .getOPSessionFromCookie(tenant, sessionCookieDelegate)
-        .ifPresent(
-            opSession ->
-                createClientSessionAndSetSid(
-                    tenant, opSession, authorizationRequest, oAuthAuthorizeRequest));
+    // Create ClientSession for OIDC Session Management. Without a session here the client gets no
+    // sid and back-channel logout cannot find it.
+    OPSession opSession = authenticatingSession(binding, tenant, authenticationTransaction);
+    if (opSession != null) {
+      createClientSessionAndSetSid(tenant, opSession, authorizationRequest, oAuthAuthorizeRequest);
+    }
 
     OAuthAuthorizeResponse authorize = oAuthProtocol.authorize(oAuthAuthorizeRequest);
 
@@ -515,11 +610,17 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
             requestAttributes);
       }
 
-      authenticationTransactionCommandRepository.delete(
-          tenant, authenticationTransaction.identifier());
-
-      // Clear AUTH_SESSION cookie - authorization flow is complete
-      authSessionCookieDelegate.clearAuthSessionCookie(tenant);
+      if (binding.crossSite()) {
+        // The transaction is kept until /complete, which needs it to write the session the browser
+        // leaves with, and the hand-off is what lets /complete know this is that browser. The code
+        // is withheld from this response and travels inside the hand-off instead.
+        handOff(tenant, binding, authenticationTransaction, user, authorize);
+      } else {
+        // Same-origin: the browser goes straight to the client from here, as it always has.
+        authenticationTransactionCommandRepository.delete(
+            tenant, authenticationTransaction.identifier());
+        authSessionCookieDelegate.clearAuthSessionCookie(tenant);
+      }
 
       eventPublisher.publish(
           tenant,
@@ -540,11 +641,165 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
   }
 
   /**
-   * Scope names the end-user declined on the consent screen, taken from the authorize request body
-   * ({@code denied_scopes}). Empty when no body / no denial. These are merged with the
-   * policy-enforced (level-of-authentication) denied scopes and removed from the granted scopes at
-   * grant build time, so the scope and its derived claims are not issued.
+   * Hands the browser back to the client, from a first-party top level navigation.
+   *
+   * <h3>Why this step exists</h3>
+   *
+   * <p>Everything between the authorization request and here runs as XHR from the authorization
+   * view. When that view is served from another site those calls are third-party, and Safari — with
+   * third-party cookies off by default — neither sends the cookies they read nor keeps the ones
+   * they set. Two things in the flow depend on cookies, and both were silently lost:
+   *
+   * <ul>
+   *   <li>{@code IDP_AUTH_SESSION}, which binds the authorization request to the browser that
+   *       started it. Unreadable on an XHR, so the only way to make the flow work was to turn the
+   *       check off — removing the defence against an attacker handing his own authorization URL to
+   *       a victim.
+   *   <li>{@code IDP_IDENTITY}, the OP session. Unwritable on an XHR, so the browser finished the
+   *       flow with no session at all. The client still got its tokens, which is why this looked
+   *       like it worked, but anything later needing a browser session — account linking among them
+   *       — found none and could never get one.
+   * </ul>
+   *
+   * <p>This endpoint is reached by a top level navigation to this server, so its cookies are
+   * first-party here: the session can be written, and the browser binding can be read again.
+   *
+   * <h3>Two checks, answering different questions</h3>
+   *
+   * <p>The hand-off says "this is the browser that authenticated"; only that browser was given it.
+   * The browser binding says "this is the browser that started the request". Either alone lets one
+   * direction of attack through:
+   *
+   * <ul>
+   *   <li>Without the hand-off, an attacker who started a request and handed its URL to a victim
+   *       could finish it himself once the victim had authenticated.
+   *   <li>Without the binding, an attacker who ran a request through with his own credentials could
+   *       send a victim here with the hand-off, and this response would write the attacker's OP
+   *       session into the victim's browser.
+   * </ul>
+   *
+   * <p>The binding is checked before the hand-off is consumed. The other way round, a caller with
+   * no binding could spend the hand-off and lock out the browser it was issued to.
+   *
+   * @param authProof the one-time value {@code /authorize} returned to that browser; the redirect
+   *     travels inside it, so this URL carries nothing a caller can point elsewhere
    */
+  @Transaction
+  public OAuthCompleteResponse complete(
+      TenantIdentifier tenantIdentifier,
+      AuthorizationRequestIdentifier authorizationRequestIdentifier,
+      String authProof,
+      RequestAttributes requestAttributes) {
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
+
+    // Reached again after it already completed — the back button, a reload — once the request
+    // is gone. The end-user is shown the error page rather than whatever the lookup would throw.
+    AuthorizationRequest authorizationRequest;
+    try {
+      authorizationRequest = oAuthProtocol.get(tenant, authorizationRequestIdentifier);
+    } catch (OAuthRequestNotFoundException e) {
+      return OAuthCompleteResponse.errorPage(
+          tenant, "invalid_request", "authorization request is not in progress.");
+    }
+
+    AuthenticationTransaction authenticationTransaction;
+    try {
+      authenticationTransaction =
+          authenticationTransactionQueryRepository.getForUpdate(
+              tenant, authorizationRequestIdentifier.toAuthorizationIdentifier());
+    } catch (AuthenticationTransactionNotFoundException e) {
+      return OAuthCompleteResponse.errorPage(
+          tenant, "invalid_request", "authorization request is not in progress.");
+    }
+
+    CrossSiteAuthorizationBinding binding = bindingFor(tenant, authorizationRequest);
+    AuthSessionId cookieAuthSessionId =
+        authSessionCookieDelegate
+            .getAuthSessionId()
+            .map(AuthSessionId::new)
+            .orElse(new AuthSessionId());
+    // The binding before the proof, the proof before the redirect: see
+    // CrossSiteAuthorizationBinding#checkCompletion. The redirect comes out of the proof, never
+    // out of the query string. Spent by deleting the transaction below.
+    CrossSiteAuthorizationBinding.CompletionCheck check =
+        binding.checkCompletion(
+            authenticationTransaction,
+            cookieAuthSessionId,
+            authProof,
+            registeredRedirectUri(tenant, authorizationRequest));
+    if (!check.isAccepted()) {
+      return OAuthCompleteResponse.errorPage(tenant, "invalid_request", check.errorDescription());
+    }
+    RedirectUri to = check.redirectUri();
+
+    if (authenticationTransaction.isSuccess()) {
+      // The session the authentication already created. Passing it in is what stops a second one
+      // being created and the first being left behind with nothing pointing at it.
+      OPSession existingSession = authenticatingSession(binding, tenant, authenticationTransaction);
+      OPSession opSession =
+          oidcSessionHandler.onAuthenticationSuccess(
+              tenant,
+              authenticationTransaction.user(),
+              authenticationTransaction.authentication(),
+              authenticationTransaction.interactionResults().toStorageMap(),
+              existingSession,
+              requestAttributes);
+      // First-party write. This is the one that the browser actually keeps.
+      oidcSessionHandler.registerSessionCookies(tenant, opSession, sessionCookieDelegate);
+    }
+
+    authenticationTransactionCommandRepository.delete(
+        tenant, authenticationTransaction.identifier());
+    authSessionCookieDelegate.clearAuthSessionCookie(tenant);
+
+    return OAuthCompleteResponse.redirect(to.value());
+  }
+
+  /**
+   * The OP session this authorization belongs to.
+   *
+   * <p>Same-site it is the one the cookie points at. Cross-site the cookie never reaches these
+   * calls, so it is the one bound to the transaction — the session itself is on the server either
+   * way.
+   */
+  private OPSession authenticatingSession(
+      CrossSiteAuthorizationBinding binding,
+      Tenant tenant,
+      AuthenticationTransaction authenticationTransaction) {
+    if (binding.crossSite()) {
+      String boundSessionId = binding.boundSessionId(authenticationTransaction);
+      if (boundSessionId == null) {
+        return null;
+      }
+      return oidcSessionHandler.getOPSession(tenant, boundSessionId).orElse(null);
+    }
+    return oidcSessionHandler.getOPSessionFromCookie(tenant, sessionCookieDelegate).orElse(null);
+  }
+
+  private OAuthAuthorizeResponse alreadyAuthorized() {
+    return new OAuthAuthorizeResponse(
+        OAuthAuthorizeStatus.BAD_REQUEST,
+        "invalid_request",
+        "authorization request has already been authorized.");
+  }
+
+  /**
+   * The redirect URI this request is entitled to.
+   *
+   * <p>Decided by {@link RedirectUriDecidable}, the same way the authorization response decided it.
+   * {@code redirect_uri} is optional for an OAuth 2.0 request whose client registered exactly one,
+   * so reading it off the request alone yields null for those — and comparing against null is not a
+   * rejection, it is a crash.
+   */
+  private RedirectUri registeredRedirectUri(
+      Tenant tenant, AuthorizationRequest authorizationRequest) {
+    ClientConfiguration clientConfiguration =
+        clientConfigurationQueryRepository.get(tenant, authorizationRequest.requestedClientId());
+    return decideRedirectUri(authorizationRequest, clientConfiguration);
+  }
+
   private List<String> extractDeniedScopes(Map<String, Object> params) {
     return extractStringList(params, "denied_scopes");
   }
@@ -577,19 +832,35 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
-    // Validate AUTH_SESSION cookie to prevent authorization flow hijacking attacks
+    // Validate AUTH_SESSION cookie to prevent authorization flow hijacking attacks. Held for
+    // update:
+    // cross-site, the hand-off for /complete is written back to it.
     AuthenticationTransaction authenticationTransaction =
-        authenticationTransactionQueryRepository.get(
+        authenticationTransactionQueryRepository.getForUpdate(
             tenant, authorizationRequestIdentifier.toAuthorizationIdentifier());
-    validateAuthSession(authenticationTransaction);
+    CrossSiteAuthorizationBinding binding = bindingFor(tenant, authenticationTransaction);
+    validateViewCall(binding, authenticationTransaction, requestAttributes);
 
     OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
     AuthorizationRequest authorizationRequest =
         oAuthProtocol.get(tenant, authorizationRequestIdentifier);
 
-    // Get OPSession from cookie and validate
-    OPSession opSession =
-        oidcSessionHandler.getOPSessionFromCookie(tenant, sessionCookieDelegate).orElse(null);
+    switch (binding.gateAuthorizeWithSession(authenticationTransaction)) {
+      case ALREADY_HANDED_OFF -> {
+        return alreadyAuthorized();
+      }
+      case SIGNED_IN_DURING_FLOW -> {
+        return new OAuthAuthorizeResponse(
+            OAuthAuthorizeStatus.BAD_REQUEST,
+            "invalid_request",
+            "a sign-in has already taken place in this authorization request; authorize with the auth_proof it returned.");
+      }
+      case CHECK_BROWSER_COOKIE, PROCEED, PROOF_REJECTED -> {}
+    }
+
+    // Same-site from the cookie; cross-site from the request, where the authorization endpoint put
+    // it while the cookie was still readable.
+    OPSession opSession = authenticatingSession(binding, tenant, authenticationTransaction);
 
     SessionValidationResult validationResult =
         oidcSessionHandler.validateSessionForAuthorization(
@@ -629,6 +900,14 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
       // Update user info on session reuse
       userRegistrator.registerOrUpdate(tenant, user);
 
+      // Same rule as the interactive path: cross-site, the code does not travel in this response.
+      // Nothing here identifies the caller — the session was bound to the transaction at the
+      // authorization request, and this XHR carries no cookie — so the code is handed off, and
+      // /complete delivers it only to the browser holding the binding cookie of the request.
+      if (binding.crossSite()) {
+        handOff(tenant, binding, authenticationTransaction, user, authorize);
+      }
+
       eventPublisher.publish(
           tenant,
           authorizationRequest,
@@ -658,7 +937,10 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
             tenant, authorizationRequestIdentifier.toAuthorizationIdentifier());
 
     // Validate AUTH_SESSION cookie to prevent session fixation attacks
-    validateAuthSession(authenticationTransaction);
+    validateViewCall(
+        bindingFor(tenant, authenticationTransaction),
+        authenticationTransaction,
+        requestAttributes);
 
     OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
 
@@ -756,18 +1038,84 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
   }
 
   /**
-   * Validates AUTH_SESSION cookie against the transaction's authSessionId.
+   * Issues the hand-off for {@code /complete} and withholds the code from this response: it travels
+   * inside the hand-off instead, so {@code /complete} delivers it only to the browser that holds
+   * it.
+   */
+  private void handOff(
+      Tenant tenant,
+      CrossSiteAuthorizationBinding binding,
+      AuthenticationTransaction authenticationTransaction,
+      User user,
+      OAuthAuthorizeResponse authorize) {
+    // Asked of the response directly. contents() changes with whether an auth proof is set, so
+    // reading the redirect from there would depend on the order of the calls.
+    CrossSiteAuthorizationBinding.HandOff handOff =
+        binding.handOff(authenticationTransaction, user, authorize.redirectUriValue());
+    if (handOff == null) {
+      return;
+    }
+    authenticationTransactionCommandRepository.update(tenant, handOff.transaction());
+    authorize.withAuthProof(handOff.proofValue());
+  }
+
+  private void storeIfChanged(Tenant tenant, AuthenticationTransaction changed) {
+    if (changed != null) {
+      authenticationTransactionCommandRepository.update(tenant, changed);
+    }
+  }
+
+  private static String sessionIdOf(OPSession opSession) {
+    return opSession != null ? opSession.id().value() : null;
+  }
+
+  private CrossSiteAuthorizationBinding bindingFor(
+      Tenant tenant, AuthorizationRequest authorizationRequest) {
+    return new CrossSiteAuthorizationBinding(
+        crossSiteAuthorizationView(tenant, authorizationRequest.requestedClientId()), aesCipher);
+  }
+
+  private CrossSiteAuthorizationBinding bindingFor(
+      Tenant tenant, AuthenticationTransaction authenticationTransaction) {
+    return new CrossSiteAuthorizationBinding(
+        crossSiteAuthorizationView(tenant, authenticationTransaction.request().requestedClientId()),
+        aesCipher);
+  }
+
+  /**
+   * Whether this request's authorization view is somewhere this server's cookies cannot reach.
    *
+   * <p>Asked once per request, through {@link #bindingFor}. It is declared rather than derived —
+   * see {@link org.idp.server.platform.multi_tenancy.tenant.config.UIConfiguration#crossSite()} —
+   * and asked per client, so relying parties can be moved over one at a time; see {@link
+   * ClientConfiguration#crossSiteAuthorizationView}.
+   */
+  private boolean crossSiteAuthorizationView(Tenant tenant, RequestedClientId requestedClientId) {
+    return clientConfigurationQueryRepository
+        .get(tenant, requestedClientId)
+        .crossSiteAuthorizationView(tenant.uiConfiguration());
+  }
+
+  /**
+   * Verifies that a call from the authorization view comes from the browser that started the
+   * request. This reads what the call carries, the browser binding cookie and the view's value in a
+   * header, and leaves the rule to {@link CrossSiteAuthorizationBinding#verifyViewCall}.
+   *
+   * @param binding how this request binds to the browser, decided once per request by the caller
    * @param authenticationTransaction the transaction to validate against
+   * @param requestAttributes the call, carrying the view's value in a header where cross-site
    * @throws org.idp.server.platform.exception.UnauthorizedException if validation fails
    */
-  private void validateAuthSession(AuthenticationTransaction authenticationTransaction) {
+  private void validateViewCall(
+      CrossSiteAuthorizationBinding binding,
+      AuthenticationTransaction authenticationTransaction,
+      RequestAttributes requestAttributes) {
     AuthSessionId cookieAuthSessionId =
-        authSessionCookieDelegate
-            .getAuthSessionId()
-            .map(AuthSessionId::new)
-            .orElse(new AuthSessionId());
-
-    AuthSessionValidator.validate(authenticationTransaction, cookieAuthSessionId);
+        authSessionCookieDelegate.getAuthSessionId().map(AuthSessionId::new).orElse(null);
+    String presented =
+        requestAttributes != null
+            ? requestAttributes.headerValue(CrossSiteAuthorizationBinding.VIEW_BINDING_HEADER)
+            : null;
+    binding.verifyViewCall(authenticationTransaction, cookieAuthSessionId, presented);
   }
 }

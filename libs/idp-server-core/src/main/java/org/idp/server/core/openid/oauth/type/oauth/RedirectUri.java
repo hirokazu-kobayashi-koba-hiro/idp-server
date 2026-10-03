@@ -16,6 +16,9 @@
 
 package org.idp.server.core.openid.oauth.type.oauth;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Locale;
 import java.util.Objects;
 
 /** RedirectUri */
@@ -34,6 +37,56 @@ public class RedirectUri {
 
   public boolean exists() {
     return Objects.nonNull(value) && !value.isEmpty();
+  }
+
+  /**
+   * Whether {@code other} addresses the same place as this one.
+   *
+   * <p>Compared structurally rather than by prefix. A prefix test has no boundary, so a client
+   * registered with a bare origin — {@code http://localhost:3000}, which plenty are — would accept
+   * {@code http://localhost:3000.attacker.example}: it starts with the registered string while
+   * pointing somewhere else entirely.
+   *
+   * <p>Scheme, host, port and path must match. Query and fragment are free, because that is where
+   * the authorization response puts the code and state. Anything unusable — absent on either side,
+   * or not a URI — is not the same place, which is also the safe answer.
+   */
+  public boolean addressesSameTarget(RedirectUri other) {
+    if (!exists() || other == null || !other.exists()) {
+      return false;
+    }
+    try {
+      URI mine = new URI(value);
+      URI theirs = new URI(other.value());
+      // Userinfo is refused outright rather than compared. It is never part of a registered
+      // redirect URI, and it is the part of a URL people misread: https://expected.example@host
+      // shows the expected name while addressing host.
+      if (theirs.getUserInfo() != null) {
+        return false;
+      }
+      return Objects.equals(scheme(theirs), scheme(mine))
+          && Objects.equals(host(theirs), host(mine))
+          && theirs.getPort() == mine.getPort()
+          && Objects.equals(path(theirs), path(mine));
+    } catch (URISyntaxException e) {
+      return false;
+    }
+  }
+
+  private static String scheme(URI uri) {
+    return uri.getScheme();
+  }
+
+  /** Host names are case-insensitive, so a differently cased one addresses the same place. */
+  private static String host(URI uri) {
+    String host = uri.getHost();
+    return host == null ? null : host.toLowerCase(Locale.ROOT);
+  }
+
+  /** A missing path and a bare slash are the same place. */
+  private static String path(URI uri) {
+    String path = uri.getPath();
+    return path == null || path.isEmpty() ? "/" : path;
   }
 
   @Override
