@@ -34,6 +34,7 @@ description: ユースケース別セットアップのエントリポイント�
 | 10 | エンタープライズ（セキュリティイベントフック） | `use-case-enterprise` | `config/templates/use-cases/enterprise/` | - |
 | 11 | MFA FIDO-UAF（パスワード + デバイス生体認証） | `use-case-mfa-fido-uaf` | `config/templates/use-cases/mfa-fido-uaf/` | - |
 | 12 | 外部API認証 | `use-case-external-api-auth` | - | - |
+| 13 | 属性照合（ログインの途中での利用者の確認） | `use-case-attribute-verification` | -（既存のログイン構成に後付け） | `config/examples/attribute-verification/` |
 
 **重要**: ユースケース選択後、対応するスキルをロードしてから作業を進めること。
 
@@ -174,6 +175,7 @@ PUT  /v1/management/organizations/{org-id}/tenants/{tenant-id}/authorization-ser
 | セッション | `timeout_seconds: 1800`, `switch_policy: STRICT` |
 | eKYC | 必須、`required_identity_verification_scopes: ["transfers", "account"]` |
 | FIDO UAF + CIBA | 高額送金時、`level_of_authentication_scopes: { "transfers": ["fido-uaf"] }` |
+| 属性照合 | eKYC 未完了の利用者をログイン直後に止めて案内（`conditions: $.user.status == IDENTITY_VERIFIED`） |
 | トークン | AT: 15分, RT: ローテーション+固定, 1時間 |
 
 ### 社内業務システム
@@ -212,6 +214,8 @@ PUT  /v1/management/organizations/{org-id}/tenants/{tenant-id}/authorization-ser
 | 金融API（FAPI準拠）を作りたい | 金融グレード（FAPI+CIBA） |
 | 既存の認証基盤にOIDCを被せたい | 外部パスワード認証委譲 |
 | 認証フローに外部APIを組み込みたい（リスク判定、OTP等） | 外部API認証 |
+| 身元確認済みの人だけ通したい（未確認なら途中で eKYC へ案内） | 属性照合 |
+| ログインのあとに生年月日などで追加確認したい | 属性照合 |
 | セキュリティイベントを外部連携したい | エンタープライズ（セキュリティイベントフック） |
 
 ---
