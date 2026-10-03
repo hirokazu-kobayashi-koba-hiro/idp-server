@@ -66,6 +66,31 @@ class AttributeVerificationInteractorTest {
       }
       """;
 
+  /** Conditions only: the account must be identity-verified, and nothing is entered. */
+  private static final String CONDITION_CONFIG =
+      """
+      {
+        "id": "4f1c2b3a-0000-4000-8000-000000000002",
+        "type": "attribute-verification",
+        "interactions": {
+          "attribute-verification": {
+            "execution": {
+              "details": {
+                "conditions": {
+                  "any_of": [[
+                    { "path": "$.user.status", "type": "string", "operation": "eq",
+                      "value": "IDENTITY_VERIFIED" }
+                  ]]
+                },
+                "error": "identity_verification_required",
+                "max_attempts": 1
+              }
+            }
+          }
+        }
+      }
+      """;
+
   private static final Map<String, Object> CORRECT =
       Map.of("birthdate", "2000/1/5", "phone_last4", "5678");
   private static final Map<String, Object> WRONG =
@@ -184,14 +209,25 @@ class AttributeVerificationInteractorTest {
         .setPhoneNumber("090-1234-5678");
   }
 
+  private AttributeVerificationInteractor interactorWith(String config) {
+    return new AttributeVerificationInteractor(
+        new StubConfigurationRepository(
+            JsonConverter.snakeCaseInstance().read(config, AuthenticationConfiguration.class)),
+        cacheStore);
+  }
+
   /** A transaction whose user was established by a successful password step. */
   private static AuthenticationTransaction identifiedTransaction() {
+    return identifiedTransaction(user());
+  }
+
+  private static AuthenticationTransaction identifiedTransaction(User user) {
     Map<String, AuthenticationInteractionResult> results = new HashMap<>();
     results.put(
         "password-authentication",
         new AuthenticationInteractionResult(
             "authentication", "password", 1, 1, 0, LocalDateTime.now()));
-    return transaction(user(), new AuthenticationInteractionResults(results));
+    return transaction(user, new AuthenticationInteractionResults(results));
   }
 
   private static AuthenticationTransaction transaction(
@@ -320,5 +356,68 @@ class AttributeVerificationInteractorTest {
     }
 
     assertEquals("too_many_attempts", interact(transaction, CORRECT).response().get("error"));
+  }
+
+  @Test
+  @DisplayName(
+      "conditions on the account: an identity-verified user passes without entering anything")
+  void conditionHolds() {
+    User verified = user().setStatus(UserStatus.IDENTITY_VERIFIED);
+
+    AuthenticationInteractionRequestResult result =
+        interactorWith(CONDITION_CONFIG)
+            .interact(
+                tenant(),
+                identifiedTransaction(verified),
+                StandardAuthenticationInteraction.ATTRIBUTE_VERIFICATION.toType(),
+                new AuthenticationInteractionRequest(new HashMap<>()),
+                null,
+                null);
+
+    assertEquals(AuthenticationInteractionStatus.SUCCESS, result.status());
+    assertEquals(OperationType.VERIFICATION, result.operationType());
+  }
+
+  @Test
+  @DisplayName(
+      "conditions on the account: the tenant's error is returned at once when they do not hold, and is not counted as a guess")
+  void conditionDoesNotHold() {
+    AttributeVerificationInteractor conditionOnly = interactorWith(CONDITION_CONFIG);
+
+    // max_attempts is 1, so a counted attempt would turn the second answer into too_many_attempts.
+    for (int i = 0; i < 2; i++) {
+      AuthenticationInteractionRequestResult result =
+          conditionOnly.interact(
+              tenant(),
+              identifiedTransaction(),
+              StandardAuthenticationInteraction.ATTRIBUTE_VERIFICATION.toType(),
+              new AuthenticationInteractionRequest(new HashMap<>()),
+              null,
+              null);
+      assertEquals(AuthenticationInteractionStatus.CLIENT_ERROR, result.status());
+      assertEquals("identity_verification_required", result.response().get("error"));
+      assertEquals(AttributeVerificationInteractor.CONDITIONS, result.interactionName());
+    }
+    assertTrue(cacheStore.counters.isEmpty());
+  }
+
+  @Test
+  @DisplayName(
+      "failed guesses are recorded under the fields breakdown, apart from condition failures")
+  void guessesRecordedUnderFields() {
+    AuthenticationTransaction transaction = identifiedTransaction();
+
+    AuthenticationInteractionRequestResult result = interact(transaction, WRONG);
+    transaction = transaction.updateWith(result);
+
+    assertEquals(AttributeVerificationInteractor.FIELDS, result.interactionName());
+    assertEquals(
+        1,
+        transaction
+            .interactionResults()
+            .get("attribute-verification")
+            .interactions()
+            .get(AttributeVerificationInteractor.FIELDS)
+            .failureCount());
   }
 }

@@ -128,6 +128,62 @@ class AttributeVerificationRulesTest {
     }
 
     @Test
+    @DisplayName("conditions alone are a valid config, with the default error unless one is given")
+    void conditionsOnly() {
+      Map<String, Object> conditions =
+          Map.of(
+              "any_of",
+              List.of(
+                  List.of(
+                      Map.of(
+                          "path",
+                          "$.user.status",
+                          "type",
+                          "string",
+                          "operation",
+                          "eq",
+                          "value",
+                          "IDENTITY_VERIFIED"))));
+
+      AttributeVerificationConfig withDefault =
+          AttributeVerificationConfig.from(Map.of("conditions", conditions));
+      assertTrue(withDefault.isValid());
+      assertTrue(withDefault.hasConditions());
+      assertFalse(withDefault.hasFields());
+      assertEquals(
+          AttributeVerificationConfig.DEFAULT_CONDITION_ERROR, withDefault.conditionError());
+
+      assertEquals(
+          "identity_verification_required",
+          AttributeVerificationConfig.from(
+                  Map.of("conditions", conditions, "error", "identity_verification_required"))
+              .conditionError());
+    }
+
+    @Test
+    @DisplayName("unreadable conditions or error codes make the config invalid")
+    void invalidConditions() {
+      Map<String, Object> unknownOperation =
+          Map.of(
+              "any_of",
+              List.of(
+                  List.of(Map.of("path", "$.user.status", "operation", "equals", "value", "x"))));
+      Map<String, Object> emptyGroup = Map.of("any_of", List.of(List.of()));
+      Map<String, Object> valid =
+          Map.of(
+              "any_of",
+              List.of(List.of(Map.of("path", "$.user.status", "operation", "eq", "value", "x"))));
+
+      assertFalse(
+          AttributeVerificationConfig.from(Map.of("conditions", unknownOperation)).isValid());
+      assertFalse(AttributeVerificationConfig.from(Map.of("conditions", emptyGroup)).isValid());
+      assertFalse(AttributeVerificationConfig.from(Map.of("conditions", List.of())).isValid());
+      assertFalse(
+          AttributeVerificationConfig.from(Map.of("conditions", valid, "error", "Not A Code"))
+              .isValid());
+    }
+
+    @Test
     @DisplayName("one unreadable field makes the whole config invalid, rather than being dropped")
     void invalid() {
       assertFalse(AttributeVerificationConfig.from(null).isValid());

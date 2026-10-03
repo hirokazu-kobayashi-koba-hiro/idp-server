@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeAll, afterAll } from "@jest/globals";
-import { deletion, get, postWithJson } from "../../../lib/http";
+import { deletion, get, patchWithJson, postWithJson } from "../../../lib/http";
 import {
   requestToken,
   getAuthorizations,
@@ -173,6 +173,20 @@ describe("Authentication: attribute verification (#1907)", () => {
           "attribute-verification": {
             execution: {
               details: {
+                // Checked first: the account itself must be identity-verified.
+                conditions: {
+                  any_of: [
+                    [
+                      {
+                        path: "$.user.status",
+                        type: "string",
+                        operation: "eq",
+                        value: "IDENTITY_VERIFIED",
+                      },
+                    ],
+                  ],
+                },
+                error: "identity_verification_required",
                 fields: [
                   {
                     input: "birthdate",
@@ -262,8 +276,11 @@ describe("Authentication: attribute verification (#1907)", () => {
     }
   });
 
-  /** A user with the attributes the verification compares against. */
-  const createUser = async () => {
+  /**
+   * A user with the attributes the verification compares against. Created REGISTERED and moved to
+   * the requested status with the management PATCH.
+   */
+  const createUser = async (status = "IDENTITY_VERIFIED") => {
     const email = `user-${Date.now()}-${crypto
       .randomBytes(4)
       .toString("hex")}@attr-verify.example.com`;
@@ -283,7 +300,16 @@ describe("Authentication: attribute verification (#1907)", () => {
       },
     });
     expect(response.status).toBe(201);
-    return { email, password, sub: response.data.result.sub };
+    const sub = response.data.result.sub;
+    if (status !== "REGISTERED") {
+      const patchResponse = await patchWithJson({
+        url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/users/${sub}`,
+        headers: { Authorization: `Bearer ${mgmtAccessToken}` },
+        body: { status },
+      });
+      expect(patchResponse.status).toBe(200);
+    }
+    return { email, password, sub };
   };
 
   const startAuthorization = async () => {
@@ -377,6 +403,17 @@ describe("Authentication: attribute verification (#1907)", () => {
     expect(response.status).toBe(400);
     expect(response.data.error).toBe("attribute_mismatch");
     expect(JSON.stringify(response.data)).not.toContain("birthdate");
+  });
+
+  it("tells the view right after sign-in when the account is not identity-verified", async () => {
+    const user = await createUser("REGISTERED");
+    const authId = await startAuthorization();
+    await signIn(authId, user);
+
+    // Even the right answer does not get past the condition on the account.
+    const response = await verifyAttributes(authId, correctAnswer);
+    expect(response.status).toBe(400);
+    expect(response.data.error).toBe("identity_verification_required");
   });
 
   it("is refused before an earlier step has established the user", async () => {
