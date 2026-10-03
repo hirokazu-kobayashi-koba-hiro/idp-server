@@ -413,4 +413,20 @@ class AttributeVerificationInteractorTest {
       assertEquals("invalid_request", result.response().get("error"));
     }
   }
+
+  @Test
+  @DisplayName("an input sent as a number is refused as malformed, without counting as a guess")
+  void nonStringInput() {
+    AuthenticationTransaction transaction = identifiedTransaction();
+
+    AuthenticationInteractionRequestResult result =
+        interact(
+            transaction,
+            Map.of("interaction", "kba", "birthdate", "2000/1/5", "phone_last4", 5678));
+    transaction = transaction.updateWith(result);
+
+    assertEquals("invalid_request", result.response().get("error"));
+    assertTrue(cacheStore.counters.isEmpty());
+    assertFalse(transaction.interactionResults().get("attribute-verification").hasInteractions());
+  }
 }

@@ -84,14 +84,15 @@ CIBA では `login_hint` で利用者が決まるため、前の段の成功が�
 
 | 項目 | 内容 | 既定値 |
 |---|---|---|
-| `fields[].input` | 入力値を読むリクエストボディのキー | 必須 |
+| `fields[].input` | 入力値を読むリクエストボディのキー。値は文字列で送る | 必須 |
 | `fields[].user_attribute` | 照合する属性（下表） | 必須 |
 | `fields[].normalize` | 比較前の正規化（下表） | `exact` |
 | `fields[].suffix_length` | 正規化のあと、末尾 N 文字だけを比較する。0 は全体 | `0` |
 | `max_attempts` | 利用者ごとの試行回数の上限 | `5` |
 | `lockout_seconds` | 上限に達したあと拒否する期間（最初の試行から数える） | `900` |
 
-すべての項目が一致したときだけ成功です。
+すべての項目が一致したときだけ成功です。入力が文字列でない（数値で送った等）リクエストは
+`invalid_request` で拒否し、試行回数には数えません。
 
 **1 つのインタラクションに `conditions` と `fields` の両方は書けません。** 結果はインタラクションの名前ごとに
 `$.attribute-verification.interactions.<名前>.*` として記録されます。1 つの名前の失敗が「推測の失敗」か
@@ -113,7 +114,8 @@ CIBA では `login_hint` で利用者が決まるため、前の段の成功が�
 
 `verified_claims` やパスワードなどは照合できません。
 
-- `email` は、多くのテナントで前の段のログイン ID そのものです。前の段で入力済みの値を照合しても、確認は強くなりません
+- `email` は、多くのテナントで前の段のログイン ID そのものです。前の段で入力済みの値を照合しても、確認は強くなりません。
+  また、どの正規化も大文字・小文字をそろえないため、登録値と大文字・小文字が違うと一致しません
 - `phone_number` は、登録値と入力の書式が違うと全桁では一致しません（例：登録値が `+819012345678`、入力が `09012345678`）。
   `suffix_length` で末尾だけを比べるか、登録値の書式に合わせて入力させてください
 
@@ -141,7 +143,8 @@ CIBA では `login_hint` で利用者が決まるため、前の段の成功が�
 前の段を通せる者は、認可リクエストを作り直すたびに `max_attempts` 回ずつ試せます。
 電話番号の下 4 桁（1 万通り）のように候補の少ない項目を使う場合は、認証ポリシーの `lock_conditions` に
 `$.attribute-verification.interactions.<入力の照合の名前>.failure_count` を書き、失敗が続いたらアカウントをロックする構成を前提にしてください。
-合計の `$.attribute-verification.failure_count` を使うと、条件のステップで止まった利用者（身元確認が済んでいないなど）が呼ぶだけでロックされます。
+`lock_conditions` / `failure_conditions` に合計の `$.attribute-verification.failure_count` を使うと、条件のステップで止まった利用者
+（身元確認が済んでいないなど）が呼ぶだけで、アカウントがロックされたり、認可リクエストが失敗したりします。内訳の名前で書いてください。
 `lock_conditions` によるロックは利用者のステータスとして DB に記録されるため、キャッシュに依存しません。
 
 ### 認証ポリシー
@@ -214,6 +217,7 @@ POST /{tenant-id}/v1/authorizations/{id}/attribute-verification
 | 成功 | 200 | - |
 | 前の段で利用者が確定していない | 400 | `invalid_request` |
 | `interaction` が無い、または設定に無い名前 | 400 | `invalid_request` |
+| 入力が文字列でない | 400 | `invalid_request`（試行回数に数えない） |
 | 条件を満たさない | 400 | 設定の `error`（既定 `attribute_condition_not_satisfied`） |
 | 一致しない（属性が未登録の場合を含む） | 400 | `attribute_mismatch` |
 | 試行回数の上限に達した | 400 | `too_many_attempts` |
