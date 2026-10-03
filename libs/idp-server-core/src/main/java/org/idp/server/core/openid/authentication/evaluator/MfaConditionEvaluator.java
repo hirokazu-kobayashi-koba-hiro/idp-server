@@ -101,6 +101,24 @@ public class MfaConditionEvaluator {
   }
 
   /**
+   * Issue #1907: whether {@code config} holds now, for a step that checks the user part-way through
+   * the flow rather than at the end. Evaluated against the same context as the policy conditions —
+   * interaction results and the allow-listed {@code $.user.*} — so a condition reads the same here
+   * as it would in {@code success_conditions}.
+   */
+  public static boolean isSatisfied(
+      AuthenticationResultConditionConfig config,
+      AuthenticationInteractionResults results,
+      User user) {
+    if (!config.exists()) {
+      return false;
+    }
+    AuthenticationInteractionResults evaluated =
+        results != null ? results : new AuthenticationInteractionResults();
+    return isAnySatisfied(config, buildContext(evaluated, user)).isSuccess();
+  }
+
+  /**
    * Builds the JsonPath evaluation context. Existing interaction-result paths (e.g. {@code
    * $.password-authentication.success_count}) are preserved as-is; the allow-listed user projection
    * is added under the {@code user} key so conditions can reference {@code $.user.*} (Issue #1501).

@@ -198,7 +198,7 @@ ACR値と認証方式のマッピング：
 | 名前空間 | 内容 | 例 |
 |---------|------|---|
 | `$.<interaction-type>.*` | 各認証方式のインタラクション結果 | `$.password-authentication.success_count` |
-| `$.<interaction-type>.interactions.<interaction>.*` | interaction ごとの内訳（`external-api-authentication` のみ）| `$.external-api-authentication.interactions.risk-check.success_count` |
+| `$.<interaction-type>.interactions.<interaction>.*` | interaction ごとの内訳（`external-api-authentication` と `attribute-verification` のみ）| `$.external-api-authentication.interactions.risk-check.success_count` |
 | `$.user.*` | 認証対象ユーザーの属性 | `$.user.status`, `$.user.roles` |
 
 #### `interactions.*`（interaction ごとの内訳）
