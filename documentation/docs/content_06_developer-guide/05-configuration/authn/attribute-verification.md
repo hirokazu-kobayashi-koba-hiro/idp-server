@@ -1,7 +1,9 @@
 # 属性照合
 
 認証の途中で、確定した利用者を確認する `attribute-verification` の `概要`・`設定`・`利用方法` について説明します。
-確認は 2 種類あり、どちらか、または両方を使えます。
+
+確認は名前を付けたインタラクションごとに設定し、認証ポリシーで別々のステップとして並べます。
+1 つのインタラクションは、次のどちらか一方です。
 
 | 確認 | 内容 | 例 |
 |---|---|---|
@@ -20,7 +22,7 @@
 
 **条件を途中で確認する理由**：認証ポリシーの `success_conditions` は、最後の `authorize` で評価されます。
 `$.user.status` で身元確認済みを求めても、満たさない利用者がそれを知るのは全ステップのあとです。
-利用者を確定したステップの直後にこの確認を置けば、その時点でテナントが決めた `error`
+利用者を確定したステップの直後に条件のステップを置けば、その時点でテナントが決めた `error`
 （例：`identity_verification_required`）が返り、認可画面は身元確認の画面へ案内するなどの分岐ができます。
 
 生年月日などは他人も知りうる値です。単独で認証を完了させる構成にはしないでください。
@@ -34,12 +36,14 @@ CIBA では `login_hint` で利用者が決まるため、前の段の成功が�
 
 ### 認証設定
 
+`interactions` のキーがインタラクションの名前です。
+
 ```json
 {
   "id": "0199a1f0-5c2d-7e3f-8a4b-1c2d3e4f5a6b",
   "type": "attribute-verification",
   "interactions": {
-    "attribute-verification": {
+    "identity-verified": {
       "execution": {
         "details": {
           "conditions": {
@@ -47,7 +51,13 @@ CIBA では `login_hint` で利用者が決まるため、前の段の成功が�
               { "path": "$.user.status", "type": "string", "operation": "eq", "value": "IDENTITY_VERIFIED" }
             ]]
           },
-          "error": "identity_verification_required",
+          "error": "identity_verification_required"
+        }
+      }
+    },
+    "kba": {
+      "execution": {
+        "details": {
           "fields": [
             { "input": "birthdate", "user_attribute": "birthdate", "normalize": "date" },
             { "input": "phone_last4", "user_attribute": "phone_number", "normalize": "digits", "suffix_length": 4 }
@@ -61,10 +71,19 @@ CIBA では `login_hint` で利用者が決まるため、前の段の成功が�
 }
 ```
 
+**条件（`conditions`）**
+
 | 項目 | 内容 | 既定値 |
 |---|---|---|
-| `conditions` | 確認する条件。書き方と参照できるパス（`$.user.*`、各ステップの結果）は認証ポリシーの `success_conditions` と同じ | なし |
+| `conditions` | 確認する条件。書き方と参照できるパス（`$.user.*`、各ステップの結果）は認証ポリシーの `success_conditions` と同じ | 必須 |
 | `error` | 条件を満たさないときに返す `error`。英小文字・数字・`_` のみ | `attribute_condition_not_satisfied` |
+
+入力が無く推測ではないので、条件を満たさなかった回数は試行回数として数えません。
+
+**入力の照合（`fields`）**
+
+| 項目 | 内容 | 既定値 |
+|---|---|---|
 | `fields[].input` | 入力値を読むリクエストボディのキー | 必須 |
 | `fields[].user_attribute` | 照合する属性（下表） | 必須 |
 | `fields[].normalize` | 比較前の正規化（下表） | `exact` |
@@ -72,21 +91,14 @@ CIBA では `login_hint` で利用者が決まるため、前の段の成功が�
 | `max_attempts` | 利用者ごとの試行回数の上限 | `5` |
 | `lockout_seconds` | 上限に達したあと拒否する期間（最初の試行から数える） | `900` |
 
-`conditions` と `fields` の少なくとも一方が必要です。両方あるときは、条件を先に確認します。
-条件を満たし、すべての項目が一致したときだけ成功です。
+すべての項目が一致したときだけ成功です。
 
-読めない設定（未知の演算子、空の条件グループ、読めない項目など）が 1 つでもあれば全体を無効として扱い、
+**1 つのインタラクションに `conditions` と `fields` の両方は書けません。** 結果はインタラクションの名前ごとに
+`$.attribute-verification.interactions.<名前>.*` として記録されます。1 つの名前の失敗が「推測の失敗」か
+「条件を満たさない」のどちらか一方になるので、アカウントロックの条件を迷わず書けます。
+
+読めない設定（両方の指定、未知の演算子、空の条件グループ、読めない項目など）は全体を無効として扱い、
 500（`server_error`）になります。黙って読み飛ばすと、確認が弱くなるためです。
-
-結果は 2 つの内訳に分けて記録します。条件を満たさなかった回数は試行回数（`max_attempts`）には数えません。
-入力が無く、推測ではないためです。
-
-| 内訳 | 記録されるもの |
-|---|---|
-| `$.attribute-verification.interactions.conditions.*` | 条件の確認（入力の照合が無い設定での成功を含む） |
-| `$.attribute-verification.interactions.fields.*` | 入力の照合（不一致、試行回数の上限、照合を含む成功） |
-
-`$.attribute-verification.failure_count` は両方の合計です。
 
 **照合できる属性**
 
@@ -118,23 +130,23 @@ CIBA では `login_hint` で利用者が決まるため、前の段の成功が�
 
 ### 総当たり対策（入力の照合）
 
-試行回数は 2 か所で数えます。
+試行回数は、インタラクションごとに 2 か所で数えます。
 
 | 単位 | 数え方 | 上限に達したとき |
 |---|---|---|
 | 利用者 | キャッシュ（Redis）。認可リクエストをやり直しても減らない。一致すると 0 に戻る | `lockout_seconds` の間、正しい値でも `too_many_attempts` |
-| 認証トランザクション | トランザクションに記録された入力の照合の失敗回数（`fields` の内訳。DB） | そのトランザクションでは `too_many_attempts` |
+| 認証トランザクション | トランザクションに記録された、そのインタラクションの失敗回数（DB） | そのトランザクションでは `too_many_attempts` |
 
 **キャッシュが使えないときは、利用者単位の上限が効きません。** 残るのはトランザクション単位の上限だけで、
 前の段を通せる者は、認可リクエストを作り直すたびに `max_attempts` 回ずつ試せます。
 電話番号の下 4 桁（1 万通り）のように候補の少ない項目を使う場合は、認証ポリシーの `lock_conditions` に
-`$.attribute-verification.interactions.fields.failure_count` を書き、失敗が続いたらアカウントをロックする構成を前提にしてください。
-合計の `$.attribute-verification.failure_count` を使うと、条件を満たさない利用者（身元確認が済んでいないなど）が呼ぶだけでロックされます。
+`$.attribute-verification.interactions.<入力の照合の名前>.failure_count` を書き、失敗が続いたらアカウントをロックする構成を前提にしてください。
+合計の `$.attribute-verification.failure_count` を使うと、条件のステップで止まった利用者（身元確認が済んでいないなど）が呼ぶだけでロックされます。
 `lock_conditions` によるロックは利用者のステータスとして DB に記録されるため、キャッシュに依存しません。
 
 ### 認証ポリシー
 
-前の段で利用者を確定させ、そのあとに属性照合を置きます。
+前の段で利用者を確定させ、そのあとにインタラクションを 1 つずつステップとして置きます（`step_definitions[].interaction`）。
 
 ```json
 {
@@ -142,19 +154,28 @@ CIBA では `login_hint` で利用者が決まるため、前の段の成功が�
   "enabled": true,
   "policies": [
     {
-      "description": "password_and_attribute_verification",
+      "description": "password_then_attribute_verification",
       "priority": 1,
       "conditions": {},
       "available_methods": ["password", "attribute-verification"],
       "step_definitions": [
         { "method": "password", "order": 1, "requires_user": false, "user_identity_source": "username" },
-        { "method": "attribute-verification", "order": 2, "requires_user": true }
+        { "method": "attribute-verification", "interaction": "identity-verified", "order": 2, "requires_user": true },
+        { "method": "attribute-verification", "interaction": "kba", "order": 3, "requires_user": true }
       ],
       "success_conditions": {
         "any_of": [
           [
             { "path": "$.password-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 },
-            { "path": "$.attribute-verification.success_count", "type": "integer", "operation": "gte", "value": 1 }
+            { "path": "$.attribute-verification.interactions.identity-verified.success_count", "type": "integer", "operation": "gte", "value": 1 },
+            { "path": "$.attribute-verification.interactions.kba.success_count", "type": "integer", "operation": "gte", "value": 1 }
+          ]
+        ]
+      },
+      "lock_conditions": {
+        "any_of": [
+          [
+            { "path": "$.attribute-verification.interactions.kba.failure_count", "type": "integer", "operation": "gte", "value": 5 }
           ]
         ]
       }
@@ -162,6 +183,9 @@ CIBA では `login_hint` で利用者が決まるため、前の段の成功が�
   ]
 }
 ```
+
+`success_conditions` には、インタラクションごとの内訳を並べます。合計の `$.attribute-verification.success_count` は、
+どちらか片方の成功でも満たされてしまいます。
 
 ---
 
@@ -171,8 +195,15 @@ CIBA では `login_hint` で利用者が決まるため、前の段の成功が�
 POST /{tenant-id}/v1/authorizations/{id}/attribute-verification
 ```
 
+リクエストボディの `interaction` で、実行するインタラクションを指定します。
+
+```json
+{ "interaction": "identity-verified" }
+```
+
 ```json
 {
+  "interaction": "kba",
   "birthdate": "2000/01/05",
   "phone_last4": "5678"
 }
@@ -180,8 +211,9 @@ POST /{tenant-id}/v1/authorizations/{id}/attribute-verification
 
 | 状況 | HTTP | `error` |
 |---|---|---|
-| 一致 | 200 | - |
+| 成功 | 200 | - |
 | 前の段で利用者が確定していない | 400 | `invalid_request` |
+| `interaction` が無い、または設定に無い名前 | 400 | `invalid_request` |
 | 条件を満たさない | 400 | 設定の `error`（既定 `attribute_condition_not_satisfied`） |
 | 一致しない（属性が未登録の場合を含む） | 400 | `attribute_mismatch` |
 | 試行回数の上限に達した | 400 | `too_many_attempts` |

@@ -34,8 +34,17 @@ describe("Authentication: attribute verification (#1907)", () => {
   const redirectUri = "https://app.example.com/callback";
   const MAX_ATTEMPTS = 3;
 
-  const correctAnswer = { birthdate: "2000/1/5", phone_last4: "５６７８" };
-  const wrongAnswer = { birthdate: "2000/1/6", phone_last4: "5678" };
+  const checkAccount = { interaction: "identity-verified" };
+  const correctAnswer = {
+    interaction: "kba",
+    birthdate: "2000/1/5",
+    phone_last4: "５６７８",
+  };
+  const wrongAnswer = {
+    interaction: "kba",
+    birthdate: "2000/1/6",
+    phone_last4: "5678",
+  };
 
   beforeAll(async () => {
     const timestamp = Date.now();
@@ -170,10 +179,10 @@ describe("Authentication: attribute verification (#1907)", () => {
         attributes: {},
         metadata: {},
         interactions: {
-          "attribute-verification": {
+          // Checked first, as its own step: the account itself must be identity-verified.
+          "identity-verified": {
             execution: {
               details: {
-                // Checked first: the account itself must be identity-verified.
                 conditions: {
                   any_of: [
                     [
@@ -187,6 +196,13 @@ describe("Authentication: attribute verification (#1907)", () => {
                   ],
                 },
                 error: "identity_verification_required",
+              },
+            },
+          },
+          // Then what the end-user enters.
+          kba: {
+            execution: {
+              details: {
                 fields: [
                   {
                     input: "birthdate",
@@ -232,7 +248,14 @@ describe("Authentication: attribute verification (#1907)", () => {
               },
               {
                 method: "attribute-verification",
+                interaction: "identity-verified",
                 order: 2,
+                requires_user: true,
+              },
+              {
+                method: "attribute-verification",
+                interaction: "kba",
+                order: 3,
                 requires_user: true,
               },
             ],
@@ -246,7 +269,13 @@ describe("Authentication: attribute verification (#1907)", () => {
                     value: 1,
                   },
                   {
-                    path: "$.attribute-verification.success_count",
+                    path: "$.attribute-verification.interactions.identity-verified.success_count",
+                    type: "integer",
+                    operation: "gte",
+                    value: 1,
+                  },
+                  {
+                    path: "$.attribute-verification.interactions.kba.success_count",
                     type: "integer",
                     operation: "gte",
                     value: 1,
@@ -346,6 +375,8 @@ describe("Authentication: attribute verification (#1907)", () => {
     const authId = await startAuthorization();
     await signIn(authId, user);
 
+    const accountResponse = await verifyAttributes(authId, checkAccount);
+    expect(accountResponse.status).toBe(200);
     const verifyResponse = await verifyAttributes(authId, correctAnswer);
     expect(verifyResponse.status).toBe(200);
 
@@ -410,10 +441,36 @@ describe("Authentication: attribute verification (#1907)", () => {
     const authId = await startAuthorization();
     await signIn(authId, user);
 
-    // Even the right answer does not get past the condition on the account.
-    const response = await verifyAttributes(authId, correctAnswer);
+    // The account check is its own step, asked for nothing: the view learns at once.
+    const response = await verifyAttributes(authId, checkAccount);
     expect(response.status).toBe(400);
     expect(response.data.error).toBe("identity_verification_required");
+  });
+
+  it("does not complete when only one of the two checks has passed", async () => {
+    const user = await createUser();
+    const authId = await startAuthorization();
+    await signIn(authId, user);
+    expect((await verifyAttributes(authId, checkAccount)).status).toBe(200);
+
+    const authorizeResponse = await authorize({
+      endpoint: `${backendUrl}/${tenantId}/v1/authorizations/{id}/authorize`,
+      id: authId,
+      body: {},
+    });
+    expect(authorizeResponse.status).not.toBe(200);
+  });
+
+  it("refuses a request that names no configured interaction", async () => {
+    const user = await createUser();
+    const authId = await startAuthorization();
+    await signIn(authId, user);
+
+    for (const body of [{}, { interaction: "no-such-check" }]) {
+      const response = await verifyAttributes(authId, body);
+      expect(response.status).toBe(400);
+      expect(response.data.error).toBe("invalid_request");
+    }
   });
 
   it("is refused before an earlier step has established the user", async () => {
