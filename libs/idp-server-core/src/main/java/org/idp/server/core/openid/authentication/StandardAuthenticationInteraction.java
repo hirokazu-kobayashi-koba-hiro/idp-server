@@ -42,6 +42,7 @@ public enum StandardAuthenticationInteraction {
   AUTHENTICATION_DEVICE_NUMBER_MATCHING_CHALLENGE(
       "authentication-device-number-matching-challenge"),
   EXTERNAL_API_AUTHENTICATION("external-api-authentication"),
+  ATTRIBUTE_VERIFICATION("attribute-verification"),
   ;
 
   String type;

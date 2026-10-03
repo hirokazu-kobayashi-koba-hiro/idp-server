@@ -105,6 +105,9 @@ paths:
         - `authentication-device-number-matching-challenge` - ナンバーマッチングコード発行
         - `authentication-device-number-matching` - ナンバーマッチングコード検証
 
+        ### 属性照合
+        - `attribute-verification` - 確定した利用者の確認（アカウントの状態の条件、入力値と登録済みの属性の照合）
+
         ### バインディングメッセージ検証について
 
         `authentication-device-binding-message`は、CIBAフローにおいて消費デバイスと認証デバイス間の
@@ -151,6 +154,32 @@ paths:
         （`GET /{tenant-id}/v1/authentication-devices/{device-id}/authentications`）の
         `number_matching_required` です。
 
+        ### 属性照合について
+
+        前の段で利用者が確定したあとに行う追加の確認です（Issue #1907）。
+        認証要素には数えず（`amr` に入らない）、単独では認証を完了させません。
+
+        認証設定 `attribute-verification` に名前付きのインタラクションを並べ、リクエストボディの `interaction` で
+        どれを実行するかを指定します。1 つのインタラクションは次のどちらか一方です。
+
+        - アカウントの状態の条件（`execution.details.conditions`）：身元確認済みかなどを、認証ポリシーと同じ条件式で
+          その場で確認します。入力は不要です。満たさないときは、設定の `error`（例：`identity_verification_required`）を返します
+        - 入力の照合（`execution.details.fields`）：リクエストボディの値を登録済みの属性と照合します。
+          応答は一致・不一致だけで、どの項目が違ったかは返しません
+
+        結果はインタラクションの名前ごとに `$.attribute-verification.interactions.<名前>.*` として記録されます。
+
+        | 状況 | HTTP | `error` |
+        |---|---|---|
+        | 成功 | 200 | - |
+        | 前の段で利用者が確定していない | 400 | `invalid_request` |
+        | `interaction` が無い、または設定に無い名前 | 400 | `invalid_request` |
+        | 入力が文字列でない | 400 | `invalid_request`（試行回数に数えない） |
+        | 条件を満たさない | 400 | 設定の `error`（既定 `attribute_condition_not_satisfied`） |
+        | 一致しない（属性が未登録の場合を含む） | 400 | `attribute_mismatch` |
+        | 試行回数の上限に達した | 400 | `too_many_attempts` |
+        | 設定が無い・読めない | 500 | `server_error` |
+
       parameters:
         - $ref: '#/components/parameters/TenantId'
         - $ref: '#/components/parameters/AuthorizationRequestId'
@@ -193,6 +222,16 @@ paths:
                 summary: メール認証の例
                 value:
                   verification_code: "123456"
+              attribute-verification-conditions:
+                summary: 属性照合（アカウントの状態の条件）の例
+                value:
+                  interaction: "identity-verified"
+              attribute-verification-fields:
+                summary: 属性照合（入力の照合）の例（キーは認証設定の fields[].input）
+                value:
+                  interaction: "kba"
+                  birthdate: "2000/01/05"
+                  phone_last4: "5678"
               initial-registration:
                 summary: 初期ユーザー登録の例
                 value:
@@ -1111,6 +1150,7 @@ components:
           - authentication-device-binding-message
           - authentication-device-number-matching-challenge
           - authentication-device-number-matching
+          - attribute-verification
         example: "password-authentication"
 
     FederationType:

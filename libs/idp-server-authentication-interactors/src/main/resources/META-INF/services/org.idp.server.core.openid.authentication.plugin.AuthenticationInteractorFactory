@@ -24,3 +24,4 @@ org.idp.server.authentication.interactors.cancel.AuthenticationCancelInteractorF
 org.idp.server.authentication.interactors.fidouaf.FidoUafCancelInteractorFactory
 org.idp.server.authentication.interactors.device.AuthenticationDeviceNotificationNoActionInteractorFactory
 org.idp.server.authentication.interactors.external_api.ExternalApiAuthenticationInteractorFactory
+org.idp.server.authentication.interactors.attribute_verification.AttributeVerificationInteractorFactory

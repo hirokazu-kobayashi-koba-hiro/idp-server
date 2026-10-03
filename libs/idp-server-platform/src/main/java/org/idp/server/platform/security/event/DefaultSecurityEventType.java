@@ -189,6 +189,10 @@ public enum DefaultSecurityEventType {
   authentication_device_number_matching_failure(
       "Number-matching code verification failed on device"),
 
+  // Attribute verification (Issue #1907)
+  attribute_verification_success("User attributes matched the registered values"),
+  attribute_verification_failure("User attribute verification failed"),
+
   // Authentication device registration
   authentication_device_registration_success("Authentication device was registered"),
   authentication_device_registration_failure("Authentication device registration failed"),

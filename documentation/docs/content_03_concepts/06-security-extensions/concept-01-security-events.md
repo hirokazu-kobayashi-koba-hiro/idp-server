@@ -92,6 +92,7 @@ public void authenticate() {
 | SMSに送られたコードを入力した | `sms_verification_success` / `failure` |
 | SMS認証コードの送信を要求した | `sms_verification_challenge_success` / `failure` |
 | 外部サービスのトークンで認証した | `external_token_authentication_success` / `failure` |
+| 生年月日などを入力し、登録済みの属性と照合した | `attribute_verification_success` / `attribute_verification_failure` |
 
 #### 認可・セッション
 

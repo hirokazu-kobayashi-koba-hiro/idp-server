@@ -23,6 +23,15 @@ public enum OperationType {
   DENY,
   DE_REGISTRATION,
   NO_ACTION,
+  /**
+   * A check of something the end-user knows about themselves — a birthdate, the last digits of a
+   * phone number — against what the account holds (Issue #1907).
+   *
+   * <p>Deliberately not {@link #AUTHENTICATION}: such values can be known to others, so passing
+   * this proves neither who is at the keyboard nor possession of anything. It is not counted as an
+   * authentication factor, is not reported in {@code amr}, and earns no browser proof.
+   */
+  VERIFICATION,
   UNKNOWN;
 
   public static OperationType of(String type) {
@@ -51,7 +60,9 @@ public enum OperationType {
    *
    * <p>Separates the steps that say something about who is at the keyboard from the ones that do
    * not. Sending a code, cancelling, or acknowledging a notification can be done by anyone who
-   * knows the request id; entering a password or a one-time code cannot.
+   * knows the request id; entering a password or a one-time code cannot. A {@link #VERIFICATION}
+   * does not count either: the values it checks can be known to others, so passing it says nothing
+   * about who is at the keyboard.
    */
   public boolean provesPossession() {
     return this == AUTHENTICATION || this == REGISTRATION;
