@@ -153,6 +153,8 @@ eKYC機能を有効にするには、認可サーバーに以下の設定が必�
 | `substring` | 部分文字列抽出 | `{"name":"substring","args":{"start":0,"end":10}}` |
 | `format` | テンプレート置換 | `{"name":"format","args":{"template":"Bearer {{value}}"}}` |
 | `normalize` | Unicode 正規化（表記ゆれ吸収）。`form`: NFC/NFD/NFKC/NFKD、既定 NFKC | `{"name":"normalize","args":{"form":"NFKC"}}` |
+| `kana` | ひらがな ⇄ カタカナ。`to`: katakana/hiragana、既定 katakana。半角カナは先に `normalize` | `{"name":"kana","args":{"to":"katakana"}}` |
+| `date` | 日付の表記をそろえる（`1990/4/1`・`1990年4月1日` 等）。読めなければ null。`format` 既定 `uuuu-MM-dd` | `{"name":"date"}` |
 
 ### コレクション操作
 
