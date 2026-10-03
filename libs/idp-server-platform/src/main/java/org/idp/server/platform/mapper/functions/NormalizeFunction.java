@@ -97,7 +97,7 @@ import java.util.Map;
  * }</pre>
  *
  * <p>Hiragana and katakana are distinct characters, not notational variants, so no form converts
- * between them.
+ * between them; that is {@link KanaFunction}.
  *
  * <p>Arrays are handled by {@code map}. Its argument key is {@code function_args}: nesting {@code
  * args} instead is not an error, it silently leaves this function with no arguments and applies the

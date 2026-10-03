@@ -111,6 +111,12 @@ public class FunctionRegistry {
     NormalizeFunction normalizeFunction = new NormalizeFunction();
     temp.put(normalizeFunction.name(), normalizeFunction);
 
+    KanaFunction kanaFunction = new KanaFunction();
+    temp.put(kanaFunction.name(), kanaFunction);
+
+    DateFunction dateFunction = new DateFunction();
+    temp.put(dateFunction.name(), dateFunction);
+
     // Initialize map field before calling setFunctionRegistry to prevent partial construction
     // escape
     this.map = Collections.unmodifiableMap(temp);
