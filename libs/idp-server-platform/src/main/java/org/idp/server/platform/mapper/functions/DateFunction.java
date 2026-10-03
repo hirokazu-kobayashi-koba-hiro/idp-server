@@ -17,6 +17,7 @@
 package org.idp.server.platform.mapper.functions;
 
 import java.text.Normalizer;
+import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -72,6 +73,9 @@ public class DateFunction implements ValueFunction {
 
   private static final String DEFAULT_FORMAT = "uuuu-MM-dd";
 
+  /** A fixed date to try an output pattern on. */
+  private static final LocalDate PROBE = LocalDate.of(2000, 1, 1);
+
   private static final List<DateTimeFormatter> ACCEPTED =
       List.of(
           strict("uuuu-M-d"),
@@ -108,8 +112,13 @@ public class DateFunction implements ValueFunction {
       return DateTimeFormatter.ofPattern(DEFAULT_FORMAT);
     }
     try {
-      return DateTimeFormatter.ofPattern(format.toString());
-    } catch (IllegalArgumentException e) {
+      DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format.toString());
+      // A pattern can be valid and still ask for something a date does not have, such as the hour.
+      // That only fails when a date is formatted, so it is tried here once rather than left to
+      // surface on the first real date.
+      formatter.format(PROBE);
+      return formatter;
+    } catch (IllegalArgumentException | DateTimeException e) {
       throw new IllegalArgumentException("date: invalid format '" + format + "'", e);
     }
   }

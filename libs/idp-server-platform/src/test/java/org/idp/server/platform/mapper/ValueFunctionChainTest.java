@@ -18,6 +18,7 @@ package org.idp.server.platform.mapper;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -46,6 +47,11 @@ public class ValueFunctionChainTest {
     assertThrows(
         IllegalArgumentException.class,
         () -> ValueFunctionChain.of(List.of(new FunctionSpec(null, Map.of()))));
+    // A null element (e.g. "functions": [null] in a configuration) is the same configuration error,
+    // not a NullPointerException.
+    List<FunctionSpec> withNull = new ArrayList<>();
+    withNull.add(null);
+    assertThrows(IllegalArgumentException.class, () -> ValueFunctionChain.of(withNull));
   }
 
   @Test

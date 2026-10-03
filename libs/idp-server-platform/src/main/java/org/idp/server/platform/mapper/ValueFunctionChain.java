@@ -49,14 +49,18 @@ public class ValueFunctionChain {
    * @throws IllegalArgumentException if a function is not named, or not known
    */
   public static ValueFunctionChain of(List<FunctionSpec> specs) {
-    List<FunctionSpec> chain = specs == null ? List.of() : List.copyOf(specs);
-    for (FunctionSpec spec : chain) {
+    if (specs == null) {
+      return new ValueFunctionChain(List.of());
+    }
+    // Checked before copying: List.copyOf rejects a null element with a NullPointerException,
+    // which a caller treating IllegalArgumentException as a configuration error would not catch.
+    for (FunctionSpec spec : specs) {
       if (spec == null || spec.name() == null || !functionRegistry.exists(spec.name())) {
         throw new IllegalArgumentException(
             "unknown function: " + (spec == null ? null : spec.name()));
       }
     }
-    return new ValueFunctionChain(chain);
+    return new ValueFunctionChain(List.copyOf(specs));
   }
 
   /** Applies each function in turn; a function's output is the next one's input. */

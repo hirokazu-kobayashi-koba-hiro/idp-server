@@ -63,6 +63,17 @@ public class DateFunctionTest {
   }
 
   @Test
+  void formatAskingForATimeIsAnErrorEvenBeforeADateArrives() {
+    // Valid syntax, but a date has no hour: refused up front, not on the first real date.
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> function.apply(null, Map.of("format", "uuuu-MM-dd HH:mm")));
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> function.apply("1990-04-01", Map.of("format", "uuuu-MM-dd HH:mm")));
+  }
+
+  @Test
   void invalidFormatIsAnError() {
     assertThrows(
         IllegalArgumentException.class,
