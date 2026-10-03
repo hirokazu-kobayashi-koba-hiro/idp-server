@@ -136,6 +136,12 @@ public class AttributeVerificationInteractor implements AuthenticationInteractor
       return named(notConfigured(type, user), interaction);
     }
 
+    // A malformed request is a fault in the caller, not a guess: refused before anything is
+    // counted, and left unnamed so it does not reach this interaction's breakdown either.
+    if (config.hasFields() && hasNonStringInput(config, request)) {
+      return invalidInput(type, user);
+    }
+
     AuthenticationInteractionRequestResult rejected =
         config.hasConditions()
             ? checkConditions(transaction, type, user, config)
@@ -205,6 +211,16 @@ public class AttributeVerificationInteractor implements AuthenticationInteractor
     }
     cacheStore.delete(attemptKey);
     return null;
+  }
+
+  /** Whether any configured input arrived as something other than a string. */
+  private static boolean hasNonStringInput(
+      AttributeVerificationConfig config, AuthenticationInteractionRequest request) {
+    return config.fields().stream()
+        .map(AttributeVerificationField::input)
+        .filter(request::containsKey)
+        .map(request::getValue)
+        .anyMatch(value -> value != null && !(value instanceof String));
   }
 
   /**
@@ -278,6 +294,19 @@ public class AttributeVerificationInteractor implements AuthenticationInteractor
         Map.of(
             "error", "invalid_request",
             "error_description", "interaction is missing or not configured."),
+        type,
+        operationType(),
+        method(),
+        user,
+        DefaultSecurityEventType.attribute_verification_failure);
+  }
+
+  private AuthenticationInteractionRequestResult invalidInput(
+      AuthenticationInteractionType type, User user) {
+    return AuthenticationInteractionRequestResult.clientError(
+        Map.of(
+            "error", "invalid_request",
+            "error_description", "each input must be sent as a string."),
         type,
         operationType(),
         method(),
