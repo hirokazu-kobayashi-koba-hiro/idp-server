@@ -31,19 +31,25 @@ import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
 
 /**
- * Checks the identified user part-way through the flow (Issue #1907), in two ways that can be used
- * together:
+ * Checks the identified user part-way through the flow (Issue #1907).
+ *
+ * <p>A tenant configures named interactions, each of which is one kind of check:
  *
  * <ul>
- *   <li>conditions on what the account already is — identity-verified, a role, a custom property —
- *       written as authentication policy conditions. The policy's own {@code success_conditions}
- *       are only evaluated at the end, so an end-user who will never pass them otherwise finds out
- *       only after every step; placed right after the step that identifies them, this tells the
- *       authorization view at once, with an error the tenant chose, so it can send them on (to
- *       identity verification, for instance).
- *   <li>values the end-user enters — a birthdate, the last digits of a phone number — against the
- *       attributes the account holds.
+ *   <li>{@code conditions} on what the account already is — identity-verified, a role, a custom
+ *       property — written as authentication policy conditions. The policy's own {@code
+ *       success_conditions} are only evaluated at the end, so an end-user who will never pass them
+ *       otherwise finds out only after every step; placed right after the step that identifies
+ *       them, this tells the authorization view at once, with an error the tenant chose, so it can
+ *       send them on (to identity verification, for instance).
+ *   <li>{@code fields}: values the end-user enters — a birthdate, the last digits of a phone number
+ *       — against the attributes the account holds.
  * </ul>
+ *
+ * <p>The request names the interaction ({@code "interaction": "<name>"}), and a policy can place
+ * several of them as separate steps ({@code step_definitions[].interaction}). Each is recorded
+ * under its own name, {@code $.attribute-verification.interactions.<name>.*}, so a policy can lock
+ * the account on failed guesses without locking every user who simply is not verified yet.
  *
  * <p>An additional check on a user who is already identified, not a way to identify one: it runs
  * only once an earlier step has established the user, and is recorded as {@link
@@ -53,24 +59,18 @@ import org.idp.server.platform.type.RequestAttributes;
  * wrong, and whether the account has the attribute at all, are not told: either would help someone
  * guessing.
  *
- * <p>Guessing is bounded twice. Per user, across authorization requests, by a counter in the cache
- * that starting a new request does not reset. Per transaction, by the failures already recorded on
- * it, which holds even when the cache is unavailable. A tenant that wants a failure to lock the
- * account adds {@code lock_conditions} to its authentication policy, as for any other step.
+ * <p>Guessing is bounded twice, per interaction. Per user, across authorization requests, by a
+ * counter in the cache that starting a new request does not reset. Per transaction, by the failures
+ * already recorded on it, which holds even when the cache is unavailable. A tenant that wants a
+ * failure to lock the account adds {@code lock_conditions} to its authentication policy, as for any
+ * other step.
  */
 public class AttributeVerificationInteractor implements AuthenticationInteractor {
 
   static final String CONFIG_KEY = "attribute-verification";
 
-  /**
-   * The names the two checks are recorded under, as {@code
-   * $.attribute-verification.interactions.<name>.*}. Kept apart so a policy can lock the account on
-   * failed guesses ({@code fields}) without locking every user who is simply not verified yet
-   * ({@code conditions}).
-   */
-  static final String CONDITIONS = "conditions";
-
-  static final String FIELDS = "fields";
+  /** The request field naming which configured interaction to run. */
+  static final String INTERACTION_FIELD = "interaction";
 
   AuthenticationConfigurationQueryRepository configurationQueryRepository;
   CacheStore cacheStore;
@@ -112,25 +112,36 @@ public class AttributeVerificationInteractor implements AuthenticationInteractor
     }
     User user = transaction.user();
 
-    AttributeVerificationConfig config = loadConfig(tenant);
-    if (!config.isValid()) {
-      log.error("Attribute verification is not configured correctly: {}", config.invalidReason());
+    AuthenticationConfiguration configuration =
+        configurationQueryRepository.find(tenant, CONFIG_KEY);
+    if (!configuration.exists()) {
+      log.error("Attribute verification is not configured for this tenant.");
       return notConfigured(type, user);
     }
 
-    if (config.hasConditions()
-        && !MfaConditionEvaluator.isSatisfied(
-            config.conditions(), transaction.interactionResults(), user)) {
-      log.info("Attribute conditions did not hold. sub={}", user.sub());
-      return named(conditionNotSatisfied(type, user, config.conditionError()), CONDITIONS);
+    String interaction = request.optValueAsString(INTERACTION_FIELD, "");
+    AuthenticationInteractionConfig interactionConfig =
+        interaction.isEmpty() ? null : configuration.getAuthenticationConfig(interaction);
+    if (interactionConfig == null) {
+      return unknownInteraction(type, user);
     }
 
-    if (config.hasFields()) {
-      AuthenticationInteractionRequestResult rejected =
-          verifyFields(tenant, transaction, type, request, user, config);
-      if (rejected != null) {
-        return named(rejected, FIELDS);
-      }
+    AttributeVerificationConfig config =
+        AttributeVerificationConfig.from(interactionConfig.execution().details());
+    if (!config.isValid()) {
+      log.error(
+          "Attribute verification interaction {} is not configured correctly: {}",
+          interaction,
+          config.invalidReason());
+      return named(notConfigured(type, user), interaction);
+    }
+
+    AuthenticationInteractionRequestResult rejected =
+        config.hasConditions()
+            ? checkConditions(transaction, type, user, config)
+            : verifyFields(tenant, transaction, type, request, user, interaction, config);
+    if (rejected != null) {
+      return named(rejected, interaction);
     }
 
     AuthenticationInteractionRequestResult success =
@@ -142,13 +153,32 @@ public class AttributeVerificationInteractor implements AuthenticationInteractor
             user,
             Map.of(),
             DefaultSecurityEventType.attribute_verification_success);
-    return named(success, config.hasFields() ? FIELDS : CONDITIONS);
+    return named(success, interaction);
   }
 
   private static AuthenticationInteractionRequestResult named(
       AuthenticationInteractionRequestResult result, String name) {
     result.setInteractionName(name);
     return result;
+  }
+
+  /**
+   * Checks the account against the conditions. Nothing is entered, so nothing is guessed, and a
+   * failure is not counted against any attempt limit.
+   *
+   * @return the rejection, or null when the conditions hold
+   */
+  private AuthenticationInteractionRequestResult checkConditions(
+      AuthenticationTransaction transaction,
+      AuthenticationInteractionType type,
+      User user,
+      AttributeVerificationConfig config) {
+    if (MfaConditionEvaluator.isSatisfied(
+        config.conditions(), transaction.interactionResults(), user)) {
+      return null;
+    }
+    log.info("Attribute conditions did not hold. sub={}", user.sub());
+    return conditionNotSatisfied(type, user, config.conditionError());
   }
 
   /**
@@ -162,9 +192,11 @@ public class AttributeVerificationInteractor implements AuthenticationInteractor
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
       User user,
+      String interaction,
       AttributeVerificationConfig config) {
-    String attemptKey = attemptKey(tenant, user);
-    if (exhaustedInTransaction(transaction, type, config) || exhaustedForUser(attemptKey, config)) {
+    String attemptKey = attemptKey(tenant, user, interaction);
+    if (exhaustedInTransaction(transaction, type, interaction, config)
+        || exhaustedForUser(attemptKey, config)) {
       return tooManyAttempts(type, user);
     }
     if (!allMatch(config, request, new VerifiableUserAttributes(user))) {
@@ -192,28 +224,14 @@ public class AttributeVerificationInteractor implements AuthenticationInteractor
     return matched;
   }
 
-  private AttributeVerificationConfig loadConfig(Tenant tenant) {
-    AuthenticationConfiguration configuration =
-        configurationQueryRepository.find(tenant, CONFIG_KEY);
-    if (!configuration.exists()) {
-      return AttributeVerificationConfig.from(null);
-    }
-    AuthenticationInteractionConfig interactionConfig =
-        configuration.getAuthenticationConfig(CONFIG_KEY);
-    if (interactionConfig == null) {
-      return AttributeVerificationConfig.from(null);
-    }
-    return AttributeVerificationConfig.from(interactionConfig.execution().details());
-  }
-
   /**
-   * Failed guesses already recorded on this transaction. Read from the database, not the cache.
-   * Only the {@code fields} breakdown counts: an account that does not meet the conditions has not
-   * guessed anything.
+   * Failed guesses already recorded on this transaction for this interaction. Read from the
+   * database, not the cache.
    */
   private boolean exhaustedInTransaction(
       AuthenticationTransaction transaction,
       AuthenticationInteractionType type,
+      String interaction,
       AttributeVerificationConfig config) {
     AuthenticationInteractionResults results = transaction.interactionResults();
     if (results == null || !results.contains(type.name())) {
@@ -223,8 +241,8 @@ public class AttributeVerificationInteractor implements AuthenticationInteractor
     if (!recorded.hasInteractions()) {
       return false;
     }
-    AuthenticationInteractionResult fields = recorded.interactions().get(FIELDS);
-    return fields != null && fields.failureCount() >= config.maxAttempts();
+    AuthenticationInteractionResult byInteraction = recorded.interactions().get(interaction);
+    return byInteraction != null && byInteraction.failureCount() >= config.maxAttempts();
   }
 
   /**
@@ -236,9 +254,10 @@ public class AttributeVerificationInteractor implements AuthenticationInteractor
     return attempts > config.maxAttempts();
   }
 
-  private static String attemptKey(Tenant tenant, User user) {
+  private static String attemptKey(Tenant tenant, User user, String interaction) {
     return String.format(
-        "attribute_verification_attempt:%s:%s", tenant.identifierValue(), user.sub());
+        "attribute_verification_attempt:%s:%s:%s",
+        tenant.identifierValue(), user.sub(), interaction);
   }
 
   private AuthenticationInteractionRequestResult userNotIdentified(
@@ -250,6 +269,19 @@ public class AttributeVerificationInteractor implements AuthenticationInteractor
         type,
         operationType(),
         method(),
+        DefaultSecurityEventType.attribute_verification_failure);
+  }
+
+  private AuthenticationInteractionRequestResult unknownInteraction(
+      AuthenticationInteractionType type, User user) {
+    return AuthenticationInteractionRequestResult.clientError(
+        Map.of(
+            "error", "invalid_request",
+            "error_description", "interaction is missing or not configured."),
+        type,
+        operationType(),
+        method(),
+        user,
         DefaultSecurityEventType.attribute_verification_failure);
   }
 

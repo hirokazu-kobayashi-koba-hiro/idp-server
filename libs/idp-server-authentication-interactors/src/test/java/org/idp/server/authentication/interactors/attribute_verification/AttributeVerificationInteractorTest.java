@@ -42,15 +42,31 @@ import org.junit.jupiter.api.Test;
 /** Issue #1907: the attribute verification interactor. */
 class AttributeVerificationInteractorTest {
 
+  /**
+   * Two interactions: {@code identity-verified} checks the account and asks for nothing; {@code
+   * kba} compares what the end-user enters.
+   */
   private static final String CONFIG =
       """
       {
         "id": "4f1c2b3a-0000-4000-8000-000000000001",
         "type": "attribute-verification",
         "interactions": {
-          "attribute-verification": {
+          "identity-verified": {
             "execution": {
-              "function": "attribute_verification",
+              "details": {
+                "conditions": {
+                  "any_of": [[
+                    { "path": "$.user.status", "type": "string", "operation": "eq",
+                      "value": "IDENTITY_VERIFIED" }
+                  ]]
+                },
+                "error": "identity_verification_required"
+              }
+            }
+          },
+          "kba": {
+            "execution": {
               "details": {
                 "fields": [
                   { "input": "birthdate", "user_attribute": "birthdate", "normalize": "date" },
@@ -66,35 +82,12 @@ class AttributeVerificationInteractorTest {
       }
       """;
 
-  /** Conditions only: the account must be identity-verified, and nothing is entered. */
-  private static final String CONDITION_CONFIG =
-      """
-      {
-        "id": "4f1c2b3a-0000-4000-8000-000000000002",
-        "type": "attribute-verification",
-        "interactions": {
-          "attribute-verification": {
-            "execution": {
-              "details": {
-                "conditions": {
-                  "any_of": [[
-                    { "path": "$.user.status", "type": "string", "operation": "eq",
-                      "value": "IDENTITY_VERIFIED" }
-                  ]]
-                },
-                "error": "identity_verification_required",
-                "max_attempts": 1
-              }
-            }
-          }
-        }
-      }
-      """;
-
   private static final Map<String, Object> CORRECT =
-      Map.of("birthdate", "2000/1/5", "phone_last4", "5678");
+      Map.of("interaction", "kba", "birthdate", "2000/1/5", "phone_last4", "5678");
   private static final Map<String, Object> WRONG =
-      Map.of("birthdate", "2000/1/6", "phone_last4", "5678");
+      Map.of("interaction", "kba", "birthdate", "2000/1/6", "phone_last4", "5678");
+  private static final Map<String, Object> CHECK_ACCOUNT =
+      Map.of("interaction", "identity-verified");
 
   /** Increments a counter per key, as the Redis store does. */
   private static class InMemoryCacheStore implements CacheStore {
@@ -207,13 +200,6 @@ class AttributeVerificationInteractorTest {
         .setStatus(UserStatus.REGISTERED)
         .setBirthdate("2000-01-05")
         .setPhoneNumber("090-1234-5678");
-  }
-
-  private AttributeVerificationInteractor interactorWith(String config) {
-    return new AttributeVerificationInteractor(
-        new StubConfigurationRepository(
-            JsonConverter.snakeCaseInstance().read(config, AuthenticationConfiguration.class)),
-        cacheStore);
   }
 
   /** A transaction whose user was established by a successful password step. */
@@ -365,14 +351,13 @@ class AttributeVerificationInteractorTest {
     User verified = user().setStatus(UserStatus.IDENTITY_VERIFIED);
 
     AuthenticationInteractionRequestResult result =
-        interactorWith(CONDITION_CONFIG)
-            .interact(
-                tenant(),
-                identifiedTransaction(verified),
-                StandardAuthenticationInteraction.ATTRIBUTE_VERIFICATION.toType(),
-                new AuthenticationInteractionRequest(new HashMap<>()),
-                null,
-                null);
+        interactor.interact(
+            tenant(),
+            identifiedTransaction(verified),
+            StandardAuthenticationInteraction.ATTRIBUTE_VERIFICATION.toType(),
+            new AuthenticationInteractionRequest(new HashMap<>(CHECK_ACCOUNT)),
+            null,
+            null);
 
     assertEquals(AuthenticationInteractionStatus.SUCCESS, result.status());
     assertEquals(OperationType.VERIFICATION, result.operationType());
@@ -382,42 +367,50 @@ class AttributeVerificationInteractorTest {
   @DisplayName(
       "conditions on the account: the tenant's error is returned at once when they do not hold, and is not counted as a guess")
   void conditionDoesNotHold() {
-    AttributeVerificationInteractor conditionOnly = interactorWith(CONDITION_CONFIG);
 
-    // max_attempts is 1, so a counted attempt would turn the second answer into too_many_attempts.
     for (int i = 0; i < 2; i++) {
       AuthenticationInteractionRequestResult result =
-          conditionOnly.interact(
+          interactor.interact(
               tenant(),
               identifiedTransaction(),
               StandardAuthenticationInteraction.ATTRIBUTE_VERIFICATION.toType(),
-              new AuthenticationInteractionRequest(new HashMap<>()),
+              new AuthenticationInteractionRequest(new HashMap<>(CHECK_ACCOUNT)),
               null,
               null);
       assertEquals(AuthenticationInteractionStatus.CLIENT_ERROR, result.status());
       assertEquals("identity_verification_required", result.response().get("error"));
-      assertEquals(AttributeVerificationInteractor.CONDITIONS, result.interactionName());
+      assertEquals("identity-verified", result.interactionName());
     }
     assertTrue(cacheStore.counters.isEmpty());
   }
 
   @Test
-  @DisplayName(
-      "failed guesses are recorded under the fields breakdown, apart from condition failures")
+  @DisplayName("each interaction is recorded under its own name")
   void guessesRecordedUnderFields() {
     AuthenticationTransaction transaction = identifiedTransaction();
 
     AuthenticationInteractionRequestResult result = interact(transaction, WRONG);
     transaction = transaction.updateWith(result);
 
-    assertEquals(AttributeVerificationInteractor.FIELDS, result.interactionName());
+    assertEquals("kba", result.interactionName());
     assertEquals(
         1,
         transaction
             .interactionResults()
             .get("attribute-verification")
             .interactions()
-            .get(AttributeVerificationInteractor.FIELDS)
+            .get("kba")
             .failureCount());
+  }
+
+  @Test
+  @DisplayName("a request that names no configured interaction is refused")
+  void unknownInteraction() {
+    for (Map<String, Object> body :
+        List.<Map<String, Object>>of(Map.of(), Map.of("interaction", "no-such-check"))) {
+      AuthenticationInteractionRequestResult result = interact(identifiedTransaction(), body);
+      assertEquals(AuthenticationInteractionStatus.CLIENT_ERROR, result.status());
+      assertEquals("invalid_request", result.response().get("error"));
+    }
   }
 }

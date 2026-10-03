@@ -161,6 +161,23 @@ class AttributeVerificationRulesTest {
     }
 
     @Test
+    @DisplayName("one interaction is one kind of check: conditions and fields together are invalid")
+    void oneKindPerInteraction() {
+      Map<String, Object> conditions =
+          Map.of(
+              "any_of",
+              List.of(List.of(Map.of("path", "$.user.status", "operation", "eq", "value", "x"))));
+      List<Object> fields = List.of(Map.of("input", "birthdate", "user_attribute", "birthdate"));
+
+      assertFalse(
+          AttributeVerificationConfig.from(Map.of("conditions", conditions, "fields", fields))
+              .isValid());
+      assertFalse(
+          AttributeVerificationConfig.from(Map.of("fields", fields, "error", "some_error"))
+              .isValid());
+    }
+
+    @Test
     @DisplayName("unreadable conditions or error codes make the config invalid")
     void invalidConditions() {
       Map<String, Object> unknownOperation =

@@ -26,16 +26,23 @@ import org.idp.server.platform.condition.ConditionOperation;
 import org.idp.server.platform.json.JsonConverter;
 
 /**
- * The tenant's attribute verification settings, read from {@code execution.details} of the {@code
- * attribute-verification} interaction.
+ * The settings of one named attribute verification interaction, read from its {@code
+ * execution.details}.
+ *
+ * <p>Each interaction is exactly one kind of check:
  *
  * <pre>{@code
+ * // what the account already is — nothing is entered
  * {
  *   "conditions": {
  *     "any_of": [[ { "path": "$.user.status", "type": "string", "operation": "eq",
  *                    "value": "IDENTITY_VERIFIED" } ]]
  *   },
- *   "error": "identity_verification_required",
+ *   "error": "identity_verification_required"
+ * }
+ *
+ * // values the end-user enters
+ * {
  *   "fields": [
  *     { "input": "birthdate", "user_attribute": "birthdate", "normalize": "date" },
  *     { "input": "phone_last4", "user_attribute": "phone_number", "normalize": "digits",
@@ -46,14 +53,9 @@ import org.idp.server.platform.json.JsonConverter;
  * }
  * }</pre>
  *
- * <p>Two kinds of check, either or both:
- *
- * <ul>
- *   <li>{@code conditions}: what the account already is — its status, roles, custom properties —
- *       written exactly as an authentication policy condition. Nothing is entered, so nothing is
- *       guessed, and {@code error} is what the authorization view is told when they do not hold.
- *   <li>{@code fields}: values the end-user enters, compared against registered attributes.
- * </ul>
+ * <p>One kind per interaction keeps what is recorded under its name unambiguous: an interaction's
+ * failures are either failed guesses or accounts that do not qualify, never a mix, so a policy can
+ * lock on the one without the other. A tenant wanting both places two interactions as two steps.
  *
  * <p>A setting that cannot be read correctly makes the whole configuration invalid rather than
  * being skipped: dropping one field would quietly turn a two-item check into a one-item check.
@@ -94,6 +96,13 @@ public class AttributeVerificationConfig {
   public static AttributeVerificationConfig from(Map<String, Object> details) {
     if (details == null || (!details.containsKey("conditions") && !details.containsKey("fields"))) {
       return invalid("neither conditions nor fields is configured.");
+    }
+    if (details.containsKey("conditions") && details.containsKey("fields")) {
+      return invalid(
+          "conditions and fields cannot both be set in one interaction; use two interactions.");
+    }
+    if (details.containsKey("fields") && details.containsKey("error")) {
+      return invalid("error applies to conditions only.");
     }
 
     AuthenticationResultConditionConfig conditions = new AuthenticationResultConditionConfig();
