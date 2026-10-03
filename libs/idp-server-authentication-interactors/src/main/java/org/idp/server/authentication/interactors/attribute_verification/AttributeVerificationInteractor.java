@@ -16,6 +16,8 @@
 
 package org.idp.server.authentication.interactors.attribute_verification;
 
+import static org.idp.server.authentication.interactors.attribute_verification.AttributeVerificationRejection.*;
+
 import java.util.Map;
 import org.idp.server.core.openid.authentication.*;
 import org.idp.server.core.openid.authentication.config.AuthenticationConfiguration;
@@ -73,14 +75,14 @@ public class AttributeVerificationInteractor implements AuthenticationInteractor
   static final String INTERACTION_FIELD = "interaction";
 
   AuthenticationConfigurationQueryRepository configurationQueryRepository;
-  CacheStore cacheStore;
+  AttributeVerificationAttempts attempts;
   LoggerWrapper log = LoggerWrapper.getLogger(AttributeVerificationInteractor.class);
 
   public AttributeVerificationInteractor(
       AuthenticationConfigurationQueryRepository configurationQueryRepository,
       CacheStore cacheStore) {
     this.configurationQueryRepository = configurationQueryRepository;
-    this.cacheStore = cacheStore;
+    this.attempts = new AttributeVerificationAttempts(cacheStore);
   }
 
   @Override
@@ -108,7 +110,7 @@ public class AttributeVerificationInteractor implements AuthenticationInteractor
       UserQueryRepository userQueryRepository) {
 
     if (!transaction.hasTrustedUser()) {
-      return userNotIdentified(type);
+      return reject(USER_NOT_IDENTIFIED, type, null, null);
     }
     User user = transaction.user();
 
@@ -116,14 +118,14 @@ public class AttributeVerificationInteractor implements AuthenticationInteractor
         configurationQueryRepository.find(tenant, CONFIG_KEY);
     if (!configuration.exists()) {
       log.error("Attribute verification is not configured for this tenant.");
-      return notConfigured(type, user);
+      return reject(NOT_CONFIGURED, type, user, null);
     }
 
     String interaction = request.optValueAsString(INTERACTION_FIELD, "");
     AuthenticationInteractionConfig interactionConfig =
         interaction.isEmpty() ? null : configuration.getAuthenticationConfig(interaction);
     if (interactionConfig == null) {
-      return unknownInteraction(type, user);
+      return reject(UNKNOWN_INTERACTION, type, user, interaction);
     }
 
     AttributeVerificationConfig config =
@@ -133,21 +135,29 @@ public class AttributeVerificationInteractor implements AuthenticationInteractor
           "Attribute verification interaction {} is not configured correctly: {}",
           interaction,
           config.invalidReason());
-      return named(notConfigured(type, user), interaction);
+      return reject(NOT_CONFIGURED, type, user, interaction);
     }
 
-    // A malformed request is a fault in the caller, not a guess: refused before anything is
-    // counted, and left unnamed so it does not reach this interaction's breakdown either.
     if (config.hasFields() && hasNonStringInput(config, request)) {
-      return invalidInput(type, user);
+      return reject(INVALID_INPUT, type, user, interaction);
     }
 
-    AuthenticationInteractionRequestResult rejected =
-        config.hasConditions()
-            ? checkConditions(transaction, type, user, config)
-            : verifyFields(tenant, transaction, type, request, user, interaction, config);
-    if (rejected != null) {
-      return named(rejected, interaction);
+    if (config.hasConditions()) {
+      if (!MfaConditionEvaluator.isSatisfied(
+          config.conditions(), transaction.interactionResults(), user)) {
+        log.info("Attribute conditions did not hold. sub={}", user.sub());
+        return CONDITION_NOT_SATISFIED.toResult(
+            type, method(), user, interaction, config.conditionError());
+      }
+    } else {
+      if (attempts.exhausted(tenant, transaction, type, user, interaction, config)) {
+        return reject(TOO_MANY_ATTEMPTS, type, user, interaction);
+      }
+      if (!allMatch(config, request, new VerifiableUserAttributes(user))) {
+        log.info("Attribute verification did not match. sub={}", user.sub());
+        return reject(MISMATCH, type, user, interaction);
+      }
+      attempts.clear(tenant, user, interaction);
     }
 
     AuthenticationInteractionRequestResult success =
@@ -159,58 +169,16 @@ public class AttributeVerificationInteractor implements AuthenticationInteractor
             user,
             Map.of(),
             DefaultSecurityEventType.attribute_verification_success);
-    return named(success, interaction);
+    success.setInteractionName(interaction);
+    return success;
   }
 
-  private static AuthenticationInteractionRequestResult named(
-      AuthenticationInteractionRequestResult result, String name) {
-    result.setInteractionName(name);
-    return result;
-  }
-
-  /**
-   * Checks the account against the conditions. Nothing is entered, so nothing is guessed, and a
-   * failure is not counted against any attempt limit.
-   *
-   * @return the rejection, or null when the conditions hold
-   */
-  private AuthenticationInteractionRequestResult checkConditions(
-      AuthenticationTransaction transaction,
+  private AuthenticationInteractionRequestResult reject(
+      AttributeVerificationRejection rejection,
       AuthenticationInteractionType type,
       User user,
-      AttributeVerificationConfig config) {
-    if (MfaConditionEvaluator.isSatisfied(
-        config.conditions(), transaction.interactionResults(), user)) {
-      return null;
-    }
-    log.info("Attribute conditions did not hold. sub={}", user.sub());
-    return conditionNotSatisfied(type, user, config.conditionError());
-  }
-
-  /**
-   * Compares the entered values, within the attempt limits.
-   *
-   * @return the rejection, or null when every field matched
-   */
-  private AuthenticationInteractionRequestResult verifyFields(
-      Tenant tenant,
-      AuthenticationTransaction transaction,
-      AuthenticationInteractionType type,
-      AuthenticationInteractionRequest request,
-      User user,
-      String interaction,
-      AttributeVerificationConfig config) {
-    String attemptKey = attemptKey(tenant, user, interaction);
-    if (exhaustedInTransaction(transaction, type, interaction, config)
-        || exhaustedForUser(attemptKey, config)) {
-      return tooManyAttempts(type, user);
-    }
-    if (!allMatch(config, request, new VerifiableUserAttributes(user))) {
-      log.info("Attribute verification did not match. sub={}", user.sub());
-      return mismatch(type, user);
-    }
-    cacheStore.delete(attemptKey);
-    return null;
+      String interaction) {
+    return rejection.toResult(type, method(), user, interaction);
   }
 
   /** Whether any configured input arrived as something other than a string. */
@@ -227,7 +195,7 @@ public class AttributeVerificationInteractor implements AuthenticationInteractor
    * Every field is compared, even after one has failed, so the time taken does not say how many of
    * them were right.
    */
-  private boolean allMatch(
+  private static boolean allMatch(
       AttributeVerificationConfig config,
       AuthenticationInteractionRequest request,
       VerifiableUserAttributes attributes) {
@@ -238,138 +206,5 @@ public class AttributeVerificationInteractor implements AuthenticationInteractor
       matched &= field.matches(submitted, registered);
     }
     return matched;
-  }
-
-  /**
-   * Failed guesses already recorded on this transaction for this interaction. Read from the
-   * database, not the cache.
-   */
-  private boolean exhaustedInTransaction(
-      AuthenticationTransaction transaction,
-      AuthenticationInteractionType type,
-      String interaction,
-      AttributeVerificationConfig config) {
-    AuthenticationInteractionResults results = transaction.interactionResults();
-    if (results == null || !results.contains(type.name())) {
-      return false;
-    }
-    AuthenticationInteractionResult recorded = results.get(type.name());
-    if (!recorded.hasInteractions()) {
-      return false;
-    }
-    AuthenticationInteractionResult byInteraction = recorded.interactions().get(interaction);
-    return byInteraction != null && byInteraction.failureCount() >= config.maxAttempts();
-  }
-
-  /**
-   * Counts this attempt against the user, across authorization requests. Counted before the
-   * comparison, so concurrent attempts cannot all slip under the limit; a match clears it.
-   */
-  private boolean exhaustedForUser(String attemptKey, AttributeVerificationConfig config) {
-    long attempts = cacheStore.increment(attemptKey, config.lockoutSeconds());
-    return attempts > config.maxAttempts();
-  }
-
-  private static String attemptKey(Tenant tenant, User user, String interaction) {
-    return String.format(
-        "attribute_verification_attempt:%s:%s:%s",
-        tenant.identifierValue(), user.sub(), interaction);
-  }
-
-  private AuthenticationInteractionRequestResult userNotIdentified(
-      AuthenticationInteractionType type) {
-    return AuthenticationInteractionRequestResult.clientError(
-        Map.of(
-            "error", "invalid_request",
-            "error_description", "attribute verification requires an identified user."),
-        type,
-        operationType(),
-        method(),
-        DefaultSecurityEventType.attribute_verification_failure);
-  }
-
-  private AuthenticationInteractionRequestResult unknownInteraction(
-      AuthenticationInteractionType type, User user) {
-    return AuthenticationInteractionRequestResult.clientError(
-        Map.of(
-            "error", "invalid_request",
-            "error_description", "interaction is missing or not configured."),
-        type,
-        operationType(),
-        method(),
-        user,
-        DefaultSecurityEventType.attribute_verification_failure);
-  }
-
-  private AuthenticationInteractionRequestResult invalidInput(
-      AuthenticationInteractionType type, User user) {
-    return AuthenticationInteractionRequestResult.clientError(
-        Map.of(
-            "error", "invalid_request",
-            "error_description", "each input must be sent as a string."),
-        type,
-        operationType(),
-        method(),
-        user,
-        DefaultSecurityEventType.attribute_verification_failure);
-  }
-
-  private AuthenticationInteractionRequestResult notConfigured(
-      AuthenticationInteractionType type, User user) {
-    return AuthenticationInteractionRequestResult.serverError(
-        Map.of(
-            "error", "server_error",
-            "error_description", "attribute verification is not configured."),
-        type,
-        operationType(),
-        method(),
-        user,
-        DefaultSecurityEventType.attribute_verification_failure);
-  }
-
-  /**
-   * The account is not what this step requires — not identity-verified, say. The error is the
-   * tenant's, so the authorization view can tell this apart and send the end-user where they can do
-   * something about it.
-   */
-  private AuthenticationInteractionRequestResult conditionNotSatisfied(
-      AuthenticationInteractionType type, User user, String error) {
-    return AuthenticationInteractionRequestResult.clientError(
-        Map.of(
-            "error",
-            error,
-            "error_description",
-            "the account does not meet the conditions for this step."),
-        type,
-        operationType(),
-        method(),
-        user,
-        DefaultSecurityEventType.attribute_verification_failure);
-  }
-
-  private AuthenticationInteractionRequestResult tooManyAttempts(
-      AuthenticationInteractionType type, User user) {
-    return AuthenticationInteractionRequestResult.clientError(
-        Map.of(
-            "error", "too_many_attempts",
-            "error_description", "Too many failed attempts. Please try again later."),
-        type,
-        operationType(),
-        method(),
-        user,
-        DefaultSecurityEventType.attribute_verification_failure);
-  }
-
-  private AuthenticationInteractionRequestResult mismatch(
-      AuthenticationInteractionType type, User user) {
-    return AuthenticationInteractionRequestResult.clientError(
-        Map.of(
-            "error", "attribute_mismatch",
-            "error_description", "the submitted values do not match the registered attributes."),
-        type,
-        operationType(),
-        method(),
-        user,
-        DefaultSecurityEventType.attribute_verification_failure);
   }
 }
