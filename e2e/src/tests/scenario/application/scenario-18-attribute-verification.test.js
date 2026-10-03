@@ -473,6 +473,32 @@ describe("Authentication: attribute verification (#1907)", () => {
     }
   });
 
+  it("tells the view, in view-data, what each named interaction needs", async () => {
+    const authId = await startAuthorization();
+
+    const response = await get({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/view-data`,
+      headers: {},
+    });
+    expect(response.status).toBe(200);
+    const interactions =
+      response.data.authentication_step_hints["attribute-verification"]
+        .interactions;
+    expect(interactions["identity-verified"]).toEqual({
+      kind: "conditions",
+      inputs: [],
+    });
+    expect(interactions.kba.kind).toBe("fields");
+    expect(interactions.kba.inputs.map((input) => input.input)).toEqual([
+      "birthdate",
+      "phone_last4",
+    ]);
+    // Settings only: nothing registered for any user is in the hints.
+    expect(
+      JSON.stringify(response.data.authentication_step_hints)
+    ).not.toContain("2000-01-05");
+  });
+
   it("is refused before an earlier step has established the user", async () => {
     const authId = await startAuthorization();
 

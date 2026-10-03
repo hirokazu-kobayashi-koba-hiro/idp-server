@@ -16,9 +16,12 @@
 
 package org.idp.server.core.openid.authentication;
 
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.openid.authentication.exception.AuthenticationInteractorNotFoundException;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class AuthenticationInteractors {
 
@@ -31,6 +34,24 @@ public class AuthenticationInteractors {
 
   public boolean contains(AuthenticationInteractionType type) {
     return values.containsKey(type);
+  }
+
+  /**
+   * The view hints of the interactors behind {@code methods}, keyed by method. Methods with no
+   * hints are left out, so the view only finds a key where there is something to read.
+   */
+  public Map<String, Map<String, Object>> viewHints(Tenant tenant, Collection<String> methods) {
+    Map<String, Map<String, Object>> hints = new HashMap<>();
+    for (AuthenticationInteractor interactor : values.values()) {
+      if (!methods.contains(interactor.method()) || hints.containsKey(interactor.method())) {
+        continue;
+      }
+      Map<String, Object> interactorHints = interactor.viewHints(tenant);
+      if (interactorHints != null && !interactorHints.isEmpty()) {
+        hints.put(interactor.method(), interactorHints);
+      }
+    }
+    return hints;
   }
 
   public AuthenticationInteractor get(AuthenticationInteractionType type) {

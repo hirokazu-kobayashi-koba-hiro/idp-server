@@ -429,4 +429,25 @@ class AttributeVerificationInteractorTest {
     assertTrue(cacheStore.counters.isEmpty());
     assertFalse(transaction.interactionResults().get("attribute-verification").hasInteractions());
   }
+
+  @Test
+  @DisplayName("view hints describe each interaction by name: what kind it is and what to ask for")
+  void viewHints() {
+    @SuppressWarnings("unchecked")
+    Map<String, Map<String, Object>> interactions =
+        (Map<String, Map<String, Object>>) interactor.viewHints(tenant()).get("interactions");
+
+    assertEquals("conditions", interactions.get("identity-verified").get("kind"));
+    assertEquals(List.of(), interactions.get("identity-verified").get("inputs"));
+
+    assertEquals("fields", interactions.get("kba").get("kind"));
+    @SuppressWarnings("unchecked")
+    List<Map<String, Object>> inputs =
+        (List<Map<String, Object>>) interactions.get("kba").get("inputs");
+    assertEquals(2, inputs.size());
+    assertEquals("phone_last4", inputs.get(1).get("input"));
+    assertEquals("phone_number", inputs.get(1).get("user_attribute"));
+    assertEquals("digits", inputs.get(1).get("normalize"));
+    assertEquals(4, inputs.get(1).get("suffix_length"));
+  }
 }
