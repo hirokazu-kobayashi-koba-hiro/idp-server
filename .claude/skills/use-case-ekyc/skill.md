@@ -257,5 +257,6 @@ description: 身元確認/eKYCユースケースの設定ガイド。外部eKYC�
 - `documentation/docs/content_05_how-to/phase-4-extensions/identity-verification/02-application.md`
 - `documentation/docs/content_05_how-to/phase-4-extensions/identity-verification/03-registration.md`
 - `documentation/docs/content_02_quickstart/quickstart-07-ekyc.md`
+- スキル `use-case-attribute-verification` - 身元確認が済んでいない利用者を、ログインの直後に止めて案内する（`$.user.status` の条件）
 
 $ARGUMENTS
