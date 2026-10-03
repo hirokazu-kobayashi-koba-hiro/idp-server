@@ -19,6 +19,7 @@ ALL_USE_CASES=(
   passwordless-fido2
   ekyc
   third-party
+  attribute-verification
 )
 
 # Parse arguments: use specified use cases or all

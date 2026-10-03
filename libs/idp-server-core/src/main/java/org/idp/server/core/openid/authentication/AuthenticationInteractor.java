@@ -16,6 +16,7 @@
 
 package org.idp.server.core.openid.authentication;
 
+import java.util.Map;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
@@ -42,6 +43,17 @@ public interface AuthenticationInteractor {
   }
 
   String method();
+
+  /**
+   * What the authorization view needs, beyond the policy, to render this step — the inputs to ask
+   * for, say. Returned in view-data under {@code authentication_step_hints.<method>}.
+   *
+   * <p>Only settings the end-user is about to be asked for anyway belong here; never a registered
+   * value or anything secret. Empty by default: most steps are fully described by the policy.
+   */
+  default Map<String, Object> viewHints(Tenant tenant) {
+    return Map.of();
+  }
 
   AuthenticationInteractionRequestResult interact(
       Tenant tenant,

@@ -1,0 +1,26 @@
+[
+  {
+    "sub": "77777777-0009-7777-7777-777777777777",
+    "provider_id": "idp-server",
+    "name": "Verified User",
+    "preferred_username": "verified@attr-verify.example.com",
+    "email": "verified@attr-verify.example.com",
+    "email_verified": true,
+    "birthdate": "1990-04-01",
+    "phone_number": "090-1234-5678",
+    "raw_password": "VerifiedPass1!",
+    "status_after_creation": "IDENTITY_VERIFIED"
+  },
+  {
+    "sub": "77777777-0010-7777-7777-777777777777",
+    "provider_id": "idp-server",
+    "name": "Unverified User",
+    "preferred_username": "unverified@attr-verify.example.com",
+    "email": "unverified@attr-verify.example.com",
+    "email_verified": true,
+    "birthdate": "1990-04-01",
+    "phone_number": "090-1234-5678",
+    "raw_password": "UnverifiedPass1!",
+    "status_after_creation": "REGISTERED"
+  }
+]

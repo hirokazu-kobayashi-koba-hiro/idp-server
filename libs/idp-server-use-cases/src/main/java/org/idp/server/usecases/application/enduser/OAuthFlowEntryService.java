@@ -18,9 +18,11 @@ package org.idp.server.usecases.application.enduser;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import org.idp.server.core.openid.authentication.AuthSessionId;
 import org.idp.server.core.openid.authentication.Authentication;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionRequest;
@@ -258,6 +260,9 @@ public class OAuthFlowEntryService
     AuthenticationPolicy authenticationPolicy = authenticationTransaction.authenticationPolicy();
     Map<String, Object> additionalViewData = new HashMap<>();
     additionalViewData.put("authentication_policy", authenticationPolicy.toMap());
+    additionalViewData.put(
+        "authentication_step_hints",
+        authenticationInteractors.viewHints(tenant, methodsOf(authenticationPolicy)));
 
     // The session the view may offer to continue with
     OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
@@ -1063,6 +1068,15 @@ public class OAuthFlowEntryService
     if (changed != null) {
       authenticationTransactionCommandRepository.update(tenant, changed);
     }
+  }
+
+  /** The methods a policy can ask for: its steps and anything else it makes available. */
+  private static Set<String> methodsOf(AuthenticationPolicy authenticationPolicy) {
+    Set<String> methods = new HashSet<>(authenticationPolicy.availableMethods());
+    authenticationPolicy
+        .stepDefinitions()
+        .forEach(step -> methods.add(step.authenticationMethod()));
+    return methods;
   }
 
   private static String sessionIdOf(OPSession opSession) {

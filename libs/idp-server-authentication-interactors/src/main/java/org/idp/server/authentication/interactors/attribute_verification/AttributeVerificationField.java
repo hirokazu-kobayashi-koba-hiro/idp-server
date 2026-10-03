@@ -18,6 +18,8 @@ package org.idp.server.authentication.interactors.attribute_verification;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * One item of an attribute verification: which request field holds the end-user's answer, which
@@ -46,6 +48,19 @@ public class AttributeVerificationField {
   /** The registered attribute it is compared against (see {@link VerifiableUserAttributes}). */
   public String userAttribute() {
     return userAttribute;
+  }
+
+  /**
+   * How the authorization view should ask for this field. Only settings: which input, what it is
+   * compared against and in what form — never the registered value.
+   */
+  public Map<String, Object> toViewHint() {
+    Map<String, Object> hint = new HashMap<>();
+    hint.put("input", input);
+    hint.put("user_attribute", userAttribute);
+    hint.put("normalize", normalization.value());
+    hint.put("suffix_length", suffixLength);
+    return hint;
   }
 
   /**
