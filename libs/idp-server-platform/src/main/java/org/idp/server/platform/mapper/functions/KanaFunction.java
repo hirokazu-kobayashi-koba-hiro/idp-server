@@ -92,6 +92,8 @@ public class KanaFunction implements ValueFunction {
 
   @Override
   public Object apply(Object input, Map<String, Object> args) {
+    // Read before the input is looked at, so a wrong target is reported whatever the input is.
+    boolean toKatakana = resolveToKatakana(args);
     if (input == null) {
       return null;
     }
@@ -99,7 +101,6 @@ public class KanaFunction implements ValueFunction {
     if (value.isEmpty()) {
       return value;
     }
-    boolean toKatakana = resolveToKatakana(args);
     StringBuilder converted = new StringBuilder(value.length());
     value
         .codePoints()

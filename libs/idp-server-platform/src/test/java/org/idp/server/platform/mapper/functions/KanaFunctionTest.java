@@ -66,8 +66,10 @@ public class KanaFunctionTest {
   }
 
   @Test
-  void unknownTargetIsAnError() {
-    assertThrows(
-        IllegalArgumentException.class, () -> function.apply("やまだ", Map.of("to", "romaji")));
+  void unknownTargetIsAnErrorWhateverTheInput() {
+    for (Object input : new Object[] {"やまだ", "", null}) {
+      assertThrows(
+          IllegalArgumentException.class, () -> function.apply(input, Map.of("to", "romaji")));
+    }
   }
 }
