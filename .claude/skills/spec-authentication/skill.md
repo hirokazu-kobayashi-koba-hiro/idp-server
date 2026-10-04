@@ -230,6 +230,7 @@ SPA → idp-server（request） → 外部 IdP 認可エンドポイント
 | `DENY` | 認証拒否 |
 | `DE_REGISTRATION` | 登録解除 |
 | `NO_ACTION` | 操作なし |
+| `VERIFICATION` | 属性照合（`attribute-verification`）。認証要素に数えない（`amr` に入らず、`provesPossession()` も false） |
 | `UNKNOWN` | 不明 |
 
 ## 認証パターンの分類
@@ -252,6 +253,7 @@ authentication/interactors/
 ├── initial_registration/ # 初期登録
 ├── password/          # パスワード
 ├── plugin/            # Plugin 定義
+├── attribute_verification/ # 属性照合（生年月日等を登録値と照合。Issue #1907）
 ├── sms/               # SMS OTP
 └── webauthn/          # WebAuthn/FIDO2
 ```
