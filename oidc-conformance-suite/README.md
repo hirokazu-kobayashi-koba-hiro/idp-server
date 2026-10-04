@@ -28,6 +28,7 @@ cross-site テナント）。**2 通り目も実測済みで、いずれも FAIL
 | スイート | 2 通り目 | 結果 |
 |---|---|---|
 | fapi1-advanced | `client_auth_type=tls_client_auth` | 43 PASSED / 3 REVIEW / 2 WARNING / 1 SKIPPED |
+| fapi1-advanced | `fapi_auth_request_method=by_value`（`private_key_jwt` / `tls_client_auth`） | 39 PASSED / 5 REVIEW / 2 WARNING ／ 28 PASSED / 5 REVIEW / 2 WARNING / 1 SKIPPED |
 | fapi-ciba | `client_auth_type=tls_client_auth` | 31 PASSED / 1 WARNING / 1 SKIPPED |
 | fapi2 | `sender_constrain=mtls` | 31 PASSED / 3 REVIEW / 3 WARNING |
 | oidcc | context-path テナント | 29 PASSED / 3 REVIEW / 3 WARNING |
