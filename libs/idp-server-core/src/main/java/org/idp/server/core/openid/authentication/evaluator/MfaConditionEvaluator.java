@@ -23,6 +23,7 @@ import org.idp.server.core.openid.authentication.AuthenticationInteractionResult
 import org.idp.server.core.openid.authentication.policy.AuthenticationResultCondition;
 import org.idp.server.core.openid.authentication.policy.AuthenticationResultConditionConfig;
 import org.idp.server.core.openid.identity.User;
+import org.idp.server.platform.condition.ConditionOperation;
 import org.idp.server.platform.condition.ConditionOperationEvaluator;
 import org.idp.server.platform.condition.ConditionTransitionResult;
 import org.idp.server.platform.json.JsonNodeWrapper;
@@ -44,11 +45,23 @@ public class MfaConditionEvaluator {
       AuthenticationResultConditionConfig config,
       AuthenticationInteractionResults results,
       User user) {
+    return isSuccessSatisfied(config, results, user, Map.of());
+  }
+
+  /**
+   * Issue #1907: also exposes {@code request} as {@code $.request.*} (see {@link
+   * PolicyEvaluationRequestContextCreator}).
+   */
+  public static boolean isSuccessSatisfied(
+      AuthenticationResultConditionConfig config,
+      AuthenticationInteractionResults results,
+      User user,
+      Map<String, Object> request) {
     if (!config.exists() || !results.exists()) {
       return false;
     }
 
-    ConditionTransitionResult result = isAnySatisfied(config, buildContext(results, user));
+    ConditionTransitionResult result = isAnySatisfied(config, buildContext(results, user, request));
 
     return result.isSuccess();
   }
@@ -66,6 +79,15 @@ public class MfaConditionEvaluator {
       AuthenticationResultConditionConfig config,
       AuthenticationInteractionResults results,
       User user) {
+    return isFailureSatisfied(config, results, user, Map.of());
+  }
+
+  /** Issue #1907: also exposes {@code request} as {@code $.request.*}. */
+  public static boolean isFailureSatisfied(
+      AuthenticationResultConditionConfig config,
+      AuthenticationInteractionResults results,
+      User user,
+      Map<String, Object> request) {
     if (!config.exists() || !results.exists()) {
       return false;
     }
@@ -74,7 +96,7 @@ public class MfaConditionEvaluator {
       return true;
     }
 
-    ConditionTransitionResult result = isAnySatisfied(config, buildContext(results, user));
+    ConditionTransitionResult result = isAnySatisfied(config, buildContext(results, user, request));
 
     return result.isSuccess();
   }
@@ -91,11 +113,20 @@ public class MfaConditionEvaluator {
       AuthenticationResultConditionConfig config,
       AuthenticationInteractionResults results,
       User user) {
+    return isLockedSatisfied(config, results, user, Map.of());
+  }
+
+  /** Issue #1907: also exposes {@code request} as {@code $.request.*}. */
+  public static boolean isLockedSatisfied(
+      AuthenticationResultConditionConfig config,
+      AuthenticationInteractionResults results,
+      User user,
+      Map<String, Object> request) {
     if (!config.exists() || !results.exists()) {
       return false;
     }
 
-    ConditionTransitionResult result = isAnySatisfied(config, buildContext(results, user));
+    ConditionTransitionResult result = isAnySatisfied(config, buildContext(results, user, request));
 
     return result.isSuccess();
   }
@@ -110,12 +141,21 @@ public class MfaConditionEvaluator {
       AuthenticationResultConditionConfig config,
       AuthenticationInteractionResults results,
       User user) {
+    return isSatisfied(config, results, user, Map.of());
+  }
+
+  /** Issue #1907: also exposes {@code request} as {@code $.request.*}. */
+  public static boolean isSatisfied(
+      AuthenticationResultConditionConfig config,
+      AuthenticationInteractionResults results,
+      User user,
+      Map<String, Object> request) {
     if (!config.exists()) {
       return false;
     }
     AuthenticationInteractionResults evaluated =
         results != null ? results : new AuthenticationInteractionResults();
-    return isAnySatisfied(config, buildContext(evaluated, user)).isSuccess();
+    return isAnySatisfied(config, buildContext(evaluated, user, request)).isSuccess();
   }
 
   /**
@@ -124,9 +164,12 @@ public class MfaConditionEvaluator {
    * is added under the {@code user} key so conditions can reference {@code $.user.*} (Issue #1501).
    */
   private static Map<String, Object> buildContext(
-      AuthenticationInteractionResults results, User user) {
+      AuthenticationInteractionResults results, User user, Map<String, Object> request) {
     Map<String, Object> context = new HashMap<>(results.toMapAsObject());
     context.put("user", PolicyEvaluationUserContextCreator.create(user));
+    if (request != null && !request.isEmpty()) {
+      context.put("request", request);
+    }
     return context;
   }
 
@@ -156,11 +199,36 @@ public class MfaConditionEvaluator {
 
       Object actualValue = jsonPathWrapper.readRaw(resultCondition.path());
 
+      if (resultCondition.hasValuePath()) {
+        Object expectedValue = jsonPathWrapper.readRaw(resultCondition.valuePath());
+        if (!isPathComparisonSatisfied(actualValue, resultCondition.operation(), expectedValue)) {
+          return false;
+        }
+        continue;
+      }
+
       if (!ConditionOperationEvaluator.evaluate(
           actualValue, resultCondition.operation(), resultCondition.value())) {
         return false;
       }
     }
     return true;
+  }
+
+  /**
+   * Issue #1907: compares two values of the context ({@code path} and {@code value_path}). Only
+   * {@code eq} and {@code ne}; anything else does not hold.
+   *
+   * <p>Two missing values are not equal. Plain {@code eq} counts them equal, which would let a
+   * request that names no value pass against a user who has none: {@code eq} holds only when both
+   * values exist and are equal, and {@code ne} is its negation.
+   */
+  static boolean isPathComparisonSatisfied(Object actual, String operation, Object expected) {
+    boolean equal = actual != null && expected != null && actual.equals(expected);
+    return switch (ConditionOperation.from(operation)) {
+      case EQ -> equal;
+      case NE -> !equal;
+      default -> false;
+    };
   }
 }

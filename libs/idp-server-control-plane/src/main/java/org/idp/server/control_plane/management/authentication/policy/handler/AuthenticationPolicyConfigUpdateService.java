@@ -22,6 +22,7 @@ import org.idp.server.control_plane.management.authentication.policy.Authenticat
 import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigManagementResponse;
 import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigManagementStatus;
 import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigUpdateRequest;
+import org.idp.server.control_plane.management.authentication.policy.verifier.AuthenticationPolicyConfigVerifier;
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfiguration;
 import org.idp.server.core.openid.authentication.repository.AuthenticationPolicyConfigurationCommandRepository;
@@ -77,6 +78,7 @@ public class AuthenticationPolicyConfigUpdateService
 
     // Build updated configuration
     AuthenticationPolicyConfiguration after = update(before, request);
+    new AuthenticationPolicyConfigVerifier().verify(after);
 
     // Update context builder with before and after states
     contextBuilder.withBefore(before).withAfter(after);

@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.authentication.acr.AcrResolver;
 import org.idp.server.core.openid.authentication.evaluator.MfaConditionEvaluator;
+import org.idp.server.core.openid.authentication.evaluator.PolicyEvaluationRequestContextCreator;
 import org.idp.server.core.openid.authentication.loa.LoaDeniedScopeResolver;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
 import org.idp.server.core.openid.authentication.policy.AuthenticationResultConditionConfig;
@@ -364,7 +365,7 @@ public class AuthenticationTransaction {
       AuthenticationResultConditionConfig authenticationResultConditionConfig =
           authenticationPolicy.successConditions();
       return MfaConditionEvaluator.isSuccessSatisfied(
-          authenticationResultConditionConfig, interactionResults, user());
+          authenticationResultConditionConfig, interactionResults, user(), requestForPolicy());
     }
     return interactionResults.containsAnySuccess();
   }
@@ -374,7 +375,7 @@ public class AuthenticationTransaction {
       AuthenticationResultConditionConfig authenticationResultConditionConfig =
           authenticationPolicy.failureConditions();
       return MfaConditionEvaluator.isFailureSatisfied(
-          authenticationResultConditionConfig, interactionResults, user());
+          authenticationResultConditionConfig, interactionResults, user(), requestForPolicy());
     }
     return interactionResults.containsDenyInteraction();
   }
@@ -384,9 +385,17 @@ public class AuthenticationTransaction {
       AuthenticationResultConditionConfig authenticationResultConditionConfig =
           authenticationPolicy.lockConditions();
       return MfaConditionEvaluator.isLockedSatisfied(
-          authenticationResultConditionConfig, interactionResults, user());
+          authenticationResultConditionConfig, interactionResults, user(), requestForPolicy());
     }
     return false;
+  }
+
+  /**
+   * Issue #1907: {@code $.request.*} for the policy conditions — the custom parameters of the
+   * authorization request from the sources the policy trusts.
+   */
+  public Map<String, Object> requestForPolicy() {
+    return PolicyEvaluationRequestContextCreator.create(request.context(), authenticationPolicy);
   }
 
   public boolean isComplete() {

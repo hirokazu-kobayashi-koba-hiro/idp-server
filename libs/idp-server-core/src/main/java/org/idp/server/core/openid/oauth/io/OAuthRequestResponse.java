@@ -43,6 +43,7 @@ public class OAuthRequestResponse {
   String redirectUri;
   String error;
   String errorDescription;
+  boolean requestObjectSigned;
 
   /**
    * Hands {@code value} to the authorization view in the fragment of the URL it is sent to.
@@ -69,6 +70,8 @@ public class OAuthRequestResponse {
     this.clientConfiguration = context.clientConfiguration();
     this.contents = Map.of("id", context.identifier().value());
     this.frontUrl = frontUrl;
+    this.requestObjectSigned =
+        context.joseContext() != null && context.joseContext().hasJsonWebSignature();
   }
 
   public OAuthRequestResponse(
@@ -159,6 +162,15 @@ public class OAuthRequestResponse {
 
   public boolean isNoInteractionOK() {
     return status.isNoInteractionOK();
+  }
+
+  /**
+   * @return whether this request came with a request object signed by the client. Known only while
+   *     the authorization endpoint is handling it; a pushed authorization request read back from
+   *     storage answers false.
+   */
+  public boolean isRequestObjectSigned() {
+    return requestObjectSigned;
   }
 
   public boolean isPushedRequest() {

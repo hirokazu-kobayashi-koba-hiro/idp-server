@@ -111,7 +111,8 @@ public class AttributeVerificationConfig {
     if (details.containsKey("conditions")) {
       conditions = parseConditions(details.get("conditions"));
       if (conditions == null) {
-        return invalid("conditions must be an any_of of non-empty groups of known operations.");
+        return invalid(
+            "conditions must be an any_of of non-empty groups of known operations, with value_path only on eq / ne and never with value.");
       }
     }
     Object rawError = details.getOrDefault("error", DEFAULT_CONDITION_ERROR);
@@ -167,6 +168,9 @@ public class AttributeVerificationConfig {
           return null;
         }
       }
+    }
+    if (!config.valuePathViolations().isEmpty()) {
+      return null;
     }
     return config;
   }

@@ -27,7 +27,7 @@ description: 属性照合ユースケースの設定ガイド。ログインの�
 | # | 決めること | 選択肢 | 影響する設定 |
 |---|-----------|--------|-------------|
 | 1 | 何を確認するか | アカウントの状態（条件） / 入力の照合 / 両方 | 認証設定 `interactions` の数と種類 |
-| 2 | 状態の条件 | status / roles / custom_properties 等 | `conditions`（認証ポリシーと同じ条件式） |
+| 2 | 状態の条件 | status / roles / custom_properties 等。RP が渡した値（会員番号等）との一致 | `conditions`（認証ポリシーと同じ条件式）。RP の値は `$.request.custom_params.*` と `value_path` |
 | 3 | 条件を満たさないときの `error` | 例: `identity_verification_required` | `error`（画面の案内の出し分けに使う） |
 | 4 | 入力させる項目と表記のそろえ方 | 生年月日 / 電話番号（下 N 桁） / 郵便番号 / 氏名 / フリガナ / メール / カスタム属性 | `fields[].user_attribute`, `normalize`（または `functions`）, `suffix_length` |
 | 5 | 試行回数と期間 | 既定 5 回 / 900 秒 | `max_attempts`, `lockout_seconds` |
@@ -159,3 +159,5 @@ ORGANIZER テナントの管理者トークンで、組織レベル API を使�
 - Redis が使えないと利用者単位の上限が効かない。下 4 桁（1 万通り）など候補の少ない項目では `lock_conditions` を前提にする
 - CIBA では `login_hint` で利用者が決まるため、最初のステップにも置ける（その場合も認証は完了しない）
 - `error` は英小文字・数字・`_` のみ
+- RP が渡した値との照合（`$.request.custom_params.<名前>` eq `value_path: $.user.custom_properties.<名前>`）は、信頼する出どころの値しか見えない（ポリシーの `custom_params_trusted_sources`、既定 `pushed` / `request_object`）。クエリだけで渡す RP には PAR か署名つきリクエストオブジェクトを使ってもらう
+- 同じ照合式は認証ポリシーの `success_conditions` にも書く。SSO のセッション再利用ではステップの成功が引き継がれ、`success_conditions` だけで判定されるため

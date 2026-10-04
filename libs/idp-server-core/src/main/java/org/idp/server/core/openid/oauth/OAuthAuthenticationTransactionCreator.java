@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 import org.idp.server.core.openid.authentication.AuthSessionId;
 import org.idp.server.core.openid.authentication.AuthenticationContext;
+import org.idp.server.core.openid.authentication.AuthenticationCustomParams;
 import org.idp.server.core.openid.authentication.AuthenticationRequest;
 import org.idp.server.core.openid.authentication.AuthenticationTransaction;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionAttributes;
@@ -35,6 +36,7 @@ import org.idp.server.core.openid.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
 import org.idp.server.core.openid.oauth.type.StandardAuthFlow;
 import org.idp.server.core.openid.oauth.type.ciba.BindingMessage;
+import org.idp.server.core.openid.oauth.type.oauth.ClientAuthenticationType;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -105,7 +107,8 @@ public class OAuthAuthenticationTransactionCreator {
             authorizationRequest.acrValues(),
             authorizationRequest.scopes(),
             new BindingMessage(),
-            authorizationDetails);
+            authorizationDetails,
+            customParamsOf(requestResponse));
     LocalDateTime createdAt = SystemDateTime.now();
     LocalDateTime expiredAt =
         createdAt.plusSeconds(requestResponse.oauthAuthorizationRequestExpiresIn());
@@ -120,5 +123,21 @@ public class OAuthAuthenticationTransactionCreator {
         context,
         createdAt,
         expiredAt);
+  }
+
+  /**
+   * Issue #1907: the custom parameters, with what each can be trusted as. Decided here, at the
+   * authorization endpoint, because it is the last point where the sources are known. A client with
+   * no registered authentication method is not taken as authenticating.
+   */
+  private static AuthenticationCustomParams customParamsOf(OAuthRequestResponse requestResponse) {
+    String method = requestResponse.clientConfiguration().tokenEndpointAuthMethod();
+    boolean clientAuthenticated =
+        method != null && !method.equals(ClientAuthenticationType.none.name());
+    return AuthenticationCustomParams.of(
+        requestResponse.authorizationRequest().customParams(),
+        requestResponse.isPushedRequest(),
+        clientAuthenticated,
+        requestResponse.isRequestObjectSigned());
   }
 }

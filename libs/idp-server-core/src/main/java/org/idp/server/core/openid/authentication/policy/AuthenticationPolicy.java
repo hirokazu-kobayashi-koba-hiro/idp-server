@@ -18,9 +18,12 @@ package org.idp.server.core.openid.authentication.policy;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
+import org.idp.server.core.openid.oauth.type.oauth.CustomParamSource;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.oauth.type.oauth.Scopes;
 import org.idp.server.core.openid.oauth.type.oidc.AcrValues;
@@ -41,6 +44,16 @@ public class AuthenticationPolicy implements JsonReadable {
       new AuthenticationResultConditionConfig();
   List<AuthenticationStepDefinition> stepDefinitions = new ArrayList<>();
   boolean authSessionBindingRequired = true; // default: enabled for security
+
+  /**
+   * Issue #1907: the sources of custom parameters the conditions may read ({@code
+   * $.request.custom_params.*}). Unset means {@link #DEFAULT_TRUSTED_CUSTOM_PARAM_SOURCES}.
+   */
+  List<String> customParamsTrustedSources;
+
+  /** The sources the end-user cannot change the value through. */
+  public static final List<String> DEFAULT_TRUSTED_CUSTOM_PARAM_SOURCES =
+      List.of(CustomParamSource.PUSHED.value(), CustomParamSource.REQUEST_OBJECT.value());
 
   public AuthenticationPolicy() {}
 
@@ -142,6 +155,51 @@ public class AuthenticationPolicy implements JsonReadable {
     return authSessionBindingRequired;
   }
 
+  public boolean hasCustomParamsTrustedSources() {
+    return customParamsTrustedSources != null;
+  }
+
+  public List<String> customParamsTrustedSources() {
+    return hasCustomParamsTrustedSources()
+        ? customParamsTrustedSources
+        : DEFAULT_TRUSTED_CUSTOM_PARAM_SOURCES;
+  }
+
+  /**
+   * @return the trusted sources. A name that is not a source is left out, so it trusts nothing; the
+   *     management API refuses such a policy.
+   */
+  public Set<CustomParamSource> trustedCustomParamSources() {
+    Set<CustomParamSource> sources = new HashSet<>();
+    for (String name : customParamsTrustedSources()) {
+      CustomParamSource source = CustomParamSource.of(name);
+      if (source != null) {
+        sources.add(source);
+      }
+    }
+    return sources;
+  }
+
+  /**
+   * @return what the management API refuses in this policy (Issue #1907): an unknown name in {@code
+   *     custom_params_trusted_sources}, and a misused {@code value_path} in any condition
+   */
+  public List<String> violations() {
+    List<String> violations = new ArrayList<>();
+    if (hasCustomParamsTrustedSources()) {
+      for (String name : customParamsTrustedSources) {
+        if (CustomParamSource.of(name) == null) {
+          violations.add("custom_params_trusted_sources has an unknown source: " + name);
+        }
+      }
+    }
+    violations.addAll(successConditions.valuePathViolations());
+    violations.addAll(failureConditions.valuePathViolations());
+    violations.addAll(lockConditions.valuePathViolations());
+    violations.addAll(deviceRegistrationConditions.valuePathViolations());
+    return violations;
+  }
+
   public boolean exists() {
     return hasSuccessConditions();
   }
@@ -162,6 +220,8 @@ public class AuthenticationPolicy implements JsonReadable {
       map.put("device_registration_conditions", deviceRegistrationConditions.toMap());
     if (hasStepDefinitions()) map.put("step_definitions", stepDefinitionsAsMap());
     map.put("auth_session_binding_required", authSessionBindingRequired);
+    if (hasCustomParamsTrustedSources())
+      map.put("custom_params_trusted_sources", customParamsTrustedSources);
     return map;
   }
 }

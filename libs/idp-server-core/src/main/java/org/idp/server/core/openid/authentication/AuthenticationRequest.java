@@ -166,7 +166,7 @@ public class AuthenticationRequest {
     if (hasUser()) map.put("user", user.toMinimalizedMap());
     if (hasAuthenticationDevice()) map.put("authentication_device", authenticationDevice.toMap());
     // SECURITY: Only include context when device is authenticated
-    if (isDeviceAuthenticated && hasContext()) map.put("context", context.toMap());
+    if (isDeviceAuthenticated && hasContext()) map.put("context", context.toMapForPublic());
     map.put("created_at", createdAt.toString());
     map.put("expires_at", expiresAt.toString());
     return map;

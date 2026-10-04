@@ -96,6 +96,7 @@
 | `failure_conditions` | ❌ | 失敗条件 |
 | `lock_conditions` | ❌ | ロック条件 |
 | `auth_session_binding_required` | ❌ | セッションバインディング（デフォルト: `true`） |
+| `custom_params_trusted_sources` | ❌ | 条件式から読めるカスタムパラメータの出どころ（デフォルト: `["pushed", "request_object"]`）。[`$.request.*`](#request-custom-params) を参照 |
 
 ---
 
@@ -191,15 +192,25 @@ ACR値と認証方式のマッピング：
 | `exists` / `missing` | 値が存在する / しない | `email_verified exists` |
 | `regex` | 正規表現マッチ | — |
 
+`value` の代わりに `value_path` を書くと、右辺もコンテキストの path から読みます（`eq` / `ne` のみ）。
+どちらかの値が無いとき、`eq` は false、`ne` は true になります（`value` の `eq` は両方 null で true になるのと違います）。
+`value` と `value_path` の両方を書いた条件と、`eq` / `ne` 以外で `value_path` を使った条件は、管理 API が 400 を返します。
+
+```json
+{ "path": "$.request.custom_params.member_no", "operation": "eq",
+  "value_path": "$.user.custom_properties.member_no" }
+```
+
 ### 参照可能なコンテキスト
 
-条件の `path` は2つの名前空間を参照できます（`success_conditions` / `failure_conditions` / `lock_conditions` / `device_registration_conditions` 共通）。
+条件の `path` は次の名前空間を参照できます（`success_conditions` / `failure_conditions` / `lock_conditions` / `device_registration_conditions` 共通）。
 
 | 名前空間 | 内容 | 例 |
 |---------|------|---|
 | `$.<interaction-type>.*` | 各認証方式のインタラクション結果 | `$.password-authentication.success_count` |
 | `$.<interaction-type>.interactions.<interaction>.*` | interaction ごとの内訳（`external-api-authentication` と `attribute-verification` のみ）| `$.external-api-authentication.interactions.risk-check.success_count` |
 | `$.user.*` | 認証対象ユーザーの属性 | `$.user.status`, `$.user.roles` |
+| `$.request.custom_params.*` | 認可リクエストのカスタムパラメータ（信頼する出どころのものだけ） | `$.request.custom_params.member_no` |
 
 #### `interactions.*`（interaction ごとの内訳）
 
@@ -291,6 +302,43 @@ interaction ごとの内訳を使えば、それぞれを名指しで要求で�
 
 - **新規登録フローの同一トランザクションでは `$.user.status` は `INITIALIZED`** です（`REGISTERED` への遷移は authorize 成立時で、`success_conditions` の評価はそれより前に走るため）。「新規 = `INITIALIZED` / 既存 = `REGISTERED`」で分岐できます。
 - challenge 段や user 未解決の段で `$.user.*` を参照する条件は**常に空 = 不成立（fail-closed）**になります。path の typo も同様に静かに不成立になるため、参照キーは上表の allowリストと突き合わせて確認してください（登録時の自動検証は [#1664](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues/1664) で検討中）。
+
+#### `$.request.*`（認可リクエスト） {#request-custom-params}
+
+認可リクエストのカスタムパラメータ（OAuth / OIDC の既知パラメータ以外）を `$.request.custom_params.<名前>` で参照できます。RP が渡した値（例：会員番号）と、ログインした利用者の属性を `value_path` で突き合わせる用途です。
+
+**見えるのは、ポリシーの `custom_params_trusted_sources` に含まれる出どころの値だけ**です。それ以外は値が無いものとして扱います。
+
+| 出どころ | 値 | 既定で信頼 |
+|---------|----|-----------|
+| `pushed` | クライアント認証をした PAR の本文（本文のリクエストオブジェクトを含む） | ✅ |
+| `request_object` | 署名されたリクエストオブジェクトのクレーム | ✅ |
+| `query` | クエリの値。署名の無いリクエストオブジェクトの値と、クライアント認証の無い（公開クライアントの）PAR の値もここに入る | ❌ |
+
+`query` の値は利用者が書き換えられます。照合に使うと、利用者が自分の値に書き換えるだけで通るため、既定では信頼しません。
+
+出どころは認可エンドポイントで決め、認証トランザクションに保存します。リクエストオブジェクトとクエリに同じキーがあるときはリクエストオブジェクトの値を使います（FAPI 1.0 Advanced ではリクエストオブジェクトの値だけ）。
+
+**設定例: RP が渡した会員番号がログインした利用者のものか確かめる**
+
+```json
+{
+  "custom_params_trusted_sources": ["pushed", "request_object"],
+  "success_conditions": {
+    "any_of": [[
+      { "path": "$.password-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 },
+      { "path": "$.request.custom_params.member_no", "type": "string", "operation": "eq",
+        "value_path": "$.user.custom_properties.member_no" }
+    ]]
+  }
+}
+```
+
+:::warning SSO でセッションを再利用するとき
+セッションの再利用（`authorize-with-session`）は `success_conditions` だけで判定し、`$.request.*` は**新しい認可リクエストの値**で評価します。一方、各ステップの成功回数は前のログインのものが引き継がれます。照合を [属性照合の条件のステップ](./authn/attribute-verification.md) だけに書くと、別の会員番号の認可リクエストでもセッションの再利用で通ります。RP ごとに値が変わるなら、同じ式を `success_conditions` にも書いてください。
+:::
+
+型は値そのもので決まります。カスタムパラメータは文字列なので、数値で保存したカスタム属性とは一致しません。
 
 ---
 

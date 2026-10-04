@@ -75,10 +75,31 @@ CIBA では `login_hint` で利用者が決まるため、前の段の成功が�
 
 | 項目 | 内容 | 既定値 |
 |---|---|---|
-| `conditions` | 確認する条件。書き方と参照できるパス（`$.user.*`、各ステップの結果）は認証ポリシーの `success_conditions` と同じ | 必須 |
+| `conditions` | 確認する条件。書き方と参照できるパス（`$.user.*`、`$.request.custom_params.*`、各ステップの結果）、`value_path` は認証ポリシーの `success_conditions` と同じ | 必須 |
 | `error` | 条件を満たさないときに返す `error`。英小文字・数字・`_` のみ | `attribute_condition_not_satisfied` |
 
 入力が無く推測ではないので、条件を満たさなかった回数は試行回数として数えません。
+
+**RP が渡した値との照合**：RP が認可リクエストで渡した値（例：会員番号）が、ログインした利用者のものかを確かめられます。
+`$.request.custom_params.*` に見えるのは、認証ポリシーの `custom_params_trusted_sources` で信頼する出どころの値だけです（既定は PAR とリクエストオブジェクト。[認証ポリシー](../authentication-policy.md#request-custom-params)）。
+
+```json
+"member-match": {
+  "execution": {
+    "details": {
+      "conditions": {
+        "any_of": [[
+          { "path": "$.request.custom_params.member_no", "type": "string", "operation": "eq",
+            "value_path": "$.user.custom_properties.member_no" }
+        ]]
+      },
+      "error": "member_mismatch"
+    }
+  }
+}
+```
+
+SSO でセッションを再利用するときは、このステップの成功が前のログインから引き継がれます。同じ式を認証ポリシーの `success_conditions` にも書いてください。
 
 **入力の照合（`fields`）**
 

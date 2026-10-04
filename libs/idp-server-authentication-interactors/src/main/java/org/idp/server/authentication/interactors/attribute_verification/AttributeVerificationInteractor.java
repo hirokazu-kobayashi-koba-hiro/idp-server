@@ -183,7 +183,10 @@ public class AttributeVerificationInteractor implements AuthenticationInteractor
 
     if (config.hasConditions()) {
       if (!MfaConditionEvaluator.isSatisfied(
-          config.conditions(), transaction.interactionResults(), user)) {
+          config.conditions(),
+          transaction.interactionResults(),
+          user,
+          transaction.requestForPolicy())) {
         log.info("Attribute conditions did not hold. sub={}", user.sub());
         return CONDITION_NOT_SATISFIED.toResult(
             type, method(), user, interaction, config.conditionError());

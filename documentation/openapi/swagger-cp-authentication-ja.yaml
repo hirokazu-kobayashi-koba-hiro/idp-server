@@ -1087,6 +1087,21 @@ components:
             セキュリティ上の理由から、本番環境ではtrueを推奨します。
 
             '
+        custom_params_trusted_sources:
+          type: array
+          items:
+            type: string
+            enum: [pushed, request_object, query]
+          default: [pushed, request_object]
+          description: |
+            条件式の `$.request.custom_params.*` に見せるカスタムパラメータの出どころ（Issue #1907）。
+            それ以外の出どころの値は、値が無いものとして扱う。
+
+            - `pushed`: クライアント認証をした PAR の本文
+            - `request_object`: 署名されたリクエストオブジェクトのクレーム
+            - `query`: クエリの値。署名の無いリクエストオブジェクトと、公開クライアントの PAR の値も含む（利用者が書き換えられる）
+
+            未知の値は 400。
       additionalProperties: false
     AuthenticationPolicyCondition:
       type: object
@@ -1110,14 +1125,46 @@ components:
       additionalProperties: true
     AuthenticationResultConditionConfig:
       type: object
-      description: Authentication result condition configuration
+      description: |
+        条件式。`any_of` の要素（グループ）のどれか 1 つで、グループ内の条件がすべて成り立てば成立する。
+        書き方と参照できるコンテキストは [認証ポリシー設定ガイド](../docs/content_06_developer-guide/05-configuration/authentication-policy.md#success-conditions) を参照。
       properties:
-        conditions:
+        any_of:
           type: array
-          description: List of result conditions
+          description: 条件グループの配列（グループ間は OR）
           items:
-            type: object
-            additionalProperties: true
+            type: array
+            description: 条件の配列（グループ内は AND）
+            items:
+              $ref: '#/components/schemas/AuthenticationResultCondition'
+      additionalProperties: true
+    AuthenticationResultCondition:
+      type: object
+      required:
+      - path
+      - operation
+      properties:
+        path:
+          type: string
+          description: 左辺の JSONPath（`$.<interaction-type>.*` / `$.user.*` / `$.request.custom_params.*`）
+          example: $.password-authentication.success_count
+        type:
+          type: string
+          description: 値の型の目安。評価には使われない（型は値そのもので決まる）
+          example: integer
+        operation:
+          type: string
+          enum: [eq, ne, gt, gte, lt, lte, in, nin, exists, missing, contains, regex]
+        value:
+          description: 右辺の値。`value_path` と同時には書けない
+          example: 1
+        value_path:
+          type: string
+          description: |
+            右辺をコンテキストの JSONPath から読む（Issue #1907）。`eq` / `ne` のみ。
+            どちらかの値が無いとき `eq` は false、`ne` は true。
+            `value` との同時指定、`eq` / `ne` 以外での指定は 400。
+          example: $.user.custom_properties.member_no
       additionalProperties: true
     AuthenticationStepDefinition:
       type: object

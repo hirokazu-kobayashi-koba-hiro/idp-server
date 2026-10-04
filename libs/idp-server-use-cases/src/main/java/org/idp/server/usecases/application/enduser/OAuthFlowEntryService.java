@@ -869,7 +869,10 @@ public class OAuthFlowEntryService
 
     SessionValidationResult validationResult =
         oidcSessionHandler.validateSessionForAuthorization(
-            opSession, authorizationRequest, authenticationTransaction.authenticationPolicy());
+            opSession,
+            authorizationRequest,
+            authenticationTransaction.authenticationPolicy(),
+            authenticationTransaction.requestForPolicy());
 
     if (validationResult.isInvalid()) {
       eventPublisher.publish(

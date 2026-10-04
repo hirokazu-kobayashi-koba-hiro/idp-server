@@ -211,14 +211,16 @@ public class OIDCSessionHandler {
    * @param opSession the OP session (may be null)
    * @param authorizationRequest the authorization request
    * @param authenticationPolicy the authentication policy for the client
+   * @param request {@code $.request.*} for the policy conditions (Issue #1907)
    * @return validation result with error details if invalid
    */
   public SessionValidationResult validateSessionForAuthorization(
       OPSession opSession,
       AuthorizationRequest authorizationRequest,
-      AuthenticationPolicy authenticationPolicy) {
+      AuthenticationPolicy authenticationPolicy,
+      Map<String, Object> request) {
     return sessionVerifier.verifyForAuthorization(
-        opSession, authorizationRequest, authenticationPolicy);
+        opSession, authorizationRequest, authenticationPolicy, request);
   }
 
   /**

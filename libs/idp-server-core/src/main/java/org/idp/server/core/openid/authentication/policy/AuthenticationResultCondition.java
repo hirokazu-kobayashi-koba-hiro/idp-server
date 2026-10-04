@@ -18,6 +18,7 @@ package org.idp.server.core.openid.authentication.policy;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.platform.condition.ConditionOperation;
 import org.idp.server.platform.json.JsonReadable;
 
 public class AuthenticationResultCondition implements JsonReadable {
@@ -25,6 +26,12 @@ public class AuthenticationResultCondition implements JsonReadable {
   String type;
   String operation;
   Object value;
+
+  /**
+   * Issue #1907: a path to compare {@code path} with, in place of the literal {@code value}. Only
+   * {@code eq} and {@code ne} take it.
+   */
+  String valuePath;
 
   public AuthenticationResultCondition() {}
 
@@ -51,8 +58,35 @@ public class AuthenticationResultCondition implements JsonReadable {
     return value;
   }
 
+  public String valuePath() {
+    return valuePath;
+  }
+
+  public boolean hasValuePath() {
+    return valuePath != null && !valuePath.isEmpty();
+  }
+
+  /**
+   * @return why {@code value_path} is misused here, or null when it is not: it replaces {@code
+   *     value}, so the two cannot both be set, and only {@code eq} / {@code ne} compare two paths
+   */
+  public String valuePathViolation() {
+    if (!hasValuePath()) {
+      return null;
+    }
+    if (value != null) {
+      return "value and value_path cannot both be set: " + path;
+    }
+    ConditionOperation conditionOperation = ConditionOperation.from(operation);
+    if (conditionOperation != ConditionOperation.EQ
+        && conditionOperation != ConditionOperation.NE) {
+      return "value_path supports only eq and ne: " + path + " " + operation;
+    }
+    return null;
+  }
+
   public boolean exists() {
-    return path != null && operation != null && value != null;
+    return path != null && operation != null && (value != null || hasValuePath());
   }
 
   public Map<String, Object> toMap() {
@@ -61,6 +95,7 @@ public class AuthenticationResultCondition implements JsonReadable {
     map.put("type", type);
     map.put("operation", operation);
     map.put("value", value);
+    if (hasValuePath()) map.put("value_path", valuePath);
     return map;
   }
 }

@@ -38,6 +38,28 @@ public class AuthenticationResultConditionConfig implements JsonReadable {
     return anyOf;
   }
 
+  /**
+   * @return the misuses of {@code value_path} in these conditions; empty when there is none
+   */
+  public List<String> valuePathViolations() {
+    List<String> violations = new ArrayList<>();
+    if (anyOf == null) {
+      return violations;
+    }
+    for (List<AuthenticationResultCondition> group : anyOf) {
+      if (group == null) {
+        continue;
+      }
+      for (AuthenticationResultCondition condition : group) {
+        String violation = condition == null ? null : condition.valuePathViolation();
+        if (violation != null) {
+          violations.add(violation);
+        }
+      }
+    }
+    return violations;
+  }
+
   public List<List<Map<String, Object>>> anyOfListAsMap() {
     List<List<Map<String, Object>>> result = new ArrayList<>();
     for (List<AuthenticationResultCondition> list : anyOf) {

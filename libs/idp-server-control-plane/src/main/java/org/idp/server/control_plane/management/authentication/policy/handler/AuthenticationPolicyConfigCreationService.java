@@ -23,6 +23,7 @@ import org.idp.server.control_plane.management.authentication.policy.Authenticat
 import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigManagementResponse;
 import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigManagementStatus;
 import org.idp.server.control_plane.management.authentication.policy.io.AuthenticationPolicyConfigRequest;
+import org.idp.server.control_plane.management.authentication.policy.verifier.AuthenticationPolicyConfigVerifier;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfiguration;
 import org.idp.server.core.openid.authentication.repository.AuthenticationPolicyConfigurationCommandRepository;
 import org.idp.server.core.openid.identity.User;
@@ -66,6 +67,7 @@ public class AuthenticationPolicyConfigCreationService
     }
     AuthenticationPolicyConfiguration configuration =
         jsonConverter.read(map, AuthenticationPolicyConfiguration.class);
+    new AuthenticationPolicyConfigVerifier().verify(configuration);
 
     // Update context builder with after state
     contextBuilder.withAfter(configuration);

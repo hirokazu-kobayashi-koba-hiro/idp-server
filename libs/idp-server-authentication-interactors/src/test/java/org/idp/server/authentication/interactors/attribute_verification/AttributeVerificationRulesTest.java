@@ -335,6 +335,30 @@ class AttributeVerificationRulesTest {
     }
 
     @Test
+    @DisplayName("value_path compares two paths with eq / ne, and is invalid otherwise (#1907)")
+    void valuePath() {
+      Map<String, Object> eq =
+          conditionWith(
+              Map.of(
+                  "path", "$.request.custom_params.member_no",
+                  "operation", "eq",
+                  "value_path", "$.user.custom_properties.member_no"));
+      Map<String, Object> otherOperation =
+          conditionWith(Map.of("path", "$.a", "operation", "gte", "value_path", "$.b"));
+      Map<String, Object> withValue =
+          conditionWith(
+              Map.of("path", "$.a", "operation", "eq", "value", "x", "value_path", "$.b"));
+
+      assertTrue(AttributeVerificationConfig.from(Map.of("conditions", eq)).isValid());
+      assertFalse(AttributeVerificationConfig.from(Map.of("conditions", otherOperation)).isValid());
+      assertFalse(AttributeVerificationConfig.from(Map.of("conditions", withValue)).isValid());
+    }
+
+    private static Map<String, Object> conditionWith(Map<String, Object> condition) {
+      return Map.of("any_of", List.of(List.of(condition)));
+    }
+
+    @Test
     @DisplayName("one unreadable field makes the whole config invalid, rather than being dropped")
     void invalid() {
       assertFalse(AttributeVerificationConfig.from(null).isValid());
