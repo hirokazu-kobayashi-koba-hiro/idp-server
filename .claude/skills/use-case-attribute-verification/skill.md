@@ -29,7 +29,7 @@ description: 属性照合ユースケースの設定ガイド。ログインの�
 | 1 | 何を確認するか | アカウントの状態（条件） / 入力の照合 / 両方 | 認証設定 `interactions` の数と種類 |
 | 2 | 状態の条件 | status / roles / custom_properties 等 | `conditions`（認証ポリシーと同じ条件式） |
 | 3 | 条件を満たさないときの `error` | 例: `identity_verification_required` | `error`（画面の案内の出し分けに使う） |
-| 4 | 入力させる項目 | 生年月日 / 電話番号（下 N 桁） / 郵便番号 / カスタム属性 | `fields[].user_attribute`, `normalize`, `suffix_length` |
+| 4 | 入力させる項目と表記のそろえ方 | 生年月日 / 電話番号（下 N 桁） / 郵便番号 / 氏名 / フリガナ / メール / カスタム属性 | `fields[].user_attribute`, `normalize`（または `functions`）, `suffix_length` |
 | 5 | 試行回数と期間 | 既定 5 回 / 900 秒 | `max_attempts`, `lockout_seconds` |
 | 6 | 入力の照合の失敗でアカウントをロックするか | yes（候補の少ない項目では前提） / no | 認証ポリシー `lock_conditions` |
 | 7 | どのログインの後ろに置くか | 既存ポリシーの `step_definitions` | 認証ポリシー `step_definitions`, `success_conditions` |
@@ -84,7 +84,20 @@ description: 属性照合ユースケースの設定ガイド。ログインの�
 ```
 
 `user_attribute` に使えるもの: `birthdate` / `phone_number` / `email` / `name` / `given_name` / `family_name` / `address.postal_code` / `custom_properties.<key>`（スカラーのみ）。
-`normalize`: `exact`（既定） / `nfkc` / `digits` / `date`。
+`normalize`（両側に同じ変換をかけてから比べる。結果が空なら一致しない）:
+
+| プリセット | 用途 | 一致する例 |
+|---|---|---|
+| `exact`（既定） | そのまま | |
+| `nfkc` | 全角・半角だけそろえる | `ＹＡＭＡＤＡ` = `YAMADA` |
+| `name` | 氏名（漢字・ローマ字）。空白除去・ダッシュ統一・小文字 | `山田 太郎` = `山田太郎`、`Smith‐Jones` = `smith - jones` |
+| `kana` | フリガナ。`name` ＋ ひらがな→カタカナ | `やまだ` = `ﾔﾏﾀﾞ` = `ヤマダ` |
+| `email` | メール。trim・小文字 | `Taro@Example.com` = `taro@example.com` |
+| `digits` | 数字だけ（電話・郵便番号） | `〒１２３－４５６７` = `123-4567` |
+| `date` | 日付（`/`・`.`・8 桁・年月日・全角） | `1990年4月1日` = `19900401` |
+
+異体字・旧字体（`髙`・`邊` など）と和暦はそろわない。氏名ならフリガナ（`kana`）を推奨。
+プリセットで足りないときは、マッピングと同じ書き方の `functions`（`normalize` / `trim` / `case` / `replace` / `regex_replace` / `substring` / `kana` / `date` のみ）を `normalize` の代わりに書ける。
 
 ### 認証ポリシー（既存ポリシーへの差分）
 
@@ -141,7 +154,7 @@ ORGANIZER テナントの管理者トークンで、組織レベル API を使�
 
 ## 注意点
 
-- `email` は多くのテナントでログイン ID そのもの。照合しても確認は強くならない
+- `email` は多くのテナントでログイン ID そのもの。照合しても確認は強くならない（照合するなら `normalize: "email"`）
 - `phone_number` は書式が違うと全桁では一致しない（`+8190…` と `090…`）。`suffix_length` で末尾を比べる
 - Redis が使えないと利用者単位の上限が効かない。下 4 桁（1 万通り）など候補の少ない項目では `lock_conditions` を前提にする
 - CIBA では `login_hint` で利用者が決まるため、最初のステップにも置ける（その場合も認証は完了しない）

@@ -53,6 +53,13 @@ const ERROR_MESSAGES: Record<string, string> = {
   too_many_attempts: "Too many attempts. Please try again later.",
 };
 
+/** The browser input that suits how the value is compared: a date picker, an email keyboard. */
+const inputTypeFor = (hint: InputHint): string => {
+  if (hint.normalize === "date") return "date";
+  if (hint.normalize === "email") return "email";
+  return "text";
+};
+
 const readInputs = (hints?: Record<string, unknown>): InputHint[] =>
   Array.isArray(hints?.inputs) ? (hints.inputs as InputHint[]) : [];
 
@@ -151,7 +158,7 @@ export const AttributeVerificationStep = ({
         <TextField
           key={hint.input}
           label={labelFor(hint)}
-          type={hint.normalize === "date" ? "date" : "text"}
+          type={inputTypeFor(hint)}
           autoFocus={index === 0}
           value={values[hint.input] ?? ""}
           onChange={(e) =>

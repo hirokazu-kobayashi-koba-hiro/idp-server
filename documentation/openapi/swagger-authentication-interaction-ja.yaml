@@ -1589,6 +1589,8 @@ components:
 
             `attribute-verification` では、インタラクションの名前ごとに種類（`kind`）と入力欄（`inputs`）を返します。
             `kind` が `conditions` のものは入力が不要なので、画面は表示した時点で送信できます。
+            `inputs[].normalize` はプリセット名（`date` / `digits` / `email` など、入力欄の種類を選ぶ手がかり）で、
+            `functions` で変換を直接書いた項目は `custom` になります。
           example:
             attribute-verification:
               interactions:
