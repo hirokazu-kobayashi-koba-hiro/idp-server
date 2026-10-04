@@ -1,7 +1,8 @@
 import { describe, expect, it, xit } from "@jest/globals";
 
-import { clientSecretPostClient, serverConfig } from "../testConfig";
-import { requestAuthorizations } from "../../oauth/request";
+import { backendUrl, clientSecretPostClient, serverConfig } from "../testConfig";
+import { pushAuthorizations, requestAuthorizations } from "../../oauth/request";
+import { get } from "../../lib/http";
 import { createJwtWithPrivateKey, generateJti } from "../../lib/jose";
 import { toEpocTime } from "../../lib/util";
 
@@ -40,6 +41,23 @@ describe("RFC 9101: JWT-Secured Authorization Request (JAR)", () => {
       request,
       clientId: clientSecretPostClient.clientId,
     });
+  };
+
+  /**
+   * Opens the authorization endpoint with {@code params} and returns the custom parameters the
+   * sign-in view is given (view-data custom_params) and the query of the redirect to it.
+   */
+  const viewCustomParams = async (params) => {
+    const response = await get({ url: serverConfig.authorizationEndpoint, params });
+    expect(response.status).toBe(302);
+    const pageQuery = new URL(response.headers.location).searchParams;
+    const id = pageQuery.get("id");
+    expect(id).toBeTruthy();
+    const viewResponse = await get({
+      url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/${id}/view-data`,
+    });
+    expect(viewResponse.status).toBe(200);
+    return { customParams: viewResponse.data.custom_params, pageQuery };
   };
 
   describe("4.  Request Object", () => {
@@ -185,7 +203,46 @@ describe("RFC 9101: JWT-Secured Authorization Request (JAR)", () => {
 
     describe("6.3.  Request Parameter Assembly and Validation", () => {
 
-      xit("The authorization server MUST extract the set of authorization request parameters from the Request Object value.", async () => {});
+      it("The authorization server MUST extract the set of authorization request parameters from the Request Object value.", async () => {
+        // Extension parameters too (Issue #1907): they used to be read from the query string only,
+        // which the client does not sign, and dropped from the request object.
+        const request = createJwtWithPrivateKey({
+          payload: { ...baseRequestObjectPayload(), member_no: "A123", tier: 3 },
+          privateKey: clientSecretPostClient.requestKey,
+        });
+
+        // By value. A key also in the query takes the request object's value (OIDC Core 6.3.3);
+        // a key only in the query is kept. Claims of the JWT itself are not parameters.
+        const byValue = await viewCustomParams({
+          client_id: clientSecretPostClient.clientId,
+          request,
+          member_no: "Z999",
+          variant: "dark",
+        });
+        expect(byValue.customParams).toEqual({ member_no: "A123", tier: "3", variant: "dark" });
+        // The redirect to the sign-in page leaves off what the client sent in the request object.
+        expect(byValue.pageQuery.get("variant")).toEqual("dark");
+        expect(byValue.pageQuery.has("member_no")).toBe(false);
+        expect(byValue.pageQuery.has("tier")).toBe(false);
+
+        // Inside a pushed authorization request.
+        const parResponse = await pushAuthorizations({
+          endpoint: serverConfig.authorizationEndpoint + "/push",
+          request: createJwtWithPrivateKey({
+            payload: { ...baseRequestObjectPayload(), member_no: "A123" },
+            privateKey: clientSecretPostClient.requestKey,
+          }),
+          clientId: clientSecretPostClient.clientId,
+          clientSecret: clientSecretPostClient.clientSecret,
+        });
+        expect(parResponse.status).toBe(201);
+        const pushed = await viewCustomParams({
+          client_id: clientSecretPostClient.clientId,
+          request_uri: parResponse.data.request_uri,
+        });
+        expect(pushed.customParams).toEqual({ member_no: "A123" });
+        expect(pushed.pageQuery.has("member_no")).toBe(false);
+      });
 
       xit("The authorization server MUST only use the parameters in the Request Object.", async () => {
         // 上記 §6 と同じくプロファイル差あり。#1781 で扱う。

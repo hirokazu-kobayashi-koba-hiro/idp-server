@@ -256,7 +256,7 @@ OAuthFlowEntryService.getViewData()
 | `scopes` | 要求されているスコープ一覧 |
 | `session_enabled` | 既存セッションで認証スキップ可能か（SSO判定） |
 | `available_federations` | 利用可能な外部IdP連携（Google、Azure AD等） |
-| `custom_params` | 認可リクエストのカスタムパラメータ |
+| `custom_params` | 認可リクエストのカスタムパラメータ。リクエストオブジェクトの独自クレームも含み、クエリと重なるキーはリクエストオブジェクトの値を使う（FAPI Advanced はリクエストオブジェクトの値だけ） |
 | `client_custom_properties` | クライアントのextension.custom_propertiesに設定した任意データ（未設定時は含まれない） |
 | `login_hint` | 認可リクエストの`login_hint`（未指定時は含まれない） |
 | `ui_locales` | 認可リクエストの`ui_locales`。**優先順位順の配列**（未指定時は含まれない） |

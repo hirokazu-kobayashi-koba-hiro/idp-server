@@ -141,6 +141,8 @@ public class RequestObjectPatternFactory implements AuthorizationRequestObjectFa
         requestObjectParameters.hasAuthorizationDetailsValue()
             ? requestObjectParameters.authorizationDetailsEntity()
             : parameters.authorizationDetailsValue();
+    CustomParams customParams =
+        parameters.customParams().assembledWith(requestObjectParameters.customParams());
 
     AuthorizationRequestBuilder builder = new AuthorizationRequestBuilder();
     builder.add(createIdentifier());
@@ -173,7 +175,7 @@ public class RequestObjectPatternFactory implements AuthorizationRequestObjectFa
     builder.add(codeChallengeMethod);
     builder.add(dpopJkt);
     builder.add(convertAuthorizationDetails(authorizationDetailsEntity));
-    builder.add(parameters.customParams());
+    builder.add(customParamsReceived(customParams, isPushed));
     int expiresIn =
         isPushed
             ? authorizationServerConfiguration.pushedAuthorizationRequestExpiresIn()

@@ -3,6 +3,7 @@ import { describe, expect, it, xit } from "@jest/globals";
 import { getJwks, getUserinfo, inspectToken, requestToken } from "../../api/oauthClient";
 import { get } from "../../lib/http";
 import {
+  backendUrl,
   clientSecretPostClient,
   privateKeyJwtClient,
   publicClient,
@@ -369,6 +370,52 @@ describe("Financial-grade API Security Profile 1.0 - Part 2: Advanced", () => {
       expect(introspectionResponse.data).toHaveProperty("cnf");
       const thumbprint = certThumbprint(selfSignedTlsAuthClient.clientCertFile);
       expect(introspectionResponse.data.cnf["x5t#S256"]).toEqual(thumbprint);
+    });
+
+    it("10. shall only use the parameters included in the signed request object passed via the request or request_uri parameter;", async () => {
+      // Extension parameters too (Issue #1907). They used to be taken from the query string, which
+      // the client does not sign, while the request object's were dropped.
+      const codeChallenge = calculateCodeChallengeWithS256(generateCodeVerifier(64));
+      const request = createJwtWithPrivateKey({
+        payload: {
+          response_type: "code",
+          state: "aiueo",
+          scope: "openid profile phone email " + selfSignedTlsAuthClient.fapiAdvanceScope,
+          redirect_uri: selfSignedTlsAuthClient.redirectUri,
+          client_id: selfSignedTlsAuthClient.clientId,
+          nonce: "nonce",
+          aud: serverConfig.issuer,
+          iss: selfSignedTlsAuthClient.clientId,
+          sub: selfSignedTlsAuthClient.clientId,
+          code_challenge: codeChallenge,
+          code_challenge_method: "S256",
+          response_mode: "jwt",
+          exp: toEpocTime({ adjusted: 3000 }),
+          iat: toEpocTime({}),
+          nbf: toEpocTime({}),
+          jti: generateJti(),
+          member_no: "A123",
+        },
+        privateKey: selfSignedTlsAuthClient.requestKey,
+      });
+      const response = await get({
+        url: serverConfig.authorizationEndpoint,
+        params: {
+          client_id: selfSignedTlsAuthClient.clientId,
+          request,
+          member_no: "Z999",
+          variant: "dark",
+        },
+      });
+      expect(response.status).toBe(302);
+      const id = new URL(response.headers.location).searchParams.get("id");
+      expect(id).toBeTruthy();
+
+      const viewResponse = await get({
+        url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/${id}/view-data`,
+      });
+      expect(viewResponse.status).toBe(200);
+      expect(viewResponse.data.custom_params).toEqual({ member_no: "A123" });
     });
 
     it("13. shall require the request object to contain an exp claim that has a lifetime of no longer than 60 minutes after the nbf claim;", async () => {

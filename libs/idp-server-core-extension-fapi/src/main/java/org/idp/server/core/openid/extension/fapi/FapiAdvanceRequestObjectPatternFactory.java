@@ -120,7 +120,7 @@ public class FapiAdvanceRequestObjectPatternFactory implements AuthorizationRequ
     builder.add(codeChallengeMethod);
     builder.add(dpopJkt);
     builder.add(convertAuthorizationDetails(authorizationDetailsEntity));
-    builder.add(parameters.customParams());
+    builder.add(customParamsReceived(requestObjectParameters.customParams(), isPushed));
     int expiresIn =
         isPushed
             ? authorizationServerConfiguration.pushedAuthorizationRequestExpiresIn()

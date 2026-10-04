@@ -1533,7 +1533,12 @@ components:
           type: object
           additionalProperties:
             type: string
-          description: カスタムパラメータ
+          description: |
+            カスタムパラメータ（OAuth / OpenID Connect の既知パラメータ以外）。
+            リクエストオブジェクトを使う場合は、その独自クレームも含みます（JWT の登録済みクレームは除く。
+            数値・真偽値は文字列にし、オブジェクト・配列は含めない）。クエリにも同じキーがあればリクエストオブジェクトの値を使います。
+            FAPI Advanced のクライアントでは、リクエストオブジェクトの値だけを使います。
+            リクエストオブジェクトの値は view-data にだけ含まれ、認可画面へのリダイレクト URL には載りません。
           example:
             organization_id: "org123"
             organization_name: "テスト組織"
