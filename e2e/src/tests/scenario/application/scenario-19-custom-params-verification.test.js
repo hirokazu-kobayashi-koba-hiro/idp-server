@@ -40,6 +40,8 @@ describe("Authentication: custom params verification (#1907)", () => {
   let user;
   const redirectUri = "https://app.example.com/callback";
   const MEMBER_NO = "A123";
+  // Requests with this scope get the policy that also trusts the query (see beforeAll).
+  const QUERY_SCOPE = "member:query";
 
   beforeAll(async () => {
     const timestamp = Date.now();
@@ -96,6 +98,7 @@ describe("Authentication: custom params verification (#1907)", () => {
             "email",
             "management",
             "org-management",
+            QUERY_SCOPE,
           ],
           response_types_supported: ["code"],
           response_modes_supported: ["query"],
@@ -121,7 +124,7 @@ describe("Authentication: custom params verification (#1907)", () => {
           redirect_uris: [redirectUri],
           response_types: ["code"],
           grant_types: ["authorization_code", "password"],
-          scope: "openid profile email management org-management",
+          scope: `openid profile email management org-management ${QUERY_SCOPE}`,
           client_name: "Custom Params Client",
           token_endpoint_auth_method: "client_secret_post",
           request_object_signing_alg: "ES256",
@@ -205,53 +208,16 @@ describe("Authentication: custom params verification (#1907)", () => {
         flow: "oauth",
         enabled: true,
         policies: [
+          // Only for requests with QUERY_SCOPE: a value in the query is enough. For a check
+          // that guards against a mix-up, not against the end-user (who can change the query).
           {
-            description: "password_and_member_match",
-            priority: 1,
-            conditions: {},
-            available_methods: ["password", "attribute-verification"],
-            step_definitions: [
-              {
-                method: "password",
-                order: 1,
-                requires_user: false,
-                user_identity_source: "username",
-              },
-              {
-                method: "attribute-verification",
-                interaction: "member-match",
-                order: 2,
-                requires_user: true,
-              },
-            ],
-            success_conditions: {
-              any_of: [
-                [
-                  {
-                    path: "$.password-authentication.success_count",
-                    type: "integer",
-                    operation: "gte",
-                    value: 1,
-                  },
-                  {
-                    path: "$.attribute-verification.interactions.member-match.success_count",
-                    type: "integer",
-                    operation: "gte",
-                    value: 1,
-                  },
-                  // Also here, not only in the step: reusing a session evaluates these
-                  // conditions against the new request, while the step's success count
-                  // carries over from the earlier sign-in.
-                  {
-                    path: "$.request.custom_params.member_no",
-                    type: "string",
-                    operation: "eq",
-                    value_path: "$.user.custom_properties.member_no",
-                  },
-                ],
-              ],
-            },
+            ...memberMatchPolicy(),
+            description: "password_and_member_match_trusting_query",
+            priority: 2,
+            conditions: { scopes: [QUERY_SCOPE] },
+            custom_params_trusted_sources: ["pushed", "request_object", "query"],
           },
+          memberMatchPolicy(),
         ],
       },
     });
@@ -273,6 +239,55 @@ describe("Authentication: custom params verification (#1907)", () => {
         headers: { Authorization: `Bearer ${systemAccessToken}` },
       }).catch(() => {});
     }
+  });
+
+  /** Password, then the member-match step. */
+  const memberMatchPolicy = () => ({
+    description: "password_and_member_match",
+    priority: 1,
+    conditions: {},
+    available_methods: ["password", "attribute-verification"],
+    step_definitions: [
+      {
+        method: "password",
+        order: 1,
+        requires_user: false,
+        user_identity_source: "username",
+      },
+      {
+        method: "attribute-verification",
+        interaction: "member-match",
+        order: 2,
+        requires_user: true,
+      },
+    ],
+    success_conditions: {
+      any_of: [
+        [
+          {
+            path: "$.password-authentication.success_count",
+            type: "integer",
+            operation: "gte",
+            value: 1,
+          },
+          {
+            path: "$.attribute-verification.interactions.member-match.success_count",
+            type: "integer",
+            operation: "gte",
+            value: 1,
+          },
+          // Also here, not only in the step: reusing a session evaluates these
+          // conditions against the new request, while the step's success count
+          // carries over from the earlier sign-in.
+          {
+            path: "$.request.custom_params.member_no",
+            type: "string",
+            operation: "eq",
+            value_path: "$.user.custom_properties.member_no",
+          },
+        ],
+      ],
+    },
   });
 
   const policiesUrl = () =>
@@ -450,6 +465,38 @@ describe("Authentication: custom params verification (#1907)", () => {
       const matchResponse = await matchMember(authId);
       expect(matchResponse.status).toBe(400);
       expect(matchResponse.data.error).toBe("member_mismatch");
+    });
+
+    describe("under a policy that trusts the query", () => {
+      const queryRequest = (memberNo) => ({
+        ...baseParams(),
+        scope: `openid profile email ${QUERY_SCOPE}`,
+        member_no: memberNo,
+      });
+
+      it("completes the authorization when the member number in the query matches", async () => {
+        const authId = await startAuthorization(queryRequest(MEMBER_NO));
+        await signIn(authId);
+
+        const matchResponse = await matchMember(authId);
+        expect(matchResponse.status).toBe(200);
+
+        const authorizeResponse = await authorizeFor(authId);
+        expect(authorizeResponse.status).toBe(200);
+        const { code } = convertToAuthorizationResponse(
+          authorizeResponse.data.redirect_uri
+        );
+        expect(code).toBeTruthy();
+      });
+
+      it("refuses a query for another member", async () => {
+        const authId = await startAuthorization(queryRequest("B456"));
+        await signIn(authId);
+
+        const matchResponse = await matchMember(authId);
+        expect(matchResponse.status).toBe(400);
+        expect(matchResponse.data.error).toBe("member_mismatch");
+      });
     });
   });
 

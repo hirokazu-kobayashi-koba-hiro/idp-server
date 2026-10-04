@@ -159,5 +159,5 @@ ORGANIZER テナントの管理者トークンで、組織レベル API を使�
 - Redis が使えないと利用者単位の上限が効かない。下 4 桁（1 万通り）など候補の少ない項目では `lock_conditions` を前提にする
 - CIBA では `login_hint` で利用者が決まるため、最初のステップにも置ける（その場合も認証は完了しない）
 - `error` は英小文字・数字・`_` のみ
-- RP が渡した値との照合（`$.request.custom_params.<名前>` eq `value_path: $.user.custom_properties.<名前>`）は、信頼する出どころの値しか見えない（ポリシーの `custom_params_trusted_sources`、既定 `pushed` / `request_object`）。クエリだけで渡す RP には PAR か署名つきリクエストオブジェクトを使ってもらう
+- RP が渡した値との照合（`$.request.custom_params.<名前>` eq `value_path: $.user.custom_properties.<名前>`）は、信頼する出どころの値しか見えない（ポリシーの `custom_params_trusted_sources`、既定 `pushed` / `request_object`）。クエリだけで渡す RP には PAR か署名つきリクエストオブジェクトを使ってもらう。取り違え防止（利用者に悪意が無い前提）だけが目的なら、そのポリシーに限って `query` を足してもよい（利用者は書き換えられるので、本人の保証にはならない）
 - 同じ照合式は認証ポリシーの `success_conditions` にも書く。SSO のセッション再利用ではステップの成功が引き継がれ、`success_conditions` だけで判定されるため
