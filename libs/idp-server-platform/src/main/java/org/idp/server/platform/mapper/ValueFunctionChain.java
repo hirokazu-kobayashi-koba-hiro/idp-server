@@ -69,6 +69,11 @@ public class ValueFunctionChain {
   /**
    * A chain for comparing values: only {@link #COMPARISON_FUNCTIONS}.
    *
+   * <p>An allowed function can still produce an empty string whatever the input — a {@code
+   * substring} past the end, a {@code regex_replace} that removes everything — and two empty
+   * results would compare equal. A caller comparing results should treat an empty or null result as
+   * no value, which matches nothing.
+   *
    * @throws IllegalArgumentException if a function is not allowed, or its arguments are wrong
    */
   public static ValueFunctionChain forComparison(List<FunctionSpec> specs) {
