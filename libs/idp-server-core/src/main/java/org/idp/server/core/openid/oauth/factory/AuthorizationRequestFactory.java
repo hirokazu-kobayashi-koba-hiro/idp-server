@@ -48,8 +48,8 @@ public interface AuthorizationRequestFactory {
 
   /**
    * @return {@code customParams}, as having come from the pushed authorization request when {@code
-   *     isPushed}. The request then reached the server in the body of a client-authenticated POST,
-   *     whether as form parameters or inside a request object.
+   *     isPushed}. The request then reached the server in the body of the POST to the pushed
+   *     authorization request endpoint, whether as form parameters or inside a request object.
    */
   default CustomParams customParamsReceived(CustomParams customParams, boolean isPushed) {
     return isPushed ? customParams.allFrom(CustomParamSource.PUSHED) : customParams;

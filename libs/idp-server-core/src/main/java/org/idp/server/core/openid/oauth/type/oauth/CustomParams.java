@@ -26,7 +26,9 @@ import java.util.Objects;
  * <p>Each key also carries where it came from ({@link CustomParamSource}), so a check that relies
  * on a value can refuse one the end-user could have changed. The sources are known only while the
  * request is being processed and are not stored with the authorization request; a request read back
- * from storage has none.
+ * from storage has none. A check that runs in a later request, such as an authentication step, has
+ * to keep what it needs at the authorization endpoint, where the authentication transaction is
+ * created.
  */
 public class CustomParams {
   Map<String, String> values;
