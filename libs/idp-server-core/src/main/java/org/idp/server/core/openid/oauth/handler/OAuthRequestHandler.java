@@ -182,6 +182,8 @@ public class OAuthRequestHandler {
       authorizationRequestRepository.register(tenant, context.authorizationRequest());
     }
 
+    context.setAuthenticationPolicyConfiguration(oAuthRequest.authenticationPolicyConfiguration());
+
     // Set OPSession for prompt=none handling
     OPSession opSession = oAuthRequest.opSession();
     if (opSession != null && opSession.exists() && opSession.isActive()) {

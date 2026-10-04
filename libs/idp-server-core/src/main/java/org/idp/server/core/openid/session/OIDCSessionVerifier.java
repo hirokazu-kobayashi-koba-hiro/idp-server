@@ -17,9 +17,7 @@
 package org.idp.server.core.openid.session;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.Map;
-import org.idp.server.core.openid.authentication.AuthenticationInteractionRequestResult;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionResults;
 import org.idp.server.core.openid.authentication.evaluator.MfaConditionEvaluator;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
@@ -76,16 +74,13 @@ public class OIDCSessionVerifier {
    * @param authenticationPolicy the authentication policy for the client
    * @param request {@code $.request.*} for the policy conditions, from this authorization request
    *     (Issue #1907)
-   * @param rechecked the policy's verification steps, checked again for this authorization request
-   *     (Issue #1907, {@code AuthenticationInteractors#recheckForSessionReuse})
    * @return verification result with error details if invalid
    */
   public SessionValidationResult verifyForAuthorization(
       OPSession opSession,
       AuthorizationRequest authorizationRequest,
       AuthenticationPolicy authenticationPolicy,
-      Map<String, Object> request,
-      List<AuthenticationInteractionRequestResult> rechecked) {
+      Map<String, Object> request) {
 
     // 1. Session existence check
     if (opSession == null || !opSession.exists()) {
@@ -119,16 +114,14 @@ public class OIDCSessionVerifier {
       }
     }
 
-    // 5. Verification steps (Issue #1907) - checked again for this request. Their results from the
-    // earlier sign-in are not carried over: they belong to the request they ran for.
+    // 5. Policies that verify each request (Issue #1907) are not satisfied by a session. Their
+    // checks — attribute verification, conditions on what the request asked for — belong to the
+    // request they ran for, so the end-user signs in again.
+    if (authenticationPolicy != null && authenticationPolicy.verifiesEachRequest()) {
+      return SessionValidationResult.signInRequiredForEachRequest();
+    }
     AuthenticationInteractionResults sessionResults =
         opSession.toAuthenticationInteractionResults().withoutVerifications();
-    for (AuthenticationInteractionRequestResult result : rechecked) {
-      if (!result.isSuccess()) {
-        return stepNotSatisfied(result);
-      }
-      sessionResults = sessionResults.updatedWith(result);
-    }
 
     // 6. Authentication policy check - prevent authentication policy bypass
     if (authenticationPolicy != null && authenticationPolicy.hasSuccessConditions()) {
@@ -144,17 +137,5 @@ public class OIDCSessionVerifier {
     }
 
     return SessionValidationResult.success();
-  }
-
-  private static SessionValidationResult stepNotSatisfied(
-      AuthenticationInteractionRequestResult result) {
-    Map<String, Object> response = result.response();
-    Object error = response.get("error");
-    Object description = response.get("error_description");
-    return SessionValidationResult.stepNotSatisfied(
-        error instanceof String code ? code : "invalid_request",
-        description instanceof String text
-            ? text
-            : "session does not satisfy authentication policy");
   }
 }

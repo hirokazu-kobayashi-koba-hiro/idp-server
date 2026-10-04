@@ -17,7 +17,6 @@
 package org.idp.server.core.openid.authentication;
 
 import java.util.Map;
-import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
@@ -54,26 +53,6 @@ public interface AuthenticationInteractor {
    */
   default Map<String, Object> viewHints(Tenant tenant) {
     return Map.of();
-  }
-
-  /**
-   * Issue #1907: checks {@code interaction} again for a new authorization request that reuses a
-   * session, without the end-user. Only verifications ({@link OperationType#VERIFICATION}) are
-   * asked: their results belong to the request they ran for and are not carried over from the
-   * earlier sign-in.
-   *
-   * @param user the session's user
-   * @param results the session's results, without verifications
-   * @return the result of checking again, or null when it cannot be checked without the end-user
-   *     (it then counts as not having run)
-   */
-  default AuthenticationInteractionRequestResult recheckForSessionReuse(
-      Tenant tenant,
-      AuthenticationTransaction transaction,
-      User user,
-      String interaction,
-      AuthenticationInteractionResults results) {
-    return null;
   }
 
   AuthenticationInteractionRequestResult interact(

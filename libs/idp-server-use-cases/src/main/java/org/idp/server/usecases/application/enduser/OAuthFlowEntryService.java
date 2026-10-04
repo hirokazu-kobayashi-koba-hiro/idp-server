@@ -179,6 +179,13 @@ public class OAuthFlowEntryService
         oidcSessionHandler.getOPSessionFromCookie(tenant, sessionCookieDelegate);
     opSessionOpt.ifPresent(oAuthRequest::setOPSession);
 
+    // Issue #1907: prompt=none must not authorize from the session a request whose policy checks
+    // each request on its own.
+    AuthenticationPolicyConfiguration authenticationPolicyConfiguration =
+        authenticationPolicyConfigurationQueryRepository.find(
+            tenant, StandardAuthFlow.OAUTH.toAuthFlow());
+    oAuthRequest.setAuthenticationPolicyConfiguration(authenticationPolicyConfiguration);
+
     OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
     OAuthRequestResponse requestResponse = oAuthProtocol.request(oAuthRequest);
 
@@ -201,9 +208,6 @@ public class OAuthFlowEntryService
       // Resolve user from login_hint if present
       User resolvedUser = resolveUserFromLoginHint(tenant, requestResponse);
 
-      AuthenticationPolicyConfiguration authenticationPolicyConfiguration =
-          authenticationPolicyConfigurationQueryRepository.find(
-              tenant, StandardAuthFlow.OAUTH.toAuthFlow());
       AuthenticationTransaction authenticationTransaction =
           OAuthAuthenticationTransactionCreator.create(
               tenant,
@@ -264,9 +268,13 @@ public class OAuthFlowEntryService
         "authentication_step_hints",
         authenticationInteractors.viewHints(tenant, methodsOf(authenticationPolicy)));
 
-    // The session the view may offer to continue with
+    // The session the view may offer to continue with. None under a policy that verifies each
+    // request (Issue #1907): a session cannot satisfy it, so the view goes straight to sign-in.
     OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
-    OPSession opSession = authenticatingSession(binding, tenant, authenticationTransaction);
+    OPSession opSession =
+        authenticationPolicy.verifiesEachRequest()
+            ? null
+            : authenticatingSession(binding, tenant, authenticationTransaction);
 
     OAuthViewDataRequest oAuthViewDataRequest =
         new OAuthViewDataRequest(
@@ -872,8 +880,7 @@ public class OAuthFlowEntryService
             opSession,
             authorizationRequest,
             authenticationTransaction.authenticationPolicy(),
-            authenticationTransaction.requestForPolicy(),
-            recheckForSessionReuse(tenant, authenticationTransaction, opSession));
+            authenticationTransaction.requestForPolicy());
 
     if (validationResult.isInvalid()) {
       eventPublisher.publish(
@@ -933,22 +940,6 @@ public class OAuthFlowEntryService
     }
 
     return authorize;
-  }
-
-  /**
-   * Issue #1907: the policy's verification steps, checked again for this authorization request with
-   * the session's user. Nothing when there is no usable session; the verifier then refuses.
-   */
-  private List<AuthenticationInteractionRequestResult> recheckForSessionReuse(
-      Tenant tenant, AuthenticationTransaction authenticationTransaction, OPSession opSession) {
-    if (opSession == null || !opSession.exists()) {
-      return List.of();
-    }
-    return authenticationInteractors.recheckForSessionReuse(
-        tenant,
-        authenticationTransaction,
-        opSession.user(),
-        opSession.toAuthenticationInteractionResults().withoutVerifications());
   }
 
   public OAuthDenyResponse deny(

@@ -426,22 +426,52 @@ describe("Authentication: custom params verification (#1907)", () => {
         body: {},
       });
 
-    it("is checked against the member number of each new request", async () => {
+    const signInAndAuthorize = async () => {
       const firstId = await pushedAuthorization({ member_no: MEMBER_NO });
       await signIn(firstId);
       expect((await matchMember(firstId)).status).toBe(200);
       expect((await authorizeFor(firstId)).status).toBe(200);
+    };
 
-      const sameMemberId = await pushedAuthorization({ member_no: MEMBER_NO }, true);
-      const sameMemberResponse = await authorizeWithSession(sameMemberId);
-      expect(sameMemberResponse.status).toBe(200);
+    // The policy checks each request on its own, so a session cannot stand in for those checks:
+    // even the same member signs in again.
+    it("is not offered, and is refused, under a policy that verifies each request", async () => {
+      await signInAndAuthorize();
 
-      // The member-match step is checked again for the new request. Its success at the first
-      // sign-in is not carried over, so the policy needs no copy of the expression.
-      const otherMemberId = await pushedAuthorization({ member_no: "B456" }, true);
-      const otherMemberResponse = await authorizeWithSession(otherMemberId);
-      expect(otherMemberResponse.status).toBe(400);
-      expect(otherMemberResponse.data.error).toBe("member_mismatch");
+      const reusedId = await pushedAuthorization({ member_no: MEMBER_NO }, true);
+      const viewResponse = await get({
+        url: `${backendUrl}/${tenantId}/v1/authorizations/${reusedId}/view-data`,
+      });
+      expect(viewResponse.status).toBe(200);
+      expect(viewResponse.data.session_enabled).toBe(false);
+
+      const reuseResponse = await authorizeWithSession(reusedId);
+      expect(reuseResponse.status).toBe(400);
+      expect(reuseResponse.data.error_description).toBe(
+        "authentication policy verifies each request; sign in again"
+      );
+    });
+
+    it("answers prompt=none with login_required", async () => {
+      await signInAndAuthorize();
+
+      const pushResponse = await post({
+        url: `${backendUrl}/${tenantId}/v1/authorizations/push`,
+        body: new URLSearchParams({
+          ...baseParams(true),
+          prompt: "none",
+          client_secret: clientSecret,
+          member_no: MEMBER_NO,
+        }).toString(),
+      });
+      expect(pushResponse.status).toBe(201);
+      const response = await get({
+        url: `${backendUrl}/${tenantId}/v1/authorizations`,
+        params: { client_id: clientId, request_uri: pushResponse.data.request_uri },
+      });
+      expect(response.status).toBe(302);
+      const { error } = convertToAuthorizationResponse(response.headers.location);
+      expect(error).toBe("login_required");
     });
   });
 

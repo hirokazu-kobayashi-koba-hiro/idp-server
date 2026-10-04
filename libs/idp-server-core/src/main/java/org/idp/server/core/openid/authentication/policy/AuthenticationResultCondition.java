@@ -67,6 +67,14 @@ public class AuthenticationResultCondition implements JsonReadable {
   }
 
   /**
+   * @return whether {@code path} or {@code value_path} starts with {@code prefix}
+   */
+  public boolean references(String prefix) {
+    return (path != null && path.startsWith(prefix))
+        || (hasValuePath() && valuePath.startsWith(prefix));
+  }
+
+  /**
    * @return why {@code value_path} is misused here, or null when it is not: it replaces {@code
    *     value}, so the two cannot both be set, and only {@code eq} / {@code ne} compare two paths
    */

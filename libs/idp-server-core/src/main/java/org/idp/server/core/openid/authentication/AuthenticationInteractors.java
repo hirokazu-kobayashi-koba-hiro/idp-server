@@ -16,15 +16,11 @@
 
 package org.idp.server.core.openid.authentication;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.openid.authentication.exception.AuthenticationInteractorNotFoundException;
-import org.idp.server.core.openid.authentication.policy.AuthenticationStepDefinition;
-import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -74,68 +70,6 @@ public class AuthenticationInteractors {
       log.warn(
           "Failed to build view hints, leaving them out. method={}, tenant={}",
           interactor.method(),
-          tenant.identifierValue(),
-          e);
-      return null;
-    }
-  }
-
-  /**
-   * Issue #1907: the verification steps of the transaction's policy, checked again for a session
-   * reused for this authorization request (see {@link
-   * AuthenticationInteractor#recheckForSessionReuse}). A step that names no interaction, or that
-   * cannot be checked without the end-user, gives no result.
-   *
-   * @param user the session's user
-   * @param results the session's results, without verifications
-   */
-  public List<AuthenticationInteractionRequestResult> recheckForSessionReuse(
-      Tenant tenant,
-      AuthenticationTransaction transaction,
-      User user,
-      AuthenticationInteractionResults results) {
-    List<AuthenticationInteractionRequestResult> rechecked = new ArrayList<>();
-    if (user == null || !user.exists() || !transaction.hasAuthenticationPolicy()) {
-      return rechecked;
-    }
-    for (AuthenticationStepDefinition step : transaction.authenticationPolicy().stepDefinitions()) {
-      if (!step.hasInteraction()) {
-        continue;
-      }
-      for (AuthenticationInteractor interactor : values.values()) {
-        if (!interactor.operationType().isVerification()
-            || !interactor.method().equals(step.authenticationMethod())) {
-          continue;
-        }
-        AuthenticationInteractionRequestResult result =
-            recheckOf(interactor, tenant, transaction, user, step.interaction(), results);
-        if (result != null) {
-          rechecked.add(result);
-        }
-        break;
-      }
-    }
-    return rechecked;
-  }
-
-  /**
-   * @return the result of checking again, or null when the interactor fails to; the step then
-   *     counts as not having run, and the session is not reused
-   */
-  private AuthenticationInteractionRequestResult recheckOf(
-      AuthenticationInteractor interactor,
-      Tenant tenant,
-      AuthenticationTransaction transaction,
-      User user,
-      String interaction,
-      AuthenticationInteractionResults results) {
-    try {
-      return interactor.recheckForSessionReuse(tenant, transaction, user, interaction, results);
-    } catch (RuntimeException e) {
-      log.warn(
-          "Failed to recheck a step for session reuse. method={}, interaction={}, tenant={}",
-          interactor.method(),
-          interaction,
           tenant.identifierValue(),
           e);
       return null;

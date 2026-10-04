@@ -97,15 +97,14 @@ public class SessionValidationResult {
   }
 
   /**
-   * Issue #1907: a verification step of the policy, checked again for this authorization request,
-   * did not hold. Carries the step's own error so the view can say why.
+   * Issue #1907: the policy verifies each authorization request on its own (attribute verification,
+   * conditions on what the request asked for), so a session alone cannot satisfy it.
    */
-  public static SessionValidationResult stepNotSatisfied(
-      String errorCode, String errorDescription) {
+  public static SessionValidationResult signInRequiredForEachRequest() {
     return new SessionValidationResult(
         false,
-        errorCode,
-        errorDescription,
+        "invalid_request",
+        "authentication policy verifies each request; sign in again",
         DefaultSecurityEventType.oauth_authorize_with_session_policy_mismatch);
   }
 

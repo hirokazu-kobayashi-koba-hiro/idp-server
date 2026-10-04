@@ -18,12 +18,10 @@ package org.idp.server.core.openid.session;
 
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.idp.server.core.openid.authentication.Authentication;
-import org.idp.server.core.openid.authentication.AuthenticationInteractionRequestResult;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
@@ -214,17 +212,15 @@ public class OIDCSessionHandler {
    * @param authorizationRequest the authorization request
    * @param authenticationPolicy the authentication policy for the client
    * @param request {@code $.request.*} for the policy conditions (Issue #1907)
-   * @param rechecked the policy's verification steps, checked again for this request (Issue #1907)
    * @return validation result with error details if invalid
    */
   public SessionValidationResult validateSessionForAuthorization(
       OPSession opSession,
       AuthorizationRequest authorizationRequest,
       AuthenticationPolicy authenticationPolicy,
-      Map<String, Object> request,
-      List<AuthenticationInteractionRequestResult> rechecked) {
+      Map<String, Object> request) {
     return sessionVerifier.verifyForAuthorization(
-        opSession, authorizationRequest, authenticationPolicy, request, rechecked);
+        opSession, authorizationRequest, authenticationPolicy, request);
   }
 
   /**

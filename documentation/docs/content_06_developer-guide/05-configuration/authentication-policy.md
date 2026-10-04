@@ -343,14 +343,20 @@ interaction ごとの内訳を使えば、それぞれを名指しで要求で�
 }
 ```
 
-:::info SSO でセッションを再利用するとき
-セッションの再利用（`authorize-with-session`）では、`$.request.*` を**新しい認可リクエストの値**で評価します。
-[属性照合](./authn/attribute-verification.md)のステップの結果は、前のログインから引き継ぎません。
+:::info このポリシーでは SSO しません
+照合は「その認可リクエストでの確認」なので、セッションでは代わりになりません。次のどれかを含むポリシーに当てはまる認可リクエストは、SSO（セッションの再利用）をせず、毎回サインインからやり直します。
 
-- 条件のステップ（`conditions`）は、新しい認可リクエストとセッションの利用者で評価し直します。満たさなければ、そのステップの `error`（例：`member_mismatch`）で拒否します
-- 入力の照合（`fields`）は入力が無いので評価し直せず、実行されなかったものとして扱います。`success_conditions` がその成功を求めていれば、再認証になります
+- [属性照合](./authn/attribute-verification.md)のステップ（`step_definitions` の `attribute-verification`）
+- `$.request.*` を参照する条件（`success_conditions` / `failure_conditions` / `lock_conditions`）
+- 属性照合の結果（`$.attribute-verification.*`）を参照する条件
 
-照合を条件のステップに書けば、`success_conditions` に同じ式を書く必要はありません。
+| 経路 | 動き |
+|------|------|
+| view-data | `session_enabled` が `false`。画面は最初からサインインを出す |
+| `authorize-with-session` | 400（`authentication policy verifies each request; sign in again`） |
+| `prompt=none` | `login_required` |
+
+SSO を効かせたいクライアントには、`conditions`（`client_ids` / `scopes` / `acr_values`）で照合の無いポリシーを当ててください。
 :::
 
 型は値そのもので決まります。カスタムパラメータは文字列なので、数値で保存したカスタム属性とは一致しません。

@@ -413,7 +413,7 @@ describe("Authentication: attribute verification (#1907)", () => {
     expect(payload.amr).not.toContain("attribute-verification");
   });
 
-  it("asks for the entered values again instead of carrying them over to a reused session", async () => {
+  it("does not let a session stand in for attribute verification", async () => {
     const user = await createUser();
     const authId = await startAuthorization();
     await signIn(authId, user);
@@ -426,8 +426,8 @@ describe("Authentication: attribute verification (#1907)", () => {
     });
     expect(authorizeResponse.status).toBe(200);
 
-    // The account check needs no input and is checked again; the entered values cannot be, and
-    // their result belongs to the earlier request, so the session alone does not satisfy kba.
+    // Attribute verification belongs to the request it ran for, so a session cannot satisfy a
+    // policy that has it: the end-user signs in again.
     const reusedId = await startAuthorization(true);
     const reuseResponse = await postWithJson({
       url: `${backendUrl}/${tenantId}/v1/authorizations/${reusedId}/authorize-with-session`,
@@ -435,7 +435,7 @@ describe("Authentication: attribute verification (#1907)", () => {
     });
     expect(reuseResponse.status).toBe(400);
     expect(reuseResponse.data.error_description).toBe(
-      "session does not satisfy authentication policy"
+      "authentication policy verifies each request; sign in again"
     );
   });
 

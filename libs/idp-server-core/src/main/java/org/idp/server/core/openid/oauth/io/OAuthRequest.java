@@ -18,6 +18,7 @@ package org.idp.server.core.openid.oauth.io;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfiguration;
 import org.idp.server.core.openid.oauth.request.OAuthRequestParameters;
 import org.idp.server.core.openid.session.OPSession;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -29,6 +30,7 @@ public class OAuthRequest {
   Map<String, String[]> params;
   String sessionId;
   OPSession opSession;
+  AuthenticationPolicyConfiguration authenticationPolicyConfiguration;
 
   public OAuthRequest(Tenant tenant, Map<String, String[]> params) {
     this.tenant = tenant;
@@ -66,5 +68,15 @@ public class OAuthRequest {
 
   public boolean hasOPSession() {
     return opSession != null && opSession.exists();
+  }
+
+  /** Issue #1907: the tenant's policies for this flow, which prompt=none must respect. */
+  public void setAuthenticationPolicyConfiguration(
+      AuthenticationPolicyConfiguration authenticationPolicyConfiguration) {
+    this.authenticationPolicyConfiguration = authenticationPolicyConfiguration;
+  }
+
+  public AuthenticationPolicyConfiguration authenticationPolicyConfiguration() {
+    return authenticationPolicyConfiguration;
   }
 }

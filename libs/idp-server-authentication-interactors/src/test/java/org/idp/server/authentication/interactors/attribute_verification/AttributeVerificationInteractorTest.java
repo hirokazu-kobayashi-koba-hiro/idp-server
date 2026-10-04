@@ -450,49 +450,4 @@ class AttributeVerificationInteractorTest {
     assertEquals("digits", inputs.get(1).get("normalize"));
     assertEquals(4, inputs.get(1).get("suffix_length"));
   }
-
-  @Test
-  @DisplayName("a reused session checks conditions again with the session's user (#1907)")
-  void recheckConditionsOnSessionReuse() {
-    User verified = user().setStatus(UserStatus.IDENTITY_VERIFIED);
-
-    AuthenticationInteractionRequestResult satisfied =
-        interactor.recheckForSessionReuse(
-            tenant(),
-            identifiedTransaction(),
-            verified,
-            "identity-verified",
-            new AuthenticationInteractionResults());
-    assertEquals(AuthenticationInteractionStatus.SUCCESS, satisfied.status());
-    assertEquals("identity-verified", satisfied.interactionName());
-
-    AuthenticationInteractionRequestResult notSatisfied =
-        interactor.recheckForSessionReuse(
-            tenant(),
-            identifiedTransaction(),
-            user(),
-            "identity-verified",
-            new AuthenticationInteractionResults());
-    assertFalse(notSatisfied.isSuccess());
-    assertEquals("identity_verification_required", notSatisfied.response().get("error"));
-  }
-
-  @Test
-  @DisplayName("a reused session cannot check entered values again, nor an unknown interaction")
-  void noRecheckForFieldsOnSessionReuse() {
-    assertNull(
-        interactor.recheckForSessionReuse(
-            tenant(),
-            identifiedTransaction(),
-            user(),
-            "kba",
-            new AuthenticationInteractionResults()));
-    assertNull(
-        interactor.recheckForSessionReuse(
-            tenant(),
-            identifiedTransaction(),
-            user(),
-            "unknown",
-            new AuthenticationInteractionResults()));
-  }
 }

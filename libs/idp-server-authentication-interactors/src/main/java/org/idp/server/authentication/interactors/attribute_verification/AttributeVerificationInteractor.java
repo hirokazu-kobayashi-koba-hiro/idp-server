@@ -205,44 +205,6 @@ public class AttributeVerificationInteractor implements AuthenticationInteractor
     return success(type, user, interaction);
   }
 
-  /**
-   * Issue #1907: a reused session is checked against the new authorization request. Conditions need
-   * no input, so they are evaluated again with the session's user and this request; fields cannot
-   * be, and give null so that the step counts as not having run.
-   */
-  @Override
-  public AuthenticationInteractionRequestResult recheckForSessionReuse(
-      Tenant tenant,
-      AuthenticationTransaction transaction,
-      User user,
-      String interaction,
-      AuthenticationInteractionResults results) {
-    AuthenticationConfiguration configuration =
-        configurationQueryRepository.find(tenant, CONFIG_KEY);
-    if (!configuration.exists()) {
-      return null;
-    }
-    AuthenticationInteractionConfig interactionConfig =
-        configuration.getAuthenticationConfig(interaction);
-    if (interactionConfig == null) {
-      return null;
-    }
-    AttributeVerificationConfig config =
-        AttributeVerificationConfig.from(interactionConfig.execution().details());
-    if (!config.isValid() || !config.hasConditions()) {
-      return null;
-    }
-
-    AuthenticationInteractionType type = type();
-    if (!MfaConditionEvaluator.isSatisfied(
-        config.conditions(), results, user, transaction.requestForPolicy())) {
-      log.info("Attribute conditions did not hold on session reuse. sub={}", user.sub());
-      return CONDITION_NOT_SATISFIED.toResult(
-          type, method(), user, interaction, config.conditionError());
-    }
-    return success(type, user, interaction);
-  }
-
   private AuthenticationInteractionRequestResult success(
       AuthenticationInteractionType type, User user, String interaction) {
     AuthenticationInteractionRequestResult success =

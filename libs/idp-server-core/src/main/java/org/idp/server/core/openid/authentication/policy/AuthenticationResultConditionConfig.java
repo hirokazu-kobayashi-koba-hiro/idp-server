@@ -39,6 +39,27 @@ public class AuthenticationResultConditionConfig implements JsonReadable {
   }
 
   /**
+   * @return whether any condition reads, as {@code path} or {@code value_path}, a path starting
+   *     with {@code prefix}
+   */
+  public boolean references(String prefix) {
+    if (anyOf == null) {
+      return false;
+    }
+    for (List<AuthenticationResultCondition> group : anyOf) {
+      if (group == null) {
+        continue;
+      }
+      for (AuthenticationResultCondition condition : group) {
+        if (condition != null && condition.references(prefix)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
    * @return the misuses of {@code value_path} in these conditions; empty when there is none
    */
   public List<String> valuePathViolations() {

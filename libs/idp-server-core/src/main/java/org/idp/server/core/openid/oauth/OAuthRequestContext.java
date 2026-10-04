@@ -20,6 +20,8 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
+import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfiguration;
 import org.idp.server.core.openid.grant_management.AuthorizationGranted;
 import org.idp.server.core.openid.grant_management.grant.GrantIdTokenClaims;
 import org.idp.server.core.openid.grant_management.grant.GrantUserinfoClaims;
@@ -60,6 +62,7 @@ public class OAuthRequestContext implements ResponseModeDecidable {
   AuthorizationServerConfiguration authorizationServerConfiguration;
   ClientConfiguration clientConfiguration;
   OPSession opSession;
+  AuthenticationPolicyConfiguration authenticationPolicyConfiguration;
   AuthorizationGranted authorizationGranted;
   boolean atPushedEndpoint;
 
@@ -116,8 +119,30 @@ public class OAuthRequestContext implements ResponseModeDecidable {
     this.opSession = opSession;
   }
 
+  public void setAuthenticationPolicyConfiguration(
+      AuthenticationPolicyConfiguration authenticationPolicyConfiguration) {
+    this.authenticationPolicyConfiguration = authenticationPolicyConfiguration;
+  }
+
   public void setAuthorizationGranted(AuthorizationGranted authorizationGranted) {
     this.authorizationGranted = authorizationGranted;
+  }
+
+  /**
+   * Issue #1907: whether the authentication policy this request falls under checks each request on
+   * its own (attribute verification, conditions on what the request asked for). prompt=none would
+   * authorize from the session without those checks, so such a request needs interaction.
+   */
+  private boolean verifiesEachRequest() {
+    if (authenticationPolicyConfiguration == null) {
+      return false;
+    }
+    AuthenticationPolicy policy =
+        authenticationPolicyConfiguration.findSatisfiedAuthenticationPolicy(
+            authorizationRequest.requestedClientId(),
+            authorizationRequest.acrValues(),
+            authorizationRequest.scopes());
+    return policy.verifiesEachRequest();
   }
 
   public boolean canAutomaticallyAuthorize() {
@@ -147,6 +172,13 @@ public class OAuthRequestContext implements ResponseModeDecidable {
         throw new OAuthRedirectableBadRequestException(
             "login_required", "session exceeds max_age", this);
       }
+    }
+
+    if (verifiesEachRequest()) {
+      throw new OAuthRedirectableBadRequestException(
+          "login_required",
+          "authentication policy verifies each request; a session alone cannot authorize it",
+          this);
     }
 
     if (authorizationGranted == null || !authorizationGranted.exists()) {

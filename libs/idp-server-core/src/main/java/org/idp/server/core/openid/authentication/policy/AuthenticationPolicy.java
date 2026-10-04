@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.idp.server.core.openid.authentication.StandardAuthenticationInteraction;
 import org.idp.server.core.openid.oauth.type.oauth.CustomParamSource;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.oauth.type.oauth.Scopes;
@@ -198,6 +199,28 @@ public class AuthenticationPolicy implements JsonReadable {
     violations.addAll(lockConditions.valuePathViolations());
     violations.addAll(deviceRegistrationConditions.valuePathViolations());
     return violations;
+  }
+
+  /**
+   * Issue #1907: whether this policy checks each authorization request on its own — an attribute
+   * verification step, or a condition on the request ({@code $.request.*}) or on a verification's
+   * result. Such checks belong to the request they ran for, so a request this policy covers is not
+   * authorized from a session alone without them ({@code prompt=none}).
+   */
+  public boolean verifiesEachRequest() {
+    String verification = StandardAuthenticationInteraction.ATTRIBUTE_VERIFICATION.toType().name();
+    for (AuthenticationStepDefinition step : stepDefinitions) {
+      if (verification.equals(step.authenticationMethod())) {
+        return true;
+      }
+    }
+    for (AuthenticationResultConditionConfig conditions :
+        List.of(successConditions, failureConditions, lockConditions)) {
+      if (conditions.references("$.request.") || conditions.references("$." + verification)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public boolean exists() {

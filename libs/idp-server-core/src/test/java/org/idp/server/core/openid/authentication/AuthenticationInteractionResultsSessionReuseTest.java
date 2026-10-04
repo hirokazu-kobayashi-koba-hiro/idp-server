@@ -29,8 +29,8 @@ import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.junit.jupiter.api.Test;
 
 /**
- * Issue #1907: on session reuse, verifications are not carried over; the ones checked again for the
- * new request are counted in instead.
+ * Issue #1907: on session reuse, verifications are not carried over — they belong to the request
+ * they ran for — and a result counted in lands under its interaction.
  */
 class AuthenticationInteractionResultsSessionReuseTest {
 
@@ -49,9 +49,9 @@ class AuthenticationInteractionResultsSessionReuseTest {
   }
 
   @Test
-  void countsInAVerificationCheckedAgainUnderItsInteraction() {
+  void countsInAResultUnderItsInteraction() {
     AuthenticationInteractionResults reused =
-        sessionResults().withoutVerifications().updatedWith(recheckedMemberMatch());
+        sessionResults().withoutVerifications().updatedWith(memberMatch());
 
     assertFalse(satisfied(sessionResults().withoutVerifications()));
     assertTrue(satisfied(reused));
@@ -86,7 +86,7 @@ class AuthenticationInteractionResultsSessionReuseTest {
     return new AuthenticationInteractionResults(values);
   }
 
-  private static AuthenticationInteractionRequestResult recheckedMemberMatch() {
+  private static AuthenticationInteractionRequestResult memberMatch() {
     AuthenticationInteractionRequestResult result =
         new AuthenticationInteractionRequestResult(
             AuthenticationInteractionStatus.SUCCESS,
