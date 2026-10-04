@@ -47,6 +47,9 @@ class AuthenticationPolicyVerifiesEachRequestTest {
         // authentication only
         "{`step_definitions`:[{`method`:`password`,`order`:1}],`success_conditions`:{`any_of`:[[{`path`:`$.password-authentication.success_count`,`operation`:`gte`,`value`:1}]]}}|false",
         "{}|false",
+        // conditions and steps written as null
+        "{`failure_conditions`:null,`lock_conditions`:null,`step_definitions`:null}|false",
+        "{`success_conditions`:null,`lock_conditions`:{`any_of`:[[{`path`:`$.request.custom_params.a`,`operation`:`exists`,`value`:true}]]}}|true",
       })
   void verifiesEachRequest(String json, boolean expected) {
     AuthenticationPolicy policy =

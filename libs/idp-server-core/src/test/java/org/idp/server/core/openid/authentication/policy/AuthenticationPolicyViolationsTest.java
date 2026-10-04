@@ -62,6 +62,15 @@ class AuthenticationPolicyViolationsTest {
   }
 
   @Test
+  void readsConditionsWrittenAsNull() {
+    assertEquals(
+        List.of(),
+        violationsOf(
+            "{\"success_conditions\":null,\"failure_conditions\":null,"
+                + "\"lock_conditions\":null,\"device_registration_conditions\":null}"));
+  }
+
+  @Test
   void trustsPushedAndRequestObjectByDefault() {
     AuthenticationPolicy policy = jsonConverter.read("{}", AuthenticationPolicy.class);
 

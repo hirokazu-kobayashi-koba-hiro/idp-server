@@ -17,10 +17,12 @@
 package org.idp.server.core.openid.authentication.policy;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.idp.server.core.openid.authentication.StandardAuthenticationInteraction;
@@ -194,10 +196,11 @@ public class AuthenticationPolicy implements JsonReadable {
         }
       }
     }
-    violations.addAll(successConditions.valuePathViolations());
-    violations.addAll(failureConditions.valuePathViolations());
-    violations.addAll(lockConditions.valuePathViolations());
-    violations.addAll(deviceRegistrationConditions.valuePathViolations());
+    for (AuthenticationResultConditionConfig conditions :
+        conditionsOf(
+            successConditions, failureConditions, lockConditions, deviceRegistrationConditions)) {
+      violations.addAll(conditions.valuePathViolations());
+    }
     return violations;
   }
 
@@ -209,18 +212,29 @@ public class AuthenticationPolicy implements JsonReadable {
    */
   public boolean verifiesEachRequest() {
     String verification = StandardAuthenticationInteraction.ATTRIBUTE_VERIFICATION.toType().name();
-    for (AuthenticationStepDefinition step : stepDefinitions) {
-      if (verification.equals(step.authenticationMethod())) {
-        return true;
+    if (hasStepDefinitions()) {
+      for (AuthenticationStepDefinition step : stepDefinitions) {
+        if (step != null && verification.equals(step.authenticationMethod())) {
+          return true;
+        }
       }
     }
     for (AuthenticationResultConditionConfig conditions :
-        List.of(successConditions, failureConditions, lockConditions)) {
+        conditionsOf(successConditions, failureConditions, lockConditions)) {
       if (conditions.references("$.request.") || conditions.references("$." + verification)) {
         return true;
       }
     }
     return false;
+  }
+
+  /**
+   * @return {@code configs} without the null ones: a policy written with {@code
+   *     "failure_conditions": null} reads as null rather than empty
+   */
+  private static List<AuthenticationResultConditionConfig> conditionsOf(
+      AuthenticationResultConditionConfig... configs) {
+    return Arrays.stream(configs).filter(Objects::nonNull).toList();
   }
 
   public boolean exists() {
