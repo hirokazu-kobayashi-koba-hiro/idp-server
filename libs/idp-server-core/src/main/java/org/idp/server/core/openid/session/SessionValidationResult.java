@@ -96,6 +96,18 @@ public class SessionValidationResult {
         DefaultSecurityEventType.oauth_authorize_with_session_policy_mismatch);
   }
 
+  /**
+   * Issue #1907: the policy verifies each authorization request on its own (attribute verification,
+   * conditions on what the request asked for), so a session alone cannot satisfy it.
+   */
+  public static SessionValidationResult signInRequiredForEachRequest() {
+    return new SessionValidationResult(
+        false,
+        "invalid_request",
+        "authentication policy verifies each request; sign in again",
+        DefaultSecurityEventType.oauth_authorize_with_session_policy_mismatch);
+  }
+
   public boolean isValid() {
     return valid;
   }

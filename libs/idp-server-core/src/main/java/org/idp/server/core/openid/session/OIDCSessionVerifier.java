@@ -17,6 +17,7 @@
 package org.idp.server.core.openid.session;
 
 import java.time.Instant;
+import java.util.Map;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionResults;
 import org.idp.server.core.openid.authentication.evaluator.MfaConditionEvaluator;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
@@ -71,12 +72,15 @@ public class OIDCSessionVerifier {
    * @param opSession the OP session (may be null)
    * @param authorizationRequest the authorization request
    * @param authenticationPolicy the authentication policy for the client
+   * @param request {@code $.request.*} for the policy conditions, from this authorization request
+   *     (Issue #1907)
    * @return verification result with error details if invalid
    */
   public SessionValidationResult verifyForAuthorization(
       OPSession opSession,
       AuthorizationRequest authorizationRequest,
-      AuthenticationPolicy authenticationPolicy) {
+      AuthenticationPolicy authenticationPolicy,
+      Map<String, Object> request) {
 
     // 1. Session existence check
     if (opSession == null || !opSession.exists()) {
@@ -110,15 +114,24 @@ public class OIDCSessionVerifier {
       }
     }
 
-    // 5. Authentication policy check - prevent authentication policy bypass
+    // 5. Policies that verify each request (Issue #1907) are not satisfied by a session. Their
+    // checks — attribute verification, conditions on what the request asked for — belong to the
+    // request they ran for, so the end-user signs in again.
+    if (authenticationPolicy != null && authenticationPolicy.verifiesEachRequest()) {
+      return SessionValidationResult.signInRequiredForEachRequest();
+    }
+    AuthenticationInteractionResults sessionResults =
+        opSession.toAuthenticationInteractionResults().withoutVerifications();
+
+    // 6. Authentication policy check - prevent authentication policy bypass
     if (authenticationPolicy != null && authenticationPolicy.hasSuccessConditions()) {
-      AuthenticationInteractionResults sessionResults =
-          opSession.toAuthenticationInteractionResults();
       // Issue #1501: pass the session user so $.user.* conditions evaluate consistently with the
       // live authentication transaction (AuthenticationTransaction#isSuccess); otherwise session
       // reuse would evaluate user attributes against an empty user and could mismatch.
+      // Issue #1907: $.request.* comes from this authorization request, not the session's, so a
+      // condition on what the relying party asked for is checked again for each request.
       if (!MfaConditionEvaluator.isSuccessSatisfied(
-          authenticationPolicy.successConditions(), sessionResults, opSession.user())) {
+          authenticationPolicy.successConditions(), sessionResults, opSession.user(), request)) {
         return SessionValidationResult.policyMismatch();
       }
     }

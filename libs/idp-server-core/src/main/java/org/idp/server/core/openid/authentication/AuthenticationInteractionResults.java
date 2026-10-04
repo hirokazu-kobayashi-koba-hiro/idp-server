@@ -19,6 +19,7 @@ package org.idp.server.core.openid.authentication;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.json.JsonReadable;
 
 public class AuthenticationInteractionResults implements JsonReadable {
@@ -132,6 +133,63 @@ public class AuthenticationInteractionResults implements JsonReadable {
 
   public AuthenticationInteractionResult get(String interactionType) {
     return values.get(interactionType);
+  }
+
+  /**
+   * @return these results with {@code interactionRequestResult} counted in, under its type and,
+   *     when it names one, its interaction (#1771)
+   */
+  public AuthenticationInteractionResults updatedWith(
+      AuthenticationInteractionRequestResult interactionRequestResult) {
+    Map<String, AuthenticationInteractionResult> resultMap = new HashMap<>(values);
+
+    if (contains(interactionRequestResult.interactionTypeName())) {
+
+      AuthenticationInteractionResult foundResult =
+          get(interactionRequestResult.interactionTypeName());
+      AuthenticationInteractionResult updatedInteraction =
+          foundResult.updateWith(interactionRequestResult);
+      resultMap.remove(interactionRequestResult.interactionTypeName());
+      resultMap.put(interactionRequestResult.interactionTypeName(), updatedInteraction);
+
+    } else {
+
+      // #1771: a named interaction gets its own entry under the type from the very first call, so
+      // the breakdown is not missing for whichever interaction happened to run first.
+      String operationType = interactionRequestResult.operationType().name();
+      String method = interactionRequestResult.method();
+      int successCount = interactionRequestResult.isSuccess() ? 1 : 0;
+      int failureCount = interactionRequestResult.isSuccess() ? 0 : 1;
+      LocalDateTime interactionTime = SystemDateTime.now();
+      Map<String, AuthenticationInteractionResult> interactions = new HashMap<>();
+      if (interactionRequestResult.hasInteractionName()) {
+        interactions.put(
+            interactionRequestResult.interactionName(),
+            AuthenticationInteractionResult.initialResultFor(interactionRequestResult));
+      }
+      AuthenticationInteractionResult result =
+          new AuthenticationInteractionResult(
+              operationType, method, 1, successCount, failureCount, interactionTime, interactions);
+      resultMap.put(interactionRequestResult.interactionTypeName(), result);
+    }
+
+    return new AuthenticationInteractionResults(resultMap);
+  }
+
+  /**
+   * Issue #1907: these results without the verifications ({@link OperationType#VERIFICATION}). A
+   * verification checks one authorization request — what it asked for, the account as it was then —
+   * so a session reused for another request must not carry it over.
+   */
+  public AuthenticationInteractionResults withoutVerifications() {
+    Map<String, AuthenticationInteractionResult> kept = new HashMap<>();
+    values.forEach(
+        (type, result) -> {
+          if (!result.operationType().isVerification()) {
+            kept.put(type, result);
+          }
+        });
+    return new AuthenticationInteractionResults(kept);
   }
 
   public boolean containsAnySuccess() {

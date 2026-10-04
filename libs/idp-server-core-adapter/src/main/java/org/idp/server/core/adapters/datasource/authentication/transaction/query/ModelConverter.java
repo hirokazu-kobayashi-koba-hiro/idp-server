@@ -94,11 +94,17 @@ public class ModelConverter {
       List<AuthorizationDetail> authorizationDetailsList =
           listAsMap.stream().map(AuthorizationDetail::new).toList();
 
+      AuthenticationCustomParams customParams =
+          jsonNodeWrapper.contains("custom_params")
+              ? AuthenticationCustomParams.fromMap(jsonNodeWrapper.getNode("custom_params").toMap())
+              : new AuthenticationCustomParams();
+
       return new AuthenticationContext(
           new AcrValues(acrValues),
           new Scopes(scopes),
           new BindingMessage(bindingMessage),
-          new AuthorizationDetails(authorizationDetailsList));
+          new AuthorizationDetails(authorizationDetailsList),
+          customParams);
     }
 
     return new AuthenticationContext();

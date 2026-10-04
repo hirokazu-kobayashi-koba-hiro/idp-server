@@ -285,12 +285,18 @@ authentication/interactors/
 
 ## 認証ポリシー条件式の参照コンテキスト
 
-`success_conditions` / `failure_conditions` / `lock_conditions` / `device_registration_conditions` の `path` は2つの名前空間を参照できる:
+`success_conditions` / `failure_conditions` / `lock_conditions` / `device_registration_conditions` の `path` は次の名前空間を参照できる:
 
 - `$.<interaction-type>.*` — 各認証方式の結果（例: `$.password-authentication.success_count`）
 - `$.user.*` — 認証済みユーザー属性（`status`, `email_verified`, `phone_number_verified`, `has_password`, `provider_id`, `roles`, `permissions`, `custom_properties.*`）。複数ステータスの許可は `$.user.status` を `in` で列挙する
 
+- `$.request.custom_params.*` — 認可リクエストのカスタムパラメータ（Issue #1907）。ポリシーの `custom_params_trusted_sources`（既定 `pushed` / `request_object`）に含まれる出どころのものだけ見える。署名の無いリクエストオブジェクトと公開クライアントの PAR の値は `query` 扱い
+
 ロール分岐は `{ "path": "$.user.roles", "operation": "contains", "value": "admin" }` のように書く。
+
+右辺を path にするなら `value_path`（`eq` / `ne` のみ。どちらかが無ければ `eq` は false）。誤用（`value` と併記、他の演算子）は管理 API で 400（`AuthenticationPolicyConfigVerifier`）。
+
+**実装（#1907）**: 出どころは認可エンドポイントで `AuthenticationCustomParams.of` が決めて `AuthenticationContext.custom_params` に保存（`OAuthAuthenticationTransactionCreator`）→ `PolicyEvaluationRequestContextCreator` が信頼する出どころだけを `$.request` に出す → `AuthenticationTransaction#requestForPolicy()` を `MfaConditionEvaluator` / `OIDCSessionVerifier` / attribute-verification に渡す。`AuthenticationPolicy#verifiesEachRequest()`（属性照合のステップ、`$.request.*` / `$.attribute-verification.*` を見る条件）に当てはまるポリシーは SSO しない：view-data の `session_enabled` を false（`OAuthFlowEntryService#getViewData`）、`authorize-with-session` は 400（`OIDCSessionVerifier`）、prompt=none は `login_required`（`OAuthRequestContext#canAutomaticallyAuthorize`。ポリシーは `OAuthRequest` で渡す）。念のため VERIFICATION の結果は SSO で引き継がない（`AuthenticationInteractionResults#withoutVerifications`）。
 
 **セキュリティ（Issue #1501）**: `$.user.*` は **allowリスト方式**。`hashed_password` / `credentials` / `verified_claims` は意図的に除外（条件評価の成否が値抽出オラクルになりうるため）。ポリシー評価専用で外部APIリクエストには使われない。属性一覧は `documentation/docs/content_06_developer-guide/05-configuration/authentication-policy.md` の「参照可能なコンテキスト」を参照。
 

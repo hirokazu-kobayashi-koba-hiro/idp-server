@@ -28,6 +28,7 @@ public class AuthenticationContext {
   Scopes scopes;
   BindingMessage bindingMessage;
   AuthorizationDetails authorizationDetails;
+  AuthenticationCustomParams customParams = new AuthenticationCustomParams();
 
   public AuthenticationContext() {}
 
@@ -40,6 +41,16 @@ public class AuthenticationContext {
     this.scopes = scopes;
     this.bindingMessage = bindingMessage;
     this.authorizationDetails = authorizationDetails;
+  }
+
+  public AuthenticationContext(
+      AcrValues acrValues,
+      Scopes scopes,
+      BindingMessage bindingMessage,
+      AuthorizationDetails authorizationDetails,
+      AuthenticationCustomParams customParams) {
+    this(acrValues, scopes, bindingMessage, authorizationDetails);
+    this.customParams = customParams;
   }
 
   public AcrValues acrValues() {
@@ -58,7 +69,23 @@ public class AuthenticationContext {
     return authorizationDetails;
   }
 
+  /** Issue #1907: the custom parameters of the authorization request, with their sources. */
+  public AuthenticationCustomParams customParams() {
+    return customParams;
+  }
+
+  /** Stored with the transaction, and returned by the management API. */
   public Map<String, Object> toMap() {
+    Map<String, Object> map = toMapForPublic();
+    if (customParams.exists()) map.put("custom_params", customParams.toMap());
+    return map;
+  }
+
+  /**
+   * For the APIs an end-user's device calls. Leaves out the custom parameters, which the relying
+   * party addressed to the server, not to the device.
+   */
+  public Map<String, Object> toMapForPublic() {
     HashMap<String, Object> map = new HashMap<>();
     if (acrValues.exists()) map.put("acr_values", acrValues.toStringValues());
     if (scopes.exists()) map.put("scopes", scopes.toStringValues());
@@ -72,6 +99,7 @@ public class AuthenticationContext {
     return acrValues != null
         || scopes != null
         || bindingMessage != null
-        || authorizationDetails != null;
+        || authorizationDetails != null
+        || customParams.exists();
   }
 }

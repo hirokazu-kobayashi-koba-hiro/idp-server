@@ -87,6 +87,10 @@ public class AuthenticationPolicyConfiguration
     return policies.stream().findFirst().orElse(new AuthenticationPolicy());
   }
 
+  public List<AuthenticationPolicy> policies() {
+    return policies != null ? policies : List.of();
+  }
+
   public List<Map<String, Object>> policiesAsMap() {
     if (policies == null) {
       return new ArrayList<>();

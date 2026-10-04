@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.authentication.acr.AcrResolver;
 import org.idp.server.core.openid.authentication.evaluator.MfaConditionEvaluator;
+import org.idp.server.core.openid.authentication.evaluator.PolicyEvaluationRequestContextCreator;
 import org.idp.server.core.openid.authentication.loa.LoaDeniedScopeResolver;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
 import org.idp.server.core.openid.authentication.policy.AuthenticationResultConditionConfig;
@@ -76,42 +77,10 @@ public class AuthenticationTransaction {
 
   public AuthenticationTransaction updateWith(
       AuthenticationInteractionRequestResult interactionRequestResult) {
-    Map<String, AuthenticationInteractionResult> resultMap = interactionResults.toMap();
-
     AuthenticationRequest updatedRequest = updateWithUser(interactionRequestResult);
 
-    if (interactionResults.contains(interactionRequestResult.interactionTypeName())) {
-
-      AuthenticationInteractionResult foundResult =
-          interactionResults.get(interactionRequestResult.interactionTypeName());
-      AuthenticationInteractionResult updatedInteraction =
-          foundResult.updateWith(interactionRequestResult);
-      resultMap.remove(interactionRequestResult.interactionTypeName());
-      resultMap.put(interactionRequestResult.interactionTypeName(), updatedInteraction);
-
-    } else {
-
-      // #1771: a named interaction gets its own entry under the type from the very first call, so
-      // the breakdown is not missing for whichever interaction happened to run first.
-      String operationType = interactionRequestResult.operationType().name();
-      String method = interactionRequestResult.method();
-      int successCount = interactionRequestResult.isSuccess() ? 1 : 0;
-      int failureCount = interactionRequestResult.isSuccess() ? 0 : 1;
-      LocalDateTime interactionTime = SystemDateTime.now();
-      Map<String, AuthenticationInteractionResult> interactions = new HashMap<>();
-      if (interactionRequestResult.hasInteractionName()) {
-        interactions.put(
-            interactionRequestResult.interactionName(),
-            AuthenticationInteractionResult.initialResultFor(interactionRequestResult));
-      }
-      AuthenticationInteractionResult result =
-          new AuthenticationInteractionResult(
-              operationType, method, 1, successCount, failureCount, interactionTime, interactions);
-      resultMap.put(interactionRequestResult.interactionTypeName(), result);
-    }
-
     AuthenticationInteractionResults updatedResults =
-        new AuthenticationInteractionResults(resultMap);
+        interactionResults.updatedWith(interactionRequestResult);
     return new AuthenticationTransaction(
         identifier,
         authorizationIdentifier,
@@ -364,7 +333,7 @@ public class AuthenticationTransaction {
       AuthenticationResultConditionConfig authenticationResultConditionConfig =
           authenticationPolicy.successConditions();
       return MfaConditionEvaluator.isSuccessSatisfied(
-          authenticationResultConditionConfig, interactionResults, user());
+          authenticationResultConditionConfig, interactionResults, user(), requestForPolicy());
     }
     return interactionResults.containsAnySuccess();
   }
@@ -374,7 +343,7 @@ public class AuthenticationTransaction {
       AuthenticationResultConditionConfig authenticationResultConditionConfig =
           authenticationPolicy.failureConditions();
       return MfaConditionEvaluator.isFailureSatisfied(
-          authenticationResultConditionConfig, interactionResults, user());
+          authenticationResultConditionConfig, interactionResults, user(), requestForPolicy());
     }
     return interactionResults.containsDenyInteraction();
   }
@@ -384,9 +353,17 @@ public class AuthenticationTransaction {
       AuthenticationResultConditionConfig authenticationResultConditionConfig =
           authenticationPolicy.lockConditions();
       return MfaConditionEvaluator.isLockedSatisfied(
-          authenticationResultConditionConfig, interactionResults, user());
+          authenticationResultConditionConfig, interactionResults, user(), requestForPolicy());
     }
     return false;
+  }
+
+  /**
+   * Issue #1907: {@code $.request.*} for the policy conditions — the custom parameters of the
+   * authorization request from the sources the policy trusts.
+   */
+  public Map<String, Object> requestForPolicy() {
+    return PolicyEvaluationRequestContextCreator.create(request.context(), authenticationPolicy);
   }
 
   public boolean isComplete() {

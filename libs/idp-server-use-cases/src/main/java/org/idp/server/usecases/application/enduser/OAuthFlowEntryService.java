@@ -179,6 +179,13 @@ public class OAuthFlowEntryService
         oidcSessionHandler.getOPSessionFromCookie(tenant, sessionCookieDelegate);
     opSessionOpt.ifPresent(oAuthRequest::setOPSession);
 
+    // Issue #1907: prompt=none must not authorize from the session a request whose policy checks
+    // each request on its own.
+    AuthenticationPolicyConfiguration authenticationPolicyConfiguration =
+        authenticationPolicyConfigurationQueryRepository.find(
+            tenant, StandardAuthFlow.OAUTH.toAuthFlow());
+    oAuthRequest.setAuthenticationPolicyConfiguration(authenticationPolicyConfiguration);
+
     OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
     OAuthRequestResponse requestResponse = oAuthProtocol.request(oAuthRequest);
 
@@ -201,9 +208,6 @@ public class OAuthFlowEntryService
       // Resolve user from login_hint if present
       User resolvedUser = resolveUserFromLoginHint(tenant, requestResponse);
 
-      AuthenticationPolicyConfiguration authenticationPolicyConfiguration =
-          authenticationPolicyConfigurationQueryRepository.find(
-              tenant, StandardAuthFlow.OAUTH.toAuthFlow());
       AuthenticationTransaction authenticationTransaction =
           OAuthAuthenticationTransactionCreator.create(
               tenant,
@@ -264,9 +268,13 @@ public class OAuthFlowEntryService
         "authentication_step_hints",
         authenticationInteractors.viewHints(tenant, methodsOf(authenticationPolicy)));
 
-    // The session the view may offer to continue with
+    // The session the view may offer to continue with. None under a policy that verifies each
+    // request (Issue #1907): a session cannot satisfy it, so the view goes straight to sign-in.
     OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
-    OPSession opSession = authenticatingSession(binding, tenant, authenticationTransaction);
+    OPSession opSession =
+        authenticationPolicy.verifiesEachRequest()
+            ? null
+            : authenticatingSession(binding, tenant, authenticationTransaction);
 
     OAuthViewDataRequest oAuthViewDataRequest =
         new OAuthViewDataRequest(
@@ -869,7 +877,10 @@ public class OAuthFlowEntryService
 
     SessionValidationResult validationResult =
         oidcSessionHandler.validateSessionForAuthorization(
-            opSession, authorizationRequest, authenticationTransaction.authenticationPolicy());
+            opSession,
+            authorizationRequest,
+            authenticationTransaction.authenticationPolicy(),
+            authenticationTransaction.requestForPolicy());
 
     if (validationResult.isInvalid()) {
       eventPublisher.publish(
