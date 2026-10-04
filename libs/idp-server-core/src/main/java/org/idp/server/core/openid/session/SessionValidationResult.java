@@ -96,6 +96,19 @@ public class SessionValidationResult {
         DefaultSecurityEventType.oauth_authorize_with_session_policy_mismatch);
   }
 
+  /**
+   * Issue #1907: a verification step of the policy, checked again for this authorization request,
+   * did not hold. Carries the step's own error so the view can say why.
+   */
+  public static SessionValidationResult stepNotSatisfied(
+      String errorCode, String errorDescription) {
+    return new SessionValidationResult(
+        false,
+        errorCode,
+        errorDescription,
+        DefaultSecurityEventType.oauth_authorize_with_session_policy_mismatch);
+  }
+
   public boolean isValid() {
     return valid;
   }

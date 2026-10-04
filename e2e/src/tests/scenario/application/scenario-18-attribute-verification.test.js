@@ -341,7 +341,8 @@ describe("Authentication: attribute verification (#1907)", () => {
     return { email, password, sub };
   };
 
-  const startAuthorization = async () => {
+  /** prompt=login unless {@code reuseSession}, so each test signs in afresh. */
+  const startAuthorization = async (reuseSession = false) => {
     const response = await getAuthorizations({
       endpoint: `${backendUrl}/${tenantId}/v1/authorizations`,
       clientId,
@@ -349,7 +350,7 @@ describe("Authentication: attribute verification (#1907)", () => {
       state: `attr-${Date.now()}`,
       scope: "openid profile email",
       redirectUri,
-      prompt: "login",
+      prompt: reuseSession ? undefined : "login",
     });
     expect(response.status).toBe(302);
     return convertNextAction(response.headers.location).params.get("id");
@@ -410,6 +411,32 @@ describe("Authentication: attribute verification (#1907)", () => {
     expect(payload.sub).toBe(user.sub);
     expect(payload.amr).toContain("password");
     expect(payload.amr).not.toContain("attribute-verification");
+  });
+
+  it("asks for the entered values again instead of carrying them over to a reused session", async () => {
+    const user = await createUser();
+    const authId = await startAuthorization();
+    await signIn(authId, user);
+    expect((await verifyAttributes(authId, checkAccount)).status).toBe(200);
+    expect((await verifyAttributes(authId, correctAnswer)).status).toBe(200);
+    const authorizeResponse = await authorize({
+      endpoint: `${backendUrl}/${tenantId}/v1/authorizations/{id}/authorize`,
+      id: authId,
+      body: {},
+    });
+    expect(authorizeResponse.status).toBe(200);
+
+    // The account check needs no input and is checked again; the entered values cannot be, and
+    // their result belongs to the earlier request, so the session alone does not satisfy kba.
+    const reusedId = await startAuthorization(true);
+    const reuseResponse = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${reusedId}/authorize-with-session`,
+      body: {},
+    });
+    expect(reuseResponse.status).toBe(400);
+    expect(reuseResponse.data.error_description).toBe(
+      "session does not satisfy authentication policy"
+    );
   });
 
   it("does not complete the authorization on the password alone", async () => {

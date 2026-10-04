@@ -129,6 +129,10 @@ public class OAuthAuthenticationTransactionCreator {
    * Issue #1907: the custom parameters, with what each can be trusted as. Decided here, at the
    * authorization endpoint, because it is the last point where the sources are known. A client with
    * no registered authentication method is not taken as authenticating.
+   *
+   * <p>For a pushed request, whether the client authenticates is read from its configuration now,
+   * not as it was at the pushed authorization request. A change in between is not seen; the pushed
+   * request lives for seconds.
    */
   private static AuthenticationCustomParams customParamsOf(OAuthRequestResponse requestResponse) {
     String method = requestResponse.clientConfiguration().tokenEndpointAuthMethod();

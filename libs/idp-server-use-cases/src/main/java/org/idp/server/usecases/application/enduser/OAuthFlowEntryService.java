@@ -872,7 +872,8 @@ public class OAuthFlowEntryService
             opSession,
             authorizationRequest,
             authenticationTransaction.authenticationPolicy(),
-            authenticationTransaction.requestForPolicy());
+            authenticationTransaction.requestForPolicy(),
+            recheckForSessionReuse(tenant, authenticationTransaction, opSession));
 
     if (validationResult.isInvalid()) {
       eventPublisher.publish(
@@ -932,6 +933,22 @@ public class OAuthFlowEntryService
     }
 
     return authorize;
+  }
+
+  /**
+   * Issue #1907: the policy's verification steps, checked again for this authorization request with
+   * the session's user. Nothing when there is no usable session; the verifier then refuses.
+   */
+  private List<AuthenticationInteractionRequestResult> recheckForSessionReuse(
+      Tenant tenant, AuthenticationTransaction authenticationTransaction, OPSession opSession) {
+    if (opSession == null || !opSession.exists()) {
+      return List.of();
+    }
+    return authenticationInteractors.recheckForSessionReuse(
+        tenant,
+        authenticationTransaction,
+        opSession.user(),
+        opSession.toAuthenticationInteractionResults().withoutVerifications());
   }
 
   public OAuthDenyResponse deny(

@@ -276,15 +276,6 @@ describe("Authentication: custom params verification (#1907)", () => {
             operation: "gte",
             value: 1,
           },
-          // Also here, not only in the step: reusing a session evaluates these
-          // conditions against the new request, while the step's success count
-          // carries over from the earlier sign-in.
-          {
-            path: "$.request.custom_params.member_no",
-            type: "string",
-            operation: "eq",
-            value_path: "$.user.custom_properties.member_no",
-          },
         ],
       ],
     },
@@ -445,12 +436,12 @@ describe("Authentication: custom params verification (#1907)", () => {
       const sameMemberResponse = await authorizeWithSession(sameMemberId);
       expect(sameMemberResponse.status).toBe(200);
 
+      // The member-match step is checked again for the new request. Its success at the first
+      // sign-in is not carried over, so the policy needs no copy of the expression.
       const otherMemberId = await pushedAuthorization({ member_no: "B456" }, true);
       const otherMemberResponse = await authorizeWithSession(otherMemberId);
       expect(otherMemberResponse.status).toBe(400);
-      expect(otherMemberResponse.data.error_description).toBe(
-        "session does not satisfy authentication policy"
-      );
+      expect(otherMemberResponse.data.error).toBe("member_mismatch");
     });
   });
 

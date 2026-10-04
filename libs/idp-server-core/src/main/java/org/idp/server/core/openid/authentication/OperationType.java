@@ -55,6 +55,10 @@ public enum OperationType {
     return this == CHALLENGE;
   }
 
+  public boolean isVerification() {
+    return this == VERIFICATION;
+  }
+
   /**
    * Whether the end-user had to supply something only they hold.
    *
