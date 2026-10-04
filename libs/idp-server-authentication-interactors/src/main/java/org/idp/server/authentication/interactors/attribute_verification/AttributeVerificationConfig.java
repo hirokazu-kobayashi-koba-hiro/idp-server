@@ -24,6 +24,8 @@ import org.idp.server.core.openid.authentication.policy.AuthenticationResultCond
 import org.idp.server.core.openid.authentication.policy.AuthenticationResultConditionConfig;
 import org.idp.server.platform.condition.ConditionOperation;
 import org.idp.server.platform.json.JsonConverter;
+import org.idp.server.platform.mapper.FunctionSpec;
+import org.idp.server.platform.mapper.ValueFunctionChain;
 
 /**
  * The settings of one named attribute verification interaction, read from its {@code
@@ -190,6 +192,22 @@ public class AttributeVerificationConfig {
         return FieldsParse.invalid(
             "field user_attribute is not a verifiable attribute: " + userAttribute);
       }
+      int suffixLength = intOf(field.get("suffix_length"), 0);
+      if (suffixLength < 0) {
+        return FieldsParse.invalid("field suffix_length must be a non-negative integer.");
+      }
+      if (field.containsKey("normalize") && field.containsKey("functions")) {
+        return FieldsParse.invalid("field normalize and functions cannot both be set.");
+      }
+      if (field.containsKey("functions")) {
+        ValueFunctionChain chain = chainOf(field.get("functions"));
+        if (chain == null) {
+          return FieldsParse.invalid(
+              "field functions must be a list of comparison functions with valid arguments.");
+        }
+        fields.add(new AttributeVerificationField(input, userAttribute, chain, null, suffixLength));
+        continue;
+      }
       Object rawNormalize = field.get("normalize");
       AttributeNormalization normalization =
           rawNormalize == null
@@ -198,13 +216,31 @@ public class AttributeVerificationConfig {
       if (normalization == null) {
         return FieldsParse.invalid("field normalize is not supported: " + rawNormalize);
       }
-      int suffixLength = intOf(field.get("suffix_length"), 0);
-      if (suffixLength < 0) {
-        return FieldsParse.invalid("field suffix_length must be a non-negative integer.");
-      }
       fields.add(new AttributeVerificationField(input, userAttribute, normalization, suffixLength));
     }
     return new FieldsParse(fields, null);
+  }
+
+  /**
+   * @return the tenant's functions as a comparison chain, or null when they are not a list, name a
+   *     function that does not suit a comparison, or carry arguments that do not work
+   */
+  private static ValueFunctionChain chainOf(Object raw) {
+    if (!(raw instanceof List<?> rawFunctions) || rawFunctions.isEmpty()) {
+      return null;
+    }
+    List<FunctionSpec> specs = new ArrayList<>();
+    for (Object rawFunction : rawFunctions) {
+      if (!(rawFunction instanceof Map<?, ?>)) {
+        return null;
+      }
+      specs.add(jsonConverter.read(rawFunction, FunctionSpec.class));
+    }
+    try {
+      return ValueFunctionChain.forComparison(specs);
+    } catch (IllegalArgumentException e) {
+      return null;
+    }
   }
 
   private static AttributeVerificationConfig invalid(String reason) {

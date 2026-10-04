@@ -18,22 +18,39 @@ package org.idp.server.authentication.interactors.attribute_verification;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import org.idp.server.platform.mapper.ValueFunctionChain;
 
 /**
  * One item of an attribute verification: which request field holds the end-user's answer, which
- * registered attribute it is checked against, and how both are normalized first.
+ * registered attribute it is checked against, and how both are brought to the same form first — a
+ * named {@link AttributeNormalization} or the tenant's own {@code functions}.
  */
 public class AttributeVerificationField {
 
   String input;
   String userAttribute;
-  AttributeNormalization normalization;
+  ValueFunctionChain chain;
+  String normalization;
   int suffixLength;
 
   public AttributeVerificationField(
       String input, String userAttribute, AttributeNormalization normalization, int suffixLength) {
+    this(input, userAttribute, normalization.chain(), normalization.value(), suffixLength);
+  }
+
+  /**
+   * @param chain the functions applied to both sides, built for comparison
+   * @param normalization the named normalization the chain came from, or null for custom functions
+   */
+  public AttributeVerificationField(
+      String input,
+      String userAttribute,
+      ValueFunctionChain chain,
+      String normalization,
+      int suffixLength) {
     this.input = input;
     this.userAttribute = userAttribute;
+    this.chain = chain;
     this.normalization = normalization;
     this.suffixLength = suffixLength;
   }
@@ -66,12 +83,23 @@ public class AttributeVerificationField {
   }
 
   /**
-   * Normalizes, then keeps the last {@code suffixLength} characters when one is set. A value
-   * shorter than that cannot be compared and yields null.
+   * Applies the chain, then keeps the last {@code suffixLength} characters when one is set.
+   *
+   * <p>An empty result is no value, not a value: a chain can reduce anything to the empty string —
+   * {@code regex_replace} removing every character, {@code date} on something that is not a date —
+   * and two empty strings would otherwise match. A value shorter than {@code suffixLength} cannot
+   * be compared either. Both yield null, which matches nothing.
    */
   private String prepare(String value) {
-    String normalized = normalization.apply(value);
-    if (normalized == null || suffixLength <= 0) {
+    if (value == null) {
+      return null;
+    }
+    Object transformed = chain.apply(value);
+    String normalized = transformed == null ? null : transformed.toString();
+    if (normalized == null || normalized.isEmpty()) {
+      return null;
+    }
+    if (suffixLength <= 0) {
       return normalized;
     }
     if (normalized.length() < suffixLength) {

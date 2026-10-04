@@ -26,44 +26,109 @@ import org.idp.server.core.openid.identity.UserStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 /** Issue #1907: the comparison rules of attribute verification, without the interactor. */
 class AttributeVerificationRulesTest {
 
+  /**
+   * Issue #1935: how each named normalization treats what people actually type, Japanese and
+   * English. Each row is registered value, submitted value, whether they should match. Characters
+   * that look alike are written as {@code \\uXXXX} escapes, which the compiler turns into the
+   * character, so the table shows which one a row is about.
+   */
   @Nested
-  @DisplayName("normalization")
+  @DisplayName("normalization: what matches and what does not")
   class Normalization {
 
-    @Test
-    @DisplayName("nfkc folds full-width forms")
-    void nfkc() {
-      assertEquals("ABC123", AttributeNormalization.NFKC.apply(" ＡＢＣ１２３ "));
+    private static boolean matches(
+        String normalize, int suffix, String registered, String submitted) {
+      AttributeVerificationField field =
+          new AttributeVerificationField("in", "x", AttributeNormalization.of(normalize), suffix);
+      return field.matches(submitted, registered);
+    }
+
+    @ParameterizedTest(name = "[{0}] {1} vs {2} -> {3}")
+    @CsvSource(
+        delimiter = '|',
+        textBlock =
+            """
+            # name: spaces, dashes, case and width fold; kanji variants do not
+            name | 山田 太郎      | 山田太郎        | true
+            name | 山田 太郎      | 山田　太郎      | true
+            name | Yamada Taro    | yamada taro     | true
+            name | YAMADA         | ＹＡＭＡＤＡ    | true
+            name | Smith-Jones    | Smith\u2010Jones | true
+            name | Smith-Jones    | ＳＭＩＴＨ－ＪＯＮＥＳ | true
+            name | Smith-Jones    | smith - jones   | true
+            name | Smith-Jones    | Smith\u2212Jones | true
+            name | 高橋           | 髙橋            | false
+            name | 渡辺           | 渡邊            | false
+            name | Yamada         | Yamamoto        | false
+            # kana: as name, and hiragana is katakana; ー is kept
+            kana | ヤマダ タロウ  | やまだ たろう   | true
+            kana | ヤマダ タロウ  | ﾔﾏﾀﾞ ﾀﾛｳ        | true
+            kana | ヤマダ タロウ  | ヤマダ　　タロウ | true
+            kana | ジョーンズ     | じょーんず      | true
+            kana | ジョーンズ     | ジョンズ        | false
+            kana | ヤマダ         | ヤマタ          | false
+            # email: width, surrounding spaces and case fold
+            email | Taro@Example.com | taro@example.com | true
+            email | taro@example.com | ｔａｒｏ＠ｅｘａｍｐｌｅ．ｃｏｍ | true
+            email | taro@example.com | ' taro@example.com ' | true
+            email | taro@example.com | taro@example.co | false
+            # digits: everything but digits goes
+            digits | 123-4567      | 1234567         | true
+            digits | 123-4567      | １２３－４５６７ | true
+            digits | 123-4567      | 〒123ー4567      | true
+            digits | 090-1234-5678 | 090\u20101234\u20105678 | true
+            digits | 090-1234-5678 | ０９０（１２３４）５６７８ | true
+            digits | +819012345678 | 09012345678     | false
+            # date: the common notations, not the Japanese era
+            date | 1990-04-01 | 1990/4/1           | true
+            date | 1990-04-01 | 19900401           | true
+            date | 1990-04-01 | １９９０／０４／０１ | true
+            date | 1990-04-01 | 1990年4月1日       | true
+            date | 1990-04-01 | 1990.04.01         | true
+            date | 1990-04-01 | ' 1990-04-01 '     | true
+            date | 1990-04-01 | H2.4.1             | false
+            date | 1990-04-01 | 1990-04-02         | false
+            # nfkc: width folds; spaces inside, kana scripts and case do not
+            nfkc | 山田 太郎   | 山田　太郎 | true
+            nfkc | YAMADA      | ＹＡＭＡＤＡ | true
+            nfkc | 山田 太郎   | 山田太郎   | false
+            nfkc | ヤマダ      | やまだ     | false
+            nfkc | Yamada      | yamada     | false
+            # exact: nothing folds
+            exact | 山田太郎   | ' 山田太郎 ' | false
+            exact | 山田太郎   | 山田太郎   | true
+            """)
+    void table(String normalize, String registered, String submitted, boolean expected) {
+      assertEquals(expected, matches(normalize, 0, registered, submitted));
+    }
+
+    @ParameterizedTest(name = "{0} vs last 4 -> {1}")
+    @CsvSource(
+        delimiter = '|',
+        textBlock =
+            """
+            +819012345678      | true
+            090-1234-5678      | true
+            ０９０‐１２３４‐５６７８ | true
+            090-1234-5679      | false
+            """)
+    void phoneLastFour(String registered, boolean expected) {
+      assertEquals(expected, matches("digits", 4, registered, "5678"));
     }
 
     @Test
-    @DisplayName("digits keeps only digits, after nfkc")
-    void digits() {
-      assertEquals("09012345678", AttributeNormalization.DIGITS.apply("０９０-1234-5678"));
-      assertEquals("819012345678", AttributeNormalization.DIGITS.apply("+81 90 1234 5678"));
-    }
-
-    @Test
-    @DisplayName("date accepts the usual written forms and writes yyyy-MM-dd")
-    void date() {
-      assertEquals("2000-01-05", AttributeNormalization.DATE.apply("2000-01-05"));
-      assertEquals("2000-01-05", AttributeNormalization.DATE.apply("2000/1/5"));
-      assertEquals("2000-01-05", AttributeNormalization.DATE.apply("20000105"));
-      assertEquals("2000-01-05", AttributeNormalization.DATE.apply("２０００／０１／０５"));
-    }
-
-    @Test
-    @DisplayName("a value that cannot be normalized becomes null")
-    void unnormalizable() {
-      assertNull(AttributeNormalization.DATE.apply("2000-02-30"));
-      assertNull(AttributeNormalization.DATE.apply("not a date"));
-      assertNull(AttributeNormalization.DIGITS.apply("abc"));
-      assertNull(AttributeNormalization.EXACT.apply(""));
-      assertNull(AttributeNormalization.EXACT.apply(null));
+    @DisplayName("an empty result is no value: two values reduced to nothing do not match")
+    void emptyResultIsNoValue() {
+      assertFalse(matches("digits", 0, "abc", "xyz"));
+      assertFalse(matches("date", 0, "not a date", "also not"));
+      assertFalse(matches("exact", 0, "", ""));
+      assertFalse(matches("name", 0, "   ", "\u3000"));
     }
 
     @Test
@@ -158,6 +223,75 @@ class AttributeVerificationRulesTest {
           AttributeVerificationConfig.from(
                   Map.of("conditions", conditions, "error", "identity_verification_required"))
               .conditionError());
+    }
+
+    @Test
+    @DisplayName("a field can name its own functions instead of a normalization")
+    void customFunctions() {
+      AttributeVerificationConfig config =
+          AttributeVerificationConfig.from(
+              Map.of(
+                  "fields",
+                  List.of(
+                      Map.of(
+                          "input", "member_no",
+                          "user_attribute", "custom_properties.member_no",
+                          "functions",
+                              List.of(
+                                  Map.of("name", "normalize"),
+                                  Map.of(
+                                      "name",
+                                      "regex_replace",
+                                      "args",
+                                      Map.of("pattern", "^M-", "replacement", "")))))));
+
+      assertTrue(config.isValid(), config.invalidReason());
+      AttributeVerificationField field = config.fields().get(0);
+      assertTrue(field.matches("Ｍ-001", "M-001"));
+      assertTrue(field.matches("001", "M-001"));
+      assertFalse(field.matches("002", "M-001"));
+    }
+
+    @Test
+    @DisplayName(
+        "functions that do not suit a comparison, or carry wrong arguments, make the config invalid")
+    void invalidFunctions() {
+      List<Object> unsuitable =
+          List.of(
+              List.of(Map.of("name", "exists")),
+              List.of(Map.of("name", "random_string", "args", Map.of("length", 8))),
+              List.of(Map.of("name", "kana", "args", Map.of("to", "katakan"))),
+              List.of(Map.of("name", "no_such_function")),
+              List.of(),
+              "normalize");
+      for (Object functions : unsuitable) {
+        assertFalse(
+            AttributeVerificationConfig.from(
+                    Map.of(
+                        "fields",
+                        List.of(
+                            Map.of(
+                                "input",
+                                "x",
+                                "user_attribute",
+                                "birthdate",
+                                "functions",
+                                functions))))
+                .isValid(),
+            String.valueOf(functions));
+      }
+
+      assertFalse(
+          AttributeVerificationConfig.from(
+                  Map.of(
+                      "fields",
+                      List.of(
+                          Map.of(
+                              "input", "x",
+                              "user_attribute", "birthdate",
+                              "normalize", "date",
+                              "functions", List.of(Map.of("name", "date"))))))
+              .isValid());
     }
 
     @Test

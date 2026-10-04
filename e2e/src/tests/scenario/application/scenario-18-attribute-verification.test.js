@@ -37,7 +37,7 @@ describe("Authentication: attribute verification (#1907)", () => {
   const checkAccount = { interaction: "identity-verified" };
   const correctAnswer = {
     interaction: "kba",
-    birthdate: "2000/1/5",
+    birthdate: "2000年1月5日",
     phone_last4: "５６７８",
   };
   const wrongAnswer = {
