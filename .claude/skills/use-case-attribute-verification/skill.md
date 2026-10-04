@@ -137,7 +137,7 @@ ORGANIZER テナントの管理者トークンで、組織レベル API を使�
 
 ## 認可画面
 
-- app-view は対応済み。view-data の `authentication_step_hints["attribute-verification"].interactions.<名前>` に `kind` と `inputs` が入り、条件のステップは自動送信、入力の照合は入力欄を出す
+- app-view は対応済み。view-data の `authentication_step_hints["attribute-verification"].interactions.<名前>` に `kind` と `inputs` が入り、条件のステップは自動送信、入力の照合は入力欄を出す。`custom_properties.<key>` のラベルはキー名がそのまま出るので、利用者向けの名前が要るなら自作の画面にする
 - 自作の画面の場合: リクエストボディに `interaction` を必ず入れる。ステップの完了は authentication-status の `interaction_results["attribute-verification"].interactions.<名前>.success_count` で判定する（方式単位では判定できない）
 
 | `error` | 画面の案内 |
