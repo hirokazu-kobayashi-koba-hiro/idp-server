@@ -237,7 +237,7 @@ public class OAuthRequestParameters {
                 params.put(key, value);
               }
             });
-    return new CustomParams(params);
+    return CustomParams.of(params, CustomParamSource.QUERY);
   }
 
   public OAuthRequestPattern analyzePattern() {

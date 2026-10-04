@@ -1,0 +1,65 @@
+/*
+ * Copyright 2025 Hirokazu Kobayashi
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.idp.server.core.openid.oauth.type.oauth;
+
+/**
+ * Where a custom parameter of an authorization request came from (Issue #1907).
+ *
+ * <p>The source alone does not say the end-user could not have changed the value. A request object
+ * protects it only when signed, and a pushed authorization request only when the client
+ * authenticated; see each constant. A check that relies on the value has to confirm that as well.
+ */
+public enum CustomParamSource {
+
+  /** The query string of the authorization request. Nothing protects it. */
+  QUERY("query"),
+
+  /**
+   * A claim of the request object (RFC 9101). Protected by the client's signature when the request
+   * object is signed; an unsigned one ({@code alg: none}) protects nothing.
+   */
+  REQUEST_OBJECT("request_object"),
+
+  /**
+   * The body of a pushed authorization request (RFC 9126), as form parameters or inside a request
+   * object. Protected by client authentication for a confidential client; anyone can push a request
+   * for a public client.
+   */
+  PUSHED("pushed");
+
+  String value;
+
+  CustomParamSource(String value) {
+    this.value = value;
+  }
+
+  /**
+   * @return the source named {@code value}, or null when there is none by that name
+   */
+  public static CustomParamSource of(String value) {
+    for (CustomParamSource source : values()) {
+      if (source.value.equals(value)) {
+        return source;
+      }
+    }
+    return null;
+  }
+
+  public String value() {
+    return value;
+  }
+}

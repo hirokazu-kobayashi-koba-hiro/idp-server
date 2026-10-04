@@ -16,8 +16,10 @@
 
 package org.idp.server.core.openid.oauth.view;
 
+import java.util.Map;
 import org.idp.server.core.openid.oauth.OAuthRequestContext;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
+import org.idp.server.core.openid.oauth.type.oauth.CustomParamSource;
 import org.idp.server.core.openid.oauth.type.oauth.CustomParams;
 import org.idp.server.core.openid.oauth.type.oauth.Error;
 import org.idp.server.core.openid.oauth.type.oauth.ErrorDescription;
@@ -77,8 +79,8 @@ public class OAuthViewUrlResolver {
    * public and anyone can put a value on it. A name nobody declared resolves to an empty variant,
    * so the request lands on the tenant's default pages.
    *
-   * <p>The name stays in the custom parameters, so it reaches the page on the URL and in view-data,
-   * and it is stored with the authorization request.
+   * <p>The name stays in the custom parameters, so it reaches the page in view-data and, unless it
+   * came in a request object, on the URL, and it is stored with the authorization request.
    */
   private static UIViewVariant resolveVariant(
       OAuthRequestContext context, UIConfiguration uiConfiguration) {
@@ -101,8 +103,7 @@ public class OAuthViewUrlResolver {
     String normalizedBase = base.endsWith("/") ? base.substring(0, base.length() - 1) : base;
     String normalizedPath = path.startsWith("/") ? path.replaceFirst("/", "") : path;
     AuthorizationRequest authorizationRequest = context.authorizationRequest();
-    CustomParams customParams = authorizationRequest.customParams();
-    HttpQueryParams httpQueryParams = new HttpQueryParams(customParams.values());
+    HttpQueryParams httpQueryParams = new HttpQueryParams(customParamsOnUrl(authorizationRequest));
     httpQueryParams.add("id", context.authorizationRequestIdentifier().value());
     httpQueryParams.add("tenant_id", context.tenantIdentifier().value());
     // Carried on the URL as well as in view-data so the page can settle its language — html lang,
@@ -113,5 +114,23 @@ public class OAuthViewUrlResolver {
     }
     String params = httpQueryParams.params();
     return String.format("%s/%s?%s", normalizedBase, normalizedPath, params);
+  }
+
+  /**
+   * The custom parameters carried on the URL to the page. All of them are in view-data.
+   *
+   * <p>A value the client put in a request object is left off (Issue #1907). The client chose to
+   * send it signed, possibly encrypted, and the URL would put it in the browser history, in Referer
+   * headers and in the page server's access log. A pushed authorization request is read back from
+   * storage at the authorization endpoint, where the source of each value is no longer known; when
+   * it held a request object, no custom parameter is carried, since any of them may have come from
+   * it.
+   */
+  private static Map<String, String> customParamsOnUrl(AuthorizationRequest authorizationRequest) {
+    CustomParams customParams = authorizationRequest.customParams();
+    if (authorizationRequest.hasRequest() && !customParams.sourcesKnown()) {
+      return Map.of();
+    }
+    return customParams.valuesNotFrom(CustomParamSource.REQUEST_OBJECT);
   }
 }

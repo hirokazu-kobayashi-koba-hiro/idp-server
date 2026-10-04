@@ -26,6 +26,8 @@ import org.idp.server.core.openid.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.openid.oauth.request.OAuthRequestParameters;
+import org.idp.server.core.openid.oauth.type.oauth.CustomParamSource;
+import org.idp.server.core.openid.oauth.type.oauth.CustomParams;
 import org.idp.server.core.openid.oauth.type.oidc.ClaimsValue;
 import org.idp.server.core.openid.oauth.type.rar.AuthorizationDetailsEntity;
 import org.idp.server.platform.jose.JoseContext;
@@ -43,6 +45,15 @@ public interface AuthorizationRequestFactory {
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration,
       boolean isPushed);
+
+  /**
+   * @return {@code customParams}, as having come from the pushed authorization request when {@code
+   *     isPushed}. The request then reached the server in the body of the POST to the pushed
+   *     authorization request endpoint, whether as form parameters or inside a request object.
+   */
+  default CustomParams customParamsReceived(CustomParams customParams, boolean isPushed) {
+    return isPushed ? customParams.allFrom(CustomParamSource.PUSHED) : customParams;
+  }
 
   default AuthorizationRequestIdentifier createIdentifier() {
     return new AuthorizationRequestIdentifier(UUID.randomUUID().toString());

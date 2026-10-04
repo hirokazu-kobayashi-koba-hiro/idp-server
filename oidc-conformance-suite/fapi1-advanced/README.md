@@ -18,7 +18,7 @@ fapi1-advanced-final-test-plan[client_auth_type=...][fapi_profile=plain_fapi][fa
 | variant | 値 | 根拠 |
 |---|---|---|
 | `fapi_profile` | `plain_fapi` | 地域プロファイル（brazil / uk / ksa）ではない |
-| `fapi_auth_request_method` | `pushed` | discovery に `pushed_authorization_request_endpoint` がある |
+| `fapi_auth_request_method` | `pushed` / `by_value` | PAR の中のリクエストオブジェクトと、認可エンドポイントに値で渡すリクエストオブジェクトで組み立ての経路が分かれるため両方流す（テナントは PAR を必須にしていない） |
 | `fapi_response_mode` | `jarm` | discovery の `response_modes_supported` に `jwt` が含まれる |
 | `client_auth_type` | `private_key_jwt` / `mtls` | 方式ごとにコードパスが分かれるため両方流す |
 
@@ -38,10 +38,24 @@ cd oidc-conformance-suite/driver && npm install && node driver.mjs
 # 4. テスト
 export CONFORMANCE_SUITE_DIR=/path/to/conformance-suite
 ./oidc-conformance-suite/fapi1-advanced/run.sh --rerun 1:2   # happy path 1本
-./oidc-conformance-suite/fapi1-advanced/run.sh               # 両方式すべて
+./oidc-conformance-suite/fapi1-advanced/run.sh               # 4 プランすべて
+./oidc-conformance-suite/fapi1-advanced/run.sh --rerun 3,4    # by_value だけ
 ```
 
 ## 実測済みの結果
+
+プラン番号は `--rerun` で使う番号（`run.sh` に並べた順）。2026-10-04 の通し実行:
+
+| # | client_auth_type | fapi_auth_request_method | 結果 |
+|---|---|---|---|
+| 1 | `private_key_jwt` | `pushed` | 60 PASSED / 3 REVIEW / 2 WARNING |
+| 2 | `mtls` | `pushed` | 43 PASSED / 3 REVIEW / 2 WARNING / 1 SKIPPED |
+| 3 | `private_key_jwt` | `by_value` | 39 PASSED / 5 REVIEW / 2 WARNING |
+| 4 | `mtls` | `by_value` | 28 PASSED / 5 REVIEW / 2 WARNING / 1 SKIPPED |
+
+WARNING はどのプランも discovery と `attempt-reuse-authorisation-code-after-one-second`。
+by_value の REVIEW が 2 つ多いのは、エラーページの表示を確かめるモジュールが増えるため。
+
 
 `private_key_jwt` の happy path（`fapi1-advanced-final`）:
 

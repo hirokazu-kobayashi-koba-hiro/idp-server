@@ -24,9 +24,11 @@ import org.idp.server.core.openid.oauth.OAuthRequestContext;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequestBuilder;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequestIdentifier;
+import org.idp.server.core.openid.oauth.type.oauth.CustomParamSource;
 import org.idp.server.core.openid.oauth.type.oauth.CustomParams;
 import org.idp.server.core.openid.oauth.type.oidc.Prompt;
 import org.idp.server.core.openid.oauth.type.oidc.Prompts;
+import org.idp.server.core.openid.oauth.type.oidc.RequestObject;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantDomain;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
@@ -268,6 +270,54 @@ class OAuthViewUrlResolverTest {
       String url = OAuthViewUrlResolver.resolve(context(tenant, requestAskingFor("v2").build()));
 
       assertTrue(url.startsWith("https://auth.example.com/v1/signin?"), url);
+    }
+  }
+
+  /** Issue #1907: values sent in a request object stay off the URL; view-data still has them. */
+  @Nested
+  @DisplayName("custom parameters on the URL")
+  class CustomParamsOnTheUrl {
+
+    final Tenant tenant =
+        tenant(Map.of("base_url", "https://auth.example.com", "signin_page", "/v1/signin"));
+
+    @Test
+    void leavesOffTheValuesOfTheRequestObjectAndKeepsThoseOfTheQuery() {
+      CustomParams customParams =
+          CustomParams.of(Map.of("variant", "dark", "member_no", "Z999"), CustomParamSource.QUERY)
+              .assembledWith(
+                  CustomParams.of(Map.of("member_no", "A123"), CustomParamSource.REQUEST_OBJECT));
+      AuthorizationRequest request =
+          request().add(new RequestObject("header.payload.signature")).add(customParams).build();
+
+      String url = OAuthViewUrlResolver.resolve(context(tenant, request));
+
+      assertTrue(url.contains("variant=dark"), url);
+      assertFalse(url.contains("member_no"), url);
+    }
+
+    @Test
+    void carriesNothingForAStoredRequestThatHeldARequestObject() {
+      AuthorizationRequest request =
+          request()
+              .add(new RequestObject("header.payload.signature"))
+              .add(new CustomParams(Map.of("member_no", "A123", "variant", "dark")))
+              .build();
+
+      String url = OAuthViewUrlResolver.resolve(context(tenant, request));
+
+      assertFalse(url.contains("member_no"), url);
+      assertFalse(url.contains("variant"), url);
+    }
+
+    @Test
+    void carriesEverythingForAStoredRequestWithoutARequestObject() {
+      AuthorizationRequest request =
+          request().add(new CustomParams(Map.of("member_no", "A123"))).build();
+
+      String url = OAuthViewUrlResolver.resolve(context(tenant, request));
+
+      assertTrue(url.contains("member_no=A123"), url);
     }
   }
 }

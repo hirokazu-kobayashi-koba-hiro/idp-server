@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import org.idp.server.core.openid.oauth.dpop.DPoPJkt;
 import org.idp.server.core.openid.oauth.type.OAuthRequestKey;
 import org.idp.server.core.openid.oauth.type.oauth.*;
@@ -32,6 +33,11 @@ import org.idp.server.core.openid.oauth.type.rar.AuthorizationDetailsEntity;
 
 /** RequestObjectParameters */
 public class RequestObjectParameters {
+
+  /** Claims of the JWT itself (RFC 7519 Section 4.1), which say nothing about the request. */
+  static final Set<String> JWT_REGISTERED_CLAIMS =
+      Set.of("iss", "sub", "aud", "exp", "nbf", "iat", "jti");
+
   Map<String, Object> values;
 
   public RequestObjectParameters() {
@@ -232,5 +238,28 @@ public class RequestObjectParameters {
 
   public AuthorizationDetailsEntity authorizationDetailsEntity() {
     return new AuthorizationDetailsEntity(getList(authorization_details));
+  }
+
+  /**
+   * The claims that are neither OAuth or OpenID Connect parameters nor claims of the JWT itself.
+   * RFC 9101 Section 4 has the request object carry extension parameters too, so they are read here
+   * rather than only from the query string, which the client did not sign.
+   *
+   * <p>Strings are taken as they are, numbers and booleans as their string form (RFC 9101 has
+   * numerical values sent as JSON numbers). Objects and arrays are left out: a custom parameter is
+   * a single string.
+   */
+  public CustomParams customParams() {
+    Map<String, String> params = new HashMap<>();
+    values.forEach(
+        (key, value) -> {
+          if (OAuthRequestKey.contains(key) || JWT_REGISTERED_CLAIMS.contains(key)) {
+            return;
+          }
+          if (value instanceof String || value instanceof Number || value instanceof Boolean) {
+            params.put(key, value.toString());
+          }
+        });
+    return CustomParams.of(params, CustomParamSource.REQUEST_OBJECT);
   }
 }
