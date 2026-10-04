@@ -18,6 +18,8 @@ package org.idp.server.authentication.interactors.attribute_verification;
 
 import static org.idp.server.authentication.interactors.attribute_verification.AttributeVerificationRejection.*;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.authentication.*;
 import org.idp.server.core.openid.authentication.config.AuthenticationConfiguration;
@@ -98,6 +100,43 @@ public class AttributeVerificationInteractor implements AuthenticationInteractor
   @Override
   public String method() {
     return "attribute-verification";
+  }
+
+  /**
+   * What the authorization view needs for each configured interaction, keyed by name: whether it
+   * checks the account ({@code conditions}, nothing to ask — the view can submit at once) or
+   * compares entered values ({@code fields}, with the inputs to ask for). Nothing here is
+   * registered data. An interaction whose configuration cannot be used is left out; the step itself
+   * then answers {@code server_error}.
+   */
+  @Override
+  public Map<String, Object> viewHints(Tenant tenant) {
+    AuthenticationConfiguration configuration =
+        configurationQueryRepository.find(tenant, CONFIG_KEY);
+    if (!configuration.exists()) {
+      return Map.of();
+    }
+    Map<String, Object> interactions = new HashMap<>();
+    configuration
+        .authentications()
+        .forEach(
+            (name, interactionConfig) -> {
+              AttributeVerificationConfig config =
+                  AttributeVerificationConfig.from(interactionConfig.execution().details());
+              if (config.isValid()) {
+                interactions.put(name, viewHintOf(config));
+              }
+            });
+    return interactions.isEmpty() ? Map.of() : Map.of("interactions", interactions);
+  }
+
+  private static Map<String, Object> viewHintOf(AttributeVerificationConfig config) {
+    if (config.hasConditions()) {
+      return Map.of("kind", "conditions", "inputs", List.of());
+    }
+    List<Map<String, Object>> inputs =
+        config.fields().stream().map(AttributeVerificationField::toViewHint).toList();
+    return Map.of("kind", "fields", "inputs", inputs);
   }
 
   @Override

@@ -1577,6 +1577,37 @@ components:
             このリクエストに適用される認証ポリシー。利用可能な認証方式、ステップ定義、
             成功条件などを含みます。スキーマは管理APIの `AuthenticationPolicy`
             （`swagger-cp-authentication-ja.yaml`）と同じです。
+        authentication_step_hints:
+          type: object
+          additionalProperties:
+            type: object
+            additionalProperties: true
+          description: |
+            認証ポリシーに含まれる方式のうち、画面の描画にポリシー以外の情報が要るものについて、
+            方式ごとのヒントを返します（方式名がキー）。ヒントの無い方式はキーごと含まれません。
+            登録済みの値など、利用者の情報は含みません。
+
+            `attribute-verification` では、インタラクションの名前ごとに種類（`kind`）と入力欄（`inputs`）を返します。
+            `kind` が `conditions` のものは入力が不要なので、画面は表示した時点で送信できます。
+            `inputs[].normalize` はプリセット名（`date` / `digits` / `email` など、入力欄の種類を選ぶ手がかり）で、
+            `functions` で変換を直接書いた項目は `custom` になります。
+          example:
+            attribute-verification:
+              interactions:
+                identity-verified:
+                  kind: conditions
+                  inputs: []
+                kba:
+                  kind: fields
+                  inputs:
+                    - input: birthdate
+                      user_attribute: birthdate
+                      normalize: date
+                      suffix_length: 0
+                    - input: phone_last4
+                      user_attribute: phone_number
+                      normalize: digits
+                      suffix_length: 4
 
     FederationInfo:
       type: object

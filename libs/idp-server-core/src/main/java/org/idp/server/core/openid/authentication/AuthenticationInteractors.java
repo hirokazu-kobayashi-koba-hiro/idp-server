@@ -16,11 +16,17 @@
 
 package org.idp.server.core.openid.authentication;
 
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.openid.authentication.exception.AuthenticationInteractorNotFoundException;
+import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class AuthenticationInteractors {
+
+  private static final LoggerWrapper log = LoggerWrapper.getLogger(AuthenticationInteractors.class);
 
   Map<AuthenticationInteractionType, AuthenticationInteractor> values;
 
@@ -31,6 +37,43 @@ public class AuthenticationInteractors {
 
   public boolean contains(AuthenticationInteractionType type) {
     return values.containsKey(type);
+  }
+
+  /**
+   * The view hints of the interactors behind {@code methods}, keyed by method. Methods with no
+   * hints are left out, so the view only finds a key where there is something to read.
+   *
+   * <p>The hints are built every time the authorization view opens and only add to it, so an
+   * interactor that fails to build them is left out rather than failing the view.
+   */
+  public Map<String, Map<String, Object>> viewHints(Tenant tenant, Collection<String> methods) {
+    Map<String, Map<String, Object>> hints = new HashMap<>();
+    for (AuthenticationInteractor interactor : values.values()) {
+      if (!methods.contains(interactor.method()) || hints.containsKey(interactor.method())) {
+        continue;
+      }
+      Map<String, Object> interactorHints = viewHintsOf(interactor, tenant);
+      if (interactorHints != null && !interactorHints.isEmpty()) {
+        hints.put(interactor.method(), interactorHints);
+      }
+    }
+    return hints;
+  }
+
+  /**
+   * @return the hints of {@code interactor}, or null when it fails to build them
+   */
+  private Map<String, Object> viewHintsOf(AuthenticationInteractor interactor, Tenant tenant) {
+    try {
+      return interactor.viewHints(tenant);
+    } catch (RuntimeException e) {
+      log.warn(
+          "Failed to build view hints, leaving them out. method={}, tenant={}",
+          interactor.method(),
+          tenant.identifierValue(),
+          e);
+      return null;
+    }
   }
 
   public AuthenticationInteractor get(AuthenticationInteractionType type) {
