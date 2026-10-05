@@ -41,4 +41,16 @@ public interface CacheStore {
   void deleteByPrefix(String prefix);
 
   long increment(String key, int timeToLiveSeconds);
+
+  /**
+   * Records {@code key} for {@code timeToLiveSeconds} unless it is already there, in one atomic
+   * step (Redis {@code SET key NX EX}).
+   *
+   * <p>For single-use values (Issue #1893): a {@code false} answer means the key was seen before.
+   * When the store cannot answer — none is configured, or it fails — implementations answer {@code
+   * true}, so the caller carries on without the check rather than refusing every request.
+   *
+   * @return {@code true} if the key was recorded now, {@code false} if it was already there
+   */
+  boolean putIfAbsent(String key, int timeToLiveSeconds);
 }

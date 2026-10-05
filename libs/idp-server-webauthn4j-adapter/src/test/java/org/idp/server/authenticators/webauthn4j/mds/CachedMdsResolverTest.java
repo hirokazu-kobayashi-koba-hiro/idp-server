@@ -190,6 +190,11 @@ class CachedMdsResolverTest {
 
   /** Simple in-memory cache store for testing */
   private static class InMemoryCacheStore implements CacheStore {
+    @Override
+    public boolean putIfAbsent(String key, int timeToLiveSeconds) {
+      return true;
+    }
+
     private final Map<String, Object> cache = new HashMap<>();
 
     @Override
