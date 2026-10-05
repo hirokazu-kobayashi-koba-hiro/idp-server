@@ -50,7 +50,12 @@ public interface CacheStore {
    * When the store cannot answer — none is configured, or it fails — implementations answer {@code
    * true}, so the caller carries on without the check rather than refusing every request.
    *
+   * <p>The default answers {@code true} without recording, so that an implementation outside this
+   * repository keeps compiling and behaves as a store that cannot answer.
+   *
    * @return {@code true} if the key was recorded now, {@code false} if it was already there
    */
-  boolean putIfAbsent(String key, int timeToLiveSeconds);
+  default boolean putIfAbsent(String key, int timeToLiveSeconds) {
+    return true;
+  }
 }

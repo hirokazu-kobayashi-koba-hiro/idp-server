@@ -91,11 +91,6 @@ class AttributeVerificationInteractorTest {
 
   /** Increments a counter per key, as the Redis store does. */
   private static class InMemoryCacheStore implements CacheStore {
-    @Override
-    public boolean putIfAbsent(String key, int timeToLiveSeconds) {
-      return true;
-    }
-
     Map<String, Long> counters = new HashMap<>();
     boolean available = true;
 

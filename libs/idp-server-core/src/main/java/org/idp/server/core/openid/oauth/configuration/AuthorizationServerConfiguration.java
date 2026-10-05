@@ -696,6 +696,11 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
     return extension.clientAttestationChallengeDuration();
   }
 
+  /** Issue #1893: the iat windows that are out of range; empty when both are in range. */
+  public List<String> acceptableWindowViolations() {
+    return extension.acceptableWindowViolations();
+  }
+
   /** Issue #1893: how far a DPoP proof's iat may be from now. */
   public Duration dpopProofAcceptableWindow() {
     return extension.dpopProofAcceptableWindow();

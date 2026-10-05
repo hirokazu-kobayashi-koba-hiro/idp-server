@@ -675,7 +675,7 @@ PoP JWT の `challenge` クレームは、その PoP がこの認可サーバー
 | `client_attestation_pop_signing_alg_values_supported` | — | PoP JWT に許可する `alg` |
 | `client_attestation_challenge_required` | `false` | Challenge の強制 |
 | `client_attestation_challenge_duration` | `300` | Challenge の有効期間（秒） |
-| `client_attestation_pop_acceptable_window_seconds` | `60` | PoP JWT の `iat` と現在時刻の差の許容範囲（秒、前後とも）。使用済み `jti` を記録しておく期間も決める |
+| `client_attestation_pop_acceptable_window_seconds` | `60` | PoP JWT の `iat` と現在時刻の差の許容範囲（秒、前後とも。1〜600）。使用済み `jti` を記録しておく期間も決める |
 
 discovery（`/.well-known/openid-configuration`）には次が出力されます。クライアントはここから対応 alg とチャレンジエンドポイントを知ります。
 

@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
 import org.idp.server.control_plane.base.definition.DefaultAdminRole;
+import org.idp.server.control_plane.management.oidc.authorization.verifier.AuthorizationServerConfigurationVerifier;
 import org.idp.server.control_plane.management.onboarding.OnboardingManagementContextBuilder;
 import org.idp.server.control_plane.management.onboarding.io.OnboardingRequest;
 import org.idp.server.control_plane.management.onboarding.io.OnboardingResponse;
@@ -132,6 +133,7 @@ public class OnboardingService {
     AuthorizationServerConfiguration authorizationServerConfiguration =
         jsonConverter.read(
             request.get("authorization_server"), AuthorizationServerConfiguration.class);
+    new AuthorizationServerConfigurationVerifier().verify(authorizationServerConfiguration);
     User user = jsonConverter.read(request.get("user"), User.class);
     if (!user.hasStatus()) {
       user.setStatus(UserStatus.REGISTERED);

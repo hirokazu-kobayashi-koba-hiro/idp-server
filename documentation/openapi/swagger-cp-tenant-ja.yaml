@@ -852,17 +852,21 @@ components:
             client_attestation_pop_acceptable_window_seconds:
               type: integer
               default: 60
+              minimum: 1
+              maximum: 600
               description: |
                 Client Attestation PoP JWT の iat と現在時刻の差の許容範囲（秒、前後とも）。
                 受け付けた PoP の jti は、クライアントごとにこの窓が閉じるまで Redis に記録し、
-                2 回目は拒否する（Issue #1893）。
+                2 回目は拒否する（Issue #1893）。範囲外は 400。
             dpop_proof_acceptable_window_seconds:
               type: integer
               default: 60
+              minimum: 1
+              maximum: 600
               description: |
                 DPoP proof の iat と現在時刻の差の許容範囲（秒、前後とも。RFC 9449 Section 11.1）。
                 受け付けた proof の jti は、鍵（JWK Thumbprint）ごとにこの窓が閉じるまで Redis に記録し、
-                2 回目は拒否する（Issue #1893）。
+                2 回目は拒否する（Issue #1893）。範囲外は 400。
             required_backchannel_auth_user_code:
               type: boolean
               default: false

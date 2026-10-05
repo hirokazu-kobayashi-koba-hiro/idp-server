@@ -21,6 +21,7 @@ import java.util.Map;
 import org.idp.server.control_plane.admin.starter.io.IdpServerStarterRequest;
 import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
 import org.idp.server.control_plane.base.definition.DefaultAdminRole;
+import org.idp.server.control_plane.management.oidc.authorization.verifier.AuthorizationServerConfigurationVerifier;
 import org.idp.server.control_plane.management.onboarding.io.OrganizationRegistrationRequest;
 import org.idp.server.control_plane.management.onboarding.io.TenantRegistrationRequest;
 import org.idp.server.core.openid.identity.User;
@@ -70,6 +71,7 @@ public class IdpServerStarterContextCreator {
     AuthorizationServerConfiguration authorizationServerConfiguration =
         jsonConverter.read(
             request.get("authorization_server"), AuthorizationServerConfiguration.class);
+    new AuthorizationServerConfigurationVerifier().verify(authorizationServerConfiguration);
     ClientConfiguration clientConfiguration =
         jsonConverter.read(request.get("client"), ClientConfiguration.class);
 

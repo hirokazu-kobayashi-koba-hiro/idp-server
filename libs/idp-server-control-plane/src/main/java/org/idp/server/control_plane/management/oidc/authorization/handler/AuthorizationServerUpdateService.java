@@ -22,6 +22,7 @@ import org.idp.server.control_plane.management.oidc.authorization.io.Authorizati
 import org.idp.server.control_plane.management.oidc.authorization.io.AuthorizationServerManagementStatus;
 import org.idp.server.control_plane.management.oidc.authorization.io.AuthorizationServerUpdateRequest;
 import org.idp.server.control_plane.management.oidc.authorization.validator.AuthorizationServerRequestValidator;
+import org.idp.server.control_plane.management.oidc.authorization.verifier.AuthorizationServerConfigurationVerifier;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationCommandRepository;
@@ -75,6 +76,7 @@ public class AuthorizationServerUpdateService
     // Build updated configuration
     AuthorizationServerConfiguration after =
         jsonConverter.read(request.toMap(), AuthorizationServerConfiguration.class);
+    new AuthorizationServerConfigurationVerifier().verify(after);
 
     // Update context builder with before and after states
     contextBuilder.withBefore(before).withAfter(after);

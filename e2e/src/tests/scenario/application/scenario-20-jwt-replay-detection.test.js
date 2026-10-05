@@ -389,4 +389,73 @@ describe("JWT replay detection on every path (#1893)", () => {
       expectReplayRefused(await request(), 401);
     });
   });
+
+  describe("iat window configuration", () => {
+    it("refuses a window out of range (1 to 600 seconds) when a tenant is created", async () => {
+      const admin = await requestToken({
+        endpoint: adminServerConfig.tokenEndpoint,
+        grantType: "password",
+        username: adminServerConfig.oauth.username,
+        password: adminServerConfig.oauth.password,
+        scope: adminServerConfig.adminClient.scope,
+        clientId: adminServerConfig.adminClient.clientId,
+        clientSecret: adminServerConfig.adminClient.clientSecret,
+      });
+      expect(admin.status).toBe(200);
+      const tenantId = uuidv4();
+      const onboard = (extension) =>
+        postWithJson({
+          url: `${backendUrl}/v1/management/onboarding`,
+          headers: { Authorization: `Bearer ${admin.data.access_token}` },
+          body: {
+            organization: { id: uuidv4(), name: `Window Org ${Date.now()}`, description: "#1893" },
+            tenant: {
+              id: tenantId,
+              name: `Window Tenant ${Date.now()}`,
+              domain: backendUrl,
+              authorization_provider: "idp-server",
+            },
+            authorization_server: {
+              issuer: `${backendUrl}/${tenantId}`,
+              authorization_endpoint: `${backendUrl}/${tenantId}/v1/authorizations`,
+              token_endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+              jwks_uri: `${backendUrl}/${tenantId}/v1/jwks`,
+              scopes_supported: ["openid", "management"],
+              response_types_supported: ["code"],
+              response_modes_supported: ["query"],
+              subject_types_supported: ["public"],
+              extension,
+            },
+            user: {
+              sub: uuidv4(),
+              provider_id: "idp-server",
+              email: `admin-${Date.now()}@window.example.com`,
+              raw_password: `AdminPass_${Date.now()}!`,
+            },
+            client: {
+              client_id: uuidv4(),
+              client_secret: `secret-${Date.now()}`,
+              redirect_uris: ["https://app.example.com/callback"],
+              response_types: ["code"],
+              grant_types: ["authorization_code"],
+              scope: "openid management",
+              token_endpoint_auth_method: "client_secret_post",
+            },
+          },
+        });
+
+      const zero = await onboard({ dpop_proof_acceptable_window_seconds: 0 });
+      expect(zero.status).toBe(400);
+      expect(zero.data.error_description).toBe(
+        "dpop_proof_acceptable_window_seconds must be between 1 and 600 seconds, but was 0"
+      );
+
+      const tooLong = await onboard({ client_attestation_pop_acceptable_window_seconds: 601 });
+      expect(tooLong.status).toBe(400);
+      expect(tooLong.data.error_description).toBe(
+        "client_attestation_pop_acceptable_window_seconds must be between 1 and 600 seconds, but was 601"
+      );
+    });
+  });
 });
+
