@@ -213,6 +213,42 @@ describe("JWT replay detection on every path (#1893)", () => {
       expect(replayed.data.error).toBe("invalid_token");
       expect(replayed.data.error_description).toBe("DPoP proof has already been used.");
     });
+
+    it("/me APIs: refuses the same proof the second time", async () => {
+      const issued = await tokenRequest(
+        {
+          grantType: "password",
+          scope: "openid identity_verification_result",
+          username: serverConfig.oauth.username,
+          password: serverConfig.oauth.password,
+        },
+        await proofFor(serverConfig.tokenEndpoint)
+      );
+      expect(issued.status).toBe(200);
+      const accessToken = issued.data.access_token;
+      const meEndpoint = `${backendUrl}/${serverConfig.tenantId}/v1/me/identity-verification/results`;
+      const proof = await createDPoPProof({
+        privateKey: keyPair.privateKey,
+        publicJwk: keyPair.publicJwk,
+        htm: "GET",
+        htu: meEndpoint,
+        overrides: { ath: computeAth(accessToken) },
+      });
+      const callMe = () =>
+        get({
+          url: meEndpoint,
+          headers: { Authorization: `DPoP ${accessToken}`, DPoP: proof },
+        });
+
+      expect((await callMe()).status).toBe(200);
+      const replayed = await callMe();
+      expect(replayed.status).toBe(401);
+      expect(replayed.data.error).toBe("invalid_token");
+      expect(replayed.data.error_description).toBe("DPoP proof has already been used.");
+      expect(replayed.headers["www-authenticate"]).toBe(
+        'DPoP error="invalid_token", error_description="DPoP proof has already been used."'
+      );
+    });
   });
 
   describe("Client Attestation PoP JWT", () => {

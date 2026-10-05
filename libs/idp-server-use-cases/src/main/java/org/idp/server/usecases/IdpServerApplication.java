@@ -159,6 +159,7 @@ import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigu
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationCommandRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
+import org.idp.server.core.openid.oauth.replay.JwtReplayDetector;
 import org.idp.server.core.openid.oauth.repository.AuthorizationCodeGrantOperationCommandRepository;
 import org.idp.server.core.openid.oauth.repository.AuthorizationRequestOperationCommandRepository;
 import org.idp.server.core.openid.plugin.AuthenticationDependencyContainerPluginLoader;
@@ -999,7 +1000,9 @@ public class IdpServerApplication {
                 new TokenProtocols(protocolContainer.resolveAll(TokenProtocol.class)),
                 tenantQueryRepository,
                 userQueryRepository,
-                organizationRepository),
+                organizationRepository,
+                authorizationServerConfigurationQueryRepository,
+                new JwtReplayDetector(cacheStore)),
             UserAuthenticationApi.class,
             databaseTypeProvider);
 
