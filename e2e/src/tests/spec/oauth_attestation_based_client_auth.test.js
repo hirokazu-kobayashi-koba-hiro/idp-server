@@ -1243,9 +1243,24 @@ describe("draft-ietf-oauth-attestation-based-client-auth-11: OAuth 2.0 Attestati
     xit("The same Client Attestation JWT presented to multiple Authorization Servers or Resource Servers allows them to correlate the Client Instance by colluding.", async () => {});
   });
 
-  describe("12.1. Replay Attacks (not implemented yet)", () => {
+  describe("12.1. Replay Attacks", () => {
 
-    xit("An Authorization/Resource Server SHOULD implement measures to detect replay attacks by the Client Instance. (witnessed jti values of the Client Attestation PoP JWT for the validity time window)", async () => {});
+    it("An Authorization/Resource Server SHOULD implement measures to detect replay attacks by the Client Instance. (witnessed jti values of the Client Attestation PoP JWT for the validity time window)", async () => {
+      // Issue #1893: each accepted PoP is recorded per client (Redis SET NX) for as long as its iat
+      // window lets it through.
+      const attestationJwt = createAttestationJwt();
+      const popJwt = createPopJwt();
+
+      const first = await requestTokenWithAttestation({ attestationJwt, popJwt });
+      expect(first.status).toBe(200);
+
+      const second = await requestTokenWithAttestation({ attestationJwt, popJwt });
+      expectInvalidClientAttestation(second, "client attestation pop jwt has already been used");
+
+      // A new PoP from the same instance goes through.
+      const third = await requestTokenWithAttestation({ attestationJwt, popJwt: createPopJwt() });
+      expect(third.status).toBe(200);
+    });
   });
   describe("12.2. Client Attestation Protection", () => {
 
