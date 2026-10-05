@@ -73,10 +73,10 @@ public class DPoPProofVerifier {
   JwtReplayDetector replayDetector;
 
   /**
-   * Without replay detection, and with the default window. For callers that only look at the proof
-   * itself, such as the FAPI 2.0 algorithm check.
+   * Without replay detection, and with the default window. Only for the tests in this package: a
+   * production path must pass the tenant's window and the replay detector (Issue #1893).
    */
-  public DPoPProofVerifier() {
+  DPoPProofVerifier() {
     this(null, DEFAULT_ACCEPTABLE_TIME_WINDOW, null);
   }
 
@@ -140,7 +140,7 @@ public class DPoPProofVerifier {
    * @throws DPoPProofInvalidException if the proof is malformed or its {@code alg} is not in {@link
    *     #FAPI2_DPOP_SIGNING_ALGORITHMS}
    */
-  public void verifyFapiSigningAlgorithm(DPoPProof dpopProof) {
+  public static void verifyFapiSigningAlgorithm(DPoPProof dpopProof) {
     JsonWebSignature jws;
     try {
       jws = JsonWebSignature.parse(dpopProof.value());

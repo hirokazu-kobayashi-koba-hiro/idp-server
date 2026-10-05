@@ -84,7 +84,8 @@ class DPoPProofVerifierTest {
 
     DPoPProofInvalidException ex =
         assertThrows(
-            DPoPProofInvalidException.class, () -> verifier.verifyFapiSigningAlgorithm(rs256));
+            DPoPProofInvalidException.class,
+            () -> DPoPProofVerifier.verifyFapiSigningAlgorithm(rs256));
     assertTrue(ex.getMessage().contains("FAPI 2.0"), ex.getMessage());
   }
 
@@ -138,6 +139,6 @@ class DPoPProofVerifierTest {
     DPoPProof es256 = dpopProof(EC_JWK);
 
     // ES256 is in the FAPI 2.0 §5.4 set.
-    assertDoesNotThrow(() -> verifier.verifyFapiSigningAlgorithm(es256));
+    assertDoesNotThrow(() -> DPoPProofVerifier.verifyFapiSigningAlgorithm(es256));
   }
 }

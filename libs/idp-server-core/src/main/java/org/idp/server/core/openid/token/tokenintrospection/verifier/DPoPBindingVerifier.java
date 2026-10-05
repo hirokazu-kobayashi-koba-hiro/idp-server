@@ -49,10 +49,6 @@ public class DPoPBindingVerifier {
   LoggerWrapper log = LoggerWrapper.getLogger(DPoPBindingVerifier.class);
   DPoPProofVerifier dpopProofVerifier;
 
-  public DPoPBindingVerifier() {
-    this(new DPoPProofVerifier());
-  }
-
   /**
    * @param dpopProofVerifier verifies the proof, with the tenant's window and replay detection
    *     (Issue #1893)

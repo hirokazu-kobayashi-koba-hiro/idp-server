@@ -61,21 +61,7 @@ public class UserinfoVerifier {
   DPoPProof dpopProof;
   String httpMethod;
   String httpUri;
-  DPoPProofVerifier dpopProofVerifier = new DPoPProofVerifier();
-
-  public UserinfoVerifier(OAuthToken oAuthToken, ClientCert clientCert) {
-    this.oAuthToken = oAuthToken;
-    this.clientCert = clientCert;
-  }
-
-  public UserinfoVerifier(
-      OAuthToken oAuthToken,
-      ClientCert clientCert,
-      DPoPProof dpopProof,
-      String httpMethod,
-      String httpUri) {
-    this(oAuthToken, clientCert, dpopProof, httpMethod, httpUri, new DPoPProofVerifier());
-  }
+  DPoPProofVerifier dpopProofVerifier;
 
   /**
    * @param dpopProofVerifier verifies the DPoP proof, with the tenant's window and replay detection

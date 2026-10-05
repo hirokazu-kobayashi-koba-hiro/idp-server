@@ -83,7 +83,7 @@ public class AuthorizationCodeGrantFapi20Verifier
   void throwExceptionIfInvalidDPoPSigningAlgorithm(TokenRequestContext tokenRequestContext) {
     DPoPProof dpopProof = tokenRequestContext.dpopProof();
     if (dpopProof != null && dpopProof.exists()) {
-      new DPoPProofVerifier().verifyFapiSigningAlgorithm(dpopProof);
+      DPoPProofVerifier.verifyFapiSigningAlgorithm(dpopProof);
     }
   }
 
