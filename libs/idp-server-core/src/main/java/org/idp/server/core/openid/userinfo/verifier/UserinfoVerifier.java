@@ -61,6 +61,7 @@ public class UserinfoVerifier {
   DPoPProof dpopProof;
   String httpMethod;
   String httpUri;
+  DPoPProofVerifier dpopProofVerifier = new DPoPProofVerifier();
 
   public UserinfoVerifier(OAuthToken oAuthToken, ClientCert clientCert) {
     this.oAuthToken = oAuthToken;
@@ -73,11 +74,26 @@ public class UserinfoVerifier {
       DPoPProof dpopProof,
       String httpMethod,
       String httpUri) {
+    this(oAuthToken, clientCert, dpopProof, httpMethod, httpUri, new DPoPProofVerifier());
+  }
+
+  /**
+   * @param dpopProofVerifier verifies the DPoP proof, with the tenant's window and replay detection
+   *     (Issue #1893)
+   */
+  public UserinfoVerifier(
+      OAuthToken oAuthToken,
+      ClientCert clientCert,
+      DPoPProof dpopProof,
+      String httpMethod,
+      String httpUri,
+      DPoPProofVerifier dpopProofVerifier) {
     this.oAuthToken = oAuthToken;
     this.clientCert = clientCert;
     this.dpopProof = dpopProof;
     this.httpMethod = httpMethod;
     this.httpUri = httpUri;
+    this.dpopProofVerifier = dpopProofVerifier;
   }
 
   /**
@@ -129,8 +145,8 @@ public class UserinfoVerifier {
     try {
       String accessTokenValue = oAuthToken.accessTokenEntity().value();
       String ath = new AccessTokenHashCalculator(accessTokenValue).calculate();
-      DPoPProofVerifier verifier = new DPoPProofVerifier();
-      DPoPProofVerifiedResult result = verifier.verify(dpopProof, httpMethod, httpUri, ath);
+      DPoPProofVerifiedResult result =
+          dpopProofVerifier.verify(dpopProof, httpMethod, httpUri, ath);
       if (!accessToken.matchJwkThumbprint(result.jwkThumbprint())) {
         throw new TokenInvalidException(
             "DPoP proof JWK thumbprint does not match the access token binding");

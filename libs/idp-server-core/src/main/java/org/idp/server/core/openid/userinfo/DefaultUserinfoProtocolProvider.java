@@ -18,7 +18,9 @@ package org.idp.server.core.openid.userinfo;
 
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
+import org.idp.server.core.openid.oauth.replay.JwtReplayDetector;
 import org.idp.server.core.openid.token.repository.OAuthTokenQueryRepository;
+import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.platform.dependency.ApplicationComponentContainer;
 import org.idp.server.platform.dependency.protocol.ProtocolProvider;
 
@@ -43,6 +45,7 @@ public class DefaultUserinfoProtocolProvider implements ProtocolProvider<Userinf
     return new DefaultUserinfoProtocol(
         oAuthTokenQueryRepository,
         authorizationServerConfigurationQueryRepository,
-        clientConfigurationQueryRepository);
+        clientConfigurationQueryRepository,
+        new JwtReplayDetector(container.resolve(CacheStore.class)));
   }
 }

@@ -26,6 +26,8 @@ import org.idp.server.core.openid.oauth.configuration.client.AvailableFederation
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientIdentifier;
 import org.idp.server.core.openid.oauth.dpop.DPoPProof;
+import org.idp.server.core.openid.oauth.dpop.DPoPProofVerifier;
+import org.idp.server.core.openid.oauth.replay.JwtReplayDetector;
 import org.idp.server.core.openid.oauth.type.OAuthRequestKey;
 import org.idp.server.core.openid.oauth.type.ciba.AuthReqId;
 import org.idp.server.core.openid.oauth.type.ciba.BackchannelTokenDeliveryMode;
@@ -54,6 +56,7 @@ public class TokenRequestContext implements BackchannelRequestContext {
   JwtBearerUserFindingDelegate jwtBearerUserFindingDelegate;
   AuthorizationServerConfiguration authorizationServerConfiguration;
   ClientConfiguration clientConfiguration;
+  JwtReplayDetector replayDetector;
 
   public TokenRequestContext(
       Tenant tenant,
@@ -318,5 +321,19 @@ public class TokenRequestContext implements BackchannelRequestContext {
 
   public boolean hasDPoPProof() {
     return dpopProof != null && dpopProof.exists();
+  }
+
+  /** Issue #1893: records each accepted DPoP proof, so that it is not accepted again. */
+  public void useReplayDetector(JwtReplayDetector replayDetector) {
+    this.replayDetector = replayDetector;
+  }
+
+  /**
+   * The DPoP proof verifier for this request: the tenant's {@code iat} window, and replay detection
+   * when a detector is set (Issue #1893).
+   */
+  public DPoPProofVerifier dpopProofVerifier() {
+    return new DPoPProofVerifier(
+        tenant, authorizationServerConfiguration.dpopProofAcceptableWindow(), replayDetector);
   }
 }

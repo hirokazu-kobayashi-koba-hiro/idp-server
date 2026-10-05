@@ -21,6 +21,7 @@ import org.idp.server.core.openid.grant_management.AuthorizationGrantedRepositor
 import org.idp.server.core.openid.oauth.clientauthenticator.ClientAuthenticationHandler;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
+import org.idp.server.core.openid.oauth.replay.JwtReplayDetector;
 import org.idp.server.core.openid.oauth.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.core.openid.oauth.repository.AuthorizationRequestRepository;
 import org.idp.server.core.openid.oauth.type.oauth.GrantType;
@@ -72,7 +73,8 @@ public class DefaultTokenProtocol implements TokenProtocol {
       PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate,
       JwtBearerUserFindingDelegate jwtBearerUserFindingDelegate,
       ClientAuthenticationHandler clientAuthenticationHandler,
-      Map<GrantType, OAuthTokenCreationService> extensionOAuthTokenCreationServices) {
+      Map<GrantType, OAuthTokenCreationService> extensionOAuthTokenCreationServices,
+      JwtReplayDetector replayDetector) {
     this.tokenRequestHandler =
         new TokenRequestHandler(
             authorizationRequestRepository,
@@ -83,7 +85,8 @@ public class DefaultTokenProtocol implements TokenProtocol {
             authorizationServerConfigurationQueryRepository,
             clientConfigurationQueryRepository,
             clientAuthenticationHandler,
-            extensionOAuthTokenCreationServices);
+            extensionOAuthTokenCreationServices,
+            replayDetector);
     this.errorHandler = new TokenRequestErrorHandler();
     this.introspectionHandler =
         new TokenIntrospectionHandler(
@@ -96,7 +99,8 @@ public class DefaultTokenProtocol implements TokenProtocol {
             oAuthTokenQueryRepository,
             authorizationServerConfigurationQueryRepository,
             clientConfigurationQueryRepository,
-            clientAuthenticationHandler);
+            clientAuthenticationHandler,
+            replayDetector);
     this.introspectionInternalHandler =
         new TokenIntrospectionInternalHandler(oAuthTokenQueryRepository);
     this.introspectionErrorHandler = new TokenIntrospectionErrorHandler();

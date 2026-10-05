@@ -37,7 +37,6 @@ import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigu
 import org.idp.server.core.openid.oauth.configuration.client.AvailableFederation;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.dpop.DPoPProofVerifiedResult;
-import org.idp.server.core.openid.oauth.dpop.DPoPProofVerifier;
 import org.idp.server.core.openid.oauth.type.extension.CustomProperties;
 import org.idp.server.core.openid.oauth.type.oauth.GrantType;
 import org.idp.server.core.openid.oauth.type.oauth.JwtBearerAssertion;
@@ -162,7 +161,8 @@ public class JwtBearerGrantService implements OAuthTokenCreationService, Refresh
               .build();
 
       DPoPProofVerifiedResult dpopResult =
-          new DPoPProofVerifier()
+          context
+              .dpopProofVerifier()
               .verifyIfNeeded(
                   context.dpopProof(),
                   context.httpMethod(),

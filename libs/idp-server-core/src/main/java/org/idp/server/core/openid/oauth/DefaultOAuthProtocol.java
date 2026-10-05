@@ -24,6 +24,7 @@ import org.idp.server.core.openid.oauth.factory.RequestObjectFactories;
 import org.idp.server.core.openid.oauth.gateway.RequestObjectHttpClient;
 import org.idp.server.core.openid.oauth.handler.*;
 import org.idp.server.core.openid.oauth.io.*;
+import org.idp.server.core.openid.oauth.replay.JwtReplayDetector;
 import org.idp.server.core.openid.oauth.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.core.openid.oauth.repository.AuthorizationRequestRepository;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
@@ -57,7 +58,8 @@ public class DefaultOAuthProtocol implements OAuthProtocol {
       OAuthTokenCommandRepository oAuthTokenCommandRepository,
       OIDCSessionHandler oidcSessionHandler,
       HttpRequestExecutor httpRequestExecutor,
-      ClientAuthenticationHandler clientAuthenticationHandler) {
+      ClientAuthenticationHandler clientAuthenticationHandler,
+      JwtReplayDetector replayDetector) {
     this.requestHandler =
         new OAuthRequestHandler(
             authorizationRequestRepository,
@@ -66,7 +68,8 @@ public class DefaultOAuthProtocol implements OAuthProtocol {
             new RequestObjectHttpClient(httpRequestExecutor),
             new RequestObjectFactories(),
             authorizationGrantedRepository,
-            clientAuthenticationHandler);
+            clientAuthenticationHandler,
+            replayDetector);
     this.authorizeHandler =
         new OAuthAuthorizeHandler(
             authorizationRequestRepository,

@@ -25,6 +25,8 @@ import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigu
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
+import org.idp.server.core.openid.oauth.dpop.DPoPProofVerifier;
+import org.idp.server.core.openid.oauth.replay.JwtReplayDetector;
 import org.idp.server.core.openid.oauth.type.oauth.AccessTokenEntity;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.token.OAuthToken;
@@ -48,18 +50,21 @@ public class TokenIntrospectionExtensionHandler {
   AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
   ClientAuthenticationHandler clientAuthenticationHandler;
+  JwtReplayDetector replayDetector;
 
   public TokenIntrospectionExtensionHandler(
       OAuthTokenQueryRepository oAuthTokenQueryRepository,
       AuthorizationServerConfigurationQueryRepository
           authorizationServerConfigurationQueryRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository,
-      ClientAuthenticationHandler clientAuthenticationHandler) {
+      ClientAuthenticationHandler clientAuthenticationHandler,
+      JwtReplayDetector replayDetector) {
     this.oAuthTokenQueryRepository = oAuthTokenQueryRepository;
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
     this.clientAuthenticationHandler = clientAuthenticationHandler;
+    this.replayDetector = replayDetector;
   }
 
   public TokenIntrospectionResponse handle(
@@ -108,7 +113,11 @@ public class TokenIntrospectionExtensionHandler {
             request.scopes(),
             oAuthToken,
             authorizationServerConfiguration,
-            clientConfiguration);
+            clientConfiguration,
+            new DPoPProofVerifier(
+                tenant,
+                authorizationServerConfiguration.dpopProofAcceptableWindow(),
+                replayDetector));
     verifier.verify();
 
     if (!oAuthToken.isClientCredentialsGrant()) {

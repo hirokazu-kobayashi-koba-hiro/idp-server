@@ -16,6 +16,7 @@
 
 package org.idp.server.core.openid.oauth.configuration;
 
+import java.time.Duration;
 import java.util.*;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionType;
 import org.idp.server.core.openid.oauth.configuration.vc.VerifiableCredentialConfiguration;
@@ -693,6 +694,16 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
 
   public int clientAttestationChallengeDuration() {
     return extension.clientAttestationChallengeDuration();
+  }
+
+  /** Issue #1893: how far a DPoP proof's iat may be from now. */
+  public Duration dpopProofAcceptableWindow() {
+    return extension.dpopProofAcceptableWindow();
+  }
+
+  /** Issue #1893: how far a Client Attestation PoP JWT's iat may be from now. */
+  public Duration clientAttestationPopAcceptableWindow() {
+    return extension.clientAttestationPopAcceptableWindow();
   }
 
   public boolean hasKey(String algorithm) {

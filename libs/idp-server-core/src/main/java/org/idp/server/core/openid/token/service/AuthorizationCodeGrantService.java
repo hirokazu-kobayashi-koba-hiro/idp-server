@@ -26,7 +26,6 @@ import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.Cl
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.dpop.DPoPProofVerifiedResult;
-import org.idp.server.core.openid.oauth.dpop.DPoPProofVerifier;
 import org.idp.server.core.openid.oauth.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.core.openid.oauth.repository.AuthorizationRequestRepository;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
@@ -149,7 +148,8 @@ public class AuthorizationCodeGrantService
 
     AuthorizationGrant authorizationGrant = authorizationCodeGrant.authorizationGrant();
     DPoPProofVerifiedResult dpopResult =
-        new DPoPProofVerifier()
+        tokenRequestContext
+            .dpopProofVerifier()
             .verifyIfNeeded(
                 tokenRequestContext.dpopProof(),
                 tokenRequestContext.httpMethod(),

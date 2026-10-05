@@ -20,10 +20,12 @@ import org.idp.server.core.openid.grant_management.AuthorizationGrantedRepositor
 import org.idp.server.core.openid.oauth.clientauthenticator.ClientAuthenticationHandler;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
+import org.idp.server.core.openid.oauth.replay.JwtReplayDetector;
 import org.idp.server.core.openid.oauth.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.core.openid.oauth.repository.AuthorizationRequestRepository;
 import org.idp.server.core.openid.session.OIDCSessionHandler;
 import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
+import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.platform.dependency.ApplicationComponentContainer;
 import org.idp.server.platform.dependency.protocol.ProtocolProvider;
 import org.idp.server.platform.http.HttpRequestExecutor;
@@ -65,6 +67,7 @@ public class DefaultOAuthProtocolProvider implements ProtocolProvider<OAuthProto
         oAuthTokenCommandRepository,
         oidcSessionHandler,
         httpRequestExecutor,
-        clientAuthenticationHandler);
+        clientAuthenticationHandler,
+        new JwtReplayDetector(container.resolve(CacheStore.class)));
   }
 }

@@ -30,7 +30,6 @@ import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.Cl
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.dpop.DPoPProofVerifiedResult;
-import org.idp.server.core.openid.oauth.dpop.DPoPProofVerifier;
 import org.idp.server.core.openid.oauth.type.ciba.AuthReqId;
 import org.idp.server.core.openid.oauth.type.oauth.GrantType;
 import org.idp.server.core.openid.oauth.type.oidc.IdToken;
@@ -98,7 +97,8 @@ public class CibaGrantService implements OAuthTokenCreationService, RefreshToken
 
     AuthorizationGrant authorizationGrant = cibaGrant.authorizationGrant();
     DPoPProofVerifiedResult dpopResult =
-        new DPoPProofVerifier()
+        tokenRequestContext
+            .dpopProofVerifier()
             .verifyIfNeeded(
                 tokenRequestContext.dpopProof(),
                 tokenRequestContext.httpMethod(),

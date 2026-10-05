@@ -47,6 +47,19 @@ import org.idp.server.platform.log.LoggerWrapper;
 public class DPoPBindingVerifier {
 
   LoggerWrapper log = LoggerWrapper.getLogger(DPoPBindingVerifier.class);
+  DPoPProofVerifier dpopProofVerifier;
+
+  public DPoPBindingVerifier() {
+    this(new DPoPProofVerifier());
+  }
+
+  /**
+   * @param dpopProofVerifier verifies the proof, with the tenant's window and replay detection
+   *     (Issue #1893)
+   */
+  public DPoPBindingVerifier(DPoPProofVerifier dpopProofVerifier) {
+    this.dpopProofVerifier = dpopProofVerifier;
+  }
 
   /**
    * Verifies DPoP-bound access token binding.
@@ -79,8 +92,7 @@ public class DPoPBindingVerifier {
 
     String accessTokenValue = oAuthToken.accessTokenEntity().value();
     String ath = new AccessTokenHashCalculator(accessTokenValue).calculate();
-    DPoPProofVerifier verifier = new DPoPProofVerifier();
-    DPoPProofVerifiedResult result = verifier.verify(dpopProof, httpMethod, httpUri, ath);
+    DPoPProofVerifiedResult result = dpopProofVerifier.verify(dpopProof, httpMethod, httpUri, ath);
 
     log.debug(
         "DPoP thumbprint verification: expected={}, actual={}",

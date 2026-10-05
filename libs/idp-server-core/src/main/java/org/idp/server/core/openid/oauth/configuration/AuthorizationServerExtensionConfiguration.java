@@ -16,6 +16,7 @@
 
 package org.idp.server.core.openid.oauth.configuration;
 
+import java.time.Duration;
 import java.util.*;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionType;
 import org.idp.server.platform.json.JsonReadable;
@@ -60,6 +61,9 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
   int backchannelAuthenticationPollingInterval = 5;
   boolean clientAttestationChallengeRequired = false;
   int clientAttestationChallengeDuration = 300;
+  // Issue #1893: how far iat may be from now, in seconds, before the JWT is refused.
+  int dpopProofAcceptableWindowSeconds = 60;
+  int clientAttestationPopAcceptableWindowSeconds = 60;
   boolean requiredBackchannelAuthUserCode = false;
   String backchannelAuthUserCodeType = "password";
   String defaultCibaAuthenticationInteractionType = "authentication-device-notification";
@@ -207,6 +211,22 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
     return clientAttestationChallengeDuration;
   }
 
+  /**
+   * Issue #1893: how far a DPoP proof's {@code iat} may be from now, either way (RFC 9449 Section
+   * 4.3 check 11, Section 11.1). Also how long its {@code jti} is remembered.
+   */
+  public Duration dpopProofAcceptableWindow() {
+    return Duration.ofSeconds(dpopProofAcceptableWindowSeconds);
+  }
+
+  /**
+   * Issue #1893: how far a Client Attestation PoP JWT's {@code iat} may be from now, either way.
+   * Also how long its {@code jti} is remembered.
+   */
+  public Duration clientAttestationPopAcceptableWindow() {
+    return Duration.ofSeconds(clientAttestationPopAcceptableWindowSeconds);
+  }
+
   public boolean requiredBackchannelAuthUserCode() {
     return requiredBackchannelAuthUserCode;
   }
@@ -312,6 +332,10 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
         "backchannel_authentication_polling_interval", backchannelAuthenticationPollingInterval);
     map.put("client_attestation_challenge_required", clientAttestationChallengeRequired);
     map.put("client_attestation_challenge_duration", clientAttestationChallengeDuration);
+    map.put("dpop_proof_acceptable_window_seconds", dpopProofAcceptableWindowSeconds);
+    map.put(
+        "client_attestation_pop_acceptable_window_seconds",
+        clientAttestationPopAcceptableWindowSeconds);
     map.put("required_backchannel_auth_user_code", requiredBackchannelAuthUserCode);
     map.put("backchannel_auth_user_code_type", backchannelAuthUserCodeType);
     map.put(

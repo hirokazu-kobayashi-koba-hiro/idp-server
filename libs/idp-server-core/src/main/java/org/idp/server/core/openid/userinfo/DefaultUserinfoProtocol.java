@@ -18,6 +18,7 @@ package org.idp.server.core.openid.userinfo;
 
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
+import org.idp.server.core.openid.oauth.replay.JwtReplayDetector;
 import org.idp.server.core.openid.token.repository.OAuthTokenQueryRepository;
 import org.idp.server.core.openid.userinfo.handler.UserinfoDelegate;
 import org.idp.server.core.openid.userinfo.handler.UserinfoErrorHandler;
@@ -38,12 +39,14 @@ public class DefaultUserinfoProtocol implements UserinfoProtocol {
       OAuthTokenQueryRepository oAuthTokenQueryRepository,
       AuthorizationServerConfigurationQueryRepository
           authorizationServerConfigurationQueryRepository,
-      ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
+      ClientConfigurationQueryRepository clientConfigurationQueryRepository,
+      JwtReplayDetector replayDetector) {
     this.userinfoHandler =
         new UserinfoHandler(
             oAuthTokenQueryRepository,
             authorizationServerConfigurationQueryRepository,
-            clientConfigurationQueryRepository);
+            clientConfigurationQueryRepository,
+            replayDetector);
     this.errorHandler = new UserinfoErrorHandler();
   }
 

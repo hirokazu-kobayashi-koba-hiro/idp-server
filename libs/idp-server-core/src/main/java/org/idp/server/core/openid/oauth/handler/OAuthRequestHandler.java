@@ -39,6 +39,7 @@ import org.idp.server.core.openid.oauth.factory.RequestObjectFactories;
 import org.idp.server.core.openid.oauth.gateway.RequestObjectGateway;
 import org.idp.server.core.openid.oauth.io.OAuthPushedRequest;
 import org.idp.server.core.openid.oauth.io.OAuthRequest;
+import org.idp.server.core.openid.oauth.replay.JwtReplayDetector;
 import org.idp.server.core.openid.oauth.repository.AuthorizationRequestRepository;
 import org.idp.server.core.openid.oauth.request.OAuthRequestParameters;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
@@ -60,6 +61,7 @@ public class OAuthRequestHandler {
   AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
   AuthorizationGrantedRepository grantedRepository;
+  JwtReplayDetector replayDetector;
 
   public OAuthRequestHandler(
       AuthorizationRequestRepository authorizationRequestRepository,
@@ -69,7 +71,8 @@ public class OAuthRequestHandler {
       RequestObjectGateway requestObjectGateway,
       RequestObjectFactories requestObjectFactories,
       AuthorizationGrantedRepository grantedRepository,
-      ClientAuthenticationHandler clientAuthenticationHandler) {
+      ClientAuthenticationHandler clientAuthenticationHandler,
+      JwtReplayDetector replayDetector) {
     this.oAuthRequestContextCreators =
         new OAuthRequestContextCreators(
             requestObjectGateway, authorizationRequestRepository, requestObjectFactories);
@@ -80,6 +83,7 @@ public class OAuthRequestHandler {
         authorizationServerConfigurationQueryRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
     this.grantedRepository = grantedRepository;
+    this.replayDetector = replayDetector;
   }
 
   /**
@@ -222,7 +226,10 @@ public class OAuthRequestHandler {
     }
     DPoPProof dpopProof = new DPoPProof(pushedRequest.dpopProofHeaders().get(0));
     DPoPProofVerifiedResult dpopResult =
-        new DPoPProofVerifier()
+        new DPoPProofVerifier(
+                tenant,
+                authorizationServerConfiguration.dpopProofAcceptableWindow(),
+                replayDetector)
             .verifyIfNeeded(
                 dpopProof,
                 pushedRequest.httpMethod(),

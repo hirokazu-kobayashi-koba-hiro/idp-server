@@ -27,6 +27,7 @@ import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.Cl
 import org.idp.server.core.openid.oauth.clientauthenticator.exception.ClientUnAuthorizedException;
 import org.idp.server.core.openid.oauth.clientauthenticator.mtls.ClientCertification;
 import org.idp.server.core.openid.oauth.clientauthenticator.plugin.ClientAuthenticator;
+import org.idp.server.core.openid.oauth.replay.JwtReplayDetector;
 import org.idp.server.core.openid.oauth.type.oauth.ClientAuthenticationType;
 import org.idp.server.core.openid.oauth.type.oauth.ClientSecret;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
@@ -56,11 +57,24 @@ public class AttestJwtClientAuthAuthenticator implements ClientAuthenticator {
   LoggerWrapper log = LoggerWrapper.getLogger(AttestJwtClientAuthAuthenticator.class);
   ClientAttestationKeyResolvers keyResolvers;
   ClientAttestationChallenges challenges;
+  JwtReplayDetector replayDetector;
 
   public AttestJwtClientAuthAuthenticator(
       ClientAttestationKeyResolvers keyResolvers, ClientAttestationChallenges challenges) {
+    this(keyResolvers, challenges, null);
+  }
+
+  /**
+   * @param replayDetector records each accepted PoP so that it is not accepted again (Section 12.1,
+   *     Issue #1893); null leaves the iat window alone to limit reuse
+   */
+  public AttestJwtClientAuthAuthenticator(
+      ClientAttestationKeyResolvers keyResolvers,
+      ClientAttestationChallenges challenges,
+      JwtReplayDetector replayDetector) {
     this.keyResolvers = keyResolvers;
     this.challenges = challenges;
+    this.replayDetector = replayDetector;
   }
 
   @Override
@@ -88,7 +102,8 @@ public class AttestJwtClientAuthAuthenticator implements ClientAuthenticator {
         new ClientAttestationJwtVerifier(context, keyResolver, trustSource).verify();
     JsonWebKey clientInstanceKey = attestation.clientInstanceKey();
     JsonWebSignature popJws =
-        new ClientAttestationPopJwtVerifier(context, clientInstanceKey, challenges).verify();
+        new ClientAttestationPopJwtVerifier(context, clientInstanceKey, challenges, replayDetector)
+            .verify();
 
     log.debug(
         "Client authentication succeeded: method={}, client_id={}",
