@@ -26,6 +26,7 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 import redis.clients.jedis.params.ScanParams;
+import redis.clients.jedis.params.SetParams;
 import redis.clients.jedis.resps.ScanResult;
 
 public class JedisCacheStore implements CacheStore {
@@ -155,6 +156,17 @@ public class JedisCacheStore implements CacheStore {
     } catch (Exception e) {
       log.error("Failed to increment cache", e);
       return 0;
+    }
+  }
+
+  @Override
+  public boolean putIfAbsent(String key, int timeToLiveSeconds) {
+    try (Jedis resource = jedisPool.getResource()) {
+      String result = resource.set(key, "1", SetParams.setParams().nx().ex(timeToLiveSeconds));
+      return "OK".equals(result);
+    } catch (Exception e) {
+      log.error("Failed to record a single-use key; it is treated as not seen before", e);
+      return true;
     }
   }
 }

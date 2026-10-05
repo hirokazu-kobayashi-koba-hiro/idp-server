@@ -255,7 +255,7 @@ Challenge を必須にしている場合は、リクエスト前に `POST /{tena
 | `typ` | `oauth-client-attestation-pop+jwt` 固定 |
 | `aud` | 認可サーバーの issuer identifier（テナントの `issuer`） |
 | `jti` | 必須。リクエストごとに一意な値 |
-| `iat` | 必須。現在時刻から**±5分以内**であること |
+| `iat` | 必須。現在時刻から**±60 秒以内**であること（`client_attestation_pop_acceptable_window_seconds` で変更可） |
 | `challenge` | `client_attestation_challenge_required` が有効なテナントでは必須 |
 | `iss` | draft-11 は PoP JWT に定義していません。載せても §5.1 の「MAY contain other claims」として無視されます |
 | `exp` | 同上。有効範囲は `iat` の窓が決めます |
@@ -263,7 +263,7 @@ Challenge を必須にしている場合は、リクエスト前に `POST /{tena
 :::tip 実装のポイント
 PoP JWT は**リクエストごとに新しく作ります**。`jti` はリプレイ検出のための識別子で、`iat` の窓とあわせて PoP の有効範囲を絞ります。
 
-ただし現時点の実装は **`jti` の存在を確認するだけで、使用済み `jti` の記録は行っていません**。同じ PoP JWT を `iat` の ±5分窓内で再送すると通ります。検出を前提にした設計にはせず、毎回新しく作ってください。
+受け付けた PoP の `jti` は、クライアントごとに `iat` の窓が閉じるまで記録され、同じ PoP JWT の 2 回目は `invalid_client_attestation`（`client attestation pop jwt has already been used`）で拒否されます（draft-11 Section 12.1）。記録は Redis に置くため、Redis を設定していない配備や Redis のエラー時は記録されず、`iat` の窓だけで判定します。
 :::
 
 ---
@@ -637,7 +637,7 @@ PoP JWT の `challenge` クレームは、その PoP がこの認可サーバー
 
 エンドポイントの公開と強制を分けてあるため、**先にエンドポイントだけ公開してクライアントの対応を待ち、揃ってから必須化する**移行ができます。
 
-**Challenge は単回消費ではありません。** 有効期間のあいだ何度でも使えます。CIBA のポーリングのように短時間に何度もリクエストする経路で、そのつど取得し直さずに済むようにするためです。既定の 300 秒は `backchannel_authentication_request_expires_in` に合わせてあります。Challenge を短命にしてもリプレイは防げません。現時点で有効範囲を絞っているのは `iat` の時間窓だけで、`jti` の記録は行っていないためです。
+**Challenge は単回消費ではありません。** 有効期間のあいだ何度でも使えます。CIBA のポーリングのように短時間に何度もリクエストする経路で、そのつど取得し直さずに済むようにするためです。既定の 300 秒は `backchannel_authentication_request_expires_in` に合わせてあります。PoP JWT 自体のリプレイは、`jti` の記録で防いでいます（Challenge の寿命とは関係しません）。
 
 ### 必須化後に Challenge が無いとき
 
@@ -675,6 +675,7 @@ PoP JWT の `challenge` クレームは、その PoP がこの認可サーバー
 | `client_attestation_pop_signing_alg_values_supported` | — | PoP JWT に許可する `alg` |
 | `client_attestation_challenge_required` | `false` | Challenge の強制 |
 | `client_attestation_challenge_duration` | `300` | Challenge の有効期間（秒） |
+| `client_attestation_pop_acceptable_window_seconds` | `60` | PoP JWT の `iat` と現在時刻の差の許容範囲（秒、前後とも。1〜600）。使用済み `jti` を記録しておく期間も決める |
 
 discovery（`/.well-known/openid-configuration`）には次が出力されます。クライアントはここから対応 alg とチャレンジエンドポイントを知ります。
 
@@ -755,7 +756,7 @@ draft-11 のうち、次は対応していません。
 - **iOS ではインスタンス鍵の置き場所を App Attest は証明しない。** App Attest が示すのは「正規のアプリが、このインスタンス鍵の登録を要求した」ことまでです。インスタンス鍵が Secure Enclave にあるかはアプリの実装に委ねられます（Android は Key Attestation がインスタンス鍵そのものを証明するため、置き場所まで確かめられます）
 - **`attester_jwks` では Client Attester の検証が信頼の起点。** 認可サーバーはプラットフォーム証明を見ません。Attester が App Attest / Play Integrity を正しく検証していることが前提です
 - **`registered_instance_key` は自己署名。** 「正当なアプリか」の裏付けは登録時のみで、以降は鍵の所持だけが根拠です。登録経路の強度がそのまま全体の強度になります
-- **PoP のリプレイ検出は未実装。** `jti` は存在チェックのみで、使用済みの記録は持ちません。同じ PoP JWT は `iat` の ±5分窓内で再利用できてしまいます
+- **PoP のリプレイ検出は Redis に依存する。** 使用済みの `jti` は Redis に記録します。Redis を設定していない配備や Redis の障害中は記録されず、同じ PoP JWT が `iat` の窓（既定 60 秒）のあいだ再利用できます
 - **Challenge は単回消費ではない。** 有効期間内は再利用できます。サーバーは発行した Challenge を保存せず、テナントと有効期限を含む HMAC 付きの値として発行し、戻ってきた値が自身の発行したものかを照合します。インスタンス登録用のチャレンジは別物で、こちらは原子的に消費されます
 
 ---

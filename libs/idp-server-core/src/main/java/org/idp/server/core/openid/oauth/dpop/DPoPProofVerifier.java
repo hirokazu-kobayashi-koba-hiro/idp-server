@@ -20,6 +20,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
+import org.idp.server.core.openid.oauth.replay.JwtReplayDetector;
+import org.idp.server.core.openid.oauth.replay.JwtReplayKind;
 import org.idp.server.platform.http.InvalidUriException;
 import org.idp.server.platform.http.UriWrapper;
 import org.idp.server.platform.jose.JoseInvalidException;
@@ -33,6 +35,7 @@ import org.idp.server.platform.jose.JsonWebTokenClaimsInvalidException;
 import org.idp.server.platform.jose.JwtClockSkewException;
 import org.idp.server.platform.jose.JwtClockSkewValidator;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
  * DPoP Proof JWT Verifier (RFC 9449 Section 4.3).
@@ -59,8 +62,35 @@ import org.idp.server.platform.log.LoggerWrapper;
 public class DPoPProofVerifier {
 
   static final LoggerWrapper log = LoggerWrapper.getLogger(DPoPProofVerifier.class);
-  static final Duration DEFAULT_ACCEPTABLE_TIME_WINDOW = Duration.ofMinutes(5);
+
+  /** Issue #1893: the default of {@code dpop_proof_acceptable_window_seconds}. */
+  static final Duration DEFAULT_ACCEPTABLE_TIME_WINDOW = Duration.ofSeconds(60);
+
   static final String DPOP_JWT_TYPE = "dpop+jwt";
+
+  Tenant tenant;
+  Duration acceptableTimeWindow;
+  JwtReplayDetector replayDetector;
+
+  /**
+   * Without replay detection, and with the default window. Only for the tests in this package: a
+   * production path must pass the tenant's window and the replay detector (Issue #1893).
+   */
+  DPoPProofVerifier() {
+    this(null, DEFAULT_ACCEPTABLE_TIME_WINDOW, null);
+  }
+
+  /**
+   * @param acceptableTimeWindow how far {@code iat} may be from now
+   * @param replayDetector records each accepted proof so that it is not accepted again (RFC 9449
+   *     Section 11.1, Issue #1893)
+   */
+  public DPoPProofVerifier(
+      Tenant tenant, Duration acceptableTimeWindow, JwtReplayDetector replayDetector) {
+    this.tenant = tenant;
+    this.acceptableTimeWindow = acceptableTimeWindow;
+    this.replayDetector = replayDetector;
+  }
 
   /**
    * FAPI 2.0 §5.4: signing algorithms permitted on DPoP proofs (the strong asymmetric set). Mirrors
@@ -110,7 +140,7 @@ public class DPoPProofVerifier {
    * @throws DPoPProofInvalidException if the proof is malformed or its {@code alg} is not in {@link
    *     #FAPI2_DPOP_SIGNING_ALGORITHMS}
    */
-  public void verifyFapiSigningAlgorithm(DPoPProof dpopProof) {
+  public static void verifyFapiSigningAlgorithm(DPoPProof dpopProof) {
     JsonWebSignature jws;
     try {
       jws = JsonWebSignature.parse(dpopProof.value());
@@ -204,11 +234,12 @@ public class DPoPProofVerifier {
     // Check 11: The creation time (iat) is within an acceptable window.
     //
     // 二重チェックの意図:
-    //   verifyIat                       — RFC 9449 §11.1 リプレイ対策のための ±5 分の対称ウィンドウ。
+    //   verifyIat                       — RFC 9449 §11.1 リプレイ対策のための対称ウィンドウ（既定 ±60 秒、
+    //                                     dpop_proof_acceptable_window_seconds）。
     //                                     iat が古すぎる proof / 未来すぎる proof いずれも拒否し、
     //                                     再利用や時計ズレ攻撃の枠を絞る。
     //   JwtClockSkewValidator           — FAPI 2.0 §5.3.2.1-2.13 が要求する forward skew 60 秒以内
-    //                                     という更に厳しい上限。FAPI 2.0 では 5 分は許容されない。
+    //                                     という上限。窓を 60 秒より広げても FAPI 2.0 ではこちらが効く。
     // 両方を通過した DPoP proof のみが有効。
     verifyIat(claims);
 
@@ -224,14 +255,13 @@ public class DPoPProofVerifier {
       verifyAth(claims, accessTokenHash);
     }
 
-    // Check 12: jti replay protection (RFC 9449 Section 4.3)
-    // Currently not implemented. The RFC states this as conditional ("if replay protection is
-    // desired"). A future implementation would require a time-limited jti cache store
-    // (e.g., Redis with TTL matching the iat acceptance window) to detect reuse.
-
     // Calculate JWK Thumbprint (RFC 7638) for token binding (RFC 9449 Section 6)
     JsonWebKey publicJwk = jwk.toPublicJwk();
     JwkThumbprint thumbprint = new JwkThumbprintCalculator(publicJwk).calculate();
+
+    // jti replay protection (RFC 9449 Section 11.1, Issue #1893). Last, so that only a proof that
+    // passed every other check uses up its jti.
+    verifyNotReplayed(claims, thumbprint);
 
     log.debug("DPoP proof verification succeeded, JWK Thumbprint: {}", thumbprint.value());
 
@@ -411,8 +441,9 @@ public class DPoPProofVerifier {
   /**
    * Check 11: The creation time (iat) is within an acceptable window.
    *
-   * <p>The acceptable window is {@value #DEFAULT_ACCEPTABLE_TIME_WINDOW} minutes. If the absolute
-   * difference between the current time and iat exceeds this window, the proof is rejected.
+   * <p>The acceptable window is {@code dpop_proof_acceptable_window_seconds} (default 60 seconds).
+   * If the absolute difference between the current time and iat exceeds this window, the proof is
+   * rejected.
    *
    * @see <a href="https://www.rfc-editor.org/rfc/rfc9449.html#section-11.1">RFC 9449 Section
    *     11.1</a>
@@ -422,12 +453,34 @@ public class DPoPProofVerifier {
     Instant now = Instant.now();
     Instant issuedAt = iat.toInstant();
     Duration difference = Duration.between(issuedAt, now).abs();
-    if (difference.compareTo(DEFAULT_ACCEPTABLE_TIME_WINDOW) > 0) {
+    if (difference.compareTo(acceptableTimeWindow) > 0) {
       throw new DPoPProofInvalidException(
           String.format(
               "DPoP proof iat claim is outside the acceptable time window. "
                   + "Issued at: %s, Current time: %s, Allowed window: %s.",
-              issuedAt, now, DEFAULT_ACCEPTABLE_TIME_WINDOW));
+              issuedAt, now, acceptableTimeWindow));
+    }
+  }
+
+  /**
+   * The proof has not been used before (RFC 9449 Section 11.1, Issue #1893). Keyed by the proof's
+   * key thumbprint and a hash of {@code jti} — Section 11.1 allows storing only a hash — so that a
+   * proof made with one key cannot use up the {@code jti} of another.
+   */
+  private void verifyNotReplayed(JsonWebTokenClaims claims, JwkThumbprint thumbprint) {
+    if (replayDetector == null) {
+      return;
+    }
+    boolean firstUse =
+        replayDetector.firstUse(
+            tenant,
+            JwtReplayKind.DPOP_PROOF,
+            thumbprint.value(),
+            claims.getJti(),
+            claims.getIat().toInstant(),
+            acceptableTimeWindow);
+    if (!firstUse) {
+      throw new DPoPProofInvalidException("DPoP proof has already been used.");
     }
   }
 

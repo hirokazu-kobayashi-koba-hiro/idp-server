@@ -16,7 +16,10 @@
 
 package org.idp.server.core.openid.oauth.configuration;
 
+import java.time.Duration;
 import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionType;
 import org.idp.server.platform.json.JsonReadable;
 
@@ -60,6 +63,17 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
   int backchannelAuthenticationPollingInterval = 5;
   boolean clientAttestationChallengeRequired = false;
   int clientAttestationChallengeDuration = 300;
+  // Issue #1893: how far iat may be from now, in seconds, before the JWT is refused.
+  int dpopProofAcceptableWindowSeconds = 60;
+  int clientAttestationPopAcceptableWindowSeconds = 60;
+
+  /**
+   * Issue #1893: the range the iat windows accept. Zero or less would refuse every proof; a long
+   * window would hardly limit reuse, and keeps each jti that much longer.
+   */
+  public static final int MIN_ACCEPTABLE_WINDOW_SECONDS = 1;
+
+  public static final int MAX_ACCEPTABLE_WINDOW_SECONDS = 600;
   boolean requiredBackchannelAuthUserCode = false;
   String backchannelAuthUserCodeType = "password";
   String defaultCibaAuthenticationInteractionType = "authentication-device-notification";
@@ -207,6 +221,46 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
     return clientAttestationChallengeDuration;
   }
 
+  /**
+   * Issue #1893: how far a DPoP proof's {@code iat} may be from now, either way (RFC 9449 Section
+   * 4.3 check 11, Section 11.1). Also how long its {@code jti} is remembered.
+   */
+  public Duration dpopProofAcceptableWindow() {
+    return Duration.ofSeconds(dpopProofAcceptableWindowSeconds);
+  }
+
+  /**
+   * Issue #1893: how far a Client Attestation PoP JWT's {@code iat} may be from now, either way.
+   * Also how long its {@code jti} is remembered.
+   */
+  public Duration clientAttestationPopAcceptableWindow() {
+    return Duration.ofSeconds(clientAttestationPopAcceptableWindowSeconds);
+  }
+
+  /**
+   * @return the iat windows that are out of range ({@link #MIN_ACCEPTABLE_WINDOW_SECONDS} to {@link
+   *     #MAX_ACCEPTABLE_WINDOW_SECONDS}); empty when both are in range
+   */
+  public List<String> acceptableWindowViolations() {
+    List<String> violations = new ArrayList<>();
+    addIfOutOfRange(
+        violations, "dpop_proof_acceptable_window_seconds", dpopProofAcceptableWindowSeconds);
+    addIfOutOfRange(
+        violations,
+        "client_attestation_pop_acceptable_window_seconds",
+        clientAttestationPopAcceptableWindowSeconds);
+    return violations;
+  }
+
+  private static void addIfOutOfRange(List<String> violations, String name, int seconds) {
+    if (seconds < MIN_ACCEPTABLE_WINDOW_SECONDS || seconds > MAX_ACCEPTABLE_WINDOW_SECONDS) {
+      violations.add(
+          String.format(
+              "%s must be between %d and %d seconds, but was %d",
+              name, MIN_ACCEPTABLE_WINDOW_SECONDS, MAX_ACCEPTABLE_WINDOW_SECONDS, seconds));
+    }
+  }
+
   public boolean requiredBackchannelAuthUserCode() {
     return requiredBackchannelAuthUserCode;
   }
@@ -312,6 +366,10 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
         "backchannel_authentication_polling_interval", backchannelAuthenticationPollingInterval);
     map.put("client_attestation_challenge_required", clientAttestationChallengeRequired);
     map.put("client_attestation_challenge_duration", clientAttestationChallengeDuration);
+    map.put("dpop_proof_acceptable_window_seconds", dpopProofAcceptableWindowSeconds);
+    map.put(
+        "client_attestation_pop_acceptable_window_seconds",
+        clientAttestationPopAcceptableWindowSeconds);
     map.put("required_backchannel_auth_user_code", requiredBackchannelAuthUserCode);
     map.put("backchannel_auth_user_code_type", backchannelAuthUserCodeType);
     map.put(

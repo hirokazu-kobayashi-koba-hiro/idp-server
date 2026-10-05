@@ -23,6 +23,8 @@ import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigu
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.dpop.DPoPHeaderValidator;
+import org.idp.server.core.openid.oauth.dpop.DPoPProofVerifier;
+import org.idp.server.core.openid.oauth.replay.JwtReplayDetector;
 import org.idp.server.core.openid.oauth.type.oauth.AccessTokenEntity;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.core.openid.token.repository.OAuthTokenQueryRepository;
@@ -42,17 +44,20 @@ public class UserinfoHandler {
   AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
   UserinfoCustomIndividualClaimsCreators userinfoCustomIndividualClaimsCreators;
+  JwtReplayDetector replayDetector;
 
   public UserinfoHandler(
       OAuthTokenQueryRepository oAuthTokenQueryRepository,
       AuthorizationServerConfigurationQueryRepository
           authorizationServerConfigurationQueryRepository,
-      ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
+      ClientConfigurationQueryRepository clientConfigurationQueryRepository,
+      JwtReplayDetector replayDetector) {
     this.oAuthTokenQueryRepository = oAuthTokenQueryRepository;
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
     this.userinfoCustomIndividualClaimsCreators = new UserinfoCustomIndividualClaimsCreators();
+    this.replayDetector = replayDetector;
   }
 
   public UserinfoRequestResponse handle(UserinfoRequest request, UserinfoDelegate delegate) {
@@ -64,6 +69,8 @@ public class UserinfoHandler {
     new DPoPHeaderValidator(request.dpopProofHeaders()).validate();
 
     OAuthToken oAuthToken = oAuthTokenQueryRepository.find(tenant, accessTokenEntity);
+    AuthorizationServerConfiguration authorizationServerConfiguration =
+        authorizationServerConfigurationQueryRepository.get(tenant);
 
     UserinfoVerifier verifier =
         new UserinfoVerifier(
@@ -71,11 +78,13 @@ public class UserinfoHandler {
             request.toClientCert(),
             request.dpopProof(),
             request.httpMethod(),
-            request.httpUri());
+            request.httpUri(),
+            new DPoPProofVerifier(
+                tenant,
+                authorizationServerConfiguration.dpopProofAcceptableWindow(),
+                replayDetector));
     verifier.verifyToken();
 
-    AuthorizationServerConfiguration authorizationServerConfiguration =
-        authorizationServerConfigurationQueryRepository.get(tenant);
     ClientConfiguration clientConfiguration =
         clientConfigurationQueryRepository.get(tenant, oAuthToken.requestedClientId());
 

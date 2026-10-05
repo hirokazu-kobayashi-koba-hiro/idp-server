@@ -21,8 +21,12 @@ import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserAuthenticationApi;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
+import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.dpop.DPoPHeaderValidator;
 import org.idp.server.core.openid.oauth.dpop.DPoPProof;
+import org.idp.server.core.openid.oauth.dpop.DPoPProofVerifier;
+import org.idp.server.core.openid.oauth.replay.JwtReplayDetector;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.core.openid.token.TokenProtocol;
 import org.idp.server.core.openid.token.TokenProtocols;
@@ -45,16 +49,24 @@ public class UserAuthenticationEntryService implements UserAuthenticationApi {
   TenantQueryRepository tenantQueryRepository;
   UserQueryRepository userQueryRepository;
   OrganizationRepository organizationRepository;
+  AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
+  JwtReplayDetector replayDetector;
 
   public UserAuthenticationEntryService(
       TokenProtocols tokenProtocols,
       TenantQueryRepository tenantQueryRepository,
       UserQueryRepository userQueryRepository,
-      OrganizationRepository organizationRepository) {
+      OrganizationRepository organizationRepository,
+      AuthorizationServerConfigurationQueryRepository
+          authorizationServerConfigurationQueryRepository,
+      JwtReplayDetector replayDetector) {
     this.tokenProtocols = tokenProtocols;
     this.tenantQueryRepository = tenantQueryRepository;
     this.userQueryRepository = userQueryRepository;
     this.organizationRepository = organizationRepository;
+    this.authorizationServerConfigurationQueryRepository =
+        authorizationServerConfigurationQueryRepository;
+    this.replayDetector = replayDetector;
   }
 
   @Transaction(readOnly = true)
@@ -81,7 +93,14 @@ public class UserAuthenticationEntryService implements UserAuthenticationApi {
     OAuthToken oAuthToken = introspectionResponse.oAuthToken();
 
     String dpopProof = dpopProofHeaders.isEmpty() ? null : dpopProofHeaders.get(0);
-    DPoPBindingVerifier dpopBindingVerifier = new DPoPBindingVerifier();
+    AuthorizationServerConfiguration authorizationServerConfiguration =
+        authorizationServerConfigurationQueryRepository.get(tenant);
+    DPoPBindingVerifier dpopBindingVerifier =
+        new DPoPBindingVerifier(
+            new DPoPProofVerifier(
+                tenant,
+                authorizationServerConfiguration.dpopProofAcceptableWindow(),
+                replayDetector));
     dpopBindingVerifier.verify(
         new DPoPProof(dpopProof), inputs.httpMethod(), inputs.httpUri(), oAuthToken);
 

@@ -29,6 +29,7 @@ import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.dpop.DPoPHeaderValidator;
 import org.idp.server.core.openid.oauth.dpop.DPoPProof;
+import org.idp.server.core.openid.oauth.replay.JwtReplayDetector;
 import org.idp.server.core.openid.oauth.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.core.openid.oauth.repository.AuthorizationRequestRepository;
 import org.idp.server.core.openid.oauth.type.extension.CustomProperties;
@@ -60,6 +61,7 @@ public class TokenRequestHandler {
   OAuthTokenCommandRepository oAuthTokenCommandRepository;
   AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
+  JwtReplayDetector replayDetector;
 
   public TokenRequestHandler(
       AuthorizationRequestRepository authorizationRequestRepository,
@@ -71,7 +73,8 @@ public class TokenRequestHandler {
           authorizationServerConfigurationQueryRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository,
       ClientAuthenticationHandler clientAuthenticationHandler,
-      Map<GrantType, OAuthTokenCreationService> extensionOAuthTokenCreationServices) {
+      Map<GrantType, OAuthTokenCreationService> extensionOAuthTokenCreationServices,
+      JwtReplayDetector replayDetector) {
     this.oAuthTokenCreationServices =
         new OAuthTokenCreationServices(
             authorizationRequestRepository,
@@ -85,6 +88,7 @@ public class TokenRequestHandler {
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
+    this.replayDetector = replayDetector;
   }
 
   public TokenRequestResponse handle(
@@ -131,6 +135,7 @@ public class TokenRequestHandler {
             jwtBearerUserFindingDelegate,
             authorizationServerConfiguration,
             clientConfiguration);
+    tokenRequestContext.useReplayDetector(replayDetector);
 
     ClientCredentials clientCredentials =
         clientAuthenticationHandler.authenticate(tokenRequestContext);

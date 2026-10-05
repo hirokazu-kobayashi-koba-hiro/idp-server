@@ -1099,7 +1099,8 @@ docker exec -it postgres psql -U idp_user -d idp_db -c \
 2. **DPoP JWTの署名不正**: 署名検証に失敗
 3. **DPoP JWTの必須クレーム欠落**: `jti`, `htm`, `htu`, `iat`が不足
 4. **DPoP JWTの`htm`/`htu`不一致**: リクエストのHTTPメソッド/URIと不一致
-5. **DPoP JWTの有効期限切れ**: `iat`が許容範囲外
+5. **DPoP JWTの有効期限切れ**: `iat`が許容範囲外（既定 ±60 秒。テナントの `dpop_proof_acceptable_window_seconds` で変更可）
+6. **同じ DPoP proof の再送**: 受け付けた proof の `jti` は鍵（JWK Thumbprint）ごとに `iat` の窓が閉じるまで記録され、2 回目は `DPoP proof has already been used.`（RFC 9449 Section 11.1）。記録は Redis に置くため、Redis が無い配備・Redis のエラー時は `iat` の窓だけで判定します
 
 **実装詳細**:
 - DPoP検証は**GrantService層**で`DPoPProofVerifier.verifyIfNeeded()`により実行

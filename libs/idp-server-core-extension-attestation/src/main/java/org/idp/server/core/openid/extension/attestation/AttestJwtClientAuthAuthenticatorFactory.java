@@ -20,8 +20,10 @@ import org.idp.server.core.openid.clientinstance.ClientInstanceQueryRepository;
 import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallenges;
 import org.idp.server.core.openid.oauth.clientauthenticator.plugin.ClientAuthenticator;
 import org.idp.server.core.openid.oauth.clientauthenticator.plugin.ClientAuthenticatorFactory;
+import org.idp.server.core.openid.oauth.replay.JwtReplayDetector;
 import org.idp.server.core.openid.oauth.type.oauth.ClientAuthenticationType;
 import org.idp.server.platform.crypto.ServerNonceCodec;
+import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.platform.dependency.ApplicationComponentContainer;
 
 /**
@@ -42,6 +44,8 @@ public class AttestJwtClientAuthAuthenticatorFactory implements ClientAuthentica
     ClientAttestationChallenges challenges =
         new ClientAttestationChallenges(container.resolve(ServerNonceCodec.class));
     return new AttestJwtClientAuthAuthenticator(
-        new ClientAttestationKeyResolvers(clientInstanceQueryRepository), challenges);
+        new ClientAttestationKeyResolvers(clientInstanceQueryRepository),
+        challenges,
+        new JwtReplayDetector(container.resolve(CacheStore.class)));
   }
 }

@@ -18,6 +18,7 @@ package org.idp.server.control_plane.management.tenant.handler;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.control_plane.management.oidc.authorization.verifier.AuthorizationServerConfigurationVerifier;
 import org.idp.server.control_plane.management.onboarding.io.TenantRegistrationRequest;
 import org.idp.server.control_plane.management.tenant.TenantManagementContextBuilder;
 import org.idp.server.control_plane.management.tenant.io.OrgTenantCreationRequest;
@@ -206,8 +207,11 @@ public class OrgTenantCreationService implements TenantManagementService<OrgTena
   }
 
   private AuthorizationServerConfiguration createAuthorization(TenantRequest request) {
-    return JsonConverter.snakeCaseInstance()
-        .read(request.get("authorization_server"), AuthorizationServerConfiguration.class);
+    AuthorizationServerConfiguration configuration =
+        JsonConverter.snakeCaseInstance()
+            .read(request.get("authorization_server"), AuthorizationServerConfiguration.class);
+    new AuthorizationServerConfigurationVerifier().verify(configuration);
+    return configuration;
   }
 
   private TenantIdentityPolicy convertIdentityPolicyConfig(Map<String, Object> configMap) {

@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.dpop.DPoPProof;
+import org.idp.server.core.openid.oauth.dpop.DPoPProofVerifier;
 import org.idp.server.core.openid.oauth.type.mtls.ClientCert;
 import org.idp.server.core.openid.oauth.type.oauth.Scopes;
 import org.idp.server.core.openid.token.OAuthToken;
@@ -38,6 +39,7 @@ public class TokenIntrospectionExtensionVerifier {
   OAuthToken oAuthToken;
   AuthorizationServerConfiguration authorizationServerConfiguration;
   ClientConfiguration clientConfiguration;
+  DPoPProofVerifier dpopProofVerifier;
   LoggerWrapper log = LoggerWrapper.getLogger(TokenIntrospectionExtensionVerifier.class);
 
   public TokenIntrospectionExtensionVerifier(
@@ -48,7 +50,8 @@ public class TokenIntrospectionExtensionVerifier {
       Scopes scopes,
       OAuthToken oAuthToken,
       AuthorizationServerConfiguration authorizationServerConfiguration,
-      ClientConfiguration clientConfiguration) {
+      ClientConfiguration clientConfiguration,
+      DPoPProofVerifier dpopProofVerifier) {
     this.clientCert = clientCert;
     this.dpopProof = dpopProof;
     this.httpMethod = httpMethod;
@@ -57,6 +60,7 @@ public class TokenIntrospectionExtensionVerifier {
     this.oAuthToken = oAuthToken;
     this.authorizationServerConfiguration = authorizationServerConfiguration;
     this.clientConfiguration = clientConfiguration;
+    this.dpopProofVerifier = dpopProofVerifier;
   }
 
   public void verify() {
@@ -88,7 +92,7 @@ public class TokenIntrospectionExtensionVerifier {
   private void verifySenderConstrainedIfRequired() {
     CertificateBindingVerifier certificateBindingVerifier = new CertificateBindingVerifier();
     certificateBindingVerifier.verify(clientCert, oAuthToken);
-    DPoPBindingVerifier dpopBindingVerifier = new DPoPBindingVerifier();
+    DPoPBindingVerifier dpopBindingVerifier = new DPoPBindingVerifier(dpopProofVerifier);
     dpopBindingVerifier.verify(dpopProof, httpMethod, httpUri, oAuthToken);
   }
 

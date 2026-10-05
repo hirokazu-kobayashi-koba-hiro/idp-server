@@ -24,6 +24,8 @@ import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttest
 import org.idp.server.core.openid.oauth.clientauthenticator.BackchannelRequestContext;
 import org.idp.server.core.openid.oauth.clientauthenticator.exception.InvalidClientAttestationException;
 import org.idp.server.core.openid.oauth.clientauthenticator.exception.UseAttestationChallengeException;
+import org.idp.server.core.openid.oauth.replay.JwtReplayDetector;
+import org.idp.server.core.openid.oauth.replay.JwtReplayKind;
 import org.idp.server.core.openid.oauth.type.oauth.ClientAuthenticationType;
 import org.idp.server.platform.jose.JoseInvalidException;
 import org.idp.server.platform.jose.JsonWebKey;
@@ -58,25 +60,28 @@ import org.idp.server.platform.jose.JwtClockSkewValidator;
  * the Client Instance Key: rejecting it mints a fresh Challenge (Section 7.4 requires the error to
  * carry one), so an unauthenticated caller must not be able to drive that write.
  *
- * <p>Replay detection of {@code jti} (SHOULD) relies on the {@code iat} time window, the same
- * policy as the DPoP proof verification.
+ * <p>Replay detection of {@code jti} (Section 12.1, SHOULD): each accepted PoP is recorded per
+ * client for as long as its {@code iat} window lets it through, and refused the second time (Issue
+ * #1893). Without a detector, the window alone limits reuse.
  */
 class ClientAttestationPopJwtVerifier {
 
   static final String POP_JWT_TYPE = "oauth-client-attestation-pop+jwt";
-  static final Duration DEFAULT_ACCEPTABLE_TIME_WINDOW = Duration.ofMinutes(5);
 
   BackchannelRequestContext context;
   JsonWebKey clientInstanceKey;
   ClientAttestationChallenges challenges;
+  JwtReplayDetector replayDetector;
 
   ClientAttestationPopJwtVerifier(
       BackchannelRequestContext context,
       JsonWebKey clientInstanceKey,
-      ClientAttestationChallenges challenges) {
+      ClientAttestationChallenges challenges,
+      JwtReplayDetector replayDetector) {
     this.context = context;
     this.clientInstanceKey = clientInstanceKey;
     this.challenges = challenges;
+    this.replayDetector = replayDetector;
   }
 
   /** Verifies the Client Attestation PoP JWT and returns the verified JWS. */
@@ -90,6 +95,8 @@ class ClientAttestationPopJwtVerifier {
     throwExceptionIfInvalidJti(claims);
     throwExceptionIfInvalidIat(claims);
     throwExceptionIfInvalidChallenge(claims);
+    // Last, so that only a PoP that passed every other check uses up its jti.
+    throwExceptionIfReplayed(claims);
     return jws;
   }
 
@@ -180,17 +187,44 @@ class ClientAttestationPopJwtVerifier {
       throw exception("client attestation pop jwt must contain iat claim");
     }
     Instant issuedAt = claims.getIat().toInstant();
+    Duration window = acceptableTimeWindow();
     Duration difference = Duration.between(issuedAt, Instant.now()).abs();
-    if (difference.compareTo(DEFAULT_ACCEPTABLE_TIME_WINDOW) > 0) {
+    if (difference.compareTo(window) > 0) {
       throw exception(
           String.format(
               "client attestation pop jwt iat claim is outside the acceptable time window. Issued at: %s, Allowed window: %s",
-              issuedAt, DEFAULT_ACCEPTABLE_TIME_WINDOW));
+              issuedAt, window));
     }
     try {
       JwtClockSkewValidator.validateIatNbf(claims);
     } catch (JwtClockSkewException e) {
       throw exception("client attestation pop jwt " + e.getMessage());
+    }
+  }
+
+  /** {@code client_attestation_pop_acceptable_window_seconds} (default 60 seconds, Issue #1893). */
+  private Duration acceptableTimeWindow() {
+    return context.serverConfiguration().clientAttestationPopAcceptableWindow();
+  }
+
+  /**
+   * Section 12.1: the PoP has not been used before. Keyed by the client and {@code jti}, so that
+   * one client cannot use up the {@code jti} of another.
+   */
+  private void throwExceptionIfReplayed(JsonWebTokenClaims claims) {
+    if (replayDetector == null) {
+      return;
+    }
+    boolean firstUse =
+        replayDetector.firstUse(
+            context.tenant(),
+            JwtReplayKind.CLIENT_ATTESTATION_POP,
+            context.requestedClientId().value(),
+            claims.getJti(),
+            claims.getIat().toInstant(),
+            acceptableTimeWindow());
+    if (!firstUse) {
+      throw exception("client attestation pop jwt has already been used");
     }
   }
 

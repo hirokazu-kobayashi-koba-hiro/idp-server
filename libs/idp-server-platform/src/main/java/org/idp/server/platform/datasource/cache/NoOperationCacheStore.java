@@ -46,4 +46,10 @@ public class NoOperationCacheStore implements CacheStore {
   public long increment(String key, int timeToLiveSeconds) {
     return 0;
   }
+
+  /** Nothing is stored, so nothing was seen before. */
+  @Override
+  public boolean putIfAbsent(String key, int timeToLiveSeconds) {
+    return true;
+  }
 }

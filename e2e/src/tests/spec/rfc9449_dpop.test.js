@@ -6,7 +6,7 @@
  *
  * @see https://www.rfc-editor.org/rfc/rfc9449
  */
-import { describe, expect, it, beforeAll } from "@jest/globals";
+import { describe, expect, it, xit, beforeAll } from "@jest/globals";
 import { v4 as uuidv4 } from "uuid";
 import crypto from "crypto";
 import * as jose from "jose";
@@ -1769,6 +1769,80 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
 
       expect(tokenResponse.status).toBe(400);
       expect(tokenResponse.data.error).toBe("invalid_grant");
+    });
+  });
+
+  /**
+   * RFC 9449 Section 11.1: DPoP Proof Replay
+   *
+   * Issue #1893: the iat window is dpop_proof_acceptable_window_seconds (default 60 seconds), and
+   * each accepted proof is recorded per key thumbprint (Redis SET NX) until that window closes.
+   *
+   * @see https://www.rfc-editor.org/rfc/rfc9449.html#section-11.1
+   */
+  describe("Section 11.1: DPoP Proof Replay", () => {
+
+    const tokenRequest = (dpopProof) =>
+      requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "client_credentials",
+        scope: clientSecretPostClient.scope,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+        additionalHeaders: { DPoP: dpopProof },
+      });
+
+    it("To limit this, servers MUST only accept DPoP proofs for a limited time after their creation (preferably only for a relatively brief period on the order of seconds or minutes).", async () => {
+      const dpopProof = await createDPoPProof({
+        privateKey: dpopKeyPair.privateKey,
+        publicJwk: dpopKeyPair.publicJwk,
+        htm: "POST",
+        htu: serverConfig.tokenEndpoint,
+        overrides: { iat: Math.floor(Date.now() / 1000) - 90 }, // beyond the 60-second default
+      });
+
+      const tokenResponse = await tokenRequest(dpopProof);
+
+      expect(tokenResponse.status).toBe(400);
+      expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
+    });
+
+    it("In the context of the target URI, servers can store the jti value of each DPoP proof for the time window in which the respective DPoP proof JWT would be accepted to prevent multiple uses of the same DPoP proof. HTTP requests to the same URI for which the jti value has been seen before would be declined.", async () => {
+      // Token endpoint
+      const tokenProof = await createDPoPProof({
+        privateKey: dpopKeyPair.privateKey,
+        publicJwk: dpopKeyPair.publicJwk,
+        htm: "POST",
+        htu: serverConfig.tokenEndpoint,
+      });
+      expect((await tokenRequest(tokenProof)).status).toBe(200);
+      const replayedToken = await tokenRequest(tokenProof);
+      expect(replayedToken.status).toBe(400);
+      expect(replayedToken.data.error).toBe("invalid_dpop_proof");
+      expect(replayedToken.data.error_description).toContain("already been used");
+
+      // UserInfo (a read-only path: the record is kept outside the database transaction)
+      const accessToken = await obtainDPoPBoundTokenViaAuthCodeFlow(dpopKeyPair);
+      const userinfoProof = await createDPoPProof({
+        privateKey: dpopKeyPair.privateKey,
+        publicJwk: dpopKeyPair.publicJwk,
+        htm: "GET",
+        htu: serverConfig.userinfoEndpoint,
+        overrides: { ath: computeAth(accessToken) },
+      });
+      const userinfo = () =>
+        getUserinfo({
+          endpoint: serverConfig.userinfoEndpoint,
+          authorizationHeader: { Authorization: `DPoP ${accessToken}`, DPoP: userinfoProof },
+        });
+      expect((await userinfo()).status).toBe(200);
+      const replayedUserinfo = await userinfo();
+      expect(replayedUserinfo.status).toBe(401);
+      expect(replayedUserinfo.data.error).toBe("invalid_token");
+    });
+
+    xit("In order to guard against memory exhaustion attacks, a server that is tracking jti values should reject DPoP proof JWTs with unnecessarily large jti values or store only a hash thereof.", async () => {
+      // 実装あり（外から観測できない）: JwtReplayDetector は jti の SHA-256 だけをキーにして記録する。
     });
   });
 });

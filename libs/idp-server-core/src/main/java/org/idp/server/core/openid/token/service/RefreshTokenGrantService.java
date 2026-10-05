@@ -23,7 +23,6 @@ import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.Cl
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.dpop.DPoPProofVerifiedResult;
-import org.idp.server.core.openid.oauth.dpop.DPoPProofVerifier;
 import org.idp.server.core.openid.oauth.type.oauth.GrantType;
 import org.idp.server.core.openid.oauth.type.oauth.RefreshTokenEntity;
 import org.idp.server.core.openid.token.*;
@@ -83,7 +82,8 @@ public class RefreshTokenGrantService implements OAuthTokenCreationService, Refr
     AuthorizationGrant authorizationGrant = oAuthToken.authorizationGrant();
 
     DPoPProofVerifiedResult dpopResult =
-        new DPoPProofVerifier()
+        context
+            .dpopProofVerifier()
             .verifyIfNeeded(
                 context.dpopProof(),
                 context.httpMethod(),
