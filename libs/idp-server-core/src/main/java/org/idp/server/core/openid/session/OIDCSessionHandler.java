@@ -17,7 +17,6 @@
 package org.idp.server.core.openid.session;
 
 import java.time.Instant;
-import java.time.ZoneOffset;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -25,6 +24,7 @@ import org.idp.server.core.openid.authentication.Authentication;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
+import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
@@ -176,7 +176,7 @@ public class OIDCSessionHandler {
   /** When the end-user authenticated, or now when the authentication does not say. */
   private Instant authTimeOf(Authentication authentication) {
     return authentication.hasAuthenticationTime()
-        ? authentication.time().atZone(ZoneOffset.UTC).toInstant()
+        ? SystemDateTime.toInstant(authentication.time())
         : Instant.now();
   }
 

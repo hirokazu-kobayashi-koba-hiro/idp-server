@@ -19,8 +19,6 @@ package org.idp.server.core.openid.session;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +28,7 @@ import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.session.repository.ClientSessionRepository;
 import org.idp.server.core.openid.session.repository.OPSessionRepository;
+import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
@@ -132,7 +131,7 @@ class OIDCSessionHandlerReauthenticationTest {
 
   private static Authentication authentication(Instant time, String acr, List<String> methods) {
     return new Authentication()
-        .setTime(LocalDateTime.ofInstant(time, ZoneOffset.UTC))
+        .setTime(SystemDateTime.fromInstant(time))
         .addAcr(acr)
         .addMethods(methods);
   }

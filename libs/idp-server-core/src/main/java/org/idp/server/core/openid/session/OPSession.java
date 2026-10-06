@@ -18,7 +18,6 @@ package org.idp.server.core.openid.session;
 
 import java.io.Serializable;
 import java.time.Instant;
-import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +26,7 @@ import org.idp.server.core.openid.authentication.Authentication;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionResults;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserIdentifier;
+import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
@@ -160,7 +160,7 @@ public class OPSession implements Serializable, JsonReadable {
 
   public Authentication authentication() {
     return new Authentication()
-        .setTime(authTime.atZone(ZoneOffset.UTC).toLocalDateTime())
+        .setTime(SystemDateTime.fromInstant(authTime))
         .addAcr(acr != null ? acr : "")
         .addMethods(amr != null ? amr : List.of());
   }
