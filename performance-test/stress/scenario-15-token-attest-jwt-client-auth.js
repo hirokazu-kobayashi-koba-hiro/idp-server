@@ -1,5 +1,7 @@
 import http from 'k6/http';
 import { check } from 'k6';
+import { SharedArray } from 'k6/data';
+import { assertTestFitsWindow, nextPopIndex } from '../libs/attestation-pop.js';
 
 // 環境変数でカスタマイズ可能なパラメータ
 const VU_COUNT = parseInt(__ENV.VU_COUNT || '120');
@@ -26,7 +28,11 @@ export let options = {
  * 事前準備（k6 は ES256 署名ができないため JWT は事前生成）:
  *   node performance-test/scripts/generate-client-instances.js
  *   node performance-test/scripts/generate-client-instances.js --resign  # テスト直前
+ *
+ * PoP JWT は 1 リクエストに 1 つずつ使う（サーバは jti の 2 回目を拒否する、#1893）。
+ * 流せるリクエストは --requests で署名した数まで。
  */
+const RESIGN = 'node performance-test/scripts/generate-client-instances.js --resign';
 const instanceData = JSON.parse(open('../data/performance-test-client-instances.json'));
 
 const tenantIndex = parseInt(__ENV.TENANT_INDEX || '0');
@@ -39,22 +45,34 @@ if (!config || !config.instances || config.instances.length === 0) {
   );
 }
 
-// PoP JWT の iat 許容窓は ±5 分。期限切れのプールで走らせると 401 の山になるので早期に止める。
-const ageSeconds = Math.floor(Date.now() / 1000) - config.generatedAt;
-if (ageSeconds > 240) {
-  throw new Error(
-    `Pre-signed attestation JWTs are ${ageSeconds}s old (window is 300s). ` +
-      'Run: node performance-test/scripts/generate-client-instances.js --resign'
+// テスト中に PoP JWT の iat 許容窓を過ぎると 401 の山になるので、始める前に止める。
+assertTestFitsWindow({
+  generatedAt: config.generatedAt,
+  popWindowSeconds: config.popWindowSeconds,
+  duration: DURATION,
+  resignCommand: RESIGN,
+});
+
+// 全 VU で 1 つを共有する（VU ごとに大きな JSON を持たない）
+const popJwts = new SharedArray('pop-jwts', () => {
+  const pool = JSON.parse(open('../data/performance-test-client-instances-pops.json')).find(
+    (entry) => entry.tenantId === config.tenantId && entry.generatedAt === config.generatedAt
   );
-}
+  if (!pool) {
+    throw new Error(`No PoP JWTs signed with the current instances. Run: ${RESIGN}`);
+  }
+  return pool.popJwts;
+});
 
 export default function () {
   const baseUrl = __ENV.BASE_URL || 'https://api.local.test';
   const tenantId = config.tenantId;
   const clientId = config.clientId;
 
-  // VU・iteration ごとに違うインスタンスを循環（client_instance の鍵解決を分散させる）
-  const instance = config.instances[(__VU + __ITER) % config.instances.length];
+  // k 番目のリクエストは k 番目の PoP JWT と、それを署名したインスタンス（k % インスタンス数）を使う。
+  // インスタンスも循環するので、client_instance の鍵解決が分散する。
+  const index = nextPopIndex(popJwts.length, RESIGN);
+  const instance = config.instances[index % config.instances.length];
 
   const url = `${baseUrl}/${tenantId}/v1/tokens`;
 
@@ -67,7 +85,7 @@ export default function () {
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
       'OAuth-Client-Attestation': instance.attestationJwt,
-      'OAuth-Client-Attestation-PoP': instance.popJwt,
+      'OAuth-Client-Attestation-PoP': popJwts[index],
     },
   };
 

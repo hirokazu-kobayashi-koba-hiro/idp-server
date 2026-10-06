@@ -89,7 +89,8 @@
       "access_token_duration": 3600,
       "id_token_duration": 3600,
       "backchannel_authentication_request_expires_in": 60,
-      "backchannel_authentication_polling_interval": 5
+      "backchannel_authentication_polling_interval": 5,
+      "client_attestation_pop_acceptable_window_seconds": 600
     }
   },
   "user": {
