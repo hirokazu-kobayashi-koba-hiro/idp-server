@@ -126,7 +126,7 @@ Content-Type: application/json
 
 | エラー | 説明 |
 |-------|------|
-| `invalid_request` - "Binding Message is null" | CIBAリクエストにbinding_messageが含まれていない |
+| `invalid_request` - "Binding Message is not set for this authentication transaction" | 認証トランザクションに binding_message が無い（CIBAリクエストに binding_message が含まれていない、または認可コードフローのトランザクション） |
 | `invalid_request` - "Binding Message is unmatched" | 入力されたbinding_messageが一致しない |
 
 ---
@@ -293,9 +293,9 @@ CIBA仕様より:
 
 ## よくあるエラーと対処
 
-### エラー1: "Binding Message is null"
+### エラー1: "Binding Message is not set for this authentication transaction"
 
-**原因**: CIBAリクエスト時に`binding_message`パラメータが指定されていない
+**原因**: CIBAリクエスト時に`binding_message`パラメータが指定されていない（認可コードフローのトランザクションも binding_message を持たないため、同じエラーになる）
 
 **対処**: CIBAリクエストに`binding_message`を含める
 
