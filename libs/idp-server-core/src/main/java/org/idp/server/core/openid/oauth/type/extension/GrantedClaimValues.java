@@ -52,6 +52,15 @@ import org.idp.server.platform.json.JsonConverter;
  * empty — the same result as denying it whole, and consistent with omitting a claim that has no
  * value (OIDC Core §5.3.2, #1699).
  *
+ * <h2>verified_claims</h2>
+ *
+ * <p>The same choice applies to the arrays under {@code verified_claims.claims} (#1947), carried
+ * under the key that mirrors where they appear in a token: {@code {"verified_claims": {"claims":
+ * {"accounts": [...]}}}}. They are kept apart from the custom properties rather than sharing a key,
+ * because the two are not the same values: an element of a verified claim need not have the shape
+ * of the custom property with the same name, so each selection is matched against its own source.
+ * An older build reads only array entries, so it skips the nested object instead of misreading it.
+ *
  * <h2>It is the decision, not the result</h2>
  *
  * <p>The selection is persisted with the grant and applied when claims are built, rather than
@@ -67,16 +76,25 @@ import org.idp.server.platform.json.JsonConverter;
 public class GrantedClaimValues {
 
   static final String SENTINEL_PREFIX = "gcv:";
+  static final String VERIFIED_CLAIMS = "verified_claims";
+  static final String CLAIMS = "claims";
   private static final JsonConverter jsonConverter = JsonConverter.defaultInstance();
 
   Map<String, List<Object>> values;
+  Map<String, List<Object>> verifiedClaimValues;
 
   public GrantedClaimValues() {
-    this.values = Map.of();
+    this(Map.of(), Map.of());
   }
 
   public GrantedClaimValues(Map<String, List<Object>> values) {
+    this(values, Map.of());
+  }
+
+  public GrantedClaimValues(
+      Map<String, List<Object>> values, Map<String, List<Object>> verifiedClaimValues) {
     this.values = values;
+    this.verifiedClaimValues = verifiedClaimValues;
   }
 
   /** True when {@code token} is the selection sentinel rather than a plain claim name. */
@@ -101,7 +119,7 @@ public class GrantedClaimValues {
     if (!exists()) {
       return "";
     }
-    String json = jsonConverter.write(values);
+    String json = jsonConverter.write(toObject());
     return SENTINEL_PREFIX
         + Base64.getUrlEncoder()
             .withoutPadding()
@@ -113,13 +131,34 @@ public class GrantedClaimValues {
     if (!(value instanceof Map<?, ?> map)) {
       return new GrantedClaimValues();
     }
+    Map<String, List<Object>> verifiedClaimValues = Map.of();
+    if (map.get(VERIFIED_CLAIMS) instanceof Map<?, ?> verifiedClaims) {
+      verifiedClaimValues = arraysOf(verifiedClaims.get(CLAIMS));
+    }
+    return new GrantedClaimValues(arraysOf(map), verifiedClaimValues);
+  }
+
+  /** The entries of {@code value} whose value is an array; anything else is skipped. */
+  private static Map<String, List<Object>> arraysOf(Object value) {
+    if (!(value instanceof Map<?, ?> map)) {
+      return Map.of();
+    }
     Map<String, List<Object>> parsed = new LinkedHashMap<>();
     for (Map.Entry<?, ?> entry : map.entrySet()) {
       if (entry.getValue() instanceof List<?> list) {
         parsed.put(String.valueOf(entry.getKey()), normalize(list));
       }
     }
-    return new GrantedClaimValues(parsed);
+    return parsed;
+  }
+
+  /** The selection in the shape {@link #fromObject} reads. */
+  private Map<String, Object> toObject() {
+    Map<String, Object> object = new LinkedHashMap<>(values);
+    if (!verifiedClaimValues.isEmpty()) {
+      object.put(VERIFIED_CLAIMS, Map.of(CLAIMS, verifiedClaimValues));
+    }
+    return object;
   }
 
   /**
@@ -142,11 +181,15 @@ public class GrantedClaimValues {
   }
 
   public boolean exists() {
-    return !values.isEmpty();
+    return !values.isEmpty() || !verifiedClaimValues.isEmpty();
   }
 
   public Map<String, List<Object>> values() {
     return values;
+  }
+
+  public Map<String, List<Object>> verifiedClaimValues() {
+    return verifiedClaimValues;
   }
 
   /**
@@ -156,18 +199,45 @@ public class GrantedClaimValues {
    *     reduced to nothing removed entirely
    */
   public Map<String, Object> narrow(Map<String, Object> customProperties) {
-    if (!exists() || customProperties == null || customProperties.isEmpty()) {
-      return customProperties;
+    return narrowArrays(customProperties, values);
+  }
+
+  /**
+   * Applies the selection to the user's verified claims, the {@code verified_claims.claims} arrays
+   * only; {@code verification} is never touched.
+   *
+   * @return the verified claims with each selected array under {@code claims} reduced to the
+   *     selected elements, and any array reduced to nothing removed entirely
+   */
+  public Map<String, Object> narrowVerifiedClaims(Map<String, Object> verifiedClaims) {
+    if (verifiedClaimValues.isEmpty() || verifiedClaims == null) {
+      return verifiedClaims;
+    }
+    if (!(verifiedClaims.get(CLAIMS) instanceof Map<?, ?> claims)) {
+      return verifiedClaims;
+    }
+    Map<String, Object> ownedClaims = new HashMap<>();
+    claims.forEach((key, value) -> ownedClaims.put(String.valueOf(key), value));
+
+    Map<String, Object> narrowed = new HashMap<>(verifiedClaims);
+    narrowed.put(CLAIMS, narrowArrays(ownedClaims, verifiedClaimValues));
+    return narrowed;
+  }
+
+  private static Map<String, Object> narrowArrays(
+      Map<String, Object> owned, Map<String, List<Object>> selections) {
+    if (selections.isEmpty() || owned == null || owned.isEmpty()) {
+      return owned;
     }
 
-    Map<String, Object> narrowed = new HashMap<>(customProperties);
-    for (Map.Entry<String, List<Object>> selection : values.entrySet()) {
+    Map<String, Object> narrowed = new HashMap<>(owned);
+    for (Map.Entry<String, List<Object>> selection : selections.entrySet()) {
       Object current = narrowed.get(selection.getKey());
-      if (!(current instanceof List<?> owned)) {
+      if (!(current instanceof List<?> elements)) {
         continue;
       }
       List<Object> kept = new ArrayList<>();
-      for (Object element : owned) {
+      for (Object element : elements) {
         if (selection.getValue().contains(element)) {
           kept.add(element);
         }

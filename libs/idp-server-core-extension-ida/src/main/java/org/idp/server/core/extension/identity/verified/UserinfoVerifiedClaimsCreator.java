@@ -58,7 +58,16 @@ public class UserinfoVerifiedClaimsCreator implements UserinfoCustomIndividualCl
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
     VerifiedClaimsObject requested = authorizationGrant.userinfoClaims().verifiedClaims();
-    JsonNodeWrapper userVerifiedClaims = user.verifiedClaimsNodeWrapper();
+    JsonNodeWrapper userVerifiedClaims = grantedVerifiedClaims(user, authorizationGrant);
     return VerifiedClaimsAssembler.assemble(requested, userVerifiedClaims, SystemDateTime.now());
+  }
+
+  /**
+   * The user's verified claims with the End-User's per-element consent applied (#1947): the arrays
+   * under {@code claims} hold only the elements chosen on the consent screen.
+   */
+  private JsonNodeWrapper grantedVerifiedClaims(User user, AuthorizationGrant authorizationGrant) {
+    return JsonNodeWrapper.fromMap(
+        authorizationGrant.grantedClaimValues().narrowVerifiedClaims(user.verifiedClaims()));
   }
 }

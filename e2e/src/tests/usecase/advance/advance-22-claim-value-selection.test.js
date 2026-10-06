@@ -39,6 +39,12 @@ describe("Advance Use Case: claim value selection (Issue #1816)", () => {
     { id: "card-1", brand: "visa", limit: 100000 },
     { id: "card-2", brand: "master", limit: 50000 },
   ];
+  // The same accounts as verified claims (#1947), deliberately not in the shape of the custom
+  // property: each selection is matched against its own source only.
+  const VERIFIED_ACCOUNTS = [
+    { id: "acc-1", bank: "Bank A" },
+    { id: "acc-2", bank: "Bank B" },
+  ];
 
   beforeAll(async () => {
     const timestamp = Date.now();
@@ -90,6 +96,7 @@ describe("Advance Use Case: claim value selection (Issue #1816)", () => {
             "claims:accounts",
             "claims:branch",
             "claims:cards",
+            "verified_claims:accounts",
             "management",
             "org-management",
             "account",
@@ -101,10 +108,13 @@ describe("Advance Use Case: claim value selection (Issue #1816)", () => {
           id_token_signing_alg_values_supported: ["ES256"],
           token_endpoint_auth_methods_supported: ["client_secret_post"],
           claims_supported: ["sub", "email", "email_verified"],
+          claims_parameter_supported: true,
           extension: {
             access_token_type: "JWT",
             // Required for claims:* scopes to reach the token at all.
             custom_claims_scope_mapping: true,
+            // Required for verified_claims:* scopes to reach the token and UserInfo.
+            access_token_selective_verified_claims: true,
           },
         },
         user: {
@@ -116,6 +126,10 @@ describe("Advance Use Case: claim value selection (Issue #1816)", () => {
           // accounts is the array the End-User selects from; branch is a scalar, which has nothing
           // to select between and must be left alone.
           custom_properties: { accounts: OWNED_ACCOUNTS, branch: "tokyo", cards: OWNED_CARDS },
+          verified_claims: {
+            verification: { trust_framework: "jp_aml" },
+            claims: { accounts: VERIFIED_ACCOUNTS, given_name: "Taro" },
+          },
         },
         client: {
           client_id: clientId,
@@ -124,7 +138,7 @@ describe("Advance Use Case: claim value selection (Issue #1816)", () => {
           grant_types: ["authorization_code", "password"],
           response_types: ["code", "code id_token"],
           scope:
-            "openid profile email claims:accounts claims:branch claims:cards management org-management account",
+            "openid profile email claims:accounts claims:branch claims:cards verified_claims:accounts management org-management account",
           client_name: "Claim Value Selection Client",
           token_endpoint_auth_method: "client_secret_post",
         },
@@ -182,8 +196,8 @@ describe("Advance Use Case: claim value selection (Issue #1816)", () => {
    *   narrows one of them is visible as a failure rather than passing on the channel it happens to
    *   cover.
    */
-  async function authorizeWith(consentBody) {
-    const authId = await startAuthorization();
+  async function authorizeWith(consentBody, authorizationOverrides = {}) {
+    const authId = await startAuthorization(authorizationOverrides);
     await authenticate(authId);
 
     const authorizeResponse = await postWithJson({
@@ -426,4 +440,121 @@ describe("Advance Use Case: claim value selection (Issue #1816)", () => {
     expect(userinfo).not.toHaveProperty("accounts");
     expect(userinfo.branch).toBe("tokyo");
   }, 90000);
+
+  /**
+   * The same choice over the arrays under `verified_claims.claims` (Issue #1947), sent under the key
+   * that mirrors where they appear in a token. It is kept apart from the custom property of the same
+   * name: the two need not hold the same elements.
+   */
+  describe("verified_claims (Issue #1947)", () => {
+    const BOTH_SCOPES = { scope: "openid claims:accounts verified_claims:accounts" };
+    const ACC_2 = { id: "acc-2", bank: "Bank B" };
+    // An earlier test adds an account to the custom property, so a custom property left alone is
+    // checked as holding every originally owned element rather than exactly them.
+    const NOT_NARROWED = expect.arrayContaining(OWNED_ACCOUNTS);
+
+    // Requests verified_claims for the ID Token through the claims parameter, the only way a
+    // verified claim reaches the ID Token.
+    const ID_TOKEN_CLAIMS = {
+      scope: "openid",
+      claims: JSON.stringify({
+        id_token: {
+          verified_claims: {
+            verification: { trust_framework: null },
+            claims: { accounts: null },
+          },
+        },
+      }),
+    };
+
+    it("offers the verified elements apart from the custom property", async () => {
+      const authId = await startAuthorization(BOTH_SCOPES);
+      await authenticate(authId);
+
+      const viewData = await viewDataOf(authId);
+      console.log("view-data claim_values:", JSON.stringify(viewData.claim_values));
+
+      expect(viewData.claim_values).toEqual({
+        accounts: NOT_NARROWED,
+        verified_claims: { claims: { accounts: VERIFIED_ACCOUNTS } },
+      });
+    }, 90000);
+
+    it("offers the verified elements requested through the claims parameter", async () => {
+      const authId = await startAuthorization(ID_TOKEN_CLAIMS);
+      await authenticate(authId);
+
+      const viewData = await viewDataOf(authId);
+
+      expect(viewData.claim_values).toEqual({
+        verified_claims: { claims: { accounts: VERIFIED_ACCOUNTS } },
+      });
+    }, 90000);
+
+    it("releases only the selected verified element", async () => {
+      const { userinfo, accessToken } = await authorizeWith(
+        { granted_claim_values: { verified_claims: { claims: { accounts: [ACC_2] } } } },
+        BOTH_SCOPES
+      );
+      console.log("verified selection:", JSON.stringify({ userinfo, accessToken }));
+
+      expect(accessToken.verified_claims.claims.accounts).toEqual([ACC_2]);
+      expect(userinfo.verified_claims.claims.accounts).toEqual([ACC_2]);
+      // verification is not part of the choice.
+      expect(accessToken.verified_claims.verification).toEqual({ trust_framework: "jp_aml" });
+      // The custom property of the same name is a separate choice, left alone here.
+      expect(accessToken.accounts).toEqual(NOT_NARROWED);
+      expect(userinfo.accounts).toEqual(NOT_NARROWED);
+    }, 90000);
+
+    it("does not narrow the verified claim by the custom property selection", async () => {
+      const { userinfo, accessToken } = await authorizeWith(
+        { granted_claim_values: { accounts: ["acc-2"] } },
+        BOTH_SCOPES
+      );
+
+      expect(accessToken.accounts).toEqual(["acc-2"]);
+      expect(accessToken.verified_claims.claims.accounts).toEqual(VERIFIED_ACCOUNTS);
+      expect(userinfo.verified_claims.claims.accounts).toEqual(VERIFIED_ACCOUNTS);
+    }, 90000);
+
+    it("cannot introduce a verified value the user does not own", async () => {
+      const { accessToken } = await authorizeWith(
+        {
+          granted_claim_values: {
+            verified_claims: { claims: { accounts: [{ id: "acc-9", bank: "Bank Z" }] } },
+          },
+        },
+        BOTH_SCOPES
+      );
+
+      // Nothing selected is owned, so the only requested verified claim is gone, and with it the
+      // whole verified_claims (OIDC4IDA §5.7.4).
+      expect(accessToken.verified_claims).toBeUndefined();
+    }, 90000);
+
+    it("narrows the verified claim in the ID Token requested through the claims parameter", async () => {
+      const { idToken, userinfo } = await authorizeWith(
+        { granted_claim_values: { verified_claims: { claims: { accounts: [ACC_2] } } } },
+        ID_TOKEN_CLAIMS
+      );
+      console.log("ID Token verified_claims:", JSON.stringify(idToken.verified_claims));
+
+      expect(idToken.verified_claims.claims.accounts).toEqual([ACC_2]);
+      // Nothing was requested for UserInfo.
+      expect(userinfo.verified_claims).toBeUndefined();
+    }, 90000);
+
+    it("omits the verified claim in the ID Token when no element is selected", async () => {
+      const { idToken } = await authorizeWith(
+        { granted_claim_values: { verified_claims: { claims: { accounts: [] } } } },
+        ID_TOKEN_CLAIMS
+      );
+
+      // The claims parameter path keeps verification with an empty claims object (IDA schema
+      // §5.3): the claim is dropped, not emptied.
+      expect(idToken.verified_claims.verification).toEqual({ trust_framework: "jp_aml" });
+      expect(idToken.verified_claims.claims.accounts).toBeUndefined();
+    }, 90000);
+  });
 });
