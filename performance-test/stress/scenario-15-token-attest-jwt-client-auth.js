@@ -1,7 +1,12 @@
 import http from 'k6/http';
 import { check } from 'k6';
 import { SharedArray } from 'k6/data';
-import { assertTestFitsWindow, nextPopIndex } from '../libs/attestation-pop.js';
+import {
+  POP_SIGNING,
+  assertTestFitsWindow,
+  createK6Signer,
+  presignedPair,
+} from '../libs/attestation-pop.js';
 
 // 環境変数でカスタマイズ可能なパラメータ
 const VU_COUNT = parseInt(__ENV.VU_COUNT || '120');
@@ -31,6 +36,9 @@ export let options = {
  *
  * PoP JWT は 1 リクエストに 1 つずつ使う（サーバは jti の 2 回目を拒否する、#1893）。
  * 流せるリクエストは --requests で署名した数まで。
+ *
+ * POP_SIGNING=k6 にすると、PoP JWT と Client Attestation JWT を k6 の中で署名する
+ * （--resign 不要・時間と件数の制限なし。k6 側で署名の CPU を使う）。
  */
 const RESIGN = 'node performance-test/scripts/generate-client-instances.js --resign';
 const instanceData = JSON.parse(open('../data/performance-test-client-instances.json'));
@@ -45,16 +53,20 @@ if (!config || !config.instances || config.instances.length === 0) {
   );
 }
 
+const presigned = POP_SIGNING === 'presigned';
+
 // テスト中に PoP JWT の iat 許容窓を過ぎると 401 の山になるので、始める前に止める。
-assertTestFitsWindow({
-  generatedAt: config.generatedAt,
-  popWindowSeconds: config.popWindowSeconds,
-  duration: DURATION,
-  resignCommand: RESIGN,
-});
+if (presigned) {
+  assertTestFitsWindow({
+    generatedAt: config.generatedAt,
+    popWindowSeconds: config.popWindowSeconds,
+    duration: DURATION,
+    resignCommand: RESIGN,
+  });
+}
 
 // 全 VU で 1 つを共有する（VU ごとに大きな JSON を持たない）
-const popJwts = new SharedArray('pop-jwts', () => {
+const popJwts = presigned ? new SharedArray('pop-jwts', () => {
   const pool = JSON.parse(open('../data/performance-test-client-instances-pops.json')).find(
     (entry) => entry.tenantId === config.tenantId && entry.generatedAt === config.generatedAt
   );
@@ -62,17 +74,26 @@ const popJwts = new SharedArray('pop-jwts', () => {
     throw new Error(`No PoP JWTs signed with the current instances. Run: ${RESIGN}`);
   }
   return pool.popJwts;
-});
+}) : null;
 
-export default function () {
+const signer = presigned
+  ? null
+  : createK6Signer({
+      alg: 'ES256',
+      issuer: config.issuer,
+      clientId: config.clientId,
+      instances: config.instances,
+    });
+
+export default async function () {
   const baseUrl = __ENV.BASE_URL || 'https://api.local.test';
   const tenantId = config.tenantId;
   const clientId = config.clientId;
 
-  // k 番目のリクエストは k 番目の PoP JWT と、それを署名したインスタンス（k % インスタンス数）を使う。
-  // インスタンスも循環するので、client_instance の鍵解決が分散する。
-  const index = nextPopIndex(popJwts.length, RESIGN);
-  const instance = config.instances[index % config.instances.length];
+  // k 番目のリクエストは k % インスタンス数 番目のインスタンスを使う（client_instance の鍵解決が分散する）。
+  const { attestationJwt, popJwt } = presigned
+    ? presignedPair(config.instances, popJwts, RESIGN)
+    : await signer.next();
 
   const url = `${baseUrl}/${tenantId}/v1/tokens`;
 
@@ -84,8 +105,8 @@ export default function () {
   const params = {
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
-      'OAuth-Client-Attestation': instance.attestationJwt,
-      'OAuth-Client-Attestation-PoP': popJwts[index],
+      'OAuth-Client-Attestation': attestationJwt,
+      'OAuth-Client-Attestation-PoP': popJwt,
     },
   };
 

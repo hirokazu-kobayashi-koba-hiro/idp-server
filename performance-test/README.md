@@ -240,6 +240,31 @@ k6 run ./performance-test/stress/scenario-15-token-attest-jwt-client-auth.js
 PoP JWT は `performance-test/data/performance-test-client-instances-pops.json` に別ファイルで出し、
 シナリオは k6 の `SharedArray` で全 VU が 1 つを共有して読む。
 
+#### k6 の中で署名する（`POP_SIGNING=k6`）
+
+scenario-15 / 16 / 17 は、`POP_SIGNING=k6` で PoP JWT と Client Attestation JWT を k6 の WebCrypto
+（`crypto.subtle`）で署名する。PoP JWT はリクエストごとに `jti` と `iat` を変えて署名し、
+Client Attestation JWT はインスタンスごとに署名して使い回す（`ATTESTATION_LIFETIME_SECONDS`、既定 300 秒の
+半分を過ぎたら署名し直す）。鍵は `generate-client-instances.js` / `generate-attestation-matrix.js` が
+保存したものを使うので、初回の登録は必要だが `--resign` は要らない。
+
+```bash
+POP_SIGNING=k6 VU_COUNT=5 DURATION=30m \
+  k6 run ./performance-test/stress/scenario-15-token-attest-jwt-client-auth.js
+```
+
+| | `presigned`（既定） | `k6` |
+|---|---|---|
+| テストの長さ・件数 | 署名から 600 秒以内・`--requests` 件まで | 制限なし（長時間のテスト向け） |
+| 毎回の `--resign` | 必要 | 不要 |
+| k6 側の負荷 | なし | 1 リクエストあたり約 0.15ms の CPU（ES256） |
+| 対応 alg | ES256 / ES384 / ES512 / RS256 / PS256 / EdDSA | ES256 / ES384 / ES512 / RS256 / PS256（k6 の WebCrypto は Ed25519 の署名に未対応） |
+
+5 VU / 20s の scenario-15 で比べたところ、サーバ側の median（4.68〜4.71ms）と TPS（差 1% 程度）は
+2 つの方式で変わらなかった。ただし k6 と idp-server が同じマシンの CPU を取り合う環境では、
+並列度を上げると k6 側の署名が測定に混ざりうる。**認証方式のコストを比べる測定（scenario-17 の alg 比較など）は
+`presigned` で取る。**
+
 ### scenario-16: CIBA BC Request (attest_jwt_client_auth)
 
 `scenario-2-bc`（client_secret）との差分を見る。PoP JWT の `aud` は issuer なので、
