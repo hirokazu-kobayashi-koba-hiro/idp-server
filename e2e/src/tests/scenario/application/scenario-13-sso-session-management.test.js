@@ -1754,6 +1754,120 @@ describe("SSO Session Management", () => {
       });
     });
 
+    /**
+     * Issue #1912: the reused session has to record the re-authentication. SSO afterwards decides
+     * on it (max_age, acr_values) and issues the ID Token from it.
+     */
+    describe("the reused session records the re-authentication (#1912)", () => {
+      const user = {
+        username: serverConfig.oauth.username,
+        password: serverConfig.oauth.password,
+      };
+
+      const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+      const idTokenPayloadFor = async (redirectUri) => {
+        const { code } = convertToAuthorizationResponse(redirectUri);
+        const tokenResponse = await requestToken({
+          endpoint: serverConfig.tokenEndpoint,
+          code: code,
+          grantType: "authorization_code",
+          redirectUri: clientSecretPostClient.redirectUri,
+          clientId: clientSecretPostClient.clientId,
+          clientSecret: clientSecretPostClient.clientSecret,
+        });
+        expect(tokenResponse.status).toBe(200);
+        const idToken = tokenResponse.data.id_token;
+        return JSON.parse(Buffer.from(idToken.split(".")[1], "base64").toString());
+      };
+
+      const startAuthorization = async ({ prompt, maxAge } = {}) => {
+        const response = await getAuthorizations({
+          endpoint: serverConfig.authorizationEndpoint,
+          clientId: clientSecretPostClient.clientId,
+          responseType: "code",
+          state: `reauth-${Date.now()}`,
+          scope: "openid profile",
+          redirectUri: clientSecretPostClient.redirectUri,
+          prompt,
+          maxAge,
+        });
+        expect(response.status).toBe(302);
+        const { params } = convertNextAction(response.headers.location);
+        return params.get("id");
+      };
+
+      /** Signs in with the password in a new authorization and returns its ID Token's payload. */
+      const signIn = async (options) => {
+        const authId = await startAuthorization(options);
+        const passwordResponse = await postAuthentication({
+          endpoint: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/{id}/password-authentication`,
+          id: authId,
+          body: user,
+        });
+        expect(passwordResponse.status).toBe(200);
+        const authorizeResponse = await authorize({
+          endpoint: serverConfig.authorizeEndpoint,
+          id: authId,
+          body: {},
+        });
+        expect(authorizeResponse.status).toBe(200);
+        return await idTokenPayloadFor(authorizeResponse.data.redirect_uri);
+      };
+
+      const sessionEnabled = async (authId) => {
+        const viewDataResponse = await get({
+          url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/${authId}/view-data`,
+        });
+        expect(viewDataResponse.status).toBe(200);
+        return viewDataResponse.data.session_enabled;
+      };
+
+      it("should issue the re-authentication's auth_time on SSO after prompt=login", async () => {
+        const first = await signIn();
+        // auth_time is in seconds
+        await sleep(1500);
+        const reauthenticated = await signIn({ prompt: "login" });
+        expect(reauthenticated.auth_time).toBeGreaterThan(first.auth_time);
+
+        const authId = await startAuthorization();
+        expect(await sessionEnabled(authId)).toBe(true);
+        const ssoResponse = await authorizeWithSession(authId);
+        expect(ssoResponse.status).toBe(200);
+        const sso = await idTokenPayloadFor(ssoResponse.data.redirect_uri);
+
+        expect(sso.auth_time).toBe(reauthenticated.auth_time);
+      });
+
+      it("should allow SSO within max_age after re-authenticating for an exceeded max_age", async () => {
+        await signIn();
+        await sleep(4000);
+
+        // The session's authentication is older than max_age, so the end-user signs in again.
+        const exceededAuthId = await startAuthorization({ maxAge: 3 });
+        expect(await sessionEnabled(exceededAuthId)).toBe(false);
+        const passwordResponse = await postAuthentication({
+          endpoint: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/{id}/password-authentication`,
+          id: exceededAuthId,
+          body: user,
+        });
+        expect(passwordResponse.status).toBe(200);
+        const authorizeResponse = await authorize({
+          endpoint: serverConfig.authorizeEndpoint,
+          id: exceededAuthId,
+          body: {},
+        });
+        expect(authorizeResponse.status).toBe(200);
+        await idTokenPayloadFor(authorizeResponse.data.redirect_uri);
+
+        // Right after that, the same max_age is satisfied by the re-authentication.
+        const authId = await startAuthorization({ maxAge: 3 });
+        expect(await sessionEnabled(authId)).toBe(true);
+        const ssoResponse = await authorizeWithSession(authId);
+        expect(ssoResponse.status).toBe(200);
+      });
+    });
+
   });
 
   describe("Session deletion and prompt=none behavior", () => {

@@ -222,7 +222,7 @@ public class OPSessionDataSource implements OPSessionRepository {
   }
 
   @Override
-  public void updateLastAccessedAt(Tenant tenant, OPSession session) {
+  public void update(Tenant tenant, OPSession session) {
     try {
       String key = buildKey(tenant, session.id());
       String json = jsonConverter.write(session);
@@ -231,12 +231,10 @@ public class OPSessionDataSource implements OPSessionRepository {
       sessionStore.set(key, json, ttl > 0 ? ttl : 0);
 
       log.debug(
-          "Updated OP session lastAccessedAt. id:{}, tenant:{}",
-          session.id().value(),
-          tenant.identifierValue());
+          "Updated OP session. id:{}, tenant:{}", session.id().value(), tenant.identifierValue());
     } catch (Exception e) {
       log.error(
-          "Failed to update OP session lastAccessedAt (graceful degradation). id:{}, tenant:{}, error:{}",
+          "Failed to update OP session (graceful degradation). id:{}, tenant:{}, error:{}",
           session.id().value(),
           tenant.identifierValue(),
           e.getMessage());

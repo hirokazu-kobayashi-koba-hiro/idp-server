@@ -66,7 +66,8 @@ public class OIDCSessionHandler {
    * <p>This method implements session switch policy:
    *
    * <ul>
-   *   <li>Same user with active session: Reuse existing session (touch lastAccessedAt)
+   *   <li>Same user with active session: Reuse existing session, replacing its auth_time, acr, amr
+   *       and interaction results with this authentication's
    *   <li>Different user with STRICT policy: Throw DifferentUserAuthenticatedException
    *   <li>Different user with SWITCH_ALLOWED policy: Terminate old session, create new
    *   <li>Different user with MULTI_SESSION policy: Create new session (old remains)
@@ -94,14 +95,19 @@ public class OIDCSessionHandler {
       String existingSub = existingSession.sub();
       String authenticatedSub = user.sub();
 
-      // Same user: reuse existing session
+      // Same user: reuse existing session, recording this authentication in it
       if (existingSub != null && existingSub.equals(authenticatedSub)) {
         log.debug(
             "Reusing existing OPSession for same user. sessionId:{}, sub:{}",
             existingSession.id().value(),
             existingSub);
-        sessionService.touchOPSession(tenant, existingSession);
-        return existingSession;
+        return sessionService.reauthenticateOPSession(
+            tenant,
+            existingSession,
+            authTimeOf(authentication),
+            authentication.acr(),
+            authentication.methods(),
+            interactionResults);
       }
 
       // Different user: apply session switch policy
@@ -145,11 +151,6 @@ public class OIDCSessionHandler {
       Authentication authentication,
       Map<String, Map<String, Object>> interactionResults,
       RequestAttributes requestAttributes) {
-    Instant authTime =
-        authentication.hasAuthenticationTime()
-            ? authentication.time().atZone(ZoneOffset.UTC).toInstant()
-            : Instant.now();
-
     String ipAddress =
         requestAttributes != null && requestAttributes.hasIpAddress()
             ? requestAttributes.getIpAddress().value()
@@ -163,13 +164,20 @@ public class OIDCSessionHandler {
     return sessionService.createOPSession(
         tenant,
         user,
-        authTime,
+        authTimeOf(authentication),
         authentication.acr(),
         authentication.methods(),
         interactionResults,
         sessionTimeoutSeconds,
         ipAddress,
         userAgent);
+  }
+
+  /** When the end-user authenticated, or now when the authentication does not say. */
+  private Instant authTimeOf(Authentication authentication) {
+    return authentication.hasAuthenticationTime()
+        ? authentication.time().atZone(ZoneOffset.UTC).toInstant()
+        : Instant.now();
   }
 
   /**

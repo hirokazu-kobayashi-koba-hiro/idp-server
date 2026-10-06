@@ -219,7 +219,24 @@ public class OPSession implements Serializable, JsonReadable {
     return status != null && status == SessionStatus.ACTIVE && !isExpired();
   }
 
-  public OPSession touch() {
+  /**
+   * Replaces the authentication this session records with the one the end-user has just completed
+   * in it.
+   *
+   * <p>auth_time, acr, amr and the interaction results describe one authentication, so all of them
+   * are replaced together and never merged, even when the new acr is weaker. Keeping an earlier,
+   * stronger acr beside the new auth_time would claim an authentication that never happened, and a
+   * request with both acr_values and max_age would pass on it.
+   */
+  public OPSession reauthenticate(
+      Instant authTime,
+      String acr,
+      List<String> amr,
+      Map<String, Map<String, Object>> interactionResults) {
+    this.authTime = authTime;
+    this.acr = acr;
+    this.amr = amr;
+    this.interactionResults = interactionResults;
     this.lastAccessedAt = Instant.now();
     return this;
   }
