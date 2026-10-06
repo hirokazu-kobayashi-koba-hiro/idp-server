@@ -46,7 +46,7 @@ public class OAuthViewDataCreator {
   AuthorizationServerConfiguration authorizationServerConfiguration;
   ClientConfiguration clientConfiguration;
   OPSession opSession;
-  User user;
+  User authenticatedUser;
   Map<String, Object> additionalViewData;
 
   public OAuthViewDataCreator(
@@ -69,13 +69,13 @@ public class OAuthViewDataCreator {
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration,
       OPSession opSession,
-      User user,
+      User authenticatedUser,
       Map<String, Object> additionalViewData) {
     this.authorizationRequest = authorizationRequest;
     this.authorizationServerConfiguration = authorizationServerConfiguration;
     this.clientConfiguration = clientConfiguration;
     this.opSession = opSession;
-    this.user = user;
+    this.authenticatedUser = authenticatedUser;
     this.additionalViewData = additionalViewData;
   }
 
@@ -182,11 +182,12 @@ public class OAuthViewDataCreator {
    * verified_claims.claims} (#1947) — the same place the selection is sent back and the claim
    * appears in a token.
    *
-   * <p>Nothing is returned before the transaction has resolved a user, which is what keeps the
-   * pre-authentication view-data free of user attributes.
+   * <p>Nothing is returned until the authentication has succeeded. A user can be resolved before
+   * that — from a {@code login_hint}, or by a first factor — without anyone having proven to be
+   * them, and the values are theirs to choose from, not the caller's to read.
    */
   private Map<String, Object> selectableClaimValues() {
-    if (user == null || !user.exists()) {
+    if (authenticatedUser == null || !authenticatedUser.exists()) {
       return Map.of();
     }
 
@@ -203,7 +204,7 @@ public class OAuthViewDataCreator {
       return Map.of();
     }
 
-    CustomProperties customProperties = user.customProperties();
+    CustomProperties customProperties = authenticatedUser.customProperties();
     Map<String, Object> selectable = new LinkedHashMap<>();
     for (String scope :
         authorizationRequest.scopes().filterMatchedPrefix(customClaimsScopePrefix)) {
@@ -224,7 +225,7 @@ public class OAuthViewDataCreator {
    * and the {@code claims} parameter.
    */
   private Map<String, Object> selectableVerifiedClaimValues() {
-    if (!(user.verifiedClaims().get("claims") instanceof Map<?, ?> verifiedClaims)) {
+    if (!(authenticatedUser.verifiedClaims().get("claims") instanceof Map<?, ?> verifiedClaims)) {
       return Map.of();
     }
 

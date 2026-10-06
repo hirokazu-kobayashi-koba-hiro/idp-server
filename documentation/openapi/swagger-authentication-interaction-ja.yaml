@@ -1534,8 +1534,9 @@ components:
             だけです。スカラーは選ぶ余地がないため含まれません（丸ごとの拒否は `denied_scopes` の担当）。
             `roles` / `permissions` / `assigned_tenants` はサーバーが決めるものなので対象外です。
 
-            **認証トランザクションがユーザーを解決したあとにのみ返ります。** 認証前の view-data には
-            含まれないため、認可リクエストIDを取得しただけの相手にユーザー属性は渡りません。
+            **認証が成功したあとにのみ返ります。** `login_hint` や多段認証の 1 段目でユーザーが
+            決まっていても、認証が成功するまでは含まれません。認可リクエストを始めただけの相手に
+            ユーザー属性は渡りません。
             `authorization_server.extension.custom_claims_scope_mapping` が無効な場合も返りません。
 
             選んだ要素は `/authorize` の `granted_claim_values` として返します。サーバーは要素まるごとの

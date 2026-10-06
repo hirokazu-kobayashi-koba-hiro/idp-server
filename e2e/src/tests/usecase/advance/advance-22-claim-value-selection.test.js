@@ -480,6 +480,28 @@ describe("Advance Use Case: claim value selection (Issue #1816)", () => {
       });
     }, 90000);
 
+    it("does not expose claim values for a user named by login_hint before authentication", async () => {
+      // A login_hint resolves the user up front, before anyone has proven to be them. The values
+      // are the user's to choose from on the consent screen, so they appear only once the
+      // authentication has succeeded — not to whoever named the user.
+      const authId = await startAuthorization({
+        ...BOTH_SCOPES,
+        loginHint: `email:${userEmail}`,
+      });
+
+      const beforeAuth = await viewDataOf(authId);
+      console.log("view-data with login_hint before auth:", JSON.stringify(beforeAuth.claim_values));
+      expect(beforeAuth.claim_values).toBeUndefined();
+
+      await authenticate(authId);
+
+      const afterAuth = await viewDataOf(authId);
+      expect(afterAuth.claim_values).toEqual({
+        accounts: NOT_NARROWED,
+        verified_claims: { claims: { accounts: VERIFIED_ACCOUNTS } },
+      });
+    }, 90000);
+
     it("offers the verified elements requested through the claims parameter", async () => {
       const authId = await startAuthorization(ID_TOKEN_CLAIMS);
       await authenticate(authId);

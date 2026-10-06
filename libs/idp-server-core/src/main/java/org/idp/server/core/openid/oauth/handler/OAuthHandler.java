@@ -92,7 +92,7 @@ public class OAuthHandler {
             authorizationServerConfiguration,
             clientConfiguration,
             opSession,
-            request.user(),
+            request.authenticatedUser(),
             request.additionalViewData());
     OAuthViewData oAuthViewData = creator.create();
 

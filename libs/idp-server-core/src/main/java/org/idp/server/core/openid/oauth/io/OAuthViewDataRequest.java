@@ -26,7 +26,7 @@ public class OAuthViewDataRequest {
   Tenant tenant;
   String id;
   OPSession opSession;
-  User user;
+  User authenticatedUser;
   Map<String, Object> additionalViewData;
 
   public OAuthViewDataRequest(Tenant tenant, String id) {
@@ -46,19 +46,21 @@ public class OAuthViewDataRequest {
   }
 
   /**
-   * @param user the user the authentication transaction has resolved, or {@code User.notFound()}
-   *     before authentication. Claim values are only surfaced once one exists.
+   * @param authenticatedUser the user of an authentication transaction that has succeeded, or
+   *     {@code User.notFound()} until it has. A user resolved before then — from a {@code
+   *     login_hint}, or by a first factor — has not been authenticated, so their attributes must
+   *     not reach the view.
    */
   public OAuthViewDataRequest(
       Tenant tenant,
       String id,
       OPSession opSession,
-      User user,
+      User authenticatedUser,
       Map<String, Object> additionalViewData) {
     this.tenant = tenant;
     this.id = id;
     this.opSession = opSession;
-    this.user = user;
+    this.authenticatedUser = authenticatedUser;
     this.additionalViewData = additionalViewData;
   }
 
@@ -74,8 +76,8 @@ public class OAuthViewDataRequest {
     return opSession;
   }
 
-  public User user() {
-    return user != null ? user : User.notFound();
+  public User authenticatedUser() {
+    return authenticatedUser != null ? authenticatedUser : User.notFound();
   }
 
   public Map<String, Object> additionalViewData() {
