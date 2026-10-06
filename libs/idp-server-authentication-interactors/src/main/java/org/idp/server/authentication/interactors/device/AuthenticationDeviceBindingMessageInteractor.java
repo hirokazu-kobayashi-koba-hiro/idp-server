@@ -59,10 +59,14 @@ public class AuthenticationDeviceBindingMessageInteractor implements Authenticat
       AuthenticationContext authenticationContext = transaction.requestContext();
       BindingMessage bindingMessage = authenticationContext.bindingMessage();
 
-      if (bindingMessage == null) {
+      // A transaction without a binding message — an authorization code flow, or a CIBA request
+      // sent without one — holds an empty value. There is nothing to compare against, so the step
+      // cannot pass (#1950).
+      if (bindingMessage == null || !bindingMessage.exists()) {
         Map<String, Object> response = new HashMap<>();
         response.put("error", "invalid_request");
-        response.put("error_description", "Binding Message is null");
+        response.put(
+            "error_description", "Binding Message is not set for this authentication transaction");
 
         DefaultSecurityEventType eventType =
             DefaultSecurityEventType.authentication_device_binding_message_failure;
