@@ -276,12 +276,16 @@ public class OAuthFlowEntryService
             ? null
             : authenticatingSession(binding, tenant, authenticationTransaction);
 
+    // Only the user of a succeeded authentication: the transaction can hold a user before that —
+    // resolved from a login_hint, or by a first factor — that nobody has proven to be.
+    User authenticatedUser =
+        authenticationTransaction.isSuccess() ? authenticationTransaction.user() : User.notFound();
     OAuthViewDataRequest oAuthViewDataRequest =
         new OAuthViewDataRequest(
             tenant,
             authorizationRequestIdentifier.value(),
             opSession,
-            authenticationTransaction.user(),
+            authenticatedUser,
             additionalViewData);
 
     return oAuthProtocol.getViewData(oAuthViewDataRequest, this);

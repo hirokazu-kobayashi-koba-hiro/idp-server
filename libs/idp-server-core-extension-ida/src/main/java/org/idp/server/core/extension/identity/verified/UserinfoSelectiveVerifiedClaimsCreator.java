@@ -67,7 +67,8 @@ public class UserinfoSelectiveVerifiedClaimsCreator
     if (!user.hasVerifiedClaims()) {
       return false;
     }
-    return SelectiveVerifiedClaims.hasSelectableClaims(scopes, user.verifiedClaimsNodeWrapper());
+    return SelectiveVerifiedClaims.hasSelectableClaims(
+        scopes, grantedVerifiedClaims(user, authorizationGrant));
   }
 
   @Override
@@ -77,7 +78,16 @@ public class UserinfoSelectiveVerifiedClaimsCreator
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
 
-    JsonNodeWrapper userVerifiedClaims = user.verifiedClaimsNodeWrapper();
-    return SelectiveVerifiedClaims.build(authorizationGrant.scopes(), userVerifiedClaims);
+    return SelectiveVerifiedClaims.build(
+        authorizationGrant.scopes(), grantedVerifiedClaims(user, authorizationGrant));
+  }
+
+  /**
+   * The user's verified claims with the End-User's per-element consent applied (#1947): the arrays
+   * under {@code claims} hold only the elements chosen on the consent screen.
+   */
+  private JsonNodeWrapper grantedVerifiedClaims(User user, AuthorizationGrant authorizationGrant) {
+    return JsonNodeWrapper.fromMap(
+        authorizationGrant.grantedClaimValues().narrowVerifiedClaims(user.verifiedClaims()));
   }
 }

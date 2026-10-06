@@ -39,11 +39,14 @@ public class OAuthViewDataCreator {
   /** Prefix that maps a scope to a user custom property, as the custom claims creators read it. */
   private static final String customClaimsScopePrefix = "claims:";
 
+  private static final String verifiedClaimsScopePrefix = "verified_claims:";
+  private static final String verificationScopePrefix = "verified_claims:verification:";
+
   AuthorizationRequest authorizationRequest;
   AuthorizationServerConfiguration authorizationServerConfiguration;
   ClientConfiguration clientConfiguration;
   OPSession opSession;
-  User user;
+  User authenticatedUser;
   Map<String, Object> additionalViewData;
 
   public OAuthViewDataCreator(
@@ -66,13 +69,13 @@ public class OAuthViewDataCreator {
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration,
       OPSession opSession,
-      User user,
+      User authenticatedUser,
       Map<String, Object> additionalViewData) {
     this.authorizationRequest = authorizationRequest;
     this.authorizationServerConfiguration = authorizationServerConfiguration;
     this.clientConfiguration = clientConfiguration;
     this.opSession = opSession;
-    this.user = user;
+    this.authenticatedUser = authenticatedUser;
     this.additionalViewData = additionalViewData;
   }
 
@@ -175,24 +178,71 @@ public class OAuthViewDataCreator {
    * assigned_tenants} are also released by {@code claims:*} scopes and are also lists, but they are
    * decided by the server, not by the End-User.
    *
-   * <p>Nothing is returned before the transaction has resolved a user, which is what keeps the
-   * pre-authentication view-data free of user attributes.
+   * <p>The arrays under the user's {@code verified_claims.claims} are offered as well, under {@code
+   * verified_claims.claims} (#1947) — the same place the selection is sent back and the claim
+   * appears in a token.
+   *
+   * <p>Nothing is returned until the authentication has succeeded. A user can be resolved before
+   * that — from a {@code login_hint}, or by a first factor — without anyone having proven to be
+   * them, and the values are theirs to choose from, not the caller's to read.
    */
   private Map<String, Object> selectableClaimValues() {
-    if (user == null || !user.exists()) {
+    if (authenticatedUser == null || !authenticatedUser.exists()) {
       return Map.of();
     }
+
+    Map<String, Object> selectable = new LinkedHashMap<>(selectableCustomClaimValues());
+    Map<String, Object> verifiedClaims = selectableVerifiedClaimValues();
+    if (!verifiedClaims.isEmpty()) {
+      selectable.put("verified_claims", Map.of("claims", verifiedClaims));
+    }
+    return selectable;
+  }
+
+  private Map<String, Object> selectableCustomClaimValues() {
     if (!authorizationServerConfiguration.enabledCustomClaimsScopeMapping()) {
       return Map.of();
     }
 
-    CustomProperties customProperties = user.customProperties();
+    CustomProperties customProperties = authenticatedUser.customProperties();
     Map<String, Object> selectable = new LinkedHashMap<>();
     for (String scope :
         authorizationRequest.scopes().filterMatchedPrefix(customClaimsScopePrefix)) {
       String claimName = scope.substring(customClaimsScopePrefix.length());
       Object value = customProperties.getValue(claimName);
       if (value instanceof List<?> list && !list.isEmpty()) {
+        selectable.put(claimName, List.copyOf(list));
+      }
+    }
+    return selectable;
+  }
+
+  /**
+   * Candidate values for the verified claims this request would release whose value is an array.
+   *
+   * <p>Names come from both ways a verified claim is requested: a {@code verified_claims:<name>}
+   * scope, which releases nothing unless the access token selective verified claims switch is on,
+   * and the {@code claims} parameter.
+   */
+  private Map<String, Object> selectableVerifiedClaimValues() {
+    if (!(authenticatedUser.verifiedClaims().get("claims") instanceof Map<?, ?> verifiedClaims)) {
+      return Map.of();
+    }
+
+    Set<String> claimNames = new LinkedHashSet<>();
+    if (authorizationServerConfiguration.enabledAccessTokenSelectiveVerifiedClaims()) {
+      for (String scope :
+          authorizationRequest.scopes().filterMatchedPrefix(verifiedClaimsScopePrefix)) {
+        if (!scope.startsWith(verificationScopePrefix)) {
+          claimNames.add(scope.substring(verifiedClaimsScopePrefix.length()));
+        }
+      }
+    }
+    claimNames.addAll(requestedVerifiedClaimNames());
+
+    Map<String, Object> selectable = new LinkedHashMap<>();
+    for (String claimName : claimNames) {
+      if (verifiedClaims.get(claimName) instanceof List<?> list && !list.isEmpty()) {
         selectable.put(claimName, List.copyOf(list));
       }
     }

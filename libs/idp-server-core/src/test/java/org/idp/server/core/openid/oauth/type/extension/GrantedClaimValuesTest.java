@@ -333,4 +333,128 @@ class GrantedClaimValuesTest {
       assertEquals(original, new GrantedClaimValues().narrow(original));
     }
   }
+
+  /**
+   * The same choice over the arrays under {@code verified_claims.claims} (#1947), sent under the
+   * key that mirrors where they appear in a token.
+   */
+  @Nested
+  class VerifiedClaims {
+
+    private Map<String, Object> ownedVerifiedClaims() {
+      return jsonConverter.read(
+          """
+          {
+            "verification": {"trust_framework": "jp_aml"},
+            "claims": {
+              "accounts": [{"id": "acc-1", "bank": "A"}, {"id": "acc-2", "bank": "B"}],
+              "given_name": "Taro"
+            }
+          }
+          """,
+          Map.class);
+    }
+
+    private GrantedClaimValues selectingVerified(String json) {
+      return GrantedClaimValues.fromObject(
+          jsonConverter.read(
+              "{\"verified_claims\": {\"claims\": {\"accounts\": " + json + "}}}", Map.class));
+    }
+
+    private Object claim(Map<String, Object> verifiedClaims, String name) {
+      return ((Map<?, ?>) verifiedClaims.get("claims")).get(name);
+    }
+
+    @Test
+    void keepsOnlyTheSelectedElements() {
+      Map<String, Object> narrowed =
+          selectingVerified("[{\"id\": \"acc-2\", \"bank\": \"B\"}]")
+              .narrowVerifiedClaims(ownedVerifiedClaims());
+
+      assertEquals(List.of(Map.of("id", "acc-2", "bank", "B")), claim(narrowed, "accounts"));
+    }
+
+    @Test
+    void removesTheClaimWhenNothingIsSelected() {
+      Map<String, Object> narrowed =
+          selectingVerified("[]").narrowVerifiedClaims(ownedVerifiedClaims());
+
+      assertFalse(((Map<?, ?>) narrowed.get("claims")).containsKey("accounts"));
+    }
+
+    @Test
+    void leavesVerificationAndOtherClaimsAlone() {
+      Map<String, Object> narrowed =
+          selectingVerified("[{\"id\": \"acc-2\", \"bank\": \"B\"}]")
+              .narrowVerifiedClaims(ownedVerifiedClaims());
+
+      assertEquals(Map.of("trust_framework", "jp_aml"), narrowed.get("verification"));
+      assertEquals("Taro", claim(narrowed, "given_name"));
+    }
+
+    @Test
+    void cannotIntroduceAValueTheUserDoesNotHave() {
+      Map<String, Object> narrowed =
+          selectingVerified("[{\"id\": \"acc-9\", \"bank\": \"Z\"}]")
+              .narrowVerifiedClaims(ownedVerifiedClaims());
+
+      assertFalse(((Map<?, ?>) narrowed.get("claims")).containsKey("accounts"));
+    }
+
+    /**
+     * A verified claim need not have the shape of the custom property with the same name, so each
+     * selection is matched against its own source only.
+     */
+    @Test
+    void isKeptApartFromTheCustomPropertySelection() {
+      GrantedClaimValues customOnly = selecting("accounts", "acc-2");
+      GrantedClaimValues verifiedOnly = selectingVerified("[{\"id\": \"acc-2\", \"bank\": \"B\"}]");
+
+      assertEquals(ownedVerifiedClaims(), customOnly.narrowVerifiedClaims(ownedVerifiedClaims()));
+      assertEquals(owned(), verifiedOnly.narrow(owned()));
+    }
+
+    @Test
+    void doesNotModifyTheInput() {
+      Map<String, Object> original = ownedVerifiedClaims();
+
+      selectingVerified("[]").narrowVerifiedClaims(original);
+
+      assertEquals(ownedVerifiedClaims(), original);
+    }
+
+    @Test
+    void existsWithoutACustomPropertySelection() {
+      assertTrue(selectingVerified("[]").exists());
+    }
+
+    @Test
+    void survivesARoundTrip() {
+      GrantedClaimValues selection = selectingVerified("[{\"id\": \"acc-2\", \"bank\": \"B\"}]");
+
+      GrantedClaimValues restored = GrantedClaimValues.fromSentinel(selection.toSentinelToken());
+
+      assertEquals(
+          List.of(Map.of("id", "acc-2", "bank", "B")),
+          claim(restored.narrowVerifiedClaims(ownedVerifiedClaims()), "accounts"));
+    }
+
+    /**
+     * A build that predates #1947 reads only array entries, so it skips the nested object rather
+     * than treating {@code verified_claims} as a custom property to narrow.
+     */
+    @Test
+    void isNotReadAsACustomPropertySelection() {
+      GrantedClaimValues selection = selectingVerified("[{\"id\": \"acc-2\", \"bank\": \"B\"}]");
+
+      assertTrue(selection.values().isEmpty());
+    }
+
+    @Test
+    void returnsTheVerifiedClaimsUnchangedWhenNothingIsSelected() {
+      Map<String, Object> original = ownedVerifiedClaims();
+
+      assertEquals(original, new GrantedClaimValues().narrowVerifiedClaims(original));
+    }
+  }
 }

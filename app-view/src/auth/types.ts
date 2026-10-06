@@ -53,6 +53,15 @@ export type RequestedClaims = {
  */
 export type ClaimValue = string | number | boolean | Record<string, unknown>;
 
+/**
+ * Candidate values per claim name, plus the arrays under `verified_claims.claims` nested where they
+ * appear in a token (backend #1947). The nested object is kept apart from a custom property of the
+ * same name because the two need not hold the same elements.
+ */
+export type ClaimValues = Record<string, ClaimValue[]> & {
+  verified_claims?: { claims?: Record<string, ClaimValue[]> };
+};
+
 export type ViewData = {
   client_name?: string;
   logo_uri?: string;
@@ -67,7 +76,7 @@ export type ViewData = {
    * the kept ones back as `granted_claim_values`; the server matches whole elements, so an element
    * has to be echoed exactly as it was received here.
    */
-  claim_values?: Record<string, ClaimValue[]>;
+  claim_values?: ClaimValues;
   authentication_policy?: AuthenticationPolicy;
   /**
    * Per-method settings a step needs to render, beyond the policy — the inputs an attribute

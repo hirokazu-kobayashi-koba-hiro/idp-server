@@ -639,8 +639,29 @@ paths:
                       問いませんが、識別子フィールドだけの部分指定では選択できません
                     - 配列でないクレームや、ユーザーが持たないクレームを指定した場合は無視されます
 
+                    **`verified_claims` のクレーム**は、トークン上の位置と同じ
+                    `verified_claims.claims.{クレーム名}` に指定します（view-data の
+                    `claim_values.verified_claims.claims` から選択）。同じ名前の `custom_properties` の
+                    クレームとは別の選択で、それぞれ自分の値とだけ突き合わせます。
+                    `verified_claims.verification` は選択の対象外です。
+
                     選択は同意の決定としてグラントに保存され、アクセストークン / ID Token / UserInfo の
                     すべてに適用されます。
+                  properties:
+                    verified_claims:
+                      type: object
+                      description: |
+                        `verified_claims.claims` の配列クレームのうち共有を許可した要素。
+                        `verified_claims:{クレーム名}` スコープ・`claims` パラメータのどちらで要求された
+                        クレームにも適用されます。要素が 1 つも残らないクレームは省略されます
+                        （スコープ経由で他に残るクレームが無ければ `verified_claims` ごと省略、
+                        `claims` パラメータ経由では `verification` と空の `claims` を返します）。
+                      properties:
+                        claims:
+                          type: object
+                          additionalProperties:
+                            type: array
+                            items: {}
                   additionalProperties:
                     type: array
                     items: {}
@@ -665,6 +686,15 @@ paths:
                 value:
                   granted_claim_values:
                     accounts: []
+              grant-single-verified-account:
+                summary: verified_claims の accounts クレームのうち acc-2 のみ共有
+                value:
+                  granted_claim_values:
+                    verified_claims:
+                      claims:
+                        accounts:
+                        - id: "acc-2"
+                          bank: "Bank B"
       responses:
         '200':
           description: 認可承認成功
@@ -1504,12 +1534,27 @@ components:
             だけです。スカラーは選ぶ余地がないため含まれません（丸ごとの拒否は `denied_scopes` の担当）。
             `roles` / `permissions` / `assigned_tenants` はサーバーが決めるものなので対象外です。
 
-            **認証トランザクションがユーザーを解決したあとにのみ返ります。** 認証前の view-data には
-            含まれないため、認可リクエストIDを取得しただけの相手にユーザー属性は渡りません。
+            **認証が成功したあとにのみ返ります。** `login_hint` や多段認証の 1 段目でユーザーが
+            決まっていても、認証が成功するまでは含まれません。認可リクエストを始めただけの相手に
+            ユーザー属性は渡りません。
             `authorization_server.extension.custom_claims_scope_mapping` が無効な場合も返りません。
 
             選んだ要素は `/authorize` の `granted_claim_values` として返します。サーバーは要素まるごとの
             一致で判定するため、**ここで受け取った値をそのまま返す**必要があります。
+
+            ユーザーの `verified_claims.claims` の配列も、`verified_claims.claims.{クレーム名}` に入ります。
+            対象は `verified_claims:{クレーム名}` スコープ（`access_token_selective_verified_claims` が
+            有効な場合）か `claims` パラメータで要求されたクレームです。同じ名前の `custom_properties` の
+            クレームとは要素の形が違うことがあるため、別の候補として扱います。
+          properties:
+            verified_claims:
+              type: object
+              properties:
+                claims:
+                  type: object
+                  additionalProperties:
+                    type: array
+                    items: {}
           additionalProperties:
             type: array
             items: {}
@@ -1520,6 +1565,13 @@ components:
               brand: "visa"
             - id: "card-2"
               brand: "master"
+            verified_claims:
+              claims:
+                accounts:
+                - id: "acc-1"
+                  bank: "Bank A"
+                - id: "acc-2"
+                  bank: "Bank B"
         session_enabled:
           type: boolean
           description: セッション有効化フラグ
