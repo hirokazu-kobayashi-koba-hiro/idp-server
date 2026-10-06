@@ -37,6 +37,11 @@ public class AuthenticationCancelInteractor implements AuthenticationInteractor 
   }
 
   @Override
+  public boolean isBrowserBased() {
+    return false;
+  }
+
+  @Override
   public String method() {
     return "cancel";
   }
