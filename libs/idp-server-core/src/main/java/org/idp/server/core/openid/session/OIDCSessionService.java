@@ -67,9 +67,16 @@ public class OIDCSessionService {
     return opSessionRepository.findById(tenant, sessionId);
   }
 
-  public void touchOPSession(Tenant tenant, OPSession session) {
-    OPSession touched = session.touch();
-    opSessionRepository.updateLastAccessedAt(tenant, touched);
+  public OPSession reauthenticateOPSession(
+      Tenant tenant,
+      OPSession session,
+      Instant authTime,
+      String acr,
+      List<String> amr,
+      Map<String, Map<String, Object>> interactionResults) {
+    OPSession reauthenticated = session.reauthenticate(authTime, acr, amr, interactionResults);
+    opSessionRepository.update(tenant, reauthenticated);
+    return reauthenticated;
   }
 
   public ClientSessions terminateOPSession(

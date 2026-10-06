@@ -35,5 +35,6 @@ public interface OPSessionRepository {
 
   void deleteByUser(Tenant tenant, UserIdentifier userIdentifier);
 
-  void updateLastAccessedAt(Tenant tenant, OPSession session);
+  /** Stores the session over the existing one, keeping its remaining lifetime. */
+  void update(Tenant tenant, OPSession session);
 }

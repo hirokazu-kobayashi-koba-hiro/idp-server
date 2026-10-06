@@ -17,6 +17,7 @@
 package org.idp.server.platform.date;
 
 import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
@@ -102,6 +103,16 @@ public class SystemDateTime {
   /** The inverse of {@link #toEpochSecond(LocalDateTime)}, in the configured zone. */
   public static LocalDateTime fromEpochSecond(long epochSecond) {
     return LocalDateTime.ofInstant(java.time.Instant.ofEpochSecond(epochSecond), clock.getZone());
+  }
+
+  /** The instant a {@link #now()} value stands for, read in the configured zone. */
+  public static Instant toInstant(LocalDateTime localDateTime) {
+    return localDateTime.atZone(clock.getZone()).toInstant();
+  }
+
+  /** The inverse of {@link #toInstant(LocalDateTime)}, in the configured zone. */
+  public static LocalDateTime fromInstant(Instant instant) {
+    return LocalDateTime.ofInstant(instant, clock.getZone());
   }
 
   public static long toEpochMilli(LocalDateTime localDateTime) {
