@@ -15,23 +15,30 @@
  *     - Client Attestation JWT と PoP JWT の両方を同じ alg で署名する
  *     → ES / RSA / EdDSA で検証コストがどう変わるかを見る
  *
- * 事前署名が成立する理由は generate-client-instances.js と同じ（iat 許容窓 ±5 分、
- * jti のリプレイ検出が未実装）。⚠️ テスト直前に --resign すること。
+ * PoP JWT はリクエストごとに 1 つ署名する（jti のリプレイ検出、#1893。理由は
+ * generate-client-instances.js と同じ）。組み合わせ × --requests 件を署名するので、
+ * テスト直前は --only で流す組み合わせだけを署名し直すこと。
+ * ⚠️ 署名から窓（--window、既定 600 秒）を過ぎると 401 になる。
  *
  * Usage:
  *   NODE_EXTRA_CA_CERTS="$(mkcert -CAROOT)/rootCA.pem" \
  *     node performance-test/scripts/generate-attestation-matrix.js
  *
- *   node performance-test/scripts/generate-attestation-matrix.js --resign
+ *   # テスト直前: 流す組み合わせだけ署名し直す
+ *   node performance-test/scripts/generate-attestation-matrix.js --resign --only attester_jwks/RS256
  *
  * Options:
  *   --instances <n>   組み合わせごとのインスタンス数（デフォルト: 20）
  *   --algs <list>     カンマ区切り（デフォルト: ES256,ES384,ES512,RS256,PS256,EdDSA）
  *   --rsa-bits <n>    RSA 系の modulus 長（デフォルト: 2048）
+ *   --requests <n>    組み合わせごとに署名する PoP JWT の数 = 流せるリクエストの上限（デフォルト: 50000）
+ *   --window <s>      テナントの PoP JWT の iat 許容窓（秒）。Client Attestation JWT の exp にも使う（デフォルト: 600）
+ *   --only <list>     署名する組み合わせ（trust_source/alg のカンマ区切り）。省略時は全部
  *   --resign          登録をスキップし、保存済みの鍵から JWT を再生成する
  *
  * Output:
- *   - performance-test/data/performance-test-client-instances-matrix.json
+ *   - performance-test/data/performance-test-client-instances-matrix.json       組み合わせ・インスタンス・Client Attestation JWT
+ *   - performance-test/data/performance-test-client-instances-matrix-pops.json  署名した組み合わせの PoP JWT（k6 の SharedArray で読む）
  */
 
 const path = require("path");
@@ -42,6 +49,7 @@ const projectRoot = path.resolve(__dirname, "../..");
 module.paths.unshift(path.join(projectRoot, "e2e/node_modules"));
 
 const jose = require("jose");
+const { signPopPool, DEFAULT_WINDOW_SECONDS } = require("./attestation-pop-pool");
 
 const performanceTestDataDir = path.join(projectRoot, "performance-test/data");
 const tenantDataPath = path.join(performanceTestDataDir, "performance-test-multi-tenant-users.json");
@@ -49,9 +57,12 @@ const outputPath = path.join(
   performanceTestDataDir,
   "performance-test-client-instances-matrix.json"
 );
+const popsPath = path.join(
+  performanceTestDataDir,
+  "performance-test-client-instances-matrix-pops.json"
+);
 
 const ATTESTATION_TYP = "oauth-client-attestation+jwt";
-const POP_TYP = "oauth-client-attestation-pop+jwt";
 const TRUST_SOURCES = ["registered_instance_key", "attester_jwks"];
 
 // =============================================================================
@@ -66,6 +77,12 @@ const instanceCount = parseInt(argValue("--instances", "20"), 10);
 const rsaBits = parseInt(argValue("--rsa-bits", "2048"), 10);
 const algs = argValue("--algs", "ES256,ES384,ES512,RS256,PS256,EdDSA").split(",");
 const resignOnly = args.includes("--resign");
+const requestCount = parseInt(argValue("--requests", "50000"), 10);
+const windowSeconds = parseInt(argValue("--window", String(DEFAULT_WINDOW_SECONDS)), 10);
+const only = argValue("--only", "")
+  .split(",")
+  .filter((key) => key.length > 0);
+const isSelected = (key) => only.length === 0 || only.includes(key);
 
 // =============================================================================
 // Helpers
@@ -139,12 +156,18 @@ async function fetchAdminToken(env, baseUrl) {
  * registered_instance_key では Client Instance が自身の鍵で自己署名し、サーバは kid
  * （= client_instance.id）で登録済みの鍵を引く。attester_jwks では Attester の鍵で署名し、
  * サーバはクライアント設定の JWKS から kid で引くので DB アクセスが発生しない。
+ *
+ * Client Attestation JWT はインスタンスごとに 1 つ、PoP JWT はリクエストごとに 1 つ。
+ * k 番目の PoP JWT は instances[k % instances.length] の鍵で署名する。
+ *
+ * @returns {Promise<string[]>} PoP JWT
  */
 async function signAll(entry) {
   const now = Math.floor(Date.now() / 1000);
   const selfSigned = entry.trustSource === "registered_instance_key";
   const attesterKey = selfSigned ? null : await jose.importJWK(entry.attesterJwk, entry.alg);
 
+  const signers = [];
   for (const instance of entry.instances) {
     const instanceKey = await jose.importJWK(instance.jwk, entry.alg);
 
@@ -152,7 +175,7 @@ async function signAll(entry) {
     instance.attestationJwt = await new jose.SignJWT({
       sub: entry.clientId,
       iat: now,
-      exp: now + 300,
+      exp: now + windowSeconds,
       cnf: { jwk: publicJwkOf(instance.jwk) },
     })
       .setProtectedHeader({
@@ -161,17 +184,45 @@ async function signAll(entry) {
         kid: selfSigned ? instance.instanceId : entry.attesterJwk.kid,
       })
       .sign(selfSigned ? instanceKey : attesterKey);
-
-    instance.popJwt = await new jose.SignJWT({
-      aud: entry.issuer,
-      jti: crypto.randomUUID(),
-      iat: now,
-    })
-      .setProtectedHeader({ alg: entry.alg, typ: POP_TYP })
-      .sign(instanceKey);
+    delete instance.popJwt;
+    signers.push({ key: instanceKey });
   }
+
+  const popJwts = await signPopPool({
+    jose,
+    signers,
+    alg: entry.alg,
+    issuer: entry.issuer,
+    now,
+    count: requestCount,
+  });
   entry.generatedAt = now;
-  return entry;
+  entry.popWindowSeconds = windowSeconds;
+  entry.popCount = popJwts.length;
+  return popJwts;
+}
+
+/** Signs the selected combinations and writes both files. */
+async function signSelected(entries) {
+  const pops = [];
+  for (const entry of entries) {
+    if (!isSelected(entry.key)) continue;
+    const popJwts = await signAll(entry);
+    pops.push({ key: entry.key, generatedAt: entry.generatedAt, popJwts });
+    console.log(`  signed ${entry.key}: ${popJwts.length} PoP JWTs`);
+  }
+  if (pops.length === 0) {
+    console.error(`No combination matched --only ${only.join(",")}`);
+    process.exit(1);
+  }
+  fs.writeFileSync(outputPath, JSON.stringify(entries, null, 2));
+  fs.writeFileSync(popsPath, JSON.stringify(pops));
+  console.log(`\nWritten: ${outputPath}`);
+  console.log(`Written: ${popsPath} (${pops.map((entry) => entry.key).join(", ")})`);
+  console.log(
+    `\n⚠️  JWT は ${windowSeconds} 秒で受け付けられなくなる。テストはこの直後に実行し、その内側で終わらせること。`
+  );
+  console.log(`    流せるリクエストは組み合わせごとに最大 ${requestCount} 件（--requests で変更）。`);
 }
 
 // =============================================================================
@@ -184,12 +235,7 @@ async function main() {
       process.exit(1);
     }
     const existing = JSON.parse(fs.readFileSync(outputPath, "utf-8"));
-    for (const entry of existing) {
-      await signAll(entry);
-    }
-    fs.writeFileSync(outputPath, JSON.stringify(existing, null, 2));
-    console.log(`re-signed ${existing.length} combinations`);
-    console.log("⚠️  JWT は 5 分で期限切れになる。テストはこの直後に実行すること。");
+    await signSelected(existing);
     return;
   }
 
@@ -264,27 +310,25 @@ async function main() {
         instances.push({ instanceId, jwk });
       }
 
-      entries.push(
-        await signAll({
-          key: `${trustSource}/${alg}`,
-          trustSource,
-          alg,
-          rsaBits: alg === "RS256" || alg === "PS256" ? rsaBits : null,
-          tenantId: tenant.tenantId,
-          issuer: `${baseUrl}/${tenant.tenantId}`,
-          clientId,
-          attesterJwk,
-          instances,
-        })
-      );
+      entries.push({
+        key: `${trustSource}/${alg}`,
+        trustSource,
+        alg,
+        rsaBits: alg === "RS256" || alg === "PS256" ? rsaBits : null,
+        tenantId: tenant.tenantId,
+        issuer: `${baseUrl}/${tenant.tenantId}`,
+        clientId,
+        attesterJwk,
+        instances,
+      });
       console.log(`  ${trustSource}/${alg}: client ${clientId}, ${instances.length} instances`);
     }
   }
 
-  fs.writeFileSync(outputPath, JSON.stringify(entries, null, 2));
-  console.log(`\nWritten: ${outputPath} (${entries.length} combinations)`);
-  console.log("\n⚠️  JWT は 5 分で期限切れになる。テストはこの直後に実行すること。");
-  console.log("    時間が空いたら: node performance-test/scripts/generate-attestation-matrix.js --resign");
+  await signSelected(entries);
+  console.log(
+    "    時間が空いたら: node performance-test/scripts/generate-attestation-matrix.js --resign --only <trust_source/alg>"
+  );
 }
 
 main().catch((error) => {

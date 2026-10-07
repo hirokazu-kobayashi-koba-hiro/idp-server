@@ -1,5 +1,12 @@
 import http from 'k6/http';
 import { check } from 'k6';
+import { SharedArray } from 'k6/data';
+import {
+  POP_SIGNING,
+  assertTestFitsWindow,
+  createK6Signer,
+  presignedPair,
+} from '../libs/attestation-pop.js';
 
 // 環境変数でカスタマイズ可能なパラメータ
 const VU_COUNT = parseInt(__ENV.VU_COUNT || '120');
@@ -22,12 +29,18 @@ export let options = {
  * attest_jwt_client_auth で投げる。クライアント認証方式だけが違うので、
  * 差分がトークンエンドポイント（scenario-5 対 scenario-15）と同じ傾向になるかを見る。
  *
- * PoP JWT の aud は issuer なので、トークンエンドポイント用と同じ JWT ペアを流用できる。
+ * PoP JWT の aud は issuer なので、トークンエンドポイント用と同じプールを使える。
+ * ただし PoP JWT は 1 リクエストに 1 つずつ使う（サーバは jti の 2 回目を拒否する、#1893）ので、
+ * scenario-15 を流したあとは --resign し直すこと。
+ *
+ * POP_SIGNING=k6 にすると、PoP JWT と Client Attestation JWT を k6 の中で署名する
+ * （--resign 不要・時間と件数の制限なし。k6 側で署名の CPU を使う）。
  *
  * 事前準備:
  *   node performance-test/scripts/generate-client-instances.js
  *   node performance-test/scripts/generate-client-instances.js --resign  # テスト直前
  */
+const RESIGN = 'node performance-test/scripts/generate-client-instances.js --resign';
 const instanceData = JSON.parse(open('../data/performance-test-client-instances.json'));
 const tenantData = JSON.parse(open('../data/performance-test-multi-tenant-users.json'));
 
@@ -49,25 +62,50 @@ if (config.tenantId !== tenantConfig.tenantId) {
   );
 }
 
-// PoP JWT の iat 許容窓は ±5 分。期限切れのプールで走らせると 401 の山になるので早期に止める。
-const ageSeconds = Math.floor(Date.now() / 1000) - config.generatedAt;
-if (ageSeconds > 240) {
-  throw new Error(
-    `Pre-signed attestation JWTs are ${ageSeconds}s old (window is 300s). ` +
-      'Run: node performance-test/scripts/generate-client-instances.js --resign'
-  );
+const presigned = POP_SIGNING === 'presigned';
+
+// テスト中に PoP JWT の iat 許容窓を過ぎると 401 の山になるので、始める前に止める。
+if (presigned) {
+  assertTestFitsWindow({
+    generatedAt: config.generatedAt,
+    popWindowSeconds: config.popWindowSeconds,
+    duration: DURATION,
+    resignCommand: RESIGN,
+  });
 }
+
+// 全 VU で 1 つを共有する（VU ごとに大きな JSON を持たない）
+const popJwts = presigned ? new SharedArray('pop-jwts', () => {
+  const pool = JSON.parse(open('../data/performance-test-client-instances-pops.json')).find(
+    (entry) => entry.tenantId === config.tenantId && entry.generatedAt === config.generatedAt
+  );
+  if (!pool) {
+    throw new Error(`No PoP JWTs signed with the current instances. Run: ${RESIGN}`);
+  }
+  return pool.popJwts;
+}) : null;
+
+const signer = presigned
+  ? null
+  : createK6Signer({
+      alg: 'ES256',
+      issuer: config.issuer,
+      clientId: config.clientId,
+      instances: config.instances,
+    });
 
 const users = tenantConfig.users;
 const userCount = users.length;
 
-export default function () {
+export default async function () {
   const baseUrl = __ENV.BASE_URL || 'https://api.local.test';
   const tenantId = config.tenantId;
   const clientId = config.clientId;
 
-  // VU・iteration ごとに違うインスタンスを循環（client_instance の鍵解決を分散させる）
-  const instance = config.instances[(__VU + __ITER) % config.instances.length];
+  // k 番目のリクエストは k % インスタンス数 番目のインスタンスを使う。
+  const { attestationJwt, popJwt } = presigned
+    ? presignedPair(config.instances, popJwts, RESIGN)
+    : await signer.next();
 
   // ユーザーをランダムに選択（scenario-2-bc と同じ sub:{subject} 形式）
   const randomIndex = Math.floor(Math.random() * userCount);
@@ -85,8 +123,8 @@ export default function () {
   const params = {
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
-      'OAuth-Client-Attestation': instance.attestationJwt,
-      'OAuth-Client-Attestation-PoP': instance.popJwt,
+      'OAuth-Client-Attestation': attestationJwt,
+      'OAuth-Client-Attestation-PoP': popJwt,
     },
   };
 

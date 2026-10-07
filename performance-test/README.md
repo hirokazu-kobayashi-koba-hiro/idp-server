@@ -204,25 +204,72 @@ k6 run ./performance-test/stress/scenario-14-client-attestation-challenge.js
 `scenario-5-token-client-credentials`（client_secret）との差分が、クライアント認証方式の実コストになる。
 1リクエストあたり JWT 署名検証 2 回（Client Attestation JWT + PoP JWT）と `client_instance` の鍵解決 1 クエリが増える。
 
-k6 は ES256 署名ができない（`k6/crypto` は HMAC のみ）ため、JWT は事前生成する。
+JWT は Node のスクリプトで事前に署名する。`k6/crypto` は HMAC しか署名できず、
+k6 の中で署名するとクライアント側の署名コストが測定に混ざるため。
+
+**PoP JWT は 1 リクエストに 1 つずつ使う。** サーバは受け付けた PoP JWT の `jti` を記録し、
+2 回目を拒否する（#1893）。そのためスクリプトは PoP JWT を流すリクエストの数（`--requests`）だけ
+`jti` を変えて署名し、シナリオは VU をまたいで一意な番号（`exec.scenario.iterationInTest`）で 1 つずつ取る。
+使い切ったら、401 を積み上げる前にテストを止める。**1 回流したら、次の実行の前に `--resign` する。**
+
+**1 回のテストは、署名から 600 秒の内側に収める。** PoP JWT の `iat` は、テナントの
+`client_attestation_pop_acceptable_window_seconds`（性能テスト用のテナントは上限の 600 秒。
+`scripts/templates/onboarding-template.json`）の内側でしか受け付けられない。Client Attestation JWT の
+`exp` も同じ長さにしてある。シナリオは「署名からの経過 + `DURATION`」が窓（から 30 秒の余裕を引いたもの）を
+超えるときは、始める前に止める。
+
+Redis を外してリプレイ検出を無効にした状態では測らない。PoP JWT を受け付けるたびに
+`SET NX EX` が 1 回増える構成のまま測る。
 
 ```bash
 # 初回: クライアント登録 + Client Instance 登録 + JWT 署名
 node ./performance-test/scripts/generate-client-instances.js
 
-# テスト直前: 保存済みの鍵から JWT だけ作り直す（API 呼び出しなし・数秒）
+# テスト直前（毎回）: 保存済みの鍵から JWT だけ作り直す（API 呼び出しなし・数秒）
 node ./performance-test/scripts/generate-client-instances.js --resign
 
 k6 run ./performance-test/stress/scenario-15-token-attest-jwt-client-auth.js
 ```
 
-`--instances <n>`（デフォルト 100）で登録するインスタンス数を変更できる。
-シナリオは VU・iteration ごとにインスタンスを循環させるので、`client_instance` の鍵解決が分散する。
+| オプション | デフォルト | 内容 |
+|---|---|---|
+| `--instances <n>` | 100 | 登録するインスタンス数。k 番目のリクエストは k % n 番目のインスタンスを使うので、`client_instance` の鍵解決が分散する |
+| `--requests <n>` | 50000 | 署名する PoP JWT の数 = 1 回に流せるリクエストの上限（50000 件で約 3 秒・約 17 MB） |
+| `--window <s>` | 600 | テナントの PoP JWT の `iat` 許容窓。テナント側の設定と合わせる |
+
+PoP JWT は `performance-test/data/performance-test-client-instances-pops.json` に別ファイルで出し、
+シナリオは k6 の `SharedArray` で全 VU が 1 つを共有して読む。
+
+#### k6 の中で署名する（`POP_SIGNING=k6`）
+
+scenario-15 / 16 / 17 は、`POP_SIGNING=k6` で PoP JWT と Client Attestation JWT を k6 の WebCrypto
+（`crypto.subtle`）で署名する。PoP JWT はリクエストごとに `jti` と `iat` を変えて署名し、
+Client Attestation JWT はインスタンスごとに署名して使い回す（`ATTESTATION_LIFETIME_SECONDS`、既定 300 秒の
+半分を過ぎたら署名し直す）。鍵は `generate-client-instances.js` / `generate-attestation-matrix.js` が
+保存したものを使うので、初回の登録は必要だが `--resign` は要らない。
+
+```bash
+POP_SIGNING=k6 VU_COUNT=5 DURATION=30m \
+  k6 run ./performance-test/stress/scenario-15-token-attest-jwt-client-auth.js
+```
+
+| | `presigned`（既定） | `k6` |
+|---|---|---|
+| テストの長さ・件数 | 署名から 600 秒以内・`--requests` 件まで | 制限なし（長時間のテスト向け） |
+| 毎回の `--resign` | 必要 | 不要 |
+| k6 側の負荷 | なし | 1 リクエストあたり約 0.15ms の CPU（ES256） |
+| 対応 alg | ES256 / ES384 / ES512 / RS256 / PS256 / EdDSA | ES256 / ES384 / ES512 / RS256 / PS256（k6 の WebCrypto は Ed25519 の署名に未対応） |
+
+5 VU / 20s の scenario-15 で比べたところ、サーバ側の median（4.68〜4.71ms）と TPS（差 1% 程度）は
+2 つの方式で変わらなかった。ただし k6 と idp-server が同じマシンの CPU を取り合う環境では、
+並列度を上げると k6 側の署名が測定に混ざりうる。**認証方式のコストを比べる測定（scenario-17 の alg 比較など）は
+`presigned` で取る。**
 
 ### scenario-16: CIBA BC Request (attest_jwt_client_auth)
 
 `scenario-2-bc`（client_secret）との差分を見る。PoP JWT の `aud` は issuer なので、
-scenario-15 と同じ JWT プールをそのまま流用できる（事前準備は共通）。
+scenario-15 と同じプールを使える（事前準備は共通）。ただし PoP JWT は使い切りなので、
+scenario-15 のあとに流すときも `--resign` し直す。
 
 ```bash
 node ./performance-test/scripts/generate-client-instances.js --resign
@@ -235,11 +282,16 @@ k6 run ./performance-test/stress/scenario-16-ciba-attest-jwt-client-auth.js
 
 ```bash
 node ./performance-test/scripts/generate-attestation-matrix.js
-node ./performance-test/scripts/generate-attestation-matrix.js --resign  # テスト直前
+# テスト直前（毎回）: 流す組み合わせだけ署名し直す
+node ./performance-test/scripts/generate-attestation-matrix.js --resign --only attester_jwks/RS256
 
 ALG=RS256 TRUST_SOURCE=attester_jwks VU_COUNT=5 DURATION=20s \
   k6 run ./performance-test/stress/scenario-17-token-attest-matrix.js
 ```
+
+組み合わせごとに `--requests`（デフォルト 50000）件の PoP JWT を署名する。全組み合わせを署名すると
+ファイルが大きくなるので、`--only` で流す組み合わせだけを署名し直す（シナリオも、その組み合わせが
+署名されていなければ始める前に止まる）。
 
 | 変数 | 値 | 何が分かるか |
 |------|-----|-------------|
