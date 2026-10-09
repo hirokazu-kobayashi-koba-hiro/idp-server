@@ -96,6 +96,27 @@ class AuditLogResponseMaskTest {
   }
 
   @Test
+  @DisplayName("資格情報を運ぶヘッダー名がキーになっているときも隠す（X-API-Key など）")
+  void masksCredentialHeadersAsKeys() {
+    Map<String, Object> masked =
+        mask.apply(
+            Map.of(
+                "headers",
+                Map.of(
+                    "X-API-Key",
+                    "k-1",
+                    "X-Auth-Token",
+                    "t-1",
+                    "Content-Type",
+                    "application/json")));
+
+    Map<?, ?> headers = (Map<?, ?>) masked.get("headers");
+    assertEquals("[SCRUBBED]", headers.get("X-API-Key"));
+    assertEquals("[SCRUBBED]", headers.get("X-Auth-Token"));
+    assertEquals("application/json", headers.get("Content-Type"));
+  }
+
+  @Test
   @DisplayName("値がオブジェクトでも、キーが当たれば丸ごと隠す（認可サーバーの jwks など）")
   void masksWholeValueOfMatchedKey() {
     Map<String, Object> masked =

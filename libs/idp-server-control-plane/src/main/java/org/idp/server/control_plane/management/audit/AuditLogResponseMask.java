@@ -82,7 +82,10 @@ public class AuditLogResponseMask {
           "incoming_webhook_url",
           "notification_token");
 
-  /** Header names, besides the masked keys, whose fixed value in a mapping rule is a credential. */
+  /**
+   * Header names, besides the masked keys, that carry a credential: masked as keys (a map of
+   * headers) and as the target of a mapping rule's fixed value.
+   */
   static final Set<String> CREDENTIAL_HEADERS =
       Set.of("x-api-key", "api-key", "apikey", "x-auth-token", "proxy-authorization");
 
@@ -132,6 +135,10 @@ public class AuditLogResponseMask {
   }
 
   private static boolean isMasked(String key) {
-    return key != null && KEYS.contains(key.toLowerCase(Locale.ROOT));
+    if (key == null) {
+      return false;
+    }
+    String name = key.toLowerCase(Locale.ROOT);
+    return KEYS.contains(name) || CREDENTIAL_HEADERS.contains(name);
   }
 }
