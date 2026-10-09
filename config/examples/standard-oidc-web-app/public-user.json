@@ -1,0 +1,12 @@
+{
+  "sub": "3f9d5c81-7b24-4e60-9a3f-8c1d2e0b6a75",
+  "provider_id": "idp-server",
+  "external_user_id": "3f9d5c81-7b24-4e60-9a3f-8c1d2e0b6a75",
+  "name": "Sample User",
+  "given_name": "Sample",
+  "family_name": "User",
+  "preferred_username": "sample",
+  "email": "sample.user@localhost.local",
+  "email_verified": true,
+  "raw_password": "LocalDevPassword123"
+}

@@ -38,7 +38,7 @@ const IdpServer = ({
     authorization: {
       url: `${issuer}/v1/authorizations`,
       params: {
-        scope: "openid profile phone email address claims:authentication_devices",
+        scope: "openid profile phone email address claims:authentication_devices linked_account:read_token",
         client_id: options.clientId,
         response_type: "code",
         ...authorizationParams,

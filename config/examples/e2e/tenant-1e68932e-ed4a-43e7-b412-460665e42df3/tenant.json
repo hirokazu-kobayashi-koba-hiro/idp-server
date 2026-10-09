@@ -6,11 +6,17 @@
     "authorization_provider": "idp-server",
     "database_type": "postgresql",
     "ui_config": {
-      "signup_page": "/auth-views/signup/index.html",
-      "signin_page": "/auth-views/signin/index.html"
+      "base_url": "https://auth.local.test",
+      "signin_page": "/auth/",
+      "signup_page": "/auth/"
     },
     "cors_config": {
-      "allow_origins": [],
+      "allow_origins": [
+        "https://auth.local.test",
+        "http://localhost:3000",
+        "http://localhost:3100",
+        "http://localhost:5173"
+      ],
       "allow_headers": "Authorization, Content-Type, Accept, x-device-id",
       "allow_methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
       "allow_credentials": true

@@ -183,7 +183,7 @@ public interface OidcSsoExecutor {
       // value and request re-authentication if it determines too much time has elapsed since the
       // last End-User authentication.
 
-      return new IdTokenVerificationResult(true, Map.of());
+      return IdTokenVerificationResult.success(claims);
     } catch (JoseInvalidException e) {
 
       Map<String, Object> data = new HashMap<>();
