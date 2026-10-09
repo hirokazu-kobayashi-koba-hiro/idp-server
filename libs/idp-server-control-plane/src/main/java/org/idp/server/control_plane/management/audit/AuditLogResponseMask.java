@@ -38,7 +38,9 @@ import java.util.Set;
  * <p>A secret can also sit on the value side of a mapping rule: {@code {"static_value": "Bearer
  * ...", "to": "Authorization"}} sends a fixed value to a header or field named by {@code to}. Such
  * a rule has its {@code static_value} masked when {@code to} names a masked key or a header that
- * carries a credential.
+ * carries a credential. Only the target is judged, by the same whole-name match; a secret written
+ * into a function's arguments (a {@code format} template holding a fixed token, say) is not
+ * recognised and stays as it is.
  *
  * <p>Security events have their own list ({@code SecurityEventLogConfiguration}'s essential scrub
  * keys), matched by prefix and extended per tenant. The two are kept apart because they match
@@ -87,7 +89,17 @@ public class AuditLogResponseMask {
    * headers) and as the target of a mapping rule's fixed value.
    */
   static final Set<String> CREDENTIAL_HEADERS =
-      Set.of("x-api-key", "api-key", "apikey", "x-auth-token", "proxy-authorization");
+      Set.of(
+          "x-api-key",
+          "api-key",
+          "apikey",
+          "x-auth-token",
+          "x-access-token",
+          "x-api-token",
+          "x-client-secret",
+          "ocp-apim-subscription-key",
+          "x-functions-key",
+          "proxy-authorization");
 
   static final String STATIC_VALUE = "static_value";
   static final String TO = "to";

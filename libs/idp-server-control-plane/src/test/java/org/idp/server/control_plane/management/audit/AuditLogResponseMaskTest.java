@@ -107,12 +107,15 @@ class AuditLogResponseMaskTest {
                     "k-1",
                     "X-Auth-Token",
                     "t-1",
+                    "X-Access-Token",
+                    "t-2",
                     "Content-Type",
                     "application/json")));
 
     Map<?, ?> headers = (Map<?, ?>) masked.get("headers");
     assertEquals("[SCRUBBED]", headers.get("X-API-Key"));
     assertEquals("[SCRUBBED]", headers.get("X-Auth-Token"));
+    assertEquals("[SCRUBBED]", headers.get("X-Access-Token"));
     assertEquals("application/json", headers.get("Content-Type"));
   }
 
@@ -147,7 +150,8 @@ class AuditLogResponseMaskTest {
                 List.of(
                     Map.of("static_value", "application/json", "to", "Content-Type"),
                     Map.of("static_value", "Bearer s3cret", "to", "Authorization"),
-                    Map.of("static_value", "k-1", "to", "X-API-Key")),
+                    Map.of("static_value", "k-1", "to", "X-API-Key"),
+                    Map.of("static_value", "k-2", "to", "Ocp-Apim-Subscription-Key")),
                 "body_mapping_rules",
                 List.of(
                     Map.of("static_value", "s3cret", "to", "client_secret"),
@@ -160,6 +164,7 @@ class AuditLogResponseMaskTest {
     assertEquals("[SCRUBBED]", ((Map<?, ?>) headers.get(1)).get("static_value"));
     assertEquals("Authorization", ((Map<?, ?>) headers.get(1)).get("to"));
     assertEquals("[SCRUBBED]", ((Map<?, ?>) headers.get(2)).get("static_value"));
+    assertEquals("[SCRUBBED]", ((Map<?, ?>) headers.get(3)).get("static_value"));
     List<?> body = (List<?>) masked.get("body_mapping_rules");
     assertEquals("[SCRUBBED]", ((Map<?, ?>) body.get(0)).get("static_value"));
     assertEquals("[SCRUBBED]", ((Map<?, ?>) body.get(1)).get("static_value"));
