@@ -37,6 +37,7 @@
   ],
   "scopes_supported": [
     "openid",
+    "linked_account:read_token",
     "profile",
     "email",
     "address",
