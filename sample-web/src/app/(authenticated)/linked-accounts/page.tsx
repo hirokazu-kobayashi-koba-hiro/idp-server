@@ -13,6 +13,7 @@ import LinkIcon from "@mui/icons-material/Link";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { auth, internalIssuer } from "@/app/auth";
 import { redirect } from "next/navigation";
+import { CallExternalApi } from "./CallExternalApi";
 
 type LinkedExternalAccount = {
   alias: string;
@@ -117,6 +118,7 @@ const LinkedAccounts = async ({
                     <Typography variant="caption" color="text.secondary">
                       連携日時: {account.created_at ?? "-"}
                     </Typography>
+                    <CallExternalApi alias={account.alias} />
                   </Stack>
                 </CardContent>
               </Card>
