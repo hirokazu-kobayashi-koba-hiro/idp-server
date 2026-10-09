@@ -29,6 +29,7 @@ import org.idp.server.account_linking.handler.AccountLinkingAuthorizeHandler;
 import org.idp.server.account_linking.handler.AccountLinkingCallbackHandler;
 import org.idp.server.account_linking.handler.AccountLinkingCompleteHandler;
 import org.idp.server.account_linking.handler.AccountLinkingStartHandler;
+import org.idp.server.account_linking.handler.LinkedExternalAccountTokenHandler;
 import org.idp.server.account_linking.repository.AccountLinkingSessionCommandRepository;
 import org.idp.server.account_linking.repository.AccountLinkingSessionQueryRepository;
 import org.idp.server.account_linking.repository.LinkedExternalAccountCommandRepository;
@@ -900,6 +901,18 @@ public class IdpServerApplication {
                     applicationComponentContainer.resolve(
                         LinkedExternalAccountCommandRepository.class),
                     accountLinkingConfigurationResolver),
+                new LinkedExternalAccountTokenHandler(
+                    oAuthTokenQueryRepository,
+                    authorizationServerConfigurationQueryRepository,
+                    clientConfigurationQueryRepository,
+                    clientAuthenticationHandler,
+                    userQueryRepository,
+                    linkedExternalAccountQueryRepository,
+                    applicationComponentContainer.resolve(
+                        LinkedExternalAccountCommandRepository.class),
+                    accountLinkingConfigurationResolver,
+                    new ExternalIdpTokenGateway(httpRequestExecutor),
+                    aesCipher),
                 oidcSessionHandler,
                 sessionCookieDelegate,
                 accountLinkingCookieDelegate,

@@ -1,12 +1,14 @@
 import { describe, expect, it } from "@jest/globals";
 import {
   backendUrl,
+  clientSecretBasicClient,
   clientSecretPostClient,
   federationServerConfig,
+  publicClient,
   serverConfig
 } from "../../testConfig";
 import { authorize, postAuthentication, requestToken } from "../../../api/oauthClient";
-import { get, postWithJson } from "../../../lib/http";
+import { get, post, postWithJson } from "../../../lib/http";
 import { requestAuthorizations } from "../../../oauth/request";
 import { convertNextAction } from "../../../lib/util";
 
@@ -32,14 +34,14 @@ describe("account linking", () => {
   };
 
   /** RP でログインし、アクセストークンを得る。cookie jar に OP セッションが載る。 */
-  const login = async (user) => {
+  const login = async (user, scope = "openid profile email") => {
     const { status, authorizationResponse } = await requestAuthorizations({
       endpoint: serverConfig.authorizationEndpoint,
       clientId: clientSecretPostClient.clientId,
       redirectUri: clientSecretPostClient.redirectUri,
       responseType: "code",
       state: "account-linking-e2e",
-      scope: "openid profile email",
+      scope,
       user,
     });
     expect(status).toBe(200);
@@ -135,8 +137,8 @@ describe("account linking", () => {
   };
 
   /** 連携を1回通して alias を返す。 */
-  const linkOnce = async (accessToken, provider) => {
-    const linkResponse = await startLink(accessToken, provider, "account offline_access");
+  const linkOnce = async (accessToken, provider, scope = "account offline_access") => {
+    const linkResponse = await startLink(accessToken, provider, scope);
     expect(linkResponse.status).toBe(201);
 
     const startResponse = await get({ url: linkResponse.data.start_url });
@@ -319,6 +321,149 @@ describe("account linking", () => {
       const aliases = listResponse.data.list.map((it) => it.alias);
       expect(aliases).toContain(firstAlias);
       expect(aliases).toContain(secondAlias);
+    });
+  });
+
+  describe("stored token retrieval", () => {
+
+    const READ_TOKEN_SCOPE = "linked_account:read_token";
+
+    /** 保管された外部トークンを、クライアント認証 + ユーザーのアクセストークンで取り出す。 */
+    const retrieveToken = async ({ alias, token, clientId, clientSecret, headers = {} }) => {
+      const params = new URLSearchParams();
+      params.append("token", token);
+      if (clientId) params.append("client_id", clientId);
+      if (clientSecret) params.append("client_secret", clientSecret);
+      return await post({
+        url: `${backendUrl}/${serverConfig.tenantId}/v1/linked-external-accounts/${alias}/token`,
+        headers,
+        body: params.toString(),
+      });
+    };
+
+    it("hands out only the external access token, which works at the external IdP", async () => {
+      const accessToken = await login(ownerUser, `openid profile email ${READ_TOKEN_SCOPE}`);
+      const alias = await linkOnce(accessToken, PROVIDER, "openid profile email offline_access");
+
+      const response = await retrieveToken({
+        alias,
+        token: accessToken,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      console.log(response.status, response.data);
+      expect(response.status).toBe(200);
+      expect(response.headers["cache-control"]).toContain("no-store");
+      expect(response.data.access_token).toBeTruthy();
+      expect(response.data.token_type).toBe("Bearer");
+      expect(response.data.issued_token_type).toBe("urn:ietf:params:oauth:token-type:access_token");
+      expect(response.data.expires_in).toBeGreaterThan(0);
+      // 外部のリフレッシュトークンはここに残して、ここで使う。アプリが使うとローテーションで
+      // 保管側が無効になるため、外には出さない。
+      expect(response.data.refresh_token).toBeUndefined();
+      expect(response.data.id_token).toBeUndefined();
+
+      // 返ったのは外部IdPが発行した本物のトークン。外部IdPの userinfo で使える。
+      const userinfoResponse = await get({
+        url: `${backendUrl}/${federationServerConfig.tenantId}/v1/userinfo`,
+        headers: { Authorization: `Bearer ${response.data.access_token}` },
+      });
+      expect(userinfoResponse.status).toBe(200);
+      expect(userinfoResponse.data.sub).toBeTruthy();
+
+      // idp-server のトークンではないので、idp-server のイントロスペクションでは有効にならない。
+      const introspectionParams = new URLSearchParams();
+      introspectionParams.append("token", response.data.access_token);
+      introspectionParams.append("client_id", clientSecretPostClient.clientId);
+      introspectionParams.append("client_secret", clientSecretPostClient.clientSecret);
+      const introspectionResponse = await post({
+        url: `${backendUrl}/${serverConfig.tenantId}/v1/tokens/introspection`,
+        body: introspectionParams.toString(),
+      });
+      expect(introspectionResponse.data.active).toBe(false);
+    });
+
+    it("refuses a user token without linked_account:read_token", async () => {
+      const accessToken = await login(ownerUser);
+
+      const response = await retrieveToken({
+        alias: `${PROVIDER}-1`,
+        token: accessToken,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      console.log(response.status, response.data);
+      expect(response.status).toBe(403);
+      expect(response.data.error).toBe("insufficient_scope");
+    });
+
+    it("refuses a public client", async () => {
+      const accessToken = await login(ownerUser, `openid profile email ${READ_TOKEN_SCOPE}`);
+
+      const response = await retrieveToken({
+        alias: `${PROVIDER}-1`,
+        token: accessToken,
+        clientId: publicClient.clientId,
+      });
+      console.log(response.status, response.data);
+      expect(response.status).toBe(401);
+      expect(response.data.error).toBe("invalid_client");
+    });
+
+    it("refuses a client that fails authentication", async () => {
+      const accessToken = await login(ownerUser, `openid profile email ${READ_TOKEN_SCOPE}`);
+
+      const response = await retrieveToken({
+        alias: `${PROVIDER}-1`,
+        token: accessToken,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: "wrong-secret",
+      });
+      console.log(response.status, response.data);
+      expect(response.status).toBe(401);
+      expect(response.data.error).toBe("invalid_client");
+    });
+
+    it("refuses a user token issued to another client", async () => {
+      // 漏れたユーザーのトークンを別の confidential client が持ち込んでも、外部トークンは出さない。
+      const accessToken = await login(ownerUser, `openid profile email ${READ_TOKEN_SCOPE}`);
+
+      const basic = Buffer.from(
+        `${clientSecretBasicClient.clientId}:${clientSecretBasicClient.clientSecret}`
+      ).toString("base64");
+      const response = await retrieveToken({
+        alias: `${PROVIDER}-1`,
+        token: accessToken,
+        headers: { Authorization: `Basic ${basic}` },
+      });
+      console.log(response.status, response.data);
+      expect(response.status).toBe(403);
+      expect(response.data.error).toBe("unauthorized_client");
+    });
+
+    it("refuses an unknown user token", async () => {
+      const response = await retrieveToken({
+        alias: `${PROVIDER}-1`,
+        token: "not-a-token",
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      console.log(response.status, response.data);
+      expect(response.status).toBe(401);
+      expect(response.data.error).toBe("invalid_token");
+    });
+
+    it("answers 404 for an alias the user has not linked", async () => {
+      const accessToken = await login(ownerUser, `openid profile email ${READ_TOKEN_SCOPE}`);
+
+      const response = await retrieveToken({
+        alias: `${PROVIDER}-9999`,
+        token: accessToken,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      console.log(response.status, response.data);
+      expect(response.status).toBe(404);
     });
   });
 

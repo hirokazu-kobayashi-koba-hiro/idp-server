@@ -20,6 +20,7 @@ import java.util.Map;
 import org.idp.server.account_linking.io.AccountLinkingResult;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.http.HttpRequestInputs;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -68,4 +69,15 @@ public interface AccountLinkingApi {
 
   AccountLinkingResult findList(
       TenantIdentifier tenantIdentifier, User user, RequestAttributes requestAttributes);
+
+  /**
+   * Hands the stored access token of one linked account to an authenticated client.
+   *
+   * <p>The client names the user with that user's access token in the {@code token} parameter.
+   */
+  AccountLinkingResult retrieveToken(
+      TenantIdentifier tenantIdentifier,
+      AccountAlias alias,
+      HttpRequestInputs inputs,
+      RequestAttributes requestAttributes);
 }

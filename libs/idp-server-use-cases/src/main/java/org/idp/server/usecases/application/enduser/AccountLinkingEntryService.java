@@ -25,6 +25,7 @@ import org.idp.server.account_linking.handler.AccountLinkingAuthorizeHandler;
 import org.idp.server.account_linking.handler.AccountLinkingCallbackHandler;
 import org.idp.server.account_linking.handler.AccountLinkingCompleteHandler;
 import org.idp.server.account_linking.handler.AccountLinkingStartHandler;
+import org.idp.server.account_linking.handler.LinkedExternalAccountTokenHandler;
 import org.idp.server.account_linking.io.AccountLinkingAuthorizeRequest;
 import org.idp.server.account_linking.io.AccountLinkingAuthorizeResult;
 import org.idp.server.account_linking.io.AccountLinkingCallbackRequest;
@@ -32,6 +33,8 @@ import org.idp.server.account_linking.io.AccountLinkingCompleteRequest;
 import org.idp.server.account_linking.io.AccountLinkingResult;
 import org.idp.server.account_linking.io.AccountLinkingStartRequest;
 import org.idp.server.account_linking.io.AccountLinkingStatus;
+import org.idp.server.account_linking.io.LinkedExternalAccountTokenRequest;
+import org.idp.server.account_linking.io.LinkedExternalAccountTokenResult;
 import org.idp.server.account_linking.repository.LinkedExternalAccountQueryRepository;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.session.OIDCSessionHandler;
@@ -40,6 +43,7 @@ import org.idp.server.core.openid.session.SessionCookieDelegate;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.core.openid.token.UserEventPublisher;
 import org.idp.server.platform.datasource.Transaction;
+import org.idp.server.platform.http.HttpRequestInputs;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
@@ -63,6 +67,7 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
   AccountLinkingAuthorizeHandler authorizeHandler;
   AccountLinkingCallbackHandler callbackHandler;
   AccountLinkingCompleteHandler completeHandler;
+  LinkedExternalAccountTokenHandler tokenHandler;
   OIDCSessionHandler oidcSessionHandler;
   SessionCookieDelegate sessionCookieDelegate;
   AccountLinkingCookieDelegate accountLinkingCookieDelegate;
@@ -75,6 +80,7 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
       AccountLinkingAuthorizeHandler authorizeHandler,
       AccountLinkingCallbackHandler callbackHandler,
       AccountLinkingCompleteHandler completeHandler,
+      LinkedExternalAccountTokenHandler tokenHandler,
       OIDCSessionHandler oidcSessionHandler,
       SessionCookieDelegate sessionCookieDelegate,
       AccountLinkingCookieDelegate accountLinkingCookieDelegate,
@@ -85,6 +91,7 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
     this.authorizeHandler = authorizeHandler;
     this.callbackHandler = callbackHandler;
     this.completeHandler = completeHandler;
+    this.tokenHandler = tokenHandler;
     this.oidcSessionHandler = oidcSessionHandler;
     this.sessionCookieDelegate = sessionCookieDelegate;
     this.accountLinkingCookieDelegate = accountLinkingCookieDelegate;
@@ -227,6 +234,38 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
     return AccountLinkingResult.success(AccountLinkingStatus.OK, contents, user);
   }
 
+  @Override
+  public AccountLinkingResult retrieveToken(
+      TenantIdentifier tenantIdentifier,
+      AccountAlias alias,
+      HttpRequestInputs inputs,
+      RequestAttributes requestAttributes) {
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+
+    LinkedExternalAccountTokenResult tokenResult =
+        tokenHandler.handle(new LinkedExternalAccountTokenRequest(tenant, alias, inputs));
+    AccountLinkingResult result = tokenResult.result();
+
+    publish(tenant, result, requestAttributes);
+    if (tokenResult.refreshed()) {
+      publish(
+          tenant,
+          result,
+          DefaultSecurityEventType.external_account_token_refreshed,
+          requestAttributes);
+    }
+    if (tokenResult.relinkRequired()) {
+      publish(
+          tenant,
+          result,
+          DefaultSecurityEventType.external_account_relink_required,
+          requestAttributes);
+    }
+
+    return result;
+  }
+
   private void publish(
       Tenant tenant,
       OAuthToken oAuthToken,
@@ -236,6 +275,19 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
       return;
     }
     eventPublisher.publish(tenant, oAuthToken, result.eventType(), requestAttributes);
+  }
+
+  private void publish(
+      Tenant tenant,
+      AccountLinkingResult result,
+      DefaultSecurityEventType eventType,
+      RequestAttributes requestAttributes) {
+    eventPublisher.publish(
+        tenant,
+        result.requestedClientId(),
+        result.hasUser() ? result.user() : new User(),
+        eventType.toEventType(),
+        requestAttributes);
   }
 
   private void publish(

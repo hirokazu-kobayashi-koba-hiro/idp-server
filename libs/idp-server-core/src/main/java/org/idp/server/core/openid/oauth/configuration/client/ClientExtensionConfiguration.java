@@ -47,6 +47,7 @@ public class ClientExtensionConfiguration implements JsonReadable {
   Map<String, Object> clientInstancePlatformConfig = new HashMap<>();
   Boolean crossSiteAuthorizationView;
   List<String> linkingReturnUris;
+  List<String> linkingTokenProviders;
   Map<String, Object> customProperties = new HashMap<>();
 
   public ClientExtensionConfiguration() {}
@@ -281,6 +282,21 @@ public class ClientExtensionConfiguration implements JsonReadable {
     return linkingReturnUris != null && !linkingReturnUris.isEmpty();
   }
 
+  /**
+   * Linked external account providers whose stored access token this client may retrieve.
+   *
+   * <p>Named by provider ({@code sso_provider}), not by account alias: an alias is assigned per
+   * user ({@code google-1}, {@code google-2}) and cannot be written into a client configuration.
+   * Empty means the client may retrieve none, so a client is never given stored tokens by default.
+   */
+  public List<String> linkingTokenProviders() {
+    return linkingTokenProviders == null ? List.of() : linkingTokenProviders;
+  }
+
+  public boolean hasLinkingTokenProviders() {
+    return linkingTokenProviders != null && !linkingTokenProviders.isEmpty();
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     if (hasAccessTokenDuration()) map.put("access_token_duration", accessTokenDuration);
@@ -317,6 +333,7 @@ public class ClientExtensionConfiguration implements JsonReadable {
     if (hasCrossSiteAuthorizationView())
       map.put("cross_site_authorization_view", crossSiteAuthorizationView);
     if (hasLinkingReturnUris()) map.put("linking_return_uris", linkingReturnUris);
+    if (hasLinkingTokenProviders()) map.put("linking_token_providers", linkingTokenProviders);
     if (hasCustomProperties()) map.put("custom_properties", customProperties);
     return map;
   }
