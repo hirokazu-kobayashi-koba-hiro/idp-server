@@ -134,6 +134,10 @@ public enum DefaultSecurityEventType {
   external_account_link_failed(
       "External IdP account linking failed. A run of these points at an attempt to attach someone"
           + " else's external account, so it is recorded even when the cause is a user mistake"),
+  external_account_token_retrieved("Stored external IdP access token was handed to a client"),
+  external_account_token_retrieval_failed(
+      "Handing a stored external IdP access token to a client was refused. A run of these points at"
+          + " a client probing for tokens it is not allowed to read"),
   external_account_token_refreshed("Stored external IdP token was refreshed"),
   external_account_relink_required(
       "Stored external IdP token could not be refreshed and the user has to link again"),
