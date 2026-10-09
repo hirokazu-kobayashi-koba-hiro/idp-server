@@ -17,13 +17,16 @@
     "authorization_code",
     "refresh_token"
   ],
-  "scope": "openid profile email",
+  "scope": "openid profile email linked_account:read_token",
   "client_name": "Local Development Public Web Application",
-  "token_endpoint_auth_method": "none",
+  "token_endpoint_auth_method": "client_secret_basic",
   "application_type": "web",
   "extension": {
     "linking_return_uris": [
       "https://sample.local.test/api/linked-accounts/complete"
+    ],
+    "linking_token_providers": [
+      "account-linking"
     ]
   }
 }
