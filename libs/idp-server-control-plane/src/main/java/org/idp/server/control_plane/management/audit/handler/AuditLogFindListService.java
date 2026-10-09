@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.control_plane.management.audit.AuditLogManagementContextBuilder;
+import org.idp.server.control_plane.management.audit.AuditLogResponseMask;
 import org.idp.server.control_plane.management.audit.io.AuditLogFindListRequest;
 import org.idp.server.control_plane.management.audit.io.AuditLogManagementResponse;
 import org.idp.server.control_plane.management.audit.io.AuditLogManagementStatus;
@@ -41,7 +42,7 @@ import org.idp.server.platform.type.RequestAttributes;
  * <ul>
  *   <li>Query repository for total count
  *   <li>Query repository for audit log list
- *   <li>Build paginated response
+ *   <li>Build paginated response, with secrets masked ({@link AuditLogResponseMask})
  * </ul>
  */
 public class AuditLogFindListService implements AuditLogManagementService<AuditLogFindListRequest> {
@@ -77,7 +78,9 @@ public class AuditLogFindListService implements AuditLogManagementService<AuditL
     List<AuditLog> interactions = auditLogQueryRepository.findList(tenant, request.queries());
 
     Map<String, Object> response = new HashMap<>();
-    response.put("list", interactions.stream().map(AuditLog::toMap).toList());
+    AuditLogResponseMask mask = new AuditLogResponseMask();
+    response.put(
+        "list", interactions.stream().map(auditLog -> mask.apply(auditLog.toMap())).toList());
     response.put("total_count", totalCount);
     response.put("limit", request.queries().limit());
     response.put("offset", request.queries().offset());

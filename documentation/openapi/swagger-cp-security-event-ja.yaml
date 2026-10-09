@@ -1305,6 +1305,10 @@ components:
         '
     AuditLog:
       type: object
+      description: |
+        監査ログ。`request` / `before` / `after` / `user_payload` / `attributes` は記録した内容のままだが、
+        API の応答では、パスワード・シークレット・トークン・鍵などの秘密の値を `[SCRUBBED]` に置き換える
+        （入れ子のオブジェクト・配列の中も含む）。
       required:
       - id
       - type
@@ -1360,6 +1364,23 @@ components:
           type: string
           nullable: true
           description: 操作元のユーザエージェント文字列
+        request:
+          type: object
+          nullable: true
+          description: 操作のリクエスト（該当する場合）
+          additionalProperties: true
+        outcome_result:
+          type: string
+          nullable: true
+          description: 操作の結果（`success` / `failure`）
+        outcome_reason:
+          type: string
+          nullable: true
+          description: 失敗した場合の理由
+        target_tenant_id:
+          type: string
+          nullable: true
+          description: 操作対象のテナント識別子（該当する場合）
         before:
           type: object
           nullable: true

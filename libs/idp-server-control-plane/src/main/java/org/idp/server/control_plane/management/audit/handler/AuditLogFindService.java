@@ -17,6 +17,7 @@
 package org.idp.server.control_plane.management.audit.handler;
 
 import org.idp.server.control_plane.management.audit.AuditLogManagementContextBuilder;
+import org.idp.server.control_plane.management.audit.AuditLogResponseMask;
 import org.idp.server.control_plane.management.audit.io.AuditLogFindRequest;
 import org.idp.server.control_plane.management.audit.io.AuditLogManagementResponse;
 import org.idp.server.control_plane.management.audit.io.AuditLogManagementStatus;
@@ -59,6 +60,7 @@ public class AuditLogFindService implements AuditLogManagementService<AuditLogFi
     // Update context builder with result (for audit logging)
     contextBuilder.withResult(auditLog);
 
-    return new AuditLogManagementResponse(AuditLogManagementStatus.OK, auditLog.toMap());
+    return new AuditLogManagementResponse(
+        AuditLogManagementStatus.OK, new AuditLogResponseMask().apply(auditLog.toMap()));
   }
 }
