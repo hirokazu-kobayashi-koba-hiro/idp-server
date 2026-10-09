@@ -275,17 +275,17 @@ draft-11 は**Client Attester への信頼の確立を仕様の範囲外**とし
 | | `attester_jwks`（既定） | `x5c` | `registered_instance_key` |
 |---|---|---|---|
 | Attestation JWT の署名者 | Client Attester | Client Attester | Client Instance（自己署名） |
-| 認可サーバーが信頼する鍵 | `client_attestation_attester_jwks` に登録した公開鍵 | `x5c` のチェーンを `client_attestation_trusted_root_certificates` まで検証したリーフ | 事前登録した Client Instance Key |
+| 認可サーバーが信頼する鍵 | `client_attestation_attester_jwks` に登録した公開鍵 | `x5c` のチェーンを `client_attestation_trusted_root_certificates` のトラストアンカーまで検証したリーフ | 事前登録した Client Instance Key |
 | インスタンスの事前登録 | 不要 | 不要 | 必要 |
 | Client Attester の運用 | 必要 | 必要 | 不要 |
 | 「正当なアプリか」の判断 | Attester がプラットフォーム証明を検証 | 同左 | 登録時のみ。以降は鍵の所持が根拠 |
-| Attester の鍵交代 | **全クライアント設定の更新が必要** | ルートが変わらなければ設定変更不要 | 該当なし |
+| Attester の鍵交代 | **全クライアント設定の更新が必要** | トラストアンカーが変わらなければ設定変更不要 | 該当なし |
 
 ### どちらを選ぶか
 
 **アプリ提供者がサーバーを持っている**なら `attester_jwks` か `x5c`。App Attest / Play Integrity の検証を Attester 側に集約でき、認可サーバーはプラットフォームごとの差異を知らずに済みます。アプリが複数の認可サーバーに接続する場合も、Attestation JWT を1か所で発行できます。
 
-そのうえで、**証明書の階層を持っているなら `x5c`**。違いは鍵交代を誰が負担するかです。`attester_jwks` は Attester が署名鍵を替えるたびに、その Attester を信頼している全クライアント設定を更新して回る必要があります。`x5c` ならルートを1つ登録しておけば、リーフの交代は認可サーバー側の設定変更なしに吸収されます。
+そのうえで、**証明書の階層を持っているなら `x5c`**。違いは鍵交代を誰が負担するかです。`attester_jwks` は Attester が署名鍵を替えるたびに、その Attester を信頼している全クライアント設定を更新して回る必要があります。`x5c` ならトラストアンカーを1つ登録しておけば、リーフの交代は認可サーバー側の設定変更なしに吸収されます。
 
 **Attester を運用しない**なら `registered_instance_key`。認可サーバーへの登録が信頼の起点になるため、**登録経路の強度がそのまま全体の強度**になります。アプリからの登録は ID トークンで認証し、インスタンスを利用者に束縛します（`client_instance_registration_policy: user_bound`）。
 
@@ -296,24 +296,29 @@ draft-11 は**Client Attester への信頼の確立を仕様の範囲外**とし
 ```json
 "extension": {
   "client_attestation_trust_source": "x5c",
-  "client_attestation_trusted_root_certificates": ["<ルート証明書 DER の base64>"]
+  "client_attestation_trusted_root_certificates": ["<トラストアンカーの証明書 DER の base64>"]
 }
 ```
 
-ピン留めするのは**ルート**であって Attester の証明書ではありません。ルートがリーフより長生きすることが、この方式の利点の前提だからです。
+設定する証明書は**トラストアンカー**（信頼の起点）です。項目名は `root` ですが、ルートである必要はなく、**途中の CA でも構いません**（RFC 5280 6 章: "The selection of a trust anchor is a matter of policy"）。認可サーバーは、x5c のリーフから設定した証明書が発行した証明書までをパスとして検証し、それより上は見ません。
 
-:::warning ルートには、そのクライアントの Attester のトラストアンカーだけを入れる
-認可サーバーが確かめるのは「チェーンが設定したルートまで辿れること」と「`sub` がこのクライアントの `client_id` であること」で、**リーフの証明書が誰のものかは見ません**。そのため、設定したルートの下で証明書を持つ者なら誰でも、このクライアントの Client Attestation JWT を作れます。
+ピン留めするのは Attester の証明書（リーフ）ではなく、それを発行する CA です。CA がリーフより長生きすることが、この方式の利点の前提だからです。ルートと途中の CA のどちらを置くかは、**そのルートが Attester 以外にも証明書を発行しているか**で決めます。発行しているなら、Attester 専用の発行 CA を置いてください。
+
+:::warning トラストアンカーには、そのクライアントの Attester のものだけを入れる
+認可サーバーが確かめるのは「チェーンが設定したトラストアンカーまで辿れること」と「`sub` がこのクライアントの `client_id` であること」で、**リーフの証明書が誰のものかは見ません**。そのため、設定したトラストアンカーの下で証明書を持つ者なら誰でも、このクライアントの Client Attestation JWT を作れます。
 
 - **設定するのは、このクライアントの Attester のトラストアンカーだけ**にしてください。EUDI Wallet では、Wallet Provider ごとのトラストアンカーが Wallet Provider 用の Trusted List に載っており、Wallet Provider はリーフの署名用証明書から判断されます。このクライアントの Wallet Provider のエントリを設定します
-- **Trusted List の全提供者のトラストアンカーや、複数の提供者の上位にある CA を設定しない**でください。別の提供者が、自分の正規の証明書で `sub` にこのクライアントの `client_id` を入れて署名すれば、チェーンは設定したルートまで辿れて認証が通ります
+- **Trusted List の全提供者のトラストアンカーや、複数の提供者の上位にある CA を設定しない**でください。別の提供者が、自分の正規の証明書で `sub` にこのクライアントの `client_id` を入れて署名すれば、チェーンは設定したトラストアンカーまで辿れて認証が通ります
+- ルートが Attester 以外の用途の証明書も発行しているなら、ルートではなく **Attester の証明書を発行する CA** を設定してください。ルートを設定すると、ほかの用途の証明書の鍵でも Client Attestation JWT を作れます
 - 1 つの Attester が複数のクライアント（ウォレットの種類ごとの `client_id` など）を持つ場合、同じトラストアンカーを共有するため、その Attester は自分の別のクライアントも名乗れます
 :::
 
-チェーンは信頼できない入力です。**ルートまでの検証だけが意味を与えます** — 単にパースできるチェーンは送ってきた者が書いたもので、そのリーフ鍵は自分の署名を検証できてしまいます。したがって検証に失敗したチェーンからは鍵を返さず、認証は「信頼できる鍵が無い」として失敗します。
+チェーンは信頼できない入力です。**トラストアンカーまでの検証だけが意味を与えます** — 単にパースできるチェーンは送ってきた者が書いたもので、そのリーフ鍵は自分の署名を検証できてしまいます。したがって検証に失敗したチェーンからは鍵を返さず、認証は「信頼できる鍵が無い」として失敗します。
 
 :::tip トラストアンカーはチェーンに含めても含めなくても動きます
-HAIP は `x5c` に**トラストアンカーを含めてはならない**としています。認可サーバーはルートを設定から持っているため、リーフだけのチェーンでも、ルートまで含むチェーンでも検証できます。
+HAIP は `x5c` に**トラストアンカーを含めてはならない**としています。認可サーバーはトラストアンカーを設定から持っているため、トラストアンカーを含まないチェーンでも、含むチェーンでも、さらにその上のルートまで含むチェーンでも検証できます。トラストアンカーより上の証明書は読みません（有効期限も見ません）。
+
+x5c のリーフはトラストアンカーそのものであってはならず、CA でない証明書（end entity）である必要があります。
 :::
 
 :::danger x5c では JWKS に alg を書く必要がありません
@@ -743,7 +748,7 @@ draft-11 のうち、次は対応していません。
 | 項目 | 確認すること |
 |---|---|
 | テスト用ルートの残り | `client_instance_platform_config` に `override_root_certificates` が**入っていない**こと。未設定なら同梱の Google / Apple のルートで検証する。設定すると同梱のルートが置き換わり、そのルートの持ち主が作った証明だけが通る（WARN ログが出る） |
-| `x5c` のルート | `client_attestation_trusted_root_certificates` に Attester の**ルート**をピン留めする |
+| `x5c` のトラストアンカー | `client_attestation_trusted_root_certificates` に、Attester の証明書を発行する CA（ルートが Attester 専用でなければ、その下の発行 CA）をピン留めする |
 | アクセストークン | リソースサーバーが JWT を手元で検証するなら有効期限を短くするか introspection を使う。失効・削除でトークンを消しても、手元で検証する JWT は期限まで通る |
 | `ENCRYPTION_KEY` | Challenge の HMAC 鍵を兼ねる。変更すると発行済みの Challenge は通らなくなる（クライアントは `use_attestation_challenge` で取り直せる） |
 | 流量制御 | Challenge エンドポイントとインスタンス登録用のチャレンジは認証なしで呼べる。エッジで絞る（[運用ガイダンス](../content_08_ops/commercial-deployment/05-operational-guidance.md#6-認証なしで呼べるエンドポイントの流量制御)） |
