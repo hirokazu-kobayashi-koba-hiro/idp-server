@@ -58,7 +58,7 @@ class AppleAttestationRootsTest {
   @Test
   void shipsARootThatIsStillValid() throws Exception {
     // Apple's root expires in 2045. A shipped certificate that has expired would reject every
-    // registration, and verifyToRoot checks the root's own validity window.
+    // registration, and verifyToTrustAnchor checks the root's own validity window.
     assertDoesNotThrow(() -> AppleAttestationRoots.certificates().get(0).checkValidity());
   }
 }

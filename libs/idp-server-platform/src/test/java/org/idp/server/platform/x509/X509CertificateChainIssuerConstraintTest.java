@@ -121,7 +121,7 @@ class X509CertificateChainIssuerConstraintTest {
   }
 
   @Test
-  void verifyToRootRejectsALeafForgedByAnEndEntityKey() throws Exception {
+  void verifyToTrustAnchorRejectsALeafForgedByAnEndEntityKey() throws Exception {
     // Apple App Attest shape: the chain carries leaf and intermediate, the root is held by the
     // verifier.
     Authority root = Authority.root("CN=Test Root", 1);
@@ -132,18 +132,18 @@ class X509CertificateChainIssuerConstraintTest {
     X509CertificateChain chain = chainOf(forged, genuineLeaf.certificate, intermediate.certificate);
 
     assertThrows(
-        X509CertInvalidException.class, () -> chain.verifyToRoot(List.of(root.certificate)));
+        X509CertInvalidException.class, () -> chain.verifyToTrustAnchor(List.of(root.certificate)));
   }
 
   @Test
-  void verifyToRootAcceptsAGenuineChain() throws Exception {
+  void verifyToTrustAnchorAcceptsAGenuineChain() throws Exception {
     Authority root = Authority.root("CN=Test Root", 1);
     Authority intermediate = root.issueCa("CN=Test Intermediate", 0);
     X509Certificate leaf = intermediate.issueEndEntity("CN=Test Leaf");
 
     X509CertificateChain chain = chainOf(leaf, intermediate.certificate);
 
-    assertDoesNotThrow(() -> chain.verifyToRoot(List.of(root.certificate)));
+    assertDoesNotThrow(() -> chain.verifyToTrustAnchor(List.of(root.certificate)));
   }
 
   // --- helpers ---

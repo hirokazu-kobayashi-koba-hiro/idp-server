@@ -73,7 +73,7 @@ public class X5cClientAttestationKeyResolver implements ClientAttestationKeyReso
 
     try {
       X509CertificateChain chain = X509CertificateChain.parse(header.x5c());
-      chain.verifyToRoot(trustedRoots(clientConfiguration));
+      chain.verifyToTrustAnchor(trustedRoots(clientConfiguration));
 
       JsonWebKey leafKey = JwkParser.parseFromCertificate(chain.leaf(), header.alg());
       return leafKey.toJwks();

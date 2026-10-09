@@ -56,7 +56,7 @@ class X509CertificateChainTrustAnchorTest {
 
     X509CertificateChain chain = chainOf(pki.leaf);
 
-    assertDoesNotThrow(() -> chain.verifyToRoot(List.of(pki.issuing.certificate)));
+    assertDoesNotThrow(() -> chain.verifyToTrustAnchor(List.of(pki.issuing.certificate)));
   }
 
   @Test
@@ -65,7 +65,7 @@ class X509CertificateChainTrustAnchorTest {
 
     X509CertificateChain chain = chainOf(pki.leaf, pki.issuing.certificate);
 
-    assertDoesNotThrow(() -> chain.verifyToRoot(List.of(pki.issuing.certificate)));
+    assertDoesNotThrow(() -> chain.verifyToTrustAnchor(List.of(pki.issuing.certificate)));
   }
 
   @Test
@@ -74,7 +74,7 @@ class X509CertificateChainTrustAnchorTest {
 
     X509CertificateChain chain = chainOf(pki.leaf, pki.issuing.certificate, pki.root.certificate);
 
-    assertDoesNotThrow(() -> chain.verifyToRoot(List.of(pki.issuing.certificate)));
+    assertDoesNotThrow(() -> chain.verifyToTrustAnchor(List.of(pki.issuing.certificate)));
   }
 
   @Test
@@ -86,10 +86,11 @@ class X509CertificateChainTrustAnchorTest {
     X509CertificateChain chain = chainOf(otherLeaf, otherIssuing.certificate);
 
     assertThrows(
-        X509CertInvalidException.class, () -> chain.verifyToRoot(List.of(pki.issuing.certificate)));
+        X509CertInvalidException.class,
+        () -> chain.verifyToTrustAnchor(List.of(pki.issuing.certificate)));
     // The same chain is accepted when the root is pinned, which is why pinning the root trusts
     // more than the attester's certificates.
-    assertDoesNotThrow(() -> chain.verifyToRoot(List.of(pki.root.certificate)));
+    assertDoesNotThrow(() -> chain.verifyToTrustAnchor(List.of(pki.root.certificate)));
   }
 
   @Test
@@ -101,7 +102,7 @@ class X509CertificateChainTrustAnchorTest {
     X509CertInvalidException exception =
         assertThrows(
             X509CertInvalidException.class,
-            () -> chain.verifyToRoot(List.of(pki.issuing.certificate)));
+            () -> chain.verifyToTrustAnchor(List.of(pki.issuing.certificate)));
     assertTrue(
         exception.getMessage().contains("end entity"),
         "expected the leaf to be refused as a CA, but was: " + exception.getMessage());
@@ -114,7 +115,8 @@ class X509CertificateChainTrustAnchorTest {
     X509CertificateChain chain = chainOf(selfSigned.certificate);
 
     assertThrows(
-        X509CertInvalidException.class, () -> chain.verifyToRoot(List.of(selfSigned.certificate)));
+        X509CertInvalidException.class,
+        () -> chain.verifyToTrustAnchor(List.of(selfSigned.certificate)));
   }
 
   @Test
@@ -125,7 +127,7 @@ class X509CertificateChainTrustAnchorTest {
 
     X509CertificateChain chain = chainOf(pki.leaf, pki.issuing.certificate);
 
-    assertDoesNotThrow(() -> chain.verifyToRoot(List.of(renewed)));
+    assertDoesNotThrow(() -> chain.verifyToTrustAnchor(List.of(renewed)));
   }
 
   @Test
@@ -141,7 +143,7 @@ class X509CertificateChainTrustAnchorTest {
 
     X509CertificateChain chain = chainOf(leaf, issuing.certificate, expiredRoot.certificate);
 
-    assertDoesNotThrow(() -> chain.verifyToRoot(List.of(issuing.certificate)));
+    assertDoesNotThrow(() -> chain.verifyToTrustAnchor(List.of(issuing.certificate)));
   }
 
   @Test
@@ -158,7 +160,8 @@ class X509CertificateChainTrustAnchorTest {
     X509CertificateChain chain = chainOf(leaf, issuing.certificate);
 
     assertThrows(
-        X509CertInvalidException.class, () -> chain.verifyToRoot(List.of(expiredRoot.certificate)));
+        X509CertInvalidException.class,
+        () -> chain.verifyToTrustAnchor(List.of(expiredRoot.certificate)));
   }
 
   @Test
@@ -169,7 +172,7 @@ class X509CertificateChainTrustAnchorTest {
 
     X509CertificateChain chain = chainOf(pki.leaf, pki.issuing.certificate, pki.root.certificate);
 
-    assertDoesNotThrow(() -> chain.verifyToRoot(List.of(pki.root.certificate)));
+    assertDoesNotThrow(() -> chain.verifyToTrustAnchor(List.of(pki.root.certificate)));
   }
 
   @Test
@@ -181,13 +184,13 @@ class X509CertificateChainTrustAnchorTest {
     X509CertificateChain chain = chainOf(leaf, issuing.certificate);
 
     assertThrows(
-        X509CertInvalidException.class, () -> chain.verifyToRoot(List.of(root.certificate)));
+        X509CertInvalidException.class, () -> chain.verifyToTrustAnchor(List.of(root.certificate)));
   }
 
   @Test
   void refusesToParseAChainLongerThanTheLimit() throws Exception {
     // Refused before any certificate is decoded, so the cost of an oversized chain stays bounded
-    // for every entry point (verify and verifyToRoot alike).
+    // for every entry point (verify and verifyToTrustAnchor alike).
     Pki pki = Pki.create();
     String[] encoded = new String[X509CertificateChain.MAX_CHAIN_LENGTH + 1];
     Arrays.fill(encoded, encode(pki.issuing.certificate));

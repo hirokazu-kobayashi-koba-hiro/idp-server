@@ -29,6 +29,7 @@ import java.security.cert.X509CertSelector;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -50,7 +51,8 @@ public class X509CertificateChain {
    * Every certificate costs a decode, and in path building a signature check per candidate issuer.
    * The limit is applied before anything is decoded, which bounds both for every entry point. Real
    * chains are a few certificates long (Apple App Attest 2, Android Key Attestation up to about 5);
-   * 10 is the limit Keycloak applies to x5c as well.
+   * 10 is the limit Keycloak applies to x5c as well ({@code MAX_CERTIFICATE_CHAIN_LENGTH} in <a
+   * href="https://github.com/keycloak/keycloak/blob/main/core/src/main/java/org/keycloak/crypto/X509CertificateChainValidator.java">X509CertificateChainValidator</a>).
    */
   static final int MAX_CHAIN_LENGTH = 10;
 
@@ -153,7 +155,9 @@ public class X509CertificateChain {
    * <ul>
    *   <li>The leaf has to be an end entity, not self-signed. Otherwise a chain holding only the
    *       anchor would make an empty path, and the anchor's own key would be accepted as a signing
-   *       key.
+   *       key. A self-signed end entity could only get through by being configured as an anchor
+   *       itself, which the anchor check below refuses as well (an empty path counts -1 CAs, and an
+   *       end entity is not a CA); the leaf check states the rule where the leaf is read.
    *   <li>The anchor has to be within its validity window and allowed to issue, counting the CAs
    *       between it and the leaf in the built path. RFC 5280 does not require either for an
    *       anchor; they are kept so that an expired or non-CA certificate configured by mistake is
@@ -161,9 +165,26 @@ public class X509CertificateChain {
    *   <li>Revocation is not checked; no revocation source is configured.
    * </ul>
    *
+   * <p>The PKIX implementation also applies {@code jdk.certpath.disabledAlgorithms} to every
+   * certificate in the path, so chains signed with algorithms or key sizes the JDK has disabled are
+   * refused.
+   *
    * @throws X509CertInvalidException when any check fails
    */
-  public void verifyToRoot(List<X509Certificate> trustAnchors) throws X509CertInvalidException {
+  public void verifyToTrustAnchor(List<X509Certificate> trustAnchors)
+      throws X509CertInvalidException {
+    verifyToTrustAnchor(trustAnchors, new Date());
+  }
+
+  /**
+   * {@link #verifyToTrustAnchor(List)} at a given time, for evidence whose certificates are checked
+   * against a fixed moment (a recorded attestation replayed in a test, for instance).
+   *
+   * @param validationDate the time every validity window, the anchor's included, is checked at
+   * @throws X509CertInvalidException when any check fails
+   */
+  public void verifyToTrustAnchor(List<X509Certificate> trustAnchors, Date validationDate)
+      throws X509CertInvalidException {
     if (certificates.isEmpty()) {
       throw new X509CertInvalidException("certificate chain is empty");
     }
@@ -174,12 +195,12 @@ public class X509CertificateChain {
     X509Certificate leaf = leaf();
     verifyLeafIsEndEntity(leaf);
 
-    PKIXCertPathBuilderResult result = buildPath(leaf, trustAnchors);
+    PKIXCertPathBuilderResult result = buildPath(leaf, trustAnchors, validationDate);
 
     X509Certificate anchor = result.getTrustAnchor().getTrustedCert();
     int subordinateCaCount = result.getCertPath().getCertificates().size() - 1;
     try {
-      anchor.checkValidity();
+      anchor.checkValidity(validationDate);
     } catch (Exception e) {
       throw new X509CertInvalidException(e);
     }
@@ -187,7 +208,8 @@ public class X509CertificateChain {
   }
 
   private PKIXCertPathBuilderResult buildPath(
-      X509Certificate leaf, List<X509Certificate> trustAnchors) throws X509CertInvalidException {
+      X509Certificate leaf, List<X509Certificate> trustAnchors, Date validationDate)
+      throws X509CertInvalidException {
     try {
       Set<TrustAnchor> anchors = new HashSet<>();
       for (X509Certificate trustAnchor : trustAnchors) {
@@ -201,6 +223,7 @@ public class X509CertificateChain {
       parameters.addCertStore(
           CertStore.getInstance("Collection", new CollectionCertStoreParameters(certificates)));
       parameters.setRevocationEnabled(false);
+      parameters.setDate(validationDate);
 
       return (PKIXCertPathBuilderResult) CertPathBuilder.getInstance("PKIX").build(parameters);
     } catch (Exception e) {
