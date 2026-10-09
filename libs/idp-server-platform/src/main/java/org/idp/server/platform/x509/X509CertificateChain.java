@@ -18,11 +18,20 @@ package org.idp.server.platform.x509;
 
 import java.io.ByteArrayInputStream;
 import java.security.MessageDigest;
+import java.security.cert.CertPathBuilder;
+import java.security.cert.CertStore;
 import java.security.cert.CertificateFactory;
+import java.security.cert.CollectionCertStoreParameters;
+import java.security.cert.PKIXBuilderParameters;
+import java.security.cert.PKIXCertPathBuilderResult;
+import java.security.cert.TrustAnchor;
+import java.security.cert.X509CertSelector;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * A certificate chain presented by a caller, and the checks that turn it into evidence.
@@ -33,6 +42,17 @@ import java.util.List;
  * chain.
  */
 public class X509CertificateChain {
+
+  /**
+   * Longest chain accepted.
+   *
+   * <p>A chain arrives before its sender is authenticated, so its length is the sender's choice.
+   * Every certificate costs a decode, and in path building a signature check per candidate issuer.
+   * The limit is applied before anything is decoded, which bounds both for every entry point. Real
+   * chains are a few certificates long (Apple App Attest 2, Android Key Attestation up to about 5);
+   * 10 is the limit Keycloak applies to x5c as well.
+   */
+  static final int MAX_CHAIN_LENGTH = 10;
 
   List<X509Certificate> certificates;
 
@@ -49,6 +69,9 @@ public class X509CertificateChain {
       throws X509CertInvalidException {
     if (base64DerList == null || base64DerList.isEmpty()) {
       throw new X509CertInvalidException("certificate chain is empty");
+    }
+    if (base64DerList.size() > MAX_CHAIN_LENGTH) {
+      throw new X509CertInvalidException("certificate chain is too long");
     }
 
     try {
@@ -107,52 +130,101 @@ public class X509CertificateChain {
   }
 
   /**
-   * Verifies that every certificate is inside its validity window, that each is signed by the next,
-   * and that the last one is signed by one of {@code trustedRoots}.
+   * Verifies that the chain leads from its leaf to one of {@code trustAnchors}, by RFC 5280 path
+   * validation.
    *
-   * <p>For chains that do not carry their own root. Apple App Attest is the case this exists for:
-   * the evidence holds the leaf and the intermediate only, and the root is one the verifier already
-   * holds, so there is nothing in the chain to pin a digest against. Passing the root as a
-   * certificate rather than a digest is what makes the terminating check a signature check.
+   * <p>A trust anchor is a name and a public key (RFC 5280 Section 6.1.1 (d)): when it is given as
+   * a certificate, its subject and subjectPublicKeyInfo are what is used. So the anchor can be a
+   * root or any CA below one — pinning the CA that issues the signing certificates, rather than a
+   * root that also issues for other purposes, is what narrows whose keys are accepted.
+   *
+   * <p>The chain is treated as the material to build the path from, not as the path itself. The
+   * path starts at the certificate the anchor issued and ends at the leaf, and the anchor is not
+   * part of it (RFC 5280 Section 6.1). So the presented chain may or may not carry the anchor, and
+   * anything beyond the anchor — a root above a pinned intermediate, for instance — is not read,
+   * neither for its signature nor for its validity. Apple App Attest is the case without the root
+   * (the evidence holds the leaf and the intermediate only); an attester serialising its whole
+   * chain is the case with it.
+   *
+   * <p>The chain's length is already bounded by {@link #parse}. The path itself is built and
+   * validated by the platform's PKIX implementation, which applies basicConstraints,
+   * pathLenConstraint and keyUsage to each issuer in it. On top of that:
+   *
+   * <ul>
+   *   <li>The leaf has to be an end entity, not self-signed. Otherwise a chain holding only the
+   *       anchor would make an empty path, and the anchor's own key would be accepted as a signing
+   *       key.
+   *   <li>The anchor has to be within its validity window and allowed to issue, counting the CAs
+   *       between it and the leaf in the built path. RFC 5280 does not require either for an
+   *       anchor; they are kept so that an expired or non-CA certificate configured by mistake is
+   *       not trusted.
+   *   <li>Revocation is not checked; no revocation source is configured.
+   * </ul>
    *
    * @throws X509CertInvalidException when any check fails
    */
-  public void verifyToRoot(List<X509Certificate> trustedRoots) throws X509CertInvalidException {
+  public void verifyToRoot(List<X509Certificate> trustAnchors) throws X509CertInvalidException {
     if (certificates.isEmpty()) {
       throw new X509CertInvalidException("certificate chain is empty");
     }
-    if (trustedRoots == null || trustedRoots.isEmpty()) {
+    if (trustAnchors == null || trustAnchors.isEmpty()) {
       throw new X509CertInvalidException("no trusted root is configured");
     }
 
+    X509Certificate leaf = leaf();
+    verifyLeafIsEndEntity(leaf);
+
+    PKIXCertPathBuilderResult result = buildPath(leaf, trustAnchors);
+
+    X509Certificate anchor = result.getTrustAnchor().getTrustedCert();
+    int subordinateCaCount = result.getCertPath().getCertificates().size() - 1;
     try {
-      for (X509Certificate certificate : certificates) {
-        certificate.checkValidity();
-      }
-      for (int i = 0; i < certificates.size() - 1; i++) {
-        X509Certificate issuer = certificates.get(i + 1);
-        verifyIssuerIsCa(issuer, i);
-        certificates.get(i).verify(issuer.getPublicKey());
-      }
-    } catch (X509CertInvalidException e) {
-      throw e;
+      anchor.checkValidity();
     } catch (Exception e) {
       throw new X509CertInvalidException(e);
     }
+    verifyIssuerIsCa(anchor, subordinateCaCount);
+  }
 
-    X509Certificate last = certificates.get(certificates.size() - 1);
-    for (X509Certificate trustedRoot : trustedRoots) {
-      try {
-        trustedRoot.checkValidity();
-        verifyIssuerIsCa(trustedRoot, certificates.size() - 1);
-        last.verify(trustedRoot.getPublicKey());
-        return;
-      } catch (Exception e) {
-        // Try the next root: several may be configured, and only one has to sign this chain.
+  private PKIXCertPathBuilderResult buildPath(
+      X509Certificate leaf, List<X509Certificate> trustAnchors) throws X509CertInvalidException {
+    try {
+      Set<TrustAnchor> anchors = new HashSet<>();
+      for (X509Certificate trustAnchor : trustAnchors) {
+        anchors.add(new TrustAnchor(trustAnchor, null));
       }
-    }
 
-    throw new X509CertInvalidException("certificate chain does not lead to a trusted root");
+      X509CertSelector target = new X509CertSelector();
+      target.setCertificate(leaf);
+
+      PKIXBuilderParameters parameters = new PKIXBuilderParameters(anchors, target);
+      parameters.addCertStore(
+          CertStore.getInstance("Collection", new CollectionCertStoreParameters(certificates)));
+      parameters.setRevocationEnabled(false);
+
+      return (PKIXCertPathBuilderResult) CertPathBuilder.getInstance("PKIX").build(parameters);
+    } catch (Exception e) {
+      throw new X509CertInvalidException(
+          "certificate chain does not lead to a trusted root: " + e.getMessage(), e);
+    }
+  }
+
+  private void verifyLeafIsEndEntity(X509Certificate leaf) throws X509CertInvalidException {
+    if (leaf.getBasicConstraints() >= 0) {
+      throw new X509CertInvalidException(
+          "certificate chain leaf must be an end entity certificate: "
+              + leaf.getSubjectX500Principal());
+    }
+    if (!leaf.getSubjectX500Principal().equals(leaf.getIssuerX500Principal())) {
+      return;
+    }
+    try {
+      leaf.verify(leaf.getPublicKey());
+    } catch (Exception e) {
+      // Same subject and issuer names but not self-signed: an ordinary leaf.
+      return;
+    }
+    throw new X509CertInvalidException("certificate chain leaf must not be self-signed");
   }
 
   /**

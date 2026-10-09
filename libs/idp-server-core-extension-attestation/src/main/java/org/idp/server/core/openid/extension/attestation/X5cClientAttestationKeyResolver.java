@@ -33,20 +33,23 @@ import org.idp.server.platform.x509.X509CertificateChain;
  *
  * <p>draft-ietf-oauth-attestation-based-client-auth-11 Section 10.8 describes this as one of the
  * shapes trust can take: the attestation carries the attester's certificate chain, and the server
- * validates it against a root it was configured with ({@code
- * client_attestation_trusted_root_certificates}).
+ * validates it against a trust anchor it was configured with ({@code
+ * client_attestation_trusted_root_certificates}). Despite the name, the anchor need not be a root:
+ * any CA can be, and pinning the CA that issues the attester's certificates keeps certificates the
+ * root issues for other purposes from being accepted (RFC 5280 Section 6, Issue #1957).
  *
  * <p>What this buys over {@link StaticJwksClientAttestationKeyResolver} is whose problem key
  * rotation is. With a configured JWKS, an attester replacing its signing key means editing every
- * client that trusts it. With a chain, the root outlives the signing key and the replacement is
+ * client that trusts it. With a chain, the anchor outlives the signing key and the replacement is
  * invisible here. Deployments built on a certificate hierarchy are shaped this way — the EUDI
  * Wallet's Wallet Instance Attestation is an {@code oauth-client-attestation+jwt} carrying the
  * Wallet Provider's certificate in {@code x5c}.
  *
- * <p>The chain is untrusted input. Only the root check makes any of it mean something: a chain that
- * merely parses was written by whoever sent it, and its leaf key would verify its own signature.
- * Validation therefore runs before the leaf key is handed back, and nothing is returned when it
- * fails — the JOSE layer would otherwise verify the signature against a key the attacker chose.
+ * <p>The chain is untrusted input. Only the check against the anchor makes any of it mean
+ * something: a chain that merely parses was written by whoever sent it, and its leaf key would
+ * verify its own signature. Validation therefore runs before the leaf key is handed back, and
+ * nothing is returned when it fails — the JOSE layer would otherwise verify the signature against a
+ * key the attacker chose.
  */
 public class X5cClientAttestationKeyResolver implements ClientAttestationKeyResolver {
 

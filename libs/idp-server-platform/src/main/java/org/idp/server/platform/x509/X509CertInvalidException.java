@@ -25,4 +25,8 @@ public class X509CertInvalidException extends Exception {
   public X509CertInvalidException(Throwable throwable) {
     super(throwable);
   }
+
+  public X509CertInvalidException(String message, Throwable throwable) {
+    super(message, throwable);
+  }
 }
