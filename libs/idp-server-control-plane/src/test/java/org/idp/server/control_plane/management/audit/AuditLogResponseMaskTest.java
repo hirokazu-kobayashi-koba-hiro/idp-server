@@ -115,4 +115,51 @@ class AuditLogResponseMaskTest {
     assertEquals("s3cret", original.get("client_secret"));
     assertNull(mask.apply(null));
   }
+
+  @Test
+  @DisplayName("マッピングルールの static_value は、送り先が秘密の項目やヘッダーなら隠す")
+  void masksStaticValueSentToACredential() {
+    Map<String, Object> masked =
+        mask.apply(
+            Map.of(
+                "header_mapping_rules",
+                List.of(
+                    Map.of("static_value", "application/json", "to", "Content-Type"),
+                    Map.of("static_value", "Bearer s3cret", "to", "Authorization"),
+                    Map.of("static_value", "k-1", "to", "X-API-Key")),
+                "body_mapping_rules",
+                List.of(
+                    Map.of("static_value", "s3cret", "to", "client_secret"),
+                    Map.of("static_value", "s3cret", "to", "credentials.client_secret"),
+                    Map.of("static_value", "client_credentials", "to", "grant_type"),
+                    Map.of("from", "$.request_body.username", "to", "username"))));
+
+    List<?> headers = (List<?>) masked.get("header_mapping_rules");
+    assertEquals("application/json", ((Map<?, ?>) headers.get(0)).get("static_value"));
+    assertEquals("[SCRUBBED]", ((Map<?, ?>) headers.get(1)).get("static_value"));
+    assertEquals("Authorization", ((Map<?, ?>) headers.get(1)).get("to"));
+    assertEquals("[SCRUBBED]", ((Map<?, ?>) headers.get(2)).get("static_value"));
+    List<?> body = (List<?>) masked.get("body_mapping_rules");
+    assertEquals("[SCRUBBED]", ((Map<?, ?>) body.get(0)).get("static_value"));
+    assertEquals("[SCRUBBED]", ((Map<?, ?>) body.get(1)).get("static_value"));
+    assertEquals("client_credentials", ((Map<?, ?>) body.get(2)).get("static_value"));
+    assertEquals("$.request_body.username", ((Map<?, ?>) body.get(3)).get("from"));
+  }
+
+  @Test
+  @DisplayName("それだけで資格情報になる値（Slack の Webhook URL、端末の通知トークン）も隠す")
+  void masksValuesThatAreCredentialsOnTheirOwn() {
+    Map<String, Object> masked =
+        mask.apply(
+            Map.of(
+                "incoming_webhook_url",
+                "https://hooks.slack.com/services/x",
+                "authentication_devices",
+                List.of(Map.of("id", "d-1", "notification_token", "t"))));
+
+    assertEquals("[SCRUBBED]", masked.get("incoming_webhook_url"));
+    Map<?, ?> device = (Map<?, ?>) ((List<?>) masked.get("authentication_devices")).get(0);
+    assertEquals("d-1", device.get("id"));
+    assertEquals("[SCRUBBED]", device.get("notification_token"));
+  }
 }

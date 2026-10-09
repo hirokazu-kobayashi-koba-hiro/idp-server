@@ -34,6 +34,15 @@ import java.util.Set;
  * <p>Keys are matched whole, ignoring case. A prefix or substring match would also hide fields that
  * only describe a secret ({@code client_secret_expires_at}, {@code token_endpoint}), and a key such
  * as {@code client_secret} would not start with {@code secret} anyway.
+ *
+ * <p>A secret can also sit on the value side of a mapping rule: {@code {"static_value": "Bearer
+ * ...", "to": "Authorization"}} sends a fixed value to a header or field named by {@code to}. Such
+ * a rule has its {@code static_value} masked when {@code to} names a masked key or a header that
+ * carries a credential.
+ *
+ * <p>Security events have their own list ({@code SecurityEventLogConfiguration}'s essential scrub
+ * keys), matched by prefix and extended per tenant. The two are kept apart because they match
+ * differently; a key added to one is worth checking against the other.
  */
 public class AuditLogResponseMask {
 
@@ -68,7 +77,17 @@ public class AuditLogResponseMask {
           "authorization",
           "cookie",
           "auth_proof",
-          "x-view-binding");
+          "x-view-binding",
+          // values that work as credentials on their own
+          "incoming_webhook_url",
+          "notification_token");
+
+  /** Header names, besides the masked keys, whose fixed value in a mapping rule is a credential. */
+  static final Set<String> CREDENTIAL_HEADERS =
+      Set.of("x-api-key", "api-key", "apikey", "x-auth-token", "proxy-authorization");
+
+  static final String STATIC_VALUE = "static_value";
+  static final String TO = "to";
 
   /**
    * @return a copy of {@code values} with the value of every masked key replaced, in nested objects
@@ -80,7 +99,22 @@ public class AuditLogResponseMask {
     }
     Map<String, Object> masked = new LinkedHashMap<>();
     values.forEach((key, value) -> masked.put(key, isMasked(key) ? MASKED : maskNested(value)));
+    if (masked.containsKey(STATIC_VALUE) && sendsToCredential(values.get(TO))) {
+      masked.put(STATIC_VALUE, MASKED);
+    }
     return masked;
+  }
+
+  /**
+   * Whether a mapping rule's {@code to} names where a credential goes: a masked key or a credential
+   * header, as the last part of a path ({@code credentials.client_secret}) too.
+   */
+  private static boolean sendsToCredential(Object to) {
+    if (!(to instanceof String target) || target.isEmpty()) {
+      return false;
+    }
+    String name = target.substring(target.lastIndexOf('.') + 1).toLowerCase(Locale.ROOT);
+    return KEYS.contains(name) || CREDENTIAL_HEADERS.contains(name);
   }
 
   private Object maskNested(Object value) {
