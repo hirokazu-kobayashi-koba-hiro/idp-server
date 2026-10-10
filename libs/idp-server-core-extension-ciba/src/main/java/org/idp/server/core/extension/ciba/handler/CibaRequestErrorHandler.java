@@ -24,7 +24,6 @@ import org.idp.server.core.extension.ciba.handler.io.CibaRequestStatus;
 import org.idp.server.core.extension.ciba.response.BackchannelAuthenticationErrorResponse;
 import org.idp.server.core.openid.oauth.clientauthenticator.exception.ClientUnAuthorizedException;
 import org.idp.server.core.openid.oauth.clientauthenticator.exception.UseAttestationChallengeException;
-import org.idp.server.core.openid.oauth.configuration.exception.ClientConfigurationNotFoundException;
 import org.idp.server.core.openid.oauth.configuration.exception.ServerConfigurationNotFoundException;
 import org.idp.server.core.openid.oauth.type.oauth.Error;
 import org.idp.server.core.openid.oauth.type.oauth.ErrorDescription;
@@ -104,16 +103,6 @@ public class CibaRequestErrorHandler {
           CibaRequestStatus.BAD_REQUEST,
           new BackchannelAuthenticationErrorResponse(
               new Error("invalid_request"), new ErrorDescription(badRequest.getMessage())));
-    }
-
-    if (exception instanceof ClientConfigurationNotFoundException) {
-      log.warn(
-          "CIBA request failed: status=bad_request, error=invalid_client, description={}",
-          exception.getMessage());
-      return new CibaIssueResponse(
-          CibaRequestStatus.BAD_REQUEST,
-          new BackchannelAuthenticationErrorResponse(
-              new Error("invalid_client"), new ErrorDescription(exception.getMessage())));
     }
 
     if (exception instanceof ServerConfigurationNotFoundException) {

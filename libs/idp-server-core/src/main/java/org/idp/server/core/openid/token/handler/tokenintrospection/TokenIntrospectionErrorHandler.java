@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.openid.oauth.clientauthenticator.exception.ClientUnAuthorizedException;
 import org.idp.server.core.openid.oauth.clientauthenticator.exception.UseAttestationChallengeException;
-import org.idp.server.core.openid.oauth.configuration.exception.ClientConfigurationNotFoundException;
 import org.idp.server.core.openid.oauth.configuration.exception.ServerConfigurationNotFoundException;
 import org.idp.server.core.openid.oauth.dpop.DPoPProofInvalidException;
 import org.idp.server.core.openid.token.handler.tokenintrospection.io.TokenIntrospectionResponse;
@@ -118,7 +117,7 @@ public class TokenIntrospectionErrorHandler {
 
       Map<String, Object> contents = new HashMap<>();
       contents.put("error", useAttestationChallenge.errorCode());
-      contents.put("error_description", exception.getMessage());
+      contents.put("error_description", useAttestationChallenge.getMessage());
 
       return new TokenIntrospectionResponse(
           BAD_REQUEST, contents, useAttestationChallenge.responseHeaders());
@@ -132,22 +131,10 @@ public class TokenIntrospectionErrorHandler {
 
       Map<String, Object> contents = new HashMap<>();
       contents.put("error", clientUnAuthorized.errorCode());
-      contents.put("error_description", exception.getMessage());
+      contents.put("error_description", clientUnAuthorized.getMessage());
 
       return new TokenIntrospectionResponse(
           UNAUTHORIZED, contents, clientUnAuthorized.responseHeaders());
-    }
-
-    if (exception instanceof ClientConfigurationNotFoundException) {
-      logTokenIntrospectionError("invalid_client", "invalid_client", exception.getMessage());
-
-      Map<String, Object> contents = new HashMap<>();
-      contents.put("active", false);
-      contents.put("error", "invalid_client");
-      contents.put("error_description", exception.getMessage());
-      contents.put("status_code", 400);
-
-      return new TokenIntrospectionResponse(BAD_REQUEST, contents);
     }
 
     if (exception instanceof ServerConfigurationNotFoundException) {
