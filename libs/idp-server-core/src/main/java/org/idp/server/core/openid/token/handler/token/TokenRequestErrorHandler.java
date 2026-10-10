@@ -20,7 +20,6 @@ import static org.idp.server.core.openid.token.handler.token.io.TokenRequestStat
 
 import org.idp.server.core.openid.oauth.clientauthenticator.exception.ClientUnAuthorizedException;
 import org.idp.server.core.openid.oauth.clientauthenticator.exception.UseAttestationChallengeException;
-import org.idp.server.core.openid.oauth.configuration.exception.ClientConfigurationNotFoundException;
 import org.idp.server.core.openid.oauth.configuration.exception.ServerConfigurationNotFoundException;
 import org.idp.server.core.openid.oauth.dpop.DPoPProofInvalidException;
 import org.idp.server.core.openid.oauth.type.oauth.Error;
@@ -96,14 +95,6 @@ public class TokenRequestErrorHandler {
               new Error(clientUnAuthorized.errorCode()),
               new ErrorDescription(exception.getLocalizedMessage())),
           clientUnAuthorized.responseHeaders());
-    }
-
-    if (exception instanceof ClientConfigurationNotFoundException) {
-      log.warn("Client configuration not found: error={}", exception.getMessage());
-      return new TokenRequestResponse(
-          UNAUTHORIZE,
-          new TokenErrorResponse(
-              new Error("invalid_client"), new ErrorDescription(exception.getMessage())));
     }
 
     if (exception instanceof ServerConfigurationNotFoundException) {

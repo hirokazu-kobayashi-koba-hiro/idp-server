@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.openid.oauth.clientauthenticator.exception.ClientUnAuthorizedException;
 import org.idp.server.core.openid.oauth.clientauthenticator.exception.UseAttestationChallengeException;
-import org.idp.server.core.openid.oauth.configuration.exception.ClientConfigurationNotFoundException;
 import org.idp.server.core.openid.oauth.configuration.exception.ServerConfigurationNotFoundException;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.core.openid.token.handler.tokenrevocation.io.TokenRevocationResponse;
@@ -39,9 +38,9 @@ import org.idp.server.platform.log.LoggerWrapper;
  *
  * <ul>
  *   <li>TokenRevocationBadRequestException → 400 Bad Request (invalid_request)
- *   <li>ClientUnAuthorizedException → 401 Unauthorized (invalid_client); 400 for {@code
- *       use_attestation_challenge}
- *   <li>ClientConfigurationNotFoundException → 400 Bad Request (invalid_client)
+ *   <li>UseAttestationChallengeException → 400 Bad Request (use_attestation_challenge)
+ *   <li>ClientUnAuthorizedException → 401 Unauthorized (invalid_client), including an unknown
+ *       client
  *   <li>ServerConfigurationNotFoundException → 400 Bad Request (invalid_client)
  *   <li>Other exceptions → 500 Internal Server Error (server_error)
  * </ul>
@@ -83,7 +82,7 @@ public class TokenRevocationErrorHandler {
 
       Map<String, Object> contents = new HashMap<>();
       contents.put("error", useAttestationChallenge.errorCode());
-      contents.put("error_description", exception.getMessage());
+      contents.put("error_description", useAttestationChallenge.getMessage());
 
       return new TokenRevocationResponse(
           BAD_REQUEST, new OAuthToken(), contents, useAttestationChallenge.responseHeaders());
@@ -98,15 +97,14 @@ public class TokenRevocationErrorHandler {
 
       Map<String, Object> contents = new HashMap<>();
       contents.put("error", clientUnAuthorized.errorCode());
-      contents.put("error_description", exception.getMessage());
+      contents.put("error_description", clientUnAuthorized.getMessage());
 
       return new TokenRevocationResponse(
           UNAUTHORIZED, new OAuthToken(), contents, clientUnAuthorized.responseHeaders());
     }
 
     // Configuration errors (400)
-    if (exception instanceof ClientConfigurationNotFoundException
-        || exception instanceof ServerConfigurationNotFoundException) {
+    if (exception instanceof ServerConfigurationNotFoundException) {
       log.warn(
           "Token revocation failed: status=bad_request, error=invalid_client, description={}",
           exception.getMessage());

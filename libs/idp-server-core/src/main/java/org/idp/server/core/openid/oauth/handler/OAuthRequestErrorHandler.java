@@ -46,6 +46,10 @@ public class OAuthRequestErrorHandler {
 
     // draft-ietf-oauth-attestation-based-client-auth-11 Section 6.1: 400, unlike other failures.
     if (exception instanceof UseAttestationChallengeException useAttestationChallenge) {
+      log.warn(
+          "OAuth pushed request failed: status=bad_request, error={}, description={}",
+          useAttestationChallenge.errorCode(),
+          useAttestationChallenge.getMessage());
       Map<String, Object> response = new HashMap<>();
       response.put("error", useAttestationChallenge.errorCode());
       response.put("error_description", useAttestationChallenge.getMessage());
@@ -56,6 +60,10 @@ public class OAuthRequestErrorHandler {
     }
 
     if (exception instanceof ClientUnAuthorizedException clientAuthException) {
+      log.warn(
+          "OAuth pushed request failed: status=unauthorized, error={}, description={}",
+          clientAuthException.errorCode(),
+          clientAuthException.getMessage());
       Map<String, Object> response = new HashMap<>();
       response.put("error", clientAuthException.errorCode());
       response.put("error_description", clientAuthException.getMessage());
@@ -74,15 +82,6 @@ public class OAuthRequestErrorHandler {
       Map<String, Object> response = new HashMap<>();
       response.put("error", redirectableBadRequestException.error().value());
       response.put("error_description", redirectableBadRequestException.errorDescription().value());
-      return new OAuthPushedRequestResponse(OAuthPushedRequestStatus.BAD_REQUEST, response);
-    }
-
-    if (exception instanceof ClientConfigurationNotFoundException clientNotFoundException) {
-      log.warn(
-          "OAuth pushed request client configuration not found: error={}", exception.getMessage());
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "invalid_request");
-      response.put("error_description", exception.getMessage());
       return new OAuthPushedRequestResponse(OAuthPushedRequestStatus.BAD_REQUEST, response);
     }
 
