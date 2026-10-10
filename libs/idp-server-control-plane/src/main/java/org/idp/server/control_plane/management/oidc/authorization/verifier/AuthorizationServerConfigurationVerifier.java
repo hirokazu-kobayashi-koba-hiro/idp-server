@@ -21,9 +21,10 @@ import org.idp.server.control_plane.management.exception.InvalidRequestException
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 
 /**
- * Refuses an authorization server configuration whose values would break the tenant at runtime
- * (Issue #1893): an iat window out of range would refuse every DPoP proof or Client Attestation PoP
- * JWT, or hardly limit their reuse.
+ * Refuses an authorization server configuration whose values would break the tenant at runtime: an
+ * iat window out of range would refuse every DPoP proof or Client Attestation PoP JWT, or hardly
+ * limit their reuse (Issue #1893); a client assertion maximum lifetime out of range would refuse
+ * every client assertion, or keep each jti that much longer (Issue #1902).
  *
  * <p>Applied wherever a configuration comes in: tenant creation, onboarding, the starter, and
  * updates.

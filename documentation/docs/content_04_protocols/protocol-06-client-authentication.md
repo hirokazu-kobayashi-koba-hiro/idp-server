@@ -164,6 +164,17 @@ grant_type=authorization_code
 |---------|---------------|------|
 | `jti` | **REQUIRED** | リプレイ攻撃防止 |
 
+**同じ assertion の再送を拒否する**（RFC 7523 §3 要件 7）。受け付けた assertion の `jti` を、テナント・`client_id` ごとに Redis に記録し、同じ assertion の 2 回目は `401 invalid_client` にします。リトライや、トークン・PAR・introspection への流用も含め、リクエストごとに新しい assertion を作ってください。記録は署名とほかの検査をすべて通った assertion だけが対象で、Redis を設定していない配備では記録しません。
+
+**受け入れる期間は最長 60 秒**（RFC 7523 §3 要件 4）。
+
+| assertion | 受け入れる条件 |
+|---|---|
+| `iat` あり | 現在時刻が `iat` + 60 秒以内（`exp` はそれより先でもよい） |
+| `iat` なし | `exp` が現在から 60 秒以内 |
+
+60 秒はテナントの `authorization_server.extension.client_assertion_max_lifetime_seconds`（1〜600 秒）で変更できます。`jti` の記録は、`exp` とこの期限の早いほうまでです。
+
 ---
 
 ## mTLS Client Authentication

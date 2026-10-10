@@ -491,6 +491,13 @@ describe("JWT replay detection on every path (#1893)", () => {
       expect(tooLong.data.error_description).toBe(
         "client_attestation_pop_acceptable_window_seconds must be between 1 and 600 seconds, but was 601"
       );
+
+      // Issue #1902: the longest a client assertion is accepted for is checked the same way.
+      const assertionLifetime = await onboard({ client_assertion_max_lifetime_seconds: 0 });
+      expect(assertionLifetime.status).toBe(400);
+      expect(assertionLifetime.data.error_description).toBe(
+        "client_assertion_max_lifetime_seconds must be between 1 and 600 seconds, but was 0"
+      );
     });
   });
 });

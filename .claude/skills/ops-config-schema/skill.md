@@ -139,6 +139,9 @@ Tenant
 | `authorization_response_duration` | long | 60 | Authorization Response有効期限（秒） |
 | `oauth_authorization_request_expires_in` | int | 1800 | OAuth認可リクエスト有効期限（秒） |
 | `pushed_authorization_request_expires_in` | int | 90 | PAR有効期限（秒） |
+| `dpop_proof_acceptable_window_seconds` | int | 60 | DPoP proof の `iat` 許容範囲（秒、前後とも。1〜600）。`jti` はこの窓が閉じるまで記録して再送を拒否 |
+| `client_attestation_pop_acceptable_window_seconds` | int | 60 | Client Attestation PoP JWT の `iat` 許容範囲（秒、前後とも。1〜600）。`jti` の扱いは DPoP と同じ |
+| `client_assertion_max_lifetime_seconds` | int | 60 | client assertion（private_key_jwt / client_secret_jwt）を受け入れる最長期間（秒、1〜600）。`iat` があれば `iat` から、無ければ `exp` が現在からこの秒数以内。`jti` は `exp` とこの期限の早いほうまで記録して再送を拒否 |
 
 ### FAPI/スコープ
 

@@ -371,6 +371,9 @@
 |-----------|------------|------|
 | `id_token_strict_mode` | `false` | IDトークン厳密モード（OIDC仕様準拠、詳細は下記参照） |
 | `redirect_uri_exact_match_required` | `false` | `redirect_uri` を完全一致で照合する（RFC 9700 §2.1、詳細は下記参照） |
+| `dpop_proof_acceptable_window_seconds` | `60` | DPoP proof の `iat` と現在時刻の差の許容範囲（秒、前後とも。1〜600、範囲外は 400）。受け付けた proof の `jti` はこの窓が閉じるまで記録し、2 回目は拒否する（RFC 9449 §11.1） |
+| `client_attestation_pop_acceptable_window_seconds` | `60` | Client Attestation PoP JWT の `iat` の許容範囲（秒、前後とも。1〜600、範囲外は 400）。`jti` の記録は DPoP と同じ |
+| `client_assertion_max_lifetime_seconds` | `60` | client assertion（`private_key_jwt` / `client_secret_jwt`）を受け入れる最長の期間（秒。1〜600、範囲外は 400）。`iat` があれば `iat` からこの秒数まで、無ければ `exp` が現在からこの秒数以内のものだけを受け入れる（RFC 7523 §3 要件 4）。受け付けた assertion の `jti` は `exp` とこの期限の早いほうまで記録し、2 回目は拒否する（RFC 7523 §3 要件 7） |
 
 ##### id_token_strict_mode - IDトークンクレーム制御
 

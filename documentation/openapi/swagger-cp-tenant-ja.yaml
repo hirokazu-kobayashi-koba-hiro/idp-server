@@ -849,6 +849,16 @@ components:
               type: integer
               default: 300
               description: 発行した challenge の有効期間（秒）。
+            client_assertion_max_lifetime_seconds:
+              type: integer
+              default: 60
+              minimum: 1
+              maximum: 600
+              description: |
+                client assertion（private_key_jwt / client_secret_jwt）を受け入れる最長の期間（秒。Issue #1902）。
+                iat があれば iat からこの秒数まで、iat が無ければ exp が現在からこの秒数以内のものだけを受け入れる
+                （RFC 7523 Section 3 要件 4）。受け付けた assertion の jti は、
+                exp とこの期限の早いほうまで Redis に記録し、2 回目は拒否する。範囲外は 400。
             client_attestation_pop_acceptable_window_seconds:
               type: integer
               default: 60

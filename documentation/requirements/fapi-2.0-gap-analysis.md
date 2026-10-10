@@ -225,7 +225,7 @@ DPoP 実装とあわせて FAPI 2.0 認定必須 P0 項目を全クリア:
 |--------|------|------|
 | `dpop-negative-tests` | `EnsureHttpStatusCodeIs400or401` | 同じ `jti` の DPoP proof を 2 回受け付ける（GAP-FAPI2-008）。dpop プランのみ。**#1893 で解消済み**: 同じ `jti` の 2 回目は 400 になり、以後の実測（2026-10-10、OpenID4VCI HAIP プラン。DPoP 必須）では本テストは PASSED |
 | `discovery-end-point-verification` | `CheckForUnexpectedParametersInServerMetadata` | discovery の `verified_claims_supported` が suite の rfc8414 スキーマに無い。OIDC4IDA の他のメタデータは登録済みで、**suite 側の登録漏れ**。idp-server は仕様どおり |
-| `attempt-reuse-authorization-code-after-one-second` | `EnsureHttpStatusCodeIs4xx` | 認可コード再利用後に発行済みアクセストークンを失効させていない（RFC 6749 §4.1.2 の SHOULD） |
+| `attempt-reuse-authorization-code-after-one-second` | `EnsureHttpStatusCodeIs4xx` | 認可コード再利用後に発行済みアクセストークンを失効させていない（RFC 6749 §4.1.2 の SHOULD）。**対応しない（#1902 で判断）**: 再利用されたコードの拒否（MUST）はしている。失効が守るのは「横取りしたコードを攻撃者が使える」構成で、FAPI では PKCE・クライアント認証・PAR・`dpop_jkt` がそれより前に止める。失効を入れると、同じコードを二重送信したクライアントが正規に得たトークンを失う |
 | `test-claims-parameter-identity-claims` | `EnsureIdentityClaimsContainRequestedClaims` | `claims` パラメータで要求した属性がテストユーザーに入っていない。実装ではなくテストデータの問題 |
 | URI 正規化 | - | ✅ (`UriWrapper`) |
 

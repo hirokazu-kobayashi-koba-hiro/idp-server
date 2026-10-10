@@ -29,19 +29,21 @@ import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
- * Lets a short-lived JWT through once (Issue #1893): the DPoP proof (RFC 9449 Section 11.1) and the
- * Client Attestation PoP JWT (draft-ietf-oauth-attestation-based-client-auth Section 12.1).
+ * Lets a short-lived JWT through once (Issue #1893): the DPoP proof (RFC 9449 Section 11.1), the
+ * Client Attestation PoP JWT (draft-ietf-oauth-attestation-based-client-auth Section 12.1) and the
+ * client assertion (RFC 7523 Section 3, Issue #1902).
  *
  * <p>Each accepted {@code jti} is recorded in the cache store (Redis {@code SET NX EX}) for as long
- * as the JWT could still be accepted by its {@code iat} window. The cache is written outside the
- * database transaction, so the check also works on read-only paths such as userinfo and
+ * as the JWT could still be accepted: until its {@code iat} window closes, or for a client
+ * assertion, until its {@code exp} or the end of its maximum lifetime. The cache is written outside
+ * the database transaction, so the check also works on read-only paths such as userinfo and
  * introspection.
  *
  * <p>The key holds what the JWT is bound to — the key thumbprint of a DPoP proof, the client of a
- * PoP — so that one client cannot use up the {@code jti} values of another.
+ * PoP or a client assertion — so that one client cannot use up the {@code jti} values of another.
  *
- * <p>Where no cache store is configured, or it fails, nothing is recorded and the {@code iat}
- * window alone limits reuse; the cache store logs the failure.
+ * <p>Where no cache store is configured, or it fails, nothing is recorded and only the time limits
+ * of the JWT ({@code iat} window, {@code exp}) limit reuse; the cache store logs the failure.
  */
 public class JwtReplayDetector {
 
@@ -71,23 +73,36 @@ public class JwtReplayDetector {
       String jti,
       Instant issuedAt,
       Duration window) {
+    return firstUseUntil(tenant, kind, binding, jti, issuedAt.plus(window));
+  }
+
+  /**
+   * Records {@code jti} unless it was seen before, keeping it until {@code acceptableUntil}: for a
+   * JWT whose acceptance is bounded by its {@code exp} rather than an {@code iat} window, such as a
+   * client assertion (RFC 7523 Section 3).
+   *
+   * @param acceptableUntil the last moment the JWT could still be accepted
+   * @return {@code true} the first time, {@code false} when the same JWT comes again
+   */
+  public boolean firstUseUntil(
+      Tenant tenant, JwtReplayKind kind, String binding, String jti, Instant acceptableUntil) {
     if (cacheStore instanceof NoOperationCacheStore) {
       if (warnedNoStore.compareAndSet(false, true)) {
         log.warn(
-            "No cache store is configured: JWT replay detection (jti) is off, and only the iat window limits reuse.");
+            "No cache store is configured: JWT replay detection (jti) is off, and only the time limits of the JWT (iat window, exp) limit reuse.");
       }
       return true;
     }
     return cacheStore.putIfAbsent(
-        key(tenant, kind, binding, jti), timeToLiveSeconds(issuedAt, window));
+        key(tenant, kind, binding, jti), timeToLiveSeconds(acceptableUntil));
   }
 
   /**
-   * As long as the JWT could still be accepted: until {@code iat + window}. At least one second, so
-   * that a JWT accepted at the very edge of the window is still recorded.
+   * As long as the JWT could still be accepted. At least one second, so that a JWT accepted at the
+   * very edge of its life is still recorded.
    */
-  static int timeToLiveSeconds(Instant issuedAt, Duration window) {
-    long seconds = Duration.between(Instant.now(), issuedAt.plus(window)).toSeconds();
+  static int timeToLiveSeconds(Instant acceptableUntil) {
+    long seconds = Duration.between(Instant.now(), acceptableUntil).toSeconds();
     return (int) Math.max(1, Math.min(seconds, Integer.MAX_VALUE));
   }
 

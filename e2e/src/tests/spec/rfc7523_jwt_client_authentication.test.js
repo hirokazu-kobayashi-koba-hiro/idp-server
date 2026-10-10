@@ -503,6 +503,77 @@ describe("RFC 7523: JSON Web Token (JWT) Profile for OAuth 2.0 Client Authentica
         expect(response.status).toBe(401);
         expect(response.data).toHaveProperty("error", "invalid_client");
       });
+
+      /**
+       * RFC 7523 Section 3, Requirement 4:
+       * "Note that the authorization server may reject JWTs with an "exp" claim value that is
+       *  unreasonably far in the future." (Issue #1902)
+       *
+       * With the default maximum lifetime of 60 seconds
+       * (client_assertion_max_lifetime_seconds): with an iat, the assertion is accepted until iat
+       * plus the maximum; without one, its exp may be at most the maximum ahead.
+       */
+      describe('Note that the authorization server may reject JWTs with an "exp" claim value that is unreasonably far in the future.', () => {
+        it("private_key_jwt: rejects an assertion without iat whose exp is more than the maximum lifetime ahead", async () => {
+          const code = await getAuthorizationCode(privateKeyJwtClient);
+          const assertion = createCustomClientAssertion({
+            client: privateKeyJwtClient,
+            issuer: serverConfig.issuer,
+            overrides: { exp: toEpocTime({ adjusted: 120 }) },
+            omit: ["iat"],
+          });
+
+          const response = await makeTokenRequest(privateKeyJwtClient, code, assertion);
+
+          expect(response.status).toBe(401);
+          expect(response.data).toHaveProperty("error", "invalid_client");
+          expect(response.data.error_description).toContain(
+            "exp is more than 60 seconds ahead and iat is not present"
+          );
+        });
+
+        it("private_key_jwt: accepts an assertion without iat whose exp is within the maximum lifetime", async () => {
+          const code = await getAuthorizationCode(privateKeyJwtClient);
+          const assertion = createCustomClientAssertion({
+            client: privateKeyJwtClient,
+            issuer: serverConfig.issuer,
+            overrides: { exp: toEpocTime({ adjusted: 30 }) },
+            omit: ["iat"],
+          });
+
+          const response = await makeTokenRequest(privateKeyJwtClient, code, assertion);
+
+          expect(response.status).toBe(200);
+        });
+
+        it("private_key_jwt: rejects an assertion issued more than the maximum lifetime ago, even though its exp is still ahead", async () => {
+          const code = await getAuthorizationCode(privateKeyJwtClient);
+          const assertion = createCustomClientAssertion({
+            client: privateKeyJwtClient,
+            issuer: serverConfig.issuer,
+            overrides: { iat: toEpocTime({ adjusted: -120 }), exp: toEpocTime({ adjusted: 3600 }) },
+          });
+
+          const response = await makeTokenRequest(privateKeyJwtClient, code, assertion);
+
+          expect(response.status).toBe(401);
+          expect(response.data).toHaveProperty("error", "invalid_client");
+          expect(response.data.error_description).toContain("iat is more than 60 seconds ago");
+        });
+
+        it("private_key_jwt: accepts a freshly issued assertion whose exp is far ahead", async () => {
+          const code = await getAuthorizationCode(privateKeyJwtClient);
+          const assertion = createCustomClientAssertion({
+            client: privateKeyJwtClient,
+            issuer: serverConfig.issuer,
+            overrides: { exp: toEpocTime({ adjusted: 3600 }) },
+          });
+
+          const response = await makeTokenRequest(privateKeyJwtClient, code, assertion);
+
+          expect(response.status).toBe(200);
+        });
+      });
     });
 
     /**
@@ -542,6 +613,37 @@ describe("RFC 7523: JSON Web Token (JWT) Profile for OAuth 2.0 Client Authentica
         expect(response.status).toBe(401);
         expect(response.data).toHaveProperty("error", "invalid_client");
       });
+
+      /**
+       * RFC 7523 Section 3, Requirement 7:
+       * "The authorization server MAY ensure that JWTs are not replayed by maintaining the set of
+       *  used "jti" values for the length of time for which the JWT would be considered valid based
+       *  on the applicable "exp" instant." (Issue #1902)
+       */
+      it.each([
+        ["private_key_jwt", privateKeyJwtClient],
+        ["client_secret_jwt", clientSecretJwtClient],
+      ])(
+        '%s: The authorization server MAY ensure that JWTs are not replayed by maintaining the set of used "jti" values for the length of time for which the JWT would be considered valid based on the applicable "exp" instant.',
+        async (_, client) => {
+          const assertion = createClientAssertion({ client, issuer: serverConfig.issuer });
+
+          const first = await makeTokenRequest(client, await getAuthorizationCode(client), assertion);
+          expect(first.status).toBe(200);
+
+          const replayed = await makeTokenRequest(
+            client,
+            await getAuthorizationCode(client),
+            assertion
+          );
+          console.log(replayed.status, replayed.data);
+          expect(replayed.status).toBe(401);
+          expect(replayed.data).toHaveProperty("error", "invalid_client");
+          expect(replayed.data.error_description).toContain(
+            "reason=client assertion jti has already been used"
+          );
+        }
+      );
     });
   });
 

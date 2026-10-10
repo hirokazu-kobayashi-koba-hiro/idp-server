@@ -19,7 +19,8 @@ package org.idp.server.core.openid.oauth.replay;
 /** The kinds of JWT {@link JwtReplayDetector} lets through once. Part of the cache key. */
 public enum JwtReplayKind {
   DPOP_PROOF("dpop"),
-  CLIENT_ATTESTATION_POP("client_attestation_pop");
+  CLIENT_ATTESTATION_POP("client_attestation_pop"),
+  CLIENT_ASSERTION("client_assertion");
 
   String value;
 
