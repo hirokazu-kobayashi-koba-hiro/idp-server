@@ -104,8 +104,15 @@ public class JwtReplayDetector {
    * life is still recorded.
    */
   static int timeToLiveSeconds(Instant acceptableUntil) {
-    long millis = Duration.between(Instant.now(), acceptableUntil).toMillis();
-    long seconds = Math.ceilDiv(millis, 1000);
+    return timeToLiveSeconds(Instant.now(), acceptableUntil);
+  }
+
+  static int timeToLiveSeconds(Instant now, Instant acceptableUntil) {
+    Duration remaining = Duration.between(now, acceptableUntil);
+    long seconds = remaining.toSeconds();
+    if (remaining.minusSeconds(seconds).isPositive()) {
+      seconds++;
+    }
     return (int) Math.max(1, Math.min(seconds, Integer.MAX_VALUE));
   }
 
