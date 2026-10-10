@@ -23,6 +23,7 @@ import org.idp.server.core.openid.oauth.clientauthenticator.exception.ClientUnAu
 import org.idp.server.core.openid.oauth.clientauthenticator.mtls.ClientCertification;
 import org.idp.server.core.openid.oauth.clientauthenticator.plugin.ClientAuthenticator;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
+import org.idp.server.core.openid.oauth.replay.JwtReplayDetector;
 import org.idp.server.core.openid.oauth.type.oauth.ClientAuthenticationType;
 import org.idp.server.core.openid.oauth.type.oauth.ClientSecret;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
@@ -36,6 +37,11 @@ class ClientSecretJwtAuthenticator
 
   LoggerWrapper log = LoggerWrapper.getLogger(ClientSecretJwtAuthenticator.class);
   JoseHandler joseHandler = new JoseHandler();
+  JwtReplayDetector replayDetector;
+
+  ClientSecretJwtAuthenticator(JwtReplayDetector replayDetector) {
+    this.replayDetector = replayDetector;
+  }
 
   @Override
   public ClientAuthenticationType type() {
@@ -52,6 +58,8 @@ class ClientSecretJwtAuthenticator
 
     ClientSecret clientSecret = new ClientSecret(context.clientConfiguration().clientSecretValue());
     ClientAssertionJwt clientAssertionJwt = new ClientAssertionJwt(joseContext.jsonWebSignature());
+    throwExceptionIfReplayed(
+        joseContext, context, replayDetector, ClientAuthenticationType.client_secret_jwt);
 
     log.debug(
         "Client authentication succeeded: method={}, client_id={}",

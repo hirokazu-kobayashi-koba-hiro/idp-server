@@ -23,6 +23,7 @@ import org.idp.server.core.openid.oauth.clientauthenticator.exception.ClientUnAu
 import org.idp.server.core.openid.oauth.clientauthenticator.mtls.ClientCertification;
 import org.idp.server.core.openid.oauth.clientauthenticator.plugin.ClientAuthenticator;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
+import org.idp.server.core.openid.oauth.replay.JwtReplayDetector;
 import org.idp.server.core.openid.oauth.type.mtls.ClientCert;
 import org.idp.server.core.openid.oauth.type.oauth.ClientAuthenticationType;
 import org.idp.server.core.openid.oauth.type.oauth.ClientSecret;
@@ -38,6 +39,11 @@ class PrivateKeyJwtAuthenticator
 
   LoggerWrapper log = LoggerWrapper.getLogger(PrivateKeyJwtAuthenticator.class);
   JoseHandler joseHandler = new JoseHandler();
+  JwtReplayDetector replayDetector;
+
+  PrivateKeyJwtAuthenticator(JwtReplayDetector replayDetector) {
+    this.replayDetector = replayDetector;
+  }
 
   @Override
   public ClientAuthenticationType type() {
@@ -57,6 +63,8 @@ class PrivateKeyJwtAuthenticator
     ClientAssertionJwt clientAssertionJwt = new ClientAssertionJwt(joseContext.jsonWebSignature());
 
     throwExceptionIfUnmatchedAlg(context, clientAssertionJwt, clientAuthenticationPublicKey);
+    throwExceptionIfReplayed(
+        joseContext, context, replayDetector, ClientAuthenticationType.private_key_jwt);
 
     ClientCertification clientCertification = parseClientCertification(context);
 

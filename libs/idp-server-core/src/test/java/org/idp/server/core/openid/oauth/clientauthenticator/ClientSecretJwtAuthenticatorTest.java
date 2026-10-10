@@ -21,10 +21,12 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.Map;
 import org.idp.server.core.openid.oauth.clientauthenticator.exception.ClientUnAuthorizedException;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
+import org.idp.server.core.openid.oauth.replay.JwtReplayDetector;
 import org.idp.server.core.openid.oauth.type.oauth.ClientSecretBasic;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.token.TokenRequestContext;
 import org.idp.server.core.openid.token.TokenRequestParameters;
+import org.idp.server.platform.datasource.cache.NoOperationCacheStore;
 import org.idp.server.platform.json.JsonConverter;
 import org.junit.jupiter.api.Test;
 
@@ -71,7 +73,8 @@ class ClientSecretJwtAuthenticatorTest {
 
   @Test
   void throwsInvalidClientWhenSecretIsNotConfigured() {
-    ClientSecretJwtAuthenticator authenticator = new ClientSecretJwtAuthenticator();
+    ClientSecretJwtAuthenticator authenticator =
+        new ClientSecretJwtAuthenticator(new JwtReplayDetector(new NoOperationCacheStore()));
 
     ClientUnAuthorizedException exception =
         assertThrows(
@@ -82,7 +85,8 @@ class ClientSecretJwtAuthenticatorTest {
 
   @Test
   void throwsInvalidClientWhenSecretIsEmpty() {
-    ClientSecretJwtAuthenticator authenticator = new ClientSecretJwtAuthenticator();
+    ClientSecretJwtAuthenticator authenticator =
+        new ClientSecretJwtAuthenticator(new JwtReplayDetector(new NoOperationCacheStore()));
 
     assertThrows(
         ClientUnAuthorizedException.class,

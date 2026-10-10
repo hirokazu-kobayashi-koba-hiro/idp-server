@@ -109,11 +109,19 @@ class JwtReplayDetectorTest {
   void remembersAJwtUntilItsWindowCloses() {
     Instant now = Instant.now();
 
-    assertEquals(60, JwtReplayDetector.timeToLiveSeconds(now, WINDOW), 1);
+    assertEquals(60, JwtReplayDetector.timeToLiveSeconds(now.plus(WINDOW)), 1);
     // iat in the future (clock ahead): accepted for longer, so remembered for longer.
-    assertEquals(90, JwtReplayDetector.timeToLiveSeconds(now.plusSeconds(30), WINDOW), 1);
+    assertEquals(90, JwtReplayDetector.timeToLiveSeconds(now.plusSeconds(30).plus(WINDOW)), 1);
     // At the very edge of the window: still remembered.
-    assertEquals(1, JwtReplayDetector.timeToLiveSeconds(now.minusSeconds(60), WINDOW));
+    assertEquals(1, JwtReplayDetector.timeToLiveSeconds(now.minusSeconds(60).plus(WINDOW)));
+  }
+
+  @Test
+  void remembersAClientAssertionUntilItsExp() {
+    Instant now = Instant.now();
+
+    // RFC 7523 Section 3: kept for as long as the assertion is valid by its exp.
+    assertEquals(300, JwtReplayDetector.timeToLiveSeconds(now.plusSeconds(300)), 1);
   }
 
   private static boolean firstUse(

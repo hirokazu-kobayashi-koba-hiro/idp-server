@@ -21,6 +21,9 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.oauth.clientauthenticator.exception.ClientUnAuthorizedException;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.openid.oauth.replay.JwtReplayDetector;
+import org.idp.server.core.openid.oauth.replay.JwtReplayKind;
+import org.idp.server.core.openid.oauth.type.oauth.ClientAuthenticationType;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.jose.JoseContext;
@@ -188,6 +191,35 @@ public interface ClientAuthenticationJwtValidatable {
     if (!claims.hasJti()) {
       throw new ClientUnAuthorizedException(
           "client assertion is invalid, must contains jti claim in jwt payload");
+    }
+  }
+
+  /**
+   * RFC 7523 Section 3: "The authorization server MAY ensure that JWTs are not replayed by
+   * maintaining the set of used "jti" values for the length of time for which the JWT would be
+   * considered valid based on the applicable "exp" instant." (Issue #1902)
+   *
+   * <p>Called once the assertion has passed every other check, so that only an accepted assertion
+   * uses up its {@code jti}. Keyed by the client, so that one client cannot use up the {@code jti}
+   * values of another.
+   */
+  default void throwExceptionIfReplayed(
+      JoseContext joseContext,
+      BackchannelRequestContext context,
+      JwtReplayDetector replayDetector,
+      ClientAuthenticationType clientAuthenticationType) {
+    JsonWebTokenClaims claims = joseContext.claims();
+    RequestedClientId clientId = context.requestedClientId();
+    boolean firstUse =
+        replayDetector.firstUseUntil(
+            context.tenant(),
+            JwtReplayKind.CLIENT_ASSERTION,
+            clientId.value(),
+            claims.getJti(),
+            claims.getExp().toInstant());
+    if (!firstUse) {
+      throw new ClientUnAuthorizedException(
+          clientAuthenticationType.name(), clientId, "client assertion jti has already been used");
     }
   }
 

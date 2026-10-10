@@ -71,6 +71,19 @@ public class JwtReplayDetector {
       String jti,
       Instant issuedAt,
       Duration window) {
+    return firstUseUntil(tenant, kind, binding, jti, issuedAt.plus(window));
+  }
+
+  /**
+   * Records {@code jti} unless it was seen before, keeping it until {@code acceptableUntil}: for a
+   * JWT whose acceptance is bounded by its {@code exp} rather than an {@code iat} window, such as a
+   * client assertion (RFC 7523 Section 3).
+   *
+   * @param acceptableUntil the last moment the JWT could still be accepted
+   * @return {@code true} the first time, {@code false} when the same JWT comes again
+   */
+  public boolean firstUseUntil(
+      Tenant tenant, JwtReplayKind kind, String binding, String jti, Instant acceptableUntil) {
     if (cacheStore instanceof NoOperationCacheStore) {
       if (warnedNoStore.compareAndSet(false, true)) {
         log.warn(
@@ -79,15 +92,15 @@ public class JwtReplayDetector {
       return true;
     }
     return cacheStore.putIfAbsent(
-        key(tenant, kind, binding, jti), timeToLiveSeconds(issuedAt, window));
+        key(tenant, kind, binding, jti), timeToLiveSeconds(acceptableUntil));
   }
 
   /**
-   * As long as the JWT could still be accepted: until {@code iat + window}. At least one second, so
-   * that a JWT accepted at the very edge of the window is still recorded.
+   * As long as the JWT could still be accepted. At least one second, so that a JWT accepted at the
+   * very edge of its life is still recorded.
    */
-  static int timeToLiveSeconds(Instant issuedAt, Duration window) {
-    long seconds = Duration.between(Instant.now(), issuedAt.plus(window)).toSeconds();
+  static int timeToLiveSeconds(Instant acceptableUntil) {
+    long seconds = Duration.between(Instant.now(), acceptableUntil).toSeconds();
     return (int) Math.max(1, Math.min(seconds, Integer.MAX_VALUE));
   }
 
