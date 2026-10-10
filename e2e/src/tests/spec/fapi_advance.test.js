@@ -739,9 +739,9 @@ describe("Financial-grade API Security Profile 1.0 - Part 2: Advanced", () => {
         codeChallengeMethod: "S256",
       });
       console.log(response.status, response.data);
-      // The PAR endpoint reports every failed client authentication with 400 (RFC 6749 5.2 requires
-      // 401 only when the client authenticated through the Authorization header).
-      expect(response.status).toBe(400);
+      // The PAR endpoint reports a failed client authentication with 401, as the token endpoint
+      // does (RFC 6749 Section 5.2 allows it; Issue #1891).
+      expect(response.status).toBe(401);
       expect(response.data.error).toEqual("invalid_client");
       expect(response.data.error_description).toContain(
         "client assertion signing algorithm must be PS256 or ES256"

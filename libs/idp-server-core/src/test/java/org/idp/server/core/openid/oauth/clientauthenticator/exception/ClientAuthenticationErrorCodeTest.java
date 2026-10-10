@@ -161,6 +161,8 @@ class ClientAuthenticationErrorCodeTest {
             .handle(new InvalidClientAttestationException(METHOD, CLIENT_ID, "bad signature"));
 
     assertEquals("invalid_client_attestation", response.response().get("error"));
-    assertEquals(false, response.response().get("active"));
+    // RFC 7662 Section 2.3: "active": false is only for an authorized query (Issue #1891).
+    assertEquals(401, response.statusCode());
+    assertFalse(response.response().containsKey("active"));
   }
 }

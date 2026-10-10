@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 560" font-family="'Helvetica Neue', Arial, 'Hiragino Sans', 'Noto Sans JP', sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#334155"/>
+    </marker>
+    <marker id="arrow-fix" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#C2410C"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="980" height="560" fill="#ffffff"/>
+
+  <!-- title -->
+  <text x="490" y="34" text-anchor="middle" font-size="20" font-weight="bold" fill="#0F172A">クライアント認証の失敗は、どのエンドポイントも RFC 6749 §5.2 に行き着く</text>
+  <text x="490" y="56" text-anchor="middle" font-size="12" fill="#64748B">introspection と CIBA だけは、自分の仕様でステータスを 401 に固定している</text>
+
+  <!-- connectors: follow §5.2 as is -->
+  <g fill="none" stroke="#334155" stroke-width="1.5">
+    <path d="M 400 113 H 480 V 300 H 560" marker-end="url(#arrow)"/>
+    <path d="M 400 193 H 480"/>
+    <path d="M 400 273 H 480"/>
+  </g>
+  <!-- connectors: status fixed to 401 -->
+  <g fill="none" stroke="#C2410C" stroke-width="1.5" stroke-dasharray="6 4">
+    <path d="M 400 353 H 470 V 320 H 560" marker-end="url(#arrow-fix)"/>
+    <path d="M 400 433 H 470 V 353"/>
+  </g>
+
+  <!-- endpoints -->
+  <rect x="40" y="85" width="360" height="56" rx="8" fill="#F8FAFC" stroke="#334155" stroke-width="1.5"/>
+  <text x="56" y="109" font-size="15" font-weight="bold" fill="#1E293B">トークンエンドポイント</text>
+  <text x="56" y="129" font-size="12" fill="#64748B">RFC 6749 §5.2 そのもの</text>
+
+  <rect x="40" y="165" width="360" height="56" rx="8" fill="#F8FAFC" stroke="#334155" stroke-width="1.5"/>
+  <text x="56" y="189" font-size="15" font-weight="bold" fill="#1E293B">Revocation（RFC 7009）</text>
+  <text x="56" y="209" font-size="12" fill="#64748B">§2.2.1: エラーの形は RFC 6749 §5.2 に準拠する</text>
+
+  <rect x="40" y="245" width="360" height="56" rx="8" fill="#F8FAFC" stroke="#334155" stroke-width="1.5"/>
+  <text x="56" y="269" font-size="15" font-weight="bold" fill="#1E293B">PAR（RFC 9126）</text>
+  <text x="56" y="289" font-size="12" fill="#64748B">§2.3: トークンエンドポイントと同じ形（§5.2）で返す</text>
+
+  <rect x="40" y="325" width="360" height="56" rx="8" fill="#FFF7ED" stroke="#C2410C" stroke-width="1.5"/>
+  <text x="56" y="349" font-size="15" font-weight="bold" fill="#7C2D12">CIBA（OpenID CIBA Core）</text>
+  <text x="56" y="369" font-size="12" fill="#9A3412">§13: invalid_client は 401</text>
+
+  <rect x="40" y="405" width="360" height="56" rx="8" fill="#FFF7ED" stroke="#C2410C" stroke-width="1.5"/>
+  <text x="56" y="429" font-size="15" font-weight="bold" fill="#7C2D12">Introspection（RFC 7662）</text>
+  <text x="56" y="449" font-size="12" fill="#9A3412">§2.3: 資格情報が無効なら 401</text>
+
+  <!-- RFC 6749 §5.2 -->
+  <rect x="560" y="230" width="380" height="150" rx="8" fill="#EEF2FF" stroke="#4F46E5" stroke-width="2"/>
+  <text x="578" y="258" font-size="15" font-weight="bold" fill="#312E81">RFC 6749 §5.2 invalid_client</text>
+  <text x="578" y="284" font-size="13" fill="#1E293B">既定は 400（unless specified otherwise）</text>
+  <text x="578" y="306" font-size="13" fill="#1E293B">401 は MAY（使える方式を示すため）</text>
+  <text x="578" y="328" font-size="13" fill="#1E293B">Authorization ヘッダーで認証したら</text>
+  <text x="578" y="350" font-size="13" font-weight="bold" fill="#1E293B">401 + WWW-Authenticate が MUST</text>
+  <text x="578" y="370" font-size="12" fill="#64748B">（client_secret_basic がこれに当たる）</text>
+
+  <!-- legend -->
+  <line x1="40" y1="510" x2="80" y2="510" stroke="#334155" stroke-width="1.5"/>
+  <text x="90" y="514" font-size="12" fill="#64748B">§5.2 のルールにそのまま従う</text>
+  <line x1="380" y1="510" x2="420" y2="510" stroke="#C2410C" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="430" y="514" font-size="12" fill="#64748B">形は §5.2 だが、ステータスは認証方式に関わらず 401</text>
+</svg>

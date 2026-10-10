@@ -337,11 +337,11 @@ describe("JWT replay detection on every path (#1893)", () => {
       post({ url, body: new URLSearchParams({ client_id: clientId, ...params }).toString(), headers });
 
     /**
-     * The client authentication failure every path answers with. The status is each endpoint's own
-     * for a failed client authentication: 400 at PAR and introspection, 401 elsewhere.
+     * The client authentication failure every path answers with: 401 (RFC 6749 Section 5.2,
+     * RFC 7662 Section 2.3, Issue #1891).
      */
-    const expectReplayRefused = (response, status) => {
-      expect(response.status).toBe(status);
+    const expectReplayRefused = (response) => {
+      expect(response.status).toBe(401);
       expect(response.data.error).toBe("invalid_client_attestation");
       expect(response.data.error_description).toBe(
         `Client authentication failed: method=attest_jwt_client_auth, client_id=${clientId}, ` +
@@ -375,7 +375,7 @@ describe("JWT replay detection on every path (#1893)", () => {
         );
 
       expect((await push()).status).toBe(201);
-      expectReplayRefused(await push(), 400);
+      expectReplayRefused(await push());
     });
 
     it("token introspection: refuses the same PoP the second time", async () => {
@@ -384,7 +384,7 @@ describe("JWT replay detection on every path (#1893)", () => {
       const introspect = () => form(serverConfig.tokenIntrospectionEndpoint, { token }, headers);
 
       expect((await introspect()).status).toBe(200);
-      expectReplayRefused(await introspect(), 400);
+      expectReplayRefused(await introspect());
     });
 
     it("token introspection extensions: refuses the same PoP the second time", async () => {
@@ -394,7 +394,7 @@ describe("JWT replay detection on every path (#1893)", () => {
         form(serverConfig.tokenIntrospectionExtensionsEndpoint, { token }, headers);
 
       expect((await introspect()).status).toBe(200);
-      expectReplayRefused(await introspect(), 400);
+      expectReplayRefused(await introspect());
     });
 
     it("token revocation: refuses the same PoP the second time", async () => {
@@ -403,7 +403,7 @@ describe("JWT replay detection on every path (#1893)", () => {
       const revoke = () => form(serverConfig.tokenRevocationEndpoint, { token }, headers);
 
       expect((await revoke()).status).toBe(200);
-      expectReplayRefused(await revoke(), 401);
+      expectReplayRefused(await revoke());
     });
 
     it("CIBA backchannel authentication request: refuses the same PoP the second time", async () => {
@@ -422,7 +422,7 @@ describe("JWT replay detection on every path (#1893)", () => {
         );
 
       expect((await request()).status).toBe(200);
-      expectReplayRefused(await request(), 401);
+      expectReplayRefused(await request());
     });
   });
 

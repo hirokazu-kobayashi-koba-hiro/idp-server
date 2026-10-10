@@ -180,6 +180,19 @@ PKI（Public Key Infrastructure）で発行された証明書を使用したmTLS
 
 ---
 
+## クライアント認証に失敗したときの応答
+
+どの方式・どのエンドポイントでも、クライアント認証の失敗は `401` + `invalid_client` で返します。仕様上の根拠（エンドポイントごとに 400 / 401 がどう決まるか）は [クライアント認証に失敗したときの応答](../content_11_learning/16-oauth-oidc-rfc/client-auth/client-authentication-error-response.md) を参照してください。
+
+| 状況 | idp-server の応答 |
+|---|---|
+| 認証の失敗（シークレット不一致、署名不正、認証情報なし、存在しない `client_id` など） | `401` + `invalid_client`。トークン・revocation・introspection・PAR・CIBA で共通 |
+| `Authorization` ヘッダー（Basic）で認証しようとして失敗 | 上に加えて `WWW-Authenticate: Basic realm="<issuer>"`（RFC 6749 §5.2） |
+| `client_secret_basic` 以外で登録したクライアントが Basic ヘッダーも送った | Basic の失敗として扱う（RFC 6749 §2.3 の「1 リクエストに 1 方式」） |
+| `attest_jwt_client_auth` の `use_attestation_challenge` | `400`（draft-ietf-oauth-attestation-based-client-auth-11 §6.1） |
+
+---
+
 ## セキュリティ考慮事項
 
 ### 推奨事項

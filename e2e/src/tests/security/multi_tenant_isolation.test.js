@@ -193,8 +193,9 @@ describe("Security: Multi-Tenant API Isolation (Issue #734)", () => {
 
     console.log(`   Response Status: ${crossTenantIntrospection.status}`);
 
-    // Must be denied with 400 Bad Request (client not found in target tenant)
-    expect(crossTenantIntrospection.status).toBe(400);
+    // Must be denied with 401 Unauthorized (client not found in target tenant: invalid_client,
+    // RFC 7662 Section 2.3, Issue #1891)
+    expect(crossTenantIntrospection.status).toBe(401);
     console.log("✅ Cross-tenant introspection blocked with error status");
 
     console.log("\n" + "=".repeat(80));

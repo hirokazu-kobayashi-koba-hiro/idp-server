@@ -889,11 +889,10 @@ describe("draft-ietf-oauth-attestation-based-client-auth-11: OAuth 2.0 Attestati
         body: params,
       });
       console.log(response.status, response.data);
-      // The introspection endpoint reports client authentication failure as 400 with
-      // active:false, matching rfc7662_token_introspection.test.js (#1707), rather than the
-      // 401 used by the token endpoint.
-      expect(response.status).toBe(400);
-      expect(response.data).toHaveProperty("active", false);
+      // RFC 7662 Section 2.3: a failed client authentication is 401, and "active" is only for an
+      // authorized query (Issue #1891).
+      expect(response.status).toBe(401);
+      expect(response.data).not.toHaveProperty("active");
       expect(response.data).toHaveProperty("error", "invalid_client");
     });
 
@@ -1003,8 +1002,11 @@ describe("draft-ietf-oauth-attestation-based-client-auth-11: OAuth 2.0 Attestati
         },
       });
       console.log(response.status, response.data);
-      expect(response.status).toBe(400);
-      expect(response.data).toHaveProperty("active", false);
+      // The client sent Basic credentials, so the failure carries a Basic challenge
+      // (RFC 6749 Section 5.2, Issue #1891).
+      expect(response.status).toBe(401);
+      expect(response.data).not.toHaveProperty("active");
+      expect(response.headers["www-authenticate"]).toMatch(/^Basic realm="/);
     });
 
     it("Token Revocation endpoint rejects the request when the Client Attestation headers are absent, and the token stays valid.", async () => {

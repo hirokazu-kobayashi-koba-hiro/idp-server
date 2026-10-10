@@ -115,7 +115,12 @@ public class TokenRequestHandler {
     AuthorizationServerConfiguration authorizationServerConfiguration =
         authorizationServerConfigurationQueryRepository.get(tenant);
     ClientConfiguration clientConfiguration =
-        clientConfigurationQueryRepository.get(tenant, requestedClientId);
+        clientAuthenticationHandler.findClient(
+            clientConfigurationQueryRepository,
+            tenant,
+            requestedClientId,
+            clientSecretBasic,
+            authorizationServerConfiguration);
 
     TokenRequestContext tokenRequestContext =
         new TokenRequestContext(

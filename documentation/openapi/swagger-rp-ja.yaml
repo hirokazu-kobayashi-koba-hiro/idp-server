@@ -208,16 +208,11 @@ paths:
                     expires_in: 300
         '400':
           description: |
-            リクエストパラメータが不正、またはクライアント認証に失敗
+            リクエストパラメータが不正。
 
-            このエンドポイントはクライアント認証の失敗をすべて `400` で返します（`401` は返しません）。
-            `attest_jwt_client_auth` の場合、`invalid_client` に加えて
-            `invalid_client_attestation`（Client Attestation JWT / PoP JWT の検証に失敗）、
-            `use_fresh_attestation`（Client Attestation JWT の期限切れ）、
-            `use_attestation_challenge`（PoP JWT の `challenge` が無い（必須化時）、または発行していない・期限切れの値）が返ります
-            （draft-ietf-oauth-attestation-based-client-auth-11 Section 6.1 / 7.4）。
-            `use_attestation_challenge` には `OAuth-Client-Attestation-Challenge` レスポンスヘッダが伴い、
-            次に使うチャレンジが入ります。
+            `attest_jwt_client_auth` で PoP JWT の `challenge` が無い（必須化時）、または発行していない・期限切れの値だった場合は
+            `use_attestation_challenge` が `400` で返ります（draft-ietf-oauth-attestation-based-client-auth-11 Section 6.1 / 7.4）。
+            `OAuth-Client-Attestation-Challenge` レスポンスヘッダに次に使うチャレンジが入ります。
           headers:
             OAuth-Client-Attestation-Challenge:
               $ref: '#/components/headers/OAuthClientAttestationChallenge'
@@ -231,16 +226,26 @@ paths:
                   value:
                     error: "invalid_request"
                     error_description: "Missing required parameter: client_id"
-                invalid_client:
-                  summary: クライアント認証失敗
-                  value:
-                    error: "invalid_client"
-                    error_description: "Client authentication failed"
                 invalid_redirect_uri:
                   summary: 無効なリダイレクト URI
                   value:
                     error: "invalid_request"
                     error_description: "Invalid redirect_uri"
+        '401':
+          description: |
+            クライアント認証の失敗。トークンエンドポイントと同じく `401` で返します。
+
+            - `invalid_client` — クライアントシークレット不一致、未登録クライアント、認証情報なし
+            - `invalid_client_attestation` / `use_fresh_attestation` — `attest_jwt_client_auth` 固有（draft-ietf-oauth-attestation-based-client-auth-11 Section 7.4）
+
+            `client_secret_basic`（`Authorization` ヘッダー）で失敗した場合は `WWW-Authenticate` が付きます（RFC 6749 Section 5.2）。
+          headers:
+            WWW-Authenticate:
+              $ref: '#/components/headers/WWWAuthenticateBasic'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenInvalidClientErrorResponse'
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
@@ -315,6 +320,11 @@ paths:
             `invalid_client_attestation`（Client Attestation JWT / PoP JWT の検証に失敗）と
             `use_fresh_attestation`（Client Attestation JWT の期限切れ）が返ります
             （draft-ietf-oauth-attestation-based-client-auth-11 Section 7.4）。
+
+            `client_secret_basic`（`Authorization` ヘッダー）で失敗した場合は `WWW-Authenticate` が付きます（RFC 6749 Section 5.2）。
+          headers:
+            WWW-Authenticate:
+              $ref: '#/components/headers/WWWAuthenticateBasic'
           content:
             application/json:
               schema:
@@ -704,6 +714,11 @@ paths:
             |---|---|
             | `invalid_client_attestation` | Client Attestation JWT / PoP JWT の検証に失敗した（署名、`typ`、`aud`、`iat` など） |
             | `use_fresh_attestation` | Client Attestation JWT の期限が切れている |
+
+            `client_secret_basic`（`Authorization` ヘッダー）で失敗した場合は `WWW-Authenticate` が付きます（RFC 6749 Section 5.2）。
+          headers:
+            WWW-Authenticate:
+              $ref: '#/components/headers/WWWAuthenticateBasic'
           content:
             application/json:
               schema:
@@ -745,7 +760,7 @@ paths:
         - `client_assertion_type`: urn:ietf:params:oauth:client-assertion-type:jwt-bearer
         - `client_assertion`: 署名済みJWT
 
-        認証に失敗した場合は `400 Bad Request` が返されます（下記 `400` を参照）。
+        認証に失敗した場合は `401 Unauthorized` が返されます（下記 `401` を参照）。
       parameters:
         - $ref: '#/components/parameters/tenant-id'
         - $ref: '#/components/parameters/Authorization'
@@ -766,29 +781,11 @@ paths:
                 $ref: '#/components/schemas/TokenIntrospectionResponse'
         '400':
           description: |
-            不正なリクエスト形式または必須パラメータの欠落、**およびクライアント認証の失敗**。
+            不正なリクエスト形式または必須パラメータの欠落（`invalid_request`）。
 
-            クライアント認証に失敗すると `400` + `{"active": false, "error": "invalid_client"}`
-            を返します。
-
-            > **⚠️ RFC 7662 Section 2.3 に準拠していません（[#1891](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues/1891)）**
-            >
-            > 仕様上は `401` を返すべきで、`active: false` は「**認可された**クエリでトークンが無効」
-            > のときの応答として定義されています。認証エラーで `active: false` が返るため、
-            > そのフィールドだけを見る Resource Server は「資格情報が不正」を
-            > 「トークンが無効」と解釈します。
-            >
-            > **`active` だけで判定せず、`error` の有無も確認してください。**
-            > 修正は Resource Server から見て破壊的変更になるため、移行方針とあわせて
-            > #1891 で扱います。トークンエンドポイントと revocation は `401` です。
-
-            `attest_jwt_client_auth` の場合、`invalid_client` に加えて
-            `invalid_client_attestation`（Client Attestation JWT / PoP JWT の検証に失敗）、
-            `use_fresh_attestation`（Client Attestation JWT の期限切れ）、
-            `use_attestation_challenge`（PoP JWT の `challenge` が無い（必須化時）、または発行していない・期限切れの値）が
-            いずれも `400` で返ります（draft-ietf-oauth-attestation-based-client-auth-11 Section 6.1 / 7.4）。
-            `use_attestation_challenge` には `OAuth-Client-Attestation-Challenge` レスポンスヘッダが伴い、
-            次に使うチャレンジが入ります。
+            `attest_jwt_client_auth` で PoP JWT の `challenge` が無い（必須化時）、または発行していない・期限切れの値だった場合は
+            `use_attestation_challenge` が `400` で返ります（draft-ietf-oauth-attestation-based-client-auth-11 Section 6.1 / 7.4）。
+            `OAuth-Client-Attestation-Challenge` レスポンスヘッダに次に使うチャレンジが入ります。
           headers:
             OAuth-Client-Attestation-Challenge:
               $ref: '#/components/headers/OAuthClientAttestationChallenge'
@@ -798,10 +795,20 @@ paths:
                 $ref: '#/components/schemas/TokenIntrospectionBadRequestResponse'
         '401':
           description: |
-            **検査対象のトークン**の問題。クライアント認証の失敗ではありません（そちらは `400`）。
+            クライアント認証の失敗（RFC 7662 Section 2.3）。認証方式に関わらず `401` で、`active` は含みません。
+            `active: false` は、認証に成功した呼び出しでトークンが無効なとき（HTTP `200`）にだけ返ります。
 
-            `error: invalid_token` として、トークンが不正・期限切れ、ユーザーが無効、
-            証明書バインディング不一致、DPoP 証明が不正、のいずれかで返ります。
+            - `invalid_client` — クライアントシークレット不一致、未登録クライアント、認証情報なし
+            - `invalid_client_attestation` / `use_fresh_attestation` — `attest_jwt_client_auth` 固有（draft-ietf-oauth-attestation-based-client-auth-11 Section 7.4）
+
+            `client_secret_basic`（`Authorization` ヘッダー）で失敗した場合は `WWW-Authenticate` が付きます（RFC 6749 Section 5.2）。
+          headers:
+            WWW-Authenticate:
+              $ref: '#/components/headers/WWWAuthenticateBasic'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenInvalidClientErrorResponse'
 
         '429':
           $ref: '#/components/responses/TooManyRequests'
@@ -842,8 +849,9 @@ paths:
 
         ## エラーハンドリング
 
-        このエンドポイントでは、クライアント認証失敗・トークン無効・スコープ不足・sender-constraint 不一致等の **すべてのエラーが HTTP 200 で返却** されます（HTTP 401/403 は返りません）。
+        このエンドポイントでは、トークン無効・スコープ不足・sender-constraint 不一致等の **トークンに関するエラーが HTTP 200 で返却** されます（HTTP 403 は返りません）。
         エラーの判別には `active: false` と `error` / `status_code` フィールドを使用してください。
+        呼び出し元（リソースサーバー）自身のクライアント認証の失敗だけは、HTTP `401` で `active` を含まずに返ります（RFC 7662 Section 2.3）。
         `status_code` はリソースサーバーがエンドユーザーに返すべき論理的な HTTP ステータスの参考値です。
 
         ## クライアント認証
@@ -863,7 +871,7 @@ paths:
         - `client_assertion_type`: urn:ietf:params:oauth:client-assertion-type:jwt-bearer
         - `client_assertion`: 署名済みJWT
 
-        認証に失敗した場合は `400 Bad Request` が返されます（下記 `400` を参照）。
+        認証に失敗した場合は `401 Unauthorized` が返されます（下記 `401` を参照）。
       parameters:
         - $ref: '#/components/parameters/tenant-id'
         - $ref: '#/components/parameters/Authorization'
@@ -890,23 +898,12 @@ paths:
                   - $ref: '#/components/schemas/TokenIntrospectionExtensionErrorResponse'
         '400':
           description: |
-            不正なリクエスト、またはクライアント認証失敗。
+            不正なリクエスト。
             - `error: invalid_request` — 必須パラメータの欠落、不正な形式
-            - `error: invalid_client` — クライアントシークレット不一致、未登録クライアント、認証情報なし
 
-            > **⚠️ クライアント認証失敗が `401` でないのは RFC 7662 Section 2.3 に準拠していません
-            > （[#1891](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues/1891)）**
-            >
-            > `active: false` も同時に返るため、そのフィールドだけを見る Resource Server は
-            > 「資格情報が不正」を「トークンが無効」と解釈します。`error` の有無も確認してください。
-
-            `attest_jwt_client_auth` の場合、`invalid_client` に加えて
-            `invalid_client_attestation`（Client Attestation JWT / PoP JWT の検証に失敗）、
-            `use_fresh_attestation`（Client Attestation JWT の期限切れ）、
-            `use_attestation_challenge`（PoP JWT の `challenge` が無い（必須化時）、または発行していない・期限切れの値）が
-            いずれも `400` で返ります（draft-ietf-oauth-attestation-based-client-auth-11 Section 6.1 / 7.4）。
-            `use_attestation_challenge` には `OAuth-Client-Attestation-Challenge` レスポンスヘッダが伴い、
-            次に使うチャレンジが入ります。
+            `attest_jwt_client_auth` で PoP JWT の `challenge` が無い（必須化時）、または発行していない・期限切れの値だった場合は
+            `use_attestation_challenge` が `400` で返ります（draft-ietf-oauth-attestation-based-client-auth-11 Section 6.1 / 7.4）。
+            `OAuth-Client-Attestation-Challenge` レスポンスヘッダに次に使うチャレンジが入ります。
           headers:
             OAuth-Client-Attestation-Challenge:
               $ref: '#/components/headers/OAuthClientAttestationChallenge'
@@ -914,6 +911,21 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TokenIntrospectionExtensionClientErrorResponse'
+        '401':
+          description: |
+            呼び出し元（リソースサーバー）のクライアント認証の失敗（RFC 7662 Section 2.3）。認証方式に関わらず `401` で、`active` は含みません。
+
+            - `invalid_client` — クライアントシークレット不一致、未登録クライアント、認証情報なし
+            - `invalid_client_attestation` / `use_fresh_attestation` — `attest_jwt_client_auth` 固有（draft-ietf-oauth-attestation-based-client-auth-11 Section 7.4）
+
+            `client_secret_basic`（`Authorization` ヘッダー）で失敗した場合は `WWW-Authenticate` が付きます（RFC 6749 Section 5.2）。
+          headers:
+            WWW-Authenticate:
+              $ref: '#/components/headers/WWWAuthenticateBasic'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenInvalidClientErrorResponse'
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
@@ -989,6 +1001,11 @@ paths:
             `invalid_client_attestation`（Client Attestation JWT / PoP JWT の検証に失敗）と
             `use_fresh_attestation`（Client Attestation JWT の期限切れ）が返ります
             （draft-ietf-oauth-attestation-based-client-auth-11 Section 7.4）。
+
+            `client_secret_basic`（`Authorization` ヘッダー）で失敗した場合は `WWW-Authenticate` が付きます（RFC 6749 Section 5.2）。
+          headers:
+            WWW-Authenticate:
+              $ref: '#/components/headers/WWWAuthenticateBasic'
 
         '429':
           $ref: '#/components/responses/TooManyRequests'
@@ -1648,6 +1665,13 @@ components:
         付けてよい（MAY）ですが、idp-server が付けるのはこのエラーのときだけです。
       schema:
         type: string
+    WWWAuthenticateBasic:
+      description: |
+        `Authorization` ヘッダーの Basic 認証（`client_secret_basic`）でクライアント認証に失敗したときに付きます
+        （RFC 6749 Section 5.2）。`realm` はテナントの issuer です。
+      schema:
+        type: string
+        example: 'Basic realm="https://api.example.com/{tenant-id}"'
 
   parameters:
     tenant-id:
@@ -2522,7 +2546,7 @@ components:
     TokenInvalidClientErrorResponse:
       type: object
       description: |
-        トークンエンドポイントでのエラーレスポンス。
+        クライアント認証の失敗（HTTP 401）のエラーレスポンス。トークン・revocation・introspection・PAR・CIBA で共通。
         OAuth 2.0 / OpenID Connect 仕様に準拠。
       properties:
         error:
@@ -2757,9 +2781,9 @@ components:
       properties:
         error:
           type: string
-          enum: [ invalid_request, invalid_client, invalid_client_attestation, use_fresh_attestation, use_attestation_challenge ]
+          enum: [ invalid_request, use_attestation_challenge ]
           description: |
-            エラーの種類。`invalid_client_attestation` / `use_fresh_attestation` / `use_attestation_challenge` は `attest_jwt_client_auth` 固有です。
+            エラーの種類。`use_attestation_challenge` は `attest_jwt_client_auth` 固有です。クライアント認証の失敗は `401`（`TokenInvalidClientErrorResponse`）です。
         error_description:
           type: string
           description: エラーに関する詳細な説明（省略可能）
@@ -2808,37 +2832,30 @@ components:
     TokenIntrospectionExtensionClientErrorResponse:
       type: object
       description: |
-        RFC 7662 拡張イントロスペクションのクライアント認証エラーレスポンス（HTTP 400）。
-        クライアント認証失敗、未登録クライアント、認証情報なし等の場合に返却されます。
+        RFC 7662 拡張イントロスペクションのリクエスト不正のエラーレスポンス（HTTP 400）。
+        クライアント認証の失敗は `401`（`TokenInvalidClientErrorResponse`）です。
       required:
-        - active
         - error
-        - status_code
       properties:
         active:
           type: boolean
-          description: 常に `false`。
+          description: 常に `false`。`invalid_request` のときだけ含まれます。
           example: false
         error:
           type: string
           enum:
             - invalid_request
-            - invalid_client
-            - invalid_client_attestation
-            - use_fresh_attestation
             - use_attestation_challenge
           description: |
             エラーの種類。
             - `invalid_request`: 必須パラメータの欠落、不正な形式
-            - `invalid_client`: クライアントシークレット不一致、未登録クライアント、認証情報なし、サーバー設定未発見
-            - `invalid_client_attestation` / `use_fresh_attestation` / `use_attestation_challenge`: `attest_jwt_client_auth` 固有（draft-ietf-oauth-attestation-based-client-auth-11 Section 7.4）
+            - `use_attestation_challenge`: `attest_jwt_client_auth` 固有（draft-ietf-oauth-attestation-based-client-auth-11 Section 6.1 / 7.4）
         error_description:
           type: string
           description: エラーの詳細説明。原因の特定に使用できます。
-          example: "Client authentication failed: method=client_secret_post, client_id=xxx, reason=client_secret does not match"
         status_code:
           type: integer
-          description: 常に `400`。
+          description: 常に `400`。`invalid_request` のときだけ含まれます。
           example: 400
 
 
