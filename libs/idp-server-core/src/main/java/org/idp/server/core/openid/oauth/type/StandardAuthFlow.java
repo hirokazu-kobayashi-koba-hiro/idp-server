@@ -16,6 +16,8 @@
 
 package org.idp.server.core.openid.oauth.type;
 
+import java.util.EnumSet;
+import java.util.Set;
 import org.idp.server.platform.exception.UnSupportedException;
 
 public enum StandardAuthFlow {
@@ -49,5 +51,34 @@ public enum StandardAuthFlow {
 
   public AuthFlow toAuthFlow() {
     return new AuthFlow(this.value);
+  }
+
+  /**
+   * Flows that may only be minted by their own dedicated endpoint, never by the generic {@code POST
+   * /{tenant-id}/v1/me/mfa/{mfa-operation-type}} minter.
+   *
+   * <p><b>Add a flow here whenever it is not an MFA registration operation.</b> That minter takes
+   * the flow straight from the URL path and validates nothing, so anything omitted from this set
+   * can be minted from there with a bare user token.
+   *
+   * <p>{@link #OAUTH} and {@link #CIBA} need a real authorization / backchannel request to exist.
+   * {@code MfaRegistrationTransactionCreator} leaves the {@code AuthorizationIdentifier} empty, so
+   * a transaction minted for them is an orphan: the mint returns 200 and the flow-specific entry
+   * service then fails its lookup with a 500 when the transaction is driven.
+   *
+   * <p>Deliberately a deny set, not an allow set: {@code flow} is a free-form string on {@link
+   * org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfiguration} and nothing
+   * validates it against this enum, so a tenant may have registered a policy under a name that is
+   * not listed here. Allow-listing would break those.
+   */
+  private static final Set<StandardAuthFlow> DEDICATED_ENDPOINT_ONLY = EnumSet.of(OAUTH, CIBA);
+
+  /**
+   * Whether {@code authFlow} must be rejected by the generic MFA minter. Unknown flows return
+   * {@code false} — see the field's javadoc for why that is the intended default.
+   */
+  public static boolean isDedicatedEndpointOnly(AuthFlow authFlow) {
+    return DEDICATED_ENDPOINT_ONLY.stream()
+        .anyMatch(standardAuthFlow -> standardAuthFlow.toAuthFlow().equals(authFlow));
   }
 }
