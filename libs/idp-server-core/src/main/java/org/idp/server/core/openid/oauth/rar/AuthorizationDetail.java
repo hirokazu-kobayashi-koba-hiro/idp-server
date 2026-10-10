@@ -96,6 +96,14 @@ public class AuthorizationDetail {
     return getValueOrEmpty("type").equals("openid_credential");
   }
 
+  /**
+   * OpenID4VCI 1.0 Section 5.1.1: the credential configuration an {@code openid_credential} asks
+   * for.
+   */
+  public String credentialConfigurationId() {
+    return getValueOrEmpty("credential_configuration_id");
+  }
+
   public String format() {
     return getValueOrEmpty("format");
   }

@@ -17,11 +17,13 @@
 package org.idp.server.platform.jose;
 
 import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.crypto.ECDSASigner;
 import com.nimbusds.jose.crypto.RSASSASigner;
+import com.nimbusds.jose.util.Base64;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import java.io.StringReader;
@@ -134,6 +136,39 @@ public class JsonWebSignatureFactory {
       SignedJWT signedJWT = new SignedJWT(jwsHeader, claimsSet);
       JWSSigner jwsSigner = of(jsonWebKey);
       signedJWT.sign(jwsSigner);
+      return new JsonWebSignature(signedJWT);
+    } catch (JsonWebKeyInvalidException | JOSEException | ParseException e) {
+      throw new JoseInvalidException(e.getMessage(), e);
+    }
+  }
+
+  /**
+   * Signs with {@code typ} set as the registered header parameter, and {@code x5c} carried from the
+   * key when {@code includeX5c}.
+   *
+   * <p>{@code customHeaders} cannot do this: a registered name put there appears in the JSON but
+   * not as the header's type or certificate chain, so a verifier reading the parsed header sees
+   * neither.
+   */
+  public JsonWebSignature createTypedWithAsymmetricKey(
+      Map<String, Object> claims, String type, JsonWebKey jsonWebKey, boolean includeX5c)
+      throws JoseInvalidException {
+    try {
+      JWSAlgorithm jwsAlgorithm = JWSAlgorithm.parse(jsonWebKey.algorithm());
+      JWSHeader.Builder builder =
+          new JWSHeader.Builder(jwsAlgorithm)
+              .type(new JOSEObjectType(type))
+              .keyID(jsonWebKey.keyId());
+      if (includeX5c) {
+        if (!jsonWebKey.hasX5c()) {
+          throw new JoseInvalidException("signing key has no x5c: " + jsonWebKey.keyId());
+        }
+        builder.x509CertChain(jsonWebKey.x5c().stream().map(Base64::new).toList());
+      }
+
+      JWTClaimsSet claimsSet = JWTClaimsSet.parse(claims);
+      SignedJWT signedJWT = new SignedJWT(builder.build(), claimsSet);
+      signedJWT.sign(of(jsonWebKey));
       return new JsonWebSignature(signedJWT);
     } catch (JsonWebKeyInvalidException | JOSEException | ParseException e) {
       throw new JoseInvalidException(e.getMessage(), e);
