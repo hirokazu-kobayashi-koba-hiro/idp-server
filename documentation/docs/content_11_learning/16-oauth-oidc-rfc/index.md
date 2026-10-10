@@ -47,6 +47,7 @@ JSON Web Token と関連する署名・暗号化仕様です。
 | RFC 7523 | [rfc7523-jwt-bearer](./client-auth/rfc7523-jwt-bearer.md) | JWT を使ったクライアント認証とグラント |
 | draft | [attestation-based-client-auth](./client-auth/attestation-based-client-auth.md) | Attestation によるクライアントインスタンス認証（策定中） |
 | draft | [attestation-based-client-auth-practice](./client-auth/attestation-based-client-auth-practice.md) | 同・実践編（モバイルアプリでの登録〜認証の実現） |
+| RFC 6749 ほか | [client-authentication-error-response](./client-auth/client-authentication-error-response.md) | 認証に失敗したときの応答（400 / 401 と `WWW-Authenticate`） |
 
 ---
 

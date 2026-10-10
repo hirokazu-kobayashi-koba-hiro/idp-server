@@ -60,6 +60,22 @@ RFC 7662に準拠し、トークンが無効な場合は以下のレスポンス
 
 **重要**: セキュリティ上の理由から、無効理由の詳細情報は含まれません。これにより、トークン列挙攻撃を防止します。
 
+### 3.3 呼び出し元のクライアント認証に失敗した場合
+
+Resource Server 自身の資格情報が無効なときは、認証方式に関わらず `401` を返し、`active` は含めません（RFC 7662 §2.3）。`active: false` は、認証に成功した呼び出しでトークンが無効なとき（3.2）だけに返します。`client_secret_basic` で失敗した場合は `WWW-Authenticate: Basic realm="<issuer>"` が付きます。
+
+```http
+HTTP/1.1 401 Unauthorized
+WWW-Authenticate: Basic realm="https://api.example.com/{tenant-id}"
+
+{
+  "error": "invalid_client",
+  "error_description": "..."
+}
+```
+
+`active` を認証エラーに使わない理由は [クライアント認証に失敗したときの応答](../content_11_learning/16-oauth-oidc-rfc/client-auth/client-authentication-error-response.md) を参照してください。
+
 ---
 
 ## 4. レスポンス属性一覧
