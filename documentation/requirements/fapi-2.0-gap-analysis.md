@@ -2,7 +2,7 @@
 
 | 項目 | 内容 |
 |------|------|
-| 分析日 | 2026-09-02 (更新) |
+| 分析日 | 2026-10-10 (更新) |
 | 対象ブランチ | `main` |
 | 検証方法 | OIDF Conformance Suite をローカル実行 (#1842)。プラン別の実測結果は §4 |
 | 対象仕様 | FAPI 2.0 Security Profile Final |
@@ -36,7 +36,7 @@ OIDF Conformance Suite `fapi2-security-profile-final-test-plan` を 2 プラン
 （`sender_constrain=dpop` / `=mtls`）通し実行し、**いずれも FAILED ゼロ**（詳細は §4.0）。
 
 **結論**: P0 (認定必須) ギャップは解消済みで、適合性テスト上も不合格項目は無い。
-残るのは P1（EdDSA、鍵長 enforcement、DPoP jti リプレイ検出、JARM `form_post.jwt`）で、
+残るのは P1（EdDSA、鍵長 enforcement、JARM `form_post.jwt`）で、
 いずれも本プランの必須テストでは FAILURE にならない。
 
 ### 1.3 直近対応サマリ (2026-04-30 → 2026-05-01)
@@ -223,7 +223,7 @@ DPoP 実装とあわせて FAPI 2.0 認定必須 P0 項目を全クリア:
 
 | テスト | 条件 | 内容 |
 |--------|------|------|
-| `dpop-negative-tests` | `EnsureHttpStatusCodeIs400or401` | 同じ `jti` の DPoP proof を 2 回受け付ける。`DPoPProofVerifier.java:226` に未実装と明記（GAP-FAPI2-008 / RFC 9449 §4.3 は条件付き要件）。dpop プランのみ |
+| `dpop-negative-tests` | `EnsureHttpStatusCodeIs400or401` | 同じ `jti` の DPoP proof を 2 回受け付ける（GAP-FAPI2-008）。dpop プランのみ。**#1893 で解消済み**: 同じ `jti` の 2 回目は 400 になり、以後の実測（2026-10-10、OpenID4VCI HAIP プラン。DPoP 必須）では本テストは PASSED |
 | `discovery-end-point-verification` | `CheckForUnexpectedParametersInServerMetadata` | discovery の `verified_claims_supported` が suite の rfc8414 スキーマに無い。OIDC4IDA の他のメタデータは登録済みで、**suite 側の登録漏れ**。idp-server は仕様どおり |
 | `attempt-reuse-authorization-code-after-one-second` | `EnsureHttpStatusCodeIs4xx` | 認可コード再利用後に発行済みアクセストークンを失効させていない（RFC 6749 §4.1.2 の SHOULD） |
 | `test-claims-parameter-identity-claims` | `EnsureIdentityClaimsContainRequestedClaims` | `claims` パラメータで要求した属性がテストユーザーに入っていない。実装ではなくテストデータの問題 |
@@ -249,7 +249,7 @@ DPoP 実装とあわせて FAPI 2.0 認定必須 P0 項目を全クリア:
 | GAP-FAPI2-005 | JARM `form_post.jwt` response mode | MUST | ❌ | #1266。前提となる素の `response_mode=form_post` も未実装（#1847）。現状 `form_post.jwt` は `unauthorized_client` ではなく HTTP 500 になる |
 | GAP-FAPI2-006 | EdDSA 明示サポート | MUST | ❌ | #1852。Verifier の allowlist には EdDSA があるが、`JsonWebKey.toPublicKey():81` の switch が RSA / EC / OCT のみで OKP に落ちない。discovery の `*_signing_alg_values_supported` も `ES256` / `PS256` のみ |
 | GAP-FAPI2-007 | CORS Authorization Endpoint 明示拒否 | MUST | ✅ | `DynamicCorsFilter.shouldNotFilter` で `/v1/authorizations` ルート除外 |
-| GAP-FAPI2-008 | DPoP jti リプレイ検出 | SHOULD | ❌ | Redis backend |
+| GAP-FAPI2-008 | DPoP jti リプレイ検出 | SHOULD | ✅ | #1893。`DPoPProofVerifier.verifyNotReplayed` → `JwtReplayDetector`（鍵のサムプリントと `jti` のハッシュで記録し、`iat` + 受理ウィンドウまで保持）。キャッシュ未設定・障害時は記録せず `iat` の窓だけで再利用を制限する |
 | GAP-FAPI2-009 | RSA/EC 最小鍵長 enforcement | MUST | ⚠️ | #1852。client assertion 経路のみ強制済み（`FapiSecurity20Verifier` / `AuthorizationCodeGrantFapi20Verifier`、PS\* ≥ 2048 / ES\* ≥ 224 / EdDSA ≥ 256）。DPoP proof 鍵 / Request Object 署名鍵 / クライアント登録時の JWKS は未検証 |
 
 ### 5.3 P2: OPTIONAL / 任意
@@ -292,7 +292,7 @@ DPoP 実装とあわせて FAPI 2.0 認定必須 P0 項目を全クリア:
 ### Phase 2: セキュリティ強化（後続、別 Issue 化）
 
 - JARM `form_post.jwt` response mode (#1266 / 前提の #1847。#1851 で追跡)
-- DPoP jti リプレイ検出（Redis backend）— #1736 の Info
+- ~~DPoP jti リプレイ検出（Redis backend）— #1736 の Info~~ → #1893 で対応済み
 - WWW-Authenticate `algs` パラメータ
 - EdDSA 明示サポート — #1852
 - RSA/EC 最小鍵長 enforcement の適用範囲拡大 — #1852
