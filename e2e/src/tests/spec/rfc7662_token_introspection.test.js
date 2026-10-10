@@ -292,7 +292,8 @@ describe("OAuth 2.0 Token Introspection", () => {
         clientId: publicClient.clientId,
       });
       console.log(JSON.stringify(introspectionResponse.data, null, 2));
-      expect(introspectionResponse.status).toBe(400);
+      // RFC 7662 Section 2.3: invalid client credentials are answered with 401 (Issue #1891).
+      expect(introspectionResponse.status).toBe(401);
       expect(introspectionResponse.data).toHaveProperty(
         "error",
         "invalid_client"

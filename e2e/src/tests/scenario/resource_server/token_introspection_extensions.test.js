@@ -1024,9 +1024,11 @@ describe("OAuth 2.0 Token Introspection Extensions", () => {
     });
   });
 
-  describe("400 error - client authentication failure", () => {
+  // RFC 7662 Section 2.3: invalid client credentials are answered with 401, without "active"
+  // (Issue #1891).
+  describe("401 error - client authentication failure", () => {
 
-    it("should return 400 with invalid_client when client_secret is wrong", async () => {
+    it("should return 401 with invalid_client when client_secret is wrong", async () => {
       const introspectionResponse = await inspectTokenWithVerification({
         endpoint: serverConfig.tokenIntrospectionExtensionsEndpoint,
         token: "dummy_token",
@@ -1034,14 +1036,14 @@ describe("OAuth 2.0 Token Introspection Extensions", () => {
         clientSecret: "wrong_secret_value",
       });
       console.log(introspectionResponse.data);
-      expect(introspectionResponse.status).toBe(400);
-      expect(introspectionResponse.data.active).toBe(false);
+      expect(introspectionResponse.status).toBe(401);
+      expect(introspectionResponse.data.active).toBeUndefined();
       expect(introspectionResponse.data.error).toBe("invalid_client");
       expect(introspectionResponse.data.error_description).toBeDefined();
-      expect(introspectionResponse.data.status_code).toBe(400);
+      expect(introspectionResponse.data.status_code).toBeUndefined();
     });
 
-    it("should return 400 with invalid_client when client_id is unregistered", async () => {
+    it("should return 401 with invalid_client when client_id is unregistered", async () => {
       const introspectionResponse = await inspectTokenWithVerification({
         endpoint: serverConfig.tokenIntrospectionExtensionsEndpoint,
         token: "dummy_token",
@@ -1049,24 +1051,24 @@ describe("OAuth 2.0 Token Introspection Extensions", () => {
         clientSecret: "whatever",
       });
       console.log(introspectionResponse.data);
-      expect(introspectionResponse.status).toBe(400);
-      expect(introspectionResponse.data.active).toBe(false);
+      expect(introspectionResponse.status).toBe(401);
+      expect(introspectionResponse.data.active).toBeUndefined();
       expect(introspectionResponse.data.error).toBe("invalid_client");
       expect(introspectionResponse.data.error_description).toBeDefined();
-      expect(introspectionResponse.data.status_code).toBe(400);
+      expect(introspectionResponse.data.status_code).toBeUndefined();
     });
 
-    it("should return 400 with invalid_client when no client credentials provided", async () => {
+    it("should return 401 with invalid_client when no client credentials provided", async () => {
       const introspectionResponse = await inspectTokenWithVerification({
         endpoint: serverConfig.tokenIntrospectionExtensionsEndpoint,
         token: "dummy_token",
       });
       console.log(introspectionResponse.data);
-      expect(introspectionResponse.status).toBe(400);
-      expect(introspectionResponse.data.active).toBe(false);
+      expect(introspectionResponse.status).toBe(401);
+      expect(introspectionResponse.data.active).toBeUndefined();
       expect(introspectionResponse.data.error).toBe("invalid_client");
       expect(introspectionResponse.data.error_description).toBeDefined();
-      expect(introspectionResponse.data.status_code).toBe(400);
+      expect(introspectionResponse.data.status_code).toBeUndefined();
     });
   });
 

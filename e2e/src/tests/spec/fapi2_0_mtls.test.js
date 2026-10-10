@@ -127,7 +127,8 @@ describe("FAPI 2.0 Security Profile Final - mTLS (tls_client_auth)", () => {
         keyPath: FAPI2_TLS_CLIENT_2.keyPath,
       });
 
-      expect(response.status).toBe(400);
+      // Issue #1891: a failed client authentication is 401 at PAR, as at the token endpoint.
+      expect(response.status).toBe(401);
       expect(response.data.error).toBe("invalid_client");
     });
   });
