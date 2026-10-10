@@ -24,7 +24,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
-/** Issue #1893: the iat windows are refused out of range (1 to 600 seconds). */
+/**
+ * Issue #1893: the iat windows are refused out of range (1 to 600 seconds). Issue #1902: so is the
+ * longest a client assertion is accepted for.
+ */
 class AcceptableWindowViolationsTest {
 
   private static final JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
@@ -52,6 +55,24 @@ class AcceptableWindowViolationsTest {
     assertEquals(violations, extension.acceptableWindowViolations().size());
   }
 
+  @ParameterizedTest
+  @CsvSource({
+    // client_assertion_max_lifetime_seconds, violations
+    "60,  0",
+    "1,   0",
+    "600, 0",
+    "0,   1",
+    "601, 1",
+  })
+  void refusesClientAssertionMaxLifetimeOutOfRange(int seconds, int violations) {
+    AuthorizationServerExtensionConfiguration extension =
+        jsonConverter.read(
+            "{\"client_assertion_max_lifetime_seconds\":" + seconds + "}",
+            AuthorizationServerExtensionConfiguration.class);
+
+    assertEquals(violations, extension.acceptableWindowViolations().size());
+  }
+
   @Test
   void defaultsToSixtySeconds() {
     AuthorizationServerExtensionConfiguration extension =
@@ -59,6 +80,7 @@ class AcceptableWindowViolationsTest {
 
     assertEquals(Duration.ofSeconds(60), extension.dpopProofAcceptableWindow());
     assertEquals(Duration.ofSeconds(60), extension.clientAttestationPopAcceptableWindow());
+    assertEquals(Duration.ofSeconds(60), extension.clientAssertionMaxLifetime());
     assertTrue(extension.acceptableWindowViolations().isEmpty());
   }
 }

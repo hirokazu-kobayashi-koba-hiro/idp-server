@@ -509,7 +509,7 @@ describe("RFC 7523: JSON Web Token (JWT) Profile for OAuth 2.0 Client Authentica
        * "Note that the authorization server may reject JWTs with an "exp" claim value that is
        *  unreasonably far in the future." (Issue #1902)
        *
-       * As Keycloak does, with the default maximum lifetime of 60 seconds
+       * With the default maximum lifetime of 60 seconds
        * (client_assertion_max_lifetime_seconds): with an iat, the assertion is accepted until iat
        * plus the maximum; without one, its exp may be at most the maximum ahead.
        */

@@ -244,7 +244,6 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
    * "the authorization server may reject JWTs with an "exp" claim value that is unreasonably far in
    * the future"). With an {@code iat}, it is accepted until {@code iat} plus this; without one, its
    * {@code exp} may be at most this far ahead. Also bounds how long its {@code jti} is remembered.
-   * The default of 60 seconds is Keycloak's.
    */
   public Duration clientAssertionMaxLifetime() {
     return Duration.ofSeconds(clientAssertionMaxLifetimeSeconds);

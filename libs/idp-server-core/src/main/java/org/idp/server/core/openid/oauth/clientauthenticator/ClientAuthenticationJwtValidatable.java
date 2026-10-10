@@ -21,6 +21,7 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.idp.server.core.openid.oauth.clientauthenticator.exception.ClientUnAuthorizedException;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.replay.JwtReplayDetector;
@@ -219,7 +220,10 @@ public interface ClientAuthenticationJwtValidatable {
             JwtReplayKind.CLIENT_ASSERTION,
             clientId.value(),
             claims.getJti(),
-            acceptableUntil(claims, context.serverConfiguration().clientAssertionMaxLifetime()));
+            acceptableUntil(
+                claims.getExp().toInstant(),
+                claims.hasIat() ? Optional.of(claims.getIat().toInstant()) : Optional.empty(),
+                context.serverConfiguration().clientAssertionMaxLifetime()));
     if (!firstUse) {
       throw new ClientUnAuthorizedException(
           clientAuthenticationType.name(), clientId, "client assertion jti has already been used");
@@ -228,9 +232,9 @@ public interface ClientAuthenticationJwtValidatable {
 
   /**
    * RFC 7523 Section 3, requirement 4: "the authorization server may reject JWTs with an "exp"
-   * claim value that is unreasonably far in the future." (Issue #1902) As Keycloak does: with an
-   * {@code iat}, the assertion is accepted until {@code iat} plus the maximum lifetime, whatever
-   * its {@code exp}; without one, its {@code exp} may be at most the maximum lifetime ahead.
+   * claim value that is unreasonably far in the future." (Issue #1902) With an {@code iat}, the
+   * assertion is accepted until {@code iat} plus the maximum lifetime, whatever its {@code exp};
+   * without one, its {@code exp} may be at most the maximum lifetime ahead.
    */
   default void throwExceptionIfLifetimeTooLong(
       JoseContext joseContext, BackchannelRequestContext context) {
@@ -258,12 +262,11 @@ public interface ClientAuthenticationJwtValidatable {
    * The last moment the assertion could be accepted: its {@code exp}, or {@code iat} plus the
    * maximum lifetime if that comes first. Its {@code jti} is remembered until then.
    */
-  static Instant acceptableUntil(JsonWebTokenClaims claims, Duration maxLifetime) {
-    Instant exp = claims.getExp().toInstant();
-    if (!claims.hasIat()) {
+  static Instant acceptableUntil(Instant exp, Optional<Instant> iat, Duration maxLifetime) {
+    if (iat.isEmpty()) {
       return exp;
     }
-    Instant iatLimit = claims.getIat().toInstant().plus(maxLifetime);
+    Instant iatLimit = iat.get().plus(maxLifetime);
     return exp.isBefore(iatLimit) ? exp : iatLimit;
   }
 

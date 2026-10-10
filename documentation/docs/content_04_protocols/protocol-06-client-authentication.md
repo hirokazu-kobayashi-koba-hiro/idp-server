@@ -166,7 +166,7 @@ grant_type=authorization_code
 
 **同じ assertion の再送を拒否する**（RFC 7523 §3 要件 7）。受け付けた assertion の `jti` を、テナント・`client_id` ごとに Redis に記録し、同じ assertion の 2 回目は `401 invalid_client` にします。リトライや、トークン・PAR・introspection への流用も含め、リクエストごとに新しい assertion を作ってください。記録は署名とほかの検査をすべて通った assertion だけが対象で、Redis を設定していない配備では記録しません。
 
-**受け入れる期間は最長 60 秒**（RFC 7523 §3 要件 4。判定と既定値は Keycloak と同じ）。
+**受け入れる期間は最長 60 秒**（RFC 7523 §3 要件 4）。
 
 | assertion | 受け入れる条件 |
 |---|---|
