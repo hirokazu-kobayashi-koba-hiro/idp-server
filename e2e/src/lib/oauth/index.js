@@ -84,16 +84,20 @@ export const createCustomClientAssertion = ({ client, issuer, overrides = {}, om
   for (const claim of omit) {
     delete payload[claim];
   }
+  // jsonwebtoken adds iat on its own unless told not to, so an omitted iat would come back.
+  const noTimestamp = omit.includes("iat");
 
   if (client.clientSecretKey) {
     return createJwtWithPrivateKey({
       payload,
-      privateKey: client.clientSecretKey
+      privateKey: client.clientSecretKey,
+      additionalOptions: { noTimestamp },
     });
   }
   return createJwt({
     payload,
-    secret: client.clientSecret
+    secret: client.clientSecret,
+    options: { noTimestamp },
   });
 };
 

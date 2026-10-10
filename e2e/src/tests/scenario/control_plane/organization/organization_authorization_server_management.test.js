@@ -357,7 +357,8 @@ describe("organization authorization server management api", () => {
           "client_attestation_challenge_required": true,
           "client_attestation_challenge_duration": 600,
           "dpop_proof_acceptable_window_seconds": 90,
-          "client_attestation_pop_acceptable_window_seconds": 120
+          "client_attestation_pop_acceptable_window_seconds": 120,
+          "client_assertion_max_lifetime_seconds": 180
         }
       };
 
@@ -461,7 +462,8 @@ describe("organization authorization server management api", () => {
           "custom_claims_scope_mapping", "access_token_selective_user_custom_properties",
           "access_token_selective_verified_claims", "access_token_selective_standard_claims",
           "client_attestation_challenge_required", "client_attestation_challenge_duration",
-          "dpop_proof_acceptable_window_seconds", "client_attestation_pop_acceptable_window_seconds"
+          "dpop_proof_acceptable_window_seconds", "client_attestation_pop_acceptable_window_seconds",
+          "client_assertion_max_lifetime_seconds"
         ];
 
         extensionFields.forEach(field => {
