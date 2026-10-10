@@ -117,6 +117,19 @@ class JwtReplayDetectorTest {
   }
 
   @Test
+  void neverForgetsAJwtBeforeItStopsBeingAccepted() {
+    Instant now = Instant.parse("2026-10-10T00:00:00Z");
+
+    // 59.5 seconds left: rounded down to 59, the last half second would accept the JWT again.
+    assertEquals(60, JwtReplayDetector.timeToLiveSeconds(now, now.plusMillis(59_500)));
+    // A fraction below a millisecond is rounded up too.
+    assertEquals(
+        60, JwtReplayDetector.timeToLiveSeconds(now, now.plusSeconds(59).plusNanos(400_000)));
+    // Whole seconds are kept as they are.
+    assertEquals(60, JwtReplayDetector.timeToLiveSeconds(now, now.plusSeconds(60)));
+  }
+
+  @Test
   void remembersAClientAssertionUntilItsExp() {
     Instant now = Instant.now();
 

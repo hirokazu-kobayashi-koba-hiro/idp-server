@@ -97,12 +97,23 @@ public class JwtReplayDetector {
         key(tenant, kind, binding, jti), timeToLiveSeconds(acceptableUntil));
   }
 
-  /**
-   * As long as the JWT could still be accepted. At least one second, so that a JWT accepted at the
-   * very edge of its life is still recorded.
-   */
+  /** {@link #timeToLiveSeconds(Instant, Instant)} from the current time. */
   static int timeToLiveSeconds(Instant acceptableUntil) {
-    long seconds = Duration.between(Instant.now(), acceptableUntil).toSeconds();
+    return timeToLiveSeconds(Instant.now(), acceptableUntil);
+  }
+
+  /**
+   * As long as the JWT could still be accepted. Rounded up to whole seconds, so that the record
+   * never expires before the JWT does: rounded down, the last fraction of a second would let the
+   * same JWT through again. At least one second, so that a JWT accepted at the very edge of its
+   * life is still recorded.
+   */
+  static int timeToLiveSeconds(Instant now, Instant acceptableUntil) {
+    Duration remaining = Duration.between(now, acceptableUntil);
+    long seconds = remaining.toSeconds();
+    if (remaining.minusSeconds(seconds).isPositive()) {
+      seconds++;
+    }
     return (int) Math.max(1, Math.min(seconds, Integer.MAX_VALUE));
   }
 
