@@ -3,7 +3,8 @@
 #
 #   attester-*  suite が Wallet Provider（Client Attester）として Client Attestation に署名する鍵。
 #               suite の client_attestation.attester_jwks に秘密鍵 JWK（x5c 付き）を、
-#               idp-server のクライアント設定に公開鍵 JWKS を入れる。
+#               idp-server のクライアント設定には、attester_jwks モードなら公開鍵 JWKS を、
+#               x5c モードなら attester-ca.pem をトラストアンカーとして入れる（configure-issuer.sh）。
 #   issuer-*    idp-server が SD-JWT VC に署名する鍵。HAIP は x5c を要求し、末端の証明書は
 #               CA が発行したもので、ルートは x5c に含めない。suite の credential.trust_anchor_pem に
 #               issuer-ca.pem を入れる。

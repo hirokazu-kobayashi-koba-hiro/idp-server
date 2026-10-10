@@ -5,10 +5,24 @@
 #   - jwks に VC の署名鍵（pki/issuer.jwk.json、x5c 付き）を足す
 #   - credential_issuance: 署名鍵と、利用者のどのクレームを VC に載せるか
 #   - credential_issuer_metadata: 公開するメタデータ
+#   - ウォレット用クライアント 2 つ。Wallet Instance Attestation の信頼元は引数で選ぶ
+#       attester_jwks（既定）: Wallet Provider の公開鍵（pki/attester.jwk.json）を登録する
+#       x5c                  : Wallet Provider の CA（pki/attester-ca.pem）をトラストアンカーに登録し、
+#                              Attestation JWT の x5c からパスを組んで検証する
+#     suite の設定（oidc-test/haip.json）はどちらでも同じ。
 #
-# 使い方: ./configure-issuer.sh
+# 使い方: ./configure-issuer.sh [attester_jwks|x5c]
 
 set -euo pipefail
+
+TRUST_SOURCE="${1:-attester_jwks}"
+case "${TRUST_SOURCE}" in
+  attester_jwks | x5c) ;;
+  *)
+    echo "使い方: $0 [attester_jwks|x5c]" >&2
+    exit 1
+    ;;
+esac
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
@@ -104,9 +118,21 @@ echo "  ✅ credential_issuer_metadata を設定"
 
 # --- ウォレット用クライアント ---
 echo ""
-echo "🔧 ウォレット用クライアントを登録"
+echo "🔧 ウォレット用クライアントを登録（信頼元: ${TRUST_SOURCE}）"
 
-ATTESTER_JWKS=$(jq -c '{keys: [{kty, crv, x, y, kid, use, alg}]}' "${SCRIPT_DIR}/pki/attester.jwk.json")
+if [ "${TRUST_SOURCE}" = "x5c" ]; then
+  ATTESTER_CA_DER=$(openssl x509 -in "${SCRIPT_DIR}/pki/attester-ca.pem" -outform DER | base64 | tr -d '\n')
+  CLIENT_EXTENSION=$(jq -n --arg ca "${ATTESTER_CA_DER}" '{
+    client_attestation_trust_source: "x5c",
+    client_attestation_trusted_root_certificates: [$ca]
+  }')
+else
+  ATTESTER_JWKS=$(jq -c '{keys: [{kty, crv, x, y, kid, use, alg}]}' "${SCRIPT_DIR}/pki/attester.jwk.json")
+  CLIENT_EXTENSION=$(jq -n --arg jwks "${ATTESTER_JWKS}" '{
+    client_attestation_trust_source: "attester_jwks",
+    client_attestation_attester_jwks: $jwks
+  }')
+fi
 WORK_DIR=$(mktemp -d)
 trap 'rm -rf "${WORK_DIR}"' EXIT
 
@@ -118,7 +144,7 @@ for ENTRY in "${WALLET_CLIENT_ID}:wallet" "${WALLET_CLIENT_2_ID}:wallet2"; do
     --arg name "OID4VCI conformance ${NAME}" \
     --arg redirect "${REDIRECT_URI}" \
     --arg scope "${CREDENTIAL_SCOPE}" \
-    --arg attester_jwks "${ATTESTER_JWKS}" '{
+    --argjson extension "${CLIENT_EXTENSION}" '{
       client_id: $client_id,
       client_name: $name,
       redirect_uris: [$redirect, ($redirect + "?dummy1=lorem&dummy2=ipsum")],
@@ -127,10 +153,7 @@ for ENTRY in "${WALLET_CLIENT_ID}:wallet" "${WALLET_CLIENT_2_ID}:wallet2"; do
       scope: $scope,
       token_endpoint_auth_method: "attest_jwt_client_auth",
       application_type: "native",
-      extension: {
-        client_attestation_trust_source: "attester_jwks",
-        client_attestation_attester_jwks: $attester_jwks
-      }
+      extension: $extension
     }' > "${WORK_DIR}/${NAME}.json"
 
   "${PROJECT_ROOT}/config/scripts/upsert-client.sh" \

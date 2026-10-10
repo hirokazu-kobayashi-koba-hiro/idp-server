@@ -9,12 +9,12 @@
 #   - 認可サーバー: attest_jwt_client_auth、Client Attestation の alg、credential_issuer_metadata、
 #     credential の scope（FAPI 2.0 のプロファイルを効かせるため fapi20_scopes にも入れる）
 #   - ウォレット用クライアント 2 つ（multiple-clients モジュールが client2 を使う）。
-#     認証は attest_jwt_client_auth、信頼元は attester_jwks（suite が Wallet Provider 役）
+#     認証は attest_jwt_client_auth、信頼元は attester_jwks か x5c（suite が Wallet Provider 役）
 #
 # PKI（pki/）は pki/generate.sh で作ったものをコミットしてある。
 #
 # 使い方:
-#   ./setup.sh
+#   ./setup.sh [attester_jwks|x5c]   （既定 attester_jwks。configure-issuer.sh に渡す）
 
 set -euo pipefail
 
@@ -62,4 +62,4 @@ echo ""
 
 "${TEMPLATE_DIR}/setup.sh"
 
-"${SCRIPT_DIR}/configure-issuer.sh"
+"${SCRIPT_DIR}/configure-issuer.sh" "$@"
