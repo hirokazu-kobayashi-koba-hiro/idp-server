@@ -255,7 +255,11 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
         grantType: "urn:openid:params:grant-type:ciba",
         authReqId: backchannelAuthenticationResponse.data.auth_req_id,
         clientId: clientSecretJwtClient.clientId,
-        clientAssertion,
+        // RFC 7523 Section 3: a client assertion is accepted once, so each request makes its own.
+        clientAssertion: createClientAssertion({
+          client: clientSecretJwtClient,
+          issuer: serverConfig.issuer,
+        }),
         clientAssertionType:
           "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
       });

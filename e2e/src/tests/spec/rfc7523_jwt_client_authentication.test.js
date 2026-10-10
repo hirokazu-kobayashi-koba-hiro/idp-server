@@ -542,6 +542,37 @@ describe("RFC 7523: JSON Web Token (JWT) Profile for OAuth 2.0 Client Authentica
         expect(response.status).toBe(401);
         expect(response.data).toHaveProperty("error", "invalid_client");
       });
+
+      /**
+       * RFC 7523 Section 3, Requirement 7:
+       * "The authorization server MAY ensure that JWTs are not replayed by maintaining the set of
+       *  used "jti" values for the length of time for which the JWT would be considered valid based
+       *  on the applicable "exp" instant." (Issue #1902)
+       */
+      it.each([
+        ["private_key_jwt", privateKeyJwtClient],
+        ["client_secret_jwt", clientSecretJwtClient],
+      ])(
+        '%s: The authorization server MAY ensure that JWTs are not replayed by maintaining the set of used "jti" values for the length of time for which the JWT would be considered valid based on the applicable "exp" instant.',
+        async (_, client) => {
+          const assertion = createClientAssertion({ client, issuer: serverConfig.issuer });
+
+          const first = await makeTokenRequest(client, await getAuthorizationCode(client), assertion);
+          expect(first.status).toBe(200);
+
+          const replayed = await makeTokenRequest(
+            client,
+            await getAuthorizationCode(client),
+            assertion
+          );
+          console.log(replayed.status, replayed.data);
+          expect(replayed.status).toBe(401);
+          expect(replayed.data).toHaveProperty("error", "invalid_client");
+          expect(replayed.data.error_description).toContain(
+            "reason=client assertion jti has already been used"
+          );
+        }
+      );
     });
   });
 

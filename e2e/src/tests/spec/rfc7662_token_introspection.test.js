@@ -153,7 +153,11 @@ describe("OAuth 2.0 Token Introspection", () => {
         endpoint: serverConfig.tokenIntrospectionEndpoint,
         token: tokenResponse.data.access_token,
         clientId: clientSecretJwtClient.clientId,
-        clientAssertion,
+        // RFC 7523 Section 3: a client assertion is accepted once, so each request makes its own.
+        clientAssertion: createClientAssertion({
+          client: clientSecretJwtClient,
+          issuer: serverConfig.issuer,
+        }),
         clientAssertionType:
           "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
       });
@@ -209,7 +213,11 @@ describe("OAuth 2.0 Token Introspection", () => {
         endpoint: serverConfig.tokenIntrospectionEndpoint,
         token: tokenResponse.data.access_token,
         clientId: privateKeyJwtClient.clientId,
-        clientAssertion,
+        // RFC 7523 Section 3: a client assertion is accepted once, so each request makes its own.
+        clientAssertion: createClientAssertion({
+          client: privateKeyJwtClient,
+          issuer: serverConfig.issuer,
+        }),
         clientAssertionType:
           "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
       });
