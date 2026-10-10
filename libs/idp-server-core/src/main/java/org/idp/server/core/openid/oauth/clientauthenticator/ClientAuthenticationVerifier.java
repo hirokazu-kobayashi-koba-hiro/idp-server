@@ -46,6 +46,7 @@ public class ClientAuthenticationVerifier {
   }
 
   public void verify() {
+    throwExceptionIfBasicCredentialsForAnotherMethod();
     if (Objects.isNull(clientAuthenticator)) {
       throw new ClientUnAuthorizedException(
           String.format(
@@ -59,7 +60,6 @@ public class ClientAuthenticationVerifier {
               "server does not supported client authentication type (%s)",
               clientAuthenticationType.name()));
     }
-    throwExceptionIfBasicCredentialsForAnotherMethod();
   }
 
   /**
