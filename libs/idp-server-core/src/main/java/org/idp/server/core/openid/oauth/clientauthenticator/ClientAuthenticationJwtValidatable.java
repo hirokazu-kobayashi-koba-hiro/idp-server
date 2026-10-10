@@ -16,6 +16,8 @@
 
 package org.idp.server.core.openid.oauth.clientauthenticator;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +42,7 @@ public interface ClientAuthenticationJwtValidatable {
     throwExceptionIfInvalidAud(joseContext, context);
     throwExceptionIfInvalidJti(joseContext, context);
     throwExceptionIfInvalidExp(joseContext, context);
+    throwExceptionIfLifetimeTooLong(joseContext, context);
     throwExceptionIfClockSkewTooLarge(joseContext);
   }
 
@@ -216,11 +219,52 @@ public interface ClientAuthenticationJwtValidatable {
             JwtReplayKind.CLIENT_ASSERTION,
             clientId.value(),
             claims.getJti(),
-            claims.getExp().toInstant());
+            acceptableUntil(claims, context.serverConfiguration().clientAssertionMaxLifetime()));
     if (!firstUse) {
       throw new ClientUnAuthorizedException(
           clientAuthenticationType.name(), clientId, "client assertion jti has already been used");
     }
+  }
+
+  /**
+   * RFC 7523 Section 3, requirement 4: "the authorization server may reject JWTs with an "exp"
+   * claim value that is unreasonably far in the future." (Issue #1902) As Keycloak does: with an
+   * {@code iat}, the assertion is accepted until {@code iat} plus the maximum lifetime, whatever
+   * its {@code exp}; without one, its {@code exp} may be at most the maximum lifetime ahead.
+   */
+  default void throwExceptionIfLifetimeTooLong(
+      JoseContext joseContext, BackchannelRequestContext context) {
+    JsonWebTokenClaims claims = joseContext.claims();
+    Duration maxLifetime = context.serverConfiguration().clientAssertionMaxLifetime();
+    Instant now = Instant.ofEpochMilli(SystemDateTime.currentEpochMilliSecond());
+    if (claims.hasIat()) {
+      if (now.isAfter(claims.getIat().toInstant().plus(maxLifetime))) {
+        throw new ClientUnAuthorizedException(
+            String.format(
+                "client assertion is invalid, iat is more than %d seconds ago",
+                maxLifetime.toSeconds()));
+      }
+      return;
+    }
+    if (claims.getExp().toInstant().isAfter(now.plus(maxLifetime))) {
+      throw new ClientUnAuthorizedException(
+          String.format(
+              "client assertion is invalid, exp is more than %d seconds ahead and iat is not present",
+              maxLifetime.toSeconds()));
+    }
+  }
+
+  /**
+   * The last moment the assertion could be accepted: its {@code exp}, or {@code iat} plus the
+   * maximum lifetime if that comes first. Its {@code jti} is remembered until then.
+   */
+  static Instant acceptableUntil(JsonWebTokenClaims claims, Duration maxLifetime) {
+    Instant exp = claims.getExp().toInstant();
+    if (!claims.hasIat()) {
+      return exp;
+    }
+    Instant iatLimit = claims.getIat().toInstant().plus(maxLifetime);
+    return exp.isBefore(iatLimit) ? exp : iatLimit;
   }
 
   default void throwExceptionIfInvalidExp(

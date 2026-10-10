@@ -711,6 +711,11 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
     return extension.clientAttestationPopAcceptableWindow();
   }
 
+  /** Issue #1902: the longest a client assertion is accepted for. */
+  public Duration clientAssertionMaxLifetime() {
+    return extension.clientAssertionMaxLifetime();
+  }
+
   public boolean hasKey(String algorithm) {
     return jwks.contains(algorithm);
   }

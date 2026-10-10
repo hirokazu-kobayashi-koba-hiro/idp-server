@@ -66,6 +66,8 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
   // Issue #1893: how far iat may be from now, in seconds, before the JWT is refused.
   int dpopProofAcceptableWindowSeconds = 60;
   int clientAttestationPopAcceptableWindowSeconds = 60;
+  // Issue #1902: how long after its iat (or from now, without iat) a client assertion is accepted.
+  int clientAssertionMaxLifetimeSeconds = 60;
 
   /**
    * Issue #1893: the range the iat windows accept. Zero or less would refuse every proof; a long
@@ -238,6 +240,17 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
   }
 
   /**
+   * Issue #1902: the longest a client assertion is accepted for (RFC 7523 Section 3, requirement 4:
+   * "the authorization server may reject JWTs with an "exp" claim value that is unreasonably far in
+   * the future"). With an {@code iat}, it is accepted until {@code iat} plus this; without one, its
+   * {@code exp} may be at most this far ahead. Also bounds how long its {@code jti} is remembered.
+   * The default of 60 seconds is Keycloak's.
+   */
+  public Duration clientAssertionMaxLifetime() {
+    return Duration.ofSeconds(clientAssertionMaxLifetimeSeconds);
+  }
+
+  /**
    * @return the iat windows that are out of range ({@link #MIN_ACCEPTABLE_WINDOW_SECONDS} to {@link
    *     #MAX_ACCEPTABLE_WINDOW_SECONDS}); empty when both are in range
    */
@@ -249,6 +262,8 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
         violations,
         "client_attestation_pop_acceptable_window_seconds",
         clientAttestationPopAcceptableWindowSeconds);
+    addIfOutOfRange(
+        violations, "client_assertion_max_lifetime_seconds", clientAssertionMaxLifetimeSeconds);
     return violations;
   }
 
@@ -370,6 +385,7 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
     map.put(
         "client_attestation_pop_acceptable_window_seconds",
         clientAttestationPopAcceptableWindowSeconds);
+    map.put("client_assertion_max_lifetime_seconds", clientAssertionMaxLifetimeSeconds);
     map.put("required_backchannel_auth_user_code", requiredBackchannelAuthUserCode);
     map.put("backchannel_auth_user_code_type", backchannelAuthUserCodeType);
     map.put(

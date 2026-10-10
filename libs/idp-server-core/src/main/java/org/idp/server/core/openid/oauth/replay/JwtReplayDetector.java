@@ -29,19 +29,21 @@ import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
- * Lets a short-lived JWT through once (Issue #1893): the DPoP proof (RFC 9449 Section 11.1) and the
- * Client Attestation PoP JWT (draft-ietf-oauth-attestation-based-client-auth Section 12.1).
+ * Lets a short-lived JWT through once (Issue #1893): the DPoP proof (RFC 9449 Section 11.1), the
+ * Client Attestation PoP JWT (draft-ietf-oauth-attestation-based-client-auth Section 12.1) and the
+ * client assertion (RFC 7523 Section 3, Issue #1902).
  *
  * <p>Each accepted {@code jti} is recorded in the cache store (Redis {@code SET NX EX}) for as long
- * as the JWT could still be accepted by its {@code iat} window. The cache is written outside the
- * database transaction, so the check also works on read-only paths such as userinfo and
+ * as the JWT could still be accepted: until its {@code iat} window closes, or for a client
+ * assertion, until its {@code exp} or the end of its maximum lifetime. The cache is written outside
+ * the database transaction, so the check also works on read-only paths such as userinfo and
  * introspection.
  *
  * <p>The key holds what the JWT is bound to — the key thumbprint of a DPoP proof, the client of a
- * PoP — so that one client cannot use up the {@code jti} values of another.
+ * PoP or a client assertion — so that one client cannot use up the {@code jti} values of another.
  *
- * <p>Where no cache store is configured, or it fails, nothing is recorded and the {@code iat}
- * window alone limits reuse; the cache store logs the failure.
+ * <p>Where no cache store is configured, or it fails, nothing is recorded and only the time limits
+ * of the JWT ({@code iat} window, {@code exp}) limit reuse; the cache store logs the failure.
  */
 public class JwtReplayDetector {
 
@@ -87,7 +89,7 @@ public class JwtReplayDetector {
     if (cacheStore instanceof NoOperationCacheStore) {
       if (warnedNoStore.compareAndSet(false, true)) {
         log.warn(
-            "No cache store is configured: JWT replay detection (jti) is off, and only the iat window limits reuse.");
+            "No cache store is configured: JWT replay detection (jti) is off, and only the time limits of the JWT (iat window, exp) limit reuse.");
       }
       return true;
     }
