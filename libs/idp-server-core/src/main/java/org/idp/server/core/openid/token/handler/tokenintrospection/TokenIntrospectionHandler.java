@@ -75,7 +75,12 @@ public class TokenIntrospectionHandler {
         authorizationServerConfigurationQueryRepository.get(tenant);
     RequestedClientId requestedClientId = request.clientId();
     ClientConfiguration clientConfiguration =
-        clientConfigurationQueryRepository.get(tenant, requestedClientId);
+        clientAuthenticationHandler.findClient(
+            clientConfigurationQueryRepository,
+            tenant,
+            requestedClientId,
+            request.clientSecretBasic(),
+            authorizationServerConfiguration);
 
     TokenIntrospectionRequestContext introspectionRequestContext =
         new TokenIntrospectionRequestContext(

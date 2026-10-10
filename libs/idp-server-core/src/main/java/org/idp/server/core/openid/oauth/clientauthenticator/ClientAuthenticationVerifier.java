@@ -17,23 +17,32 @@
 package org.idp.server.core.openid.oauth.clientauthenticator;
 
 import java.util.Objects;
+import org.idp.server.core.openid.oauth.clientauthenticator.exception.ClientSecretBasicUnAuthorizedException;
 import org.idp.server.core.openid.oauth.clientauthenticator.exception.ClientUnAuthorizedException;
 import org.idp.server.core.openid.oauth.clientauthenticator.plugin.ClientAuthenticator;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.type.oauth.ClientAuthenticationType;
+import org.idp.server.core.openid.oauth.type.oauth.ClientSecretBasic;
+import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 
 public class ClientAuthenticationVerifier {
   ClientAuthenticationType clientAuthenticationType;
   ClientAuthenticator clientAuthenticator;
   AuthorizationServerConfiguration authorizationServerConfiguration;
+  ClientSecretBasic clientSecretBasic;
+  RequestedClientId requestedClientId;
 
   public ClientAuthenticationVerifier(
       ClientAuthenticationType clientAuthenticationType,
       ClientAuthenticator clientAuthenticator,
-      AuthorizationServerConfiguration authorizationServerConfiguration) {
+      AuthorizationServerConfiguration authorizationServerConfiguration,
+      ClientSecretBasic clientSecretBasic,
+      RequestedClientId requestedClientId) {
     this.clientAuthenticationType = clientAuthenticationType;
     this.clientAuthenticator = clientAuthenticator;
     this.authorizationServerConfiguration = authorizationServerConfiguration;
+    this.clientSecretBasic = clientSecretBasic;
+    this.requestedClientId = requestedClientId;
   }
 
   public void verify() {
@@ -49,6 +58,23 @@ public class ClientAuthenticationVerifier {
           String.format(
               "server does not supported client authentication type (%s)",
               clientAuthenticationType.name()));
+    }
+    throwExceptionIfBasicCredentialsForAnotherMethod();
+  }
+
+  /**
+   * RFC 6749 Section 2.3: "The client MUST NOT use more than one authentication method in each
+   * request." Basic credentials sent by a client registered for another method are therefore a
+   * failed client authentication, and, as the client attempted to authenticate via the {@code
+   * Authorization} header, Section 5.2 has it answered with the Basic challenge.
+   */
+  void throwExceptionIfBasicCredentialsForAnotherMethod() {
+    if (clientSecretBasic.exists() && !clientAuthenticationType.isClientSecretBasic()) {
+      throw new ClientSecretBasicUnAuthorizedException(
+          clientAuthenticationType.name(),
+          requestedClientId,
+          "Basic credentials are sent, but the client is not registered for client_secret_basic",
+          authorizationServerConfiguration.issuer());
     }
   }
 }

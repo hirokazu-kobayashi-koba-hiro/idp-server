@@ -19,6 +19,7 @@ package org.idp.server.core.openid.oauth.clientauthenticator;
 import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientAssertionJwt;
 import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientAuthenticationPublicKey;
 import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
+import org.idp.server.core.openid.oauth.clientauthenticator.exception.ClientSecretBasicUnAuthorizedException;
 import org.idp.server.core.openid.oauth.clientauthenticator.exception.ClientUnAuthorizedException;
 import org.idp.server.core.openid.oauth.clientauthenticator.mtls.ClientCertification;
 import org.idp.server.core.openid.oauth.clientauthenticator.plugin.ClientAuthenticator;
@@ -82,10 +83,11 @@ class ClientSecretBasicAuthenticator implements ClientAuthenticator {
     ClientConfiguration clientConfiguration = context.clientConfiguration();
     RequestedClientId clientId = context.requestedClientId();
     if (!clientConfiguration.matchClientSecret(clientSecretBasic.clientSecret().value())) {
-      throw new ClientUnAuthorizedException(
+      throw new ClientSecretBasicUnAuthorizedException(
           ClientAuthenticationType.client_secret_basic.name(),
           clientId,
-          "client_secret does not match");
+          "client_secret does not match",
+          context.serverConfiguration().issuer());
     }
   }
 

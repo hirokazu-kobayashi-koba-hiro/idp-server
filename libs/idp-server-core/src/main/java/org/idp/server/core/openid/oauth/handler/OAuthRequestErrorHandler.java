@@ -19,6 +19,7 @@ package org.idp.server.core.openid.oauth.handler;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.openid.oauth.clientauthenticator.exception.ClientUnAuthorizedException;
+import org.idp.server.core.openid.oauth.clientauthenticator.exception.UseAttestationChallengeException;
 import org.idp.server.core.openid.oauth.configuration.exception.ClientConfigurationNotFoundException;
 import org.idp.server.core.openid.oauth.configuration.exception.ServerConfigurationNotFoundException;
 import org.idp.server.core.openid.oauth.dpop.DPoPProofInvalidException;
@@ -43,12 +44,23 @@ public class OAuthRequestErrorHandler {
     log.trace(
         "Handling OAuth pushed request exception: type={}", exception.getClass().getSimpleName());
 
+    // draft-ietf-oauth-attestation-based-client-auth-11 Section 6.1: 400, unlike other failures.
+    if (exception instanceof UseAttestationChallengeException useAttestationChallenge) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", useAttestationChallenge.errorCode());
+      response.put("error_description", useAttestationChallenge.getMessage());
+      return new OAuthPushedRequestResponse(
+          OAuthPushedRequestStatus.BAD_REQUEST,
+          response,
+          useAttestationChallenge.responseHeaders());
+    }
+
     if (exception instanceof ClientUnAuthorizedException clientAuthException) {
       Map<String, Object> response = new HashMap<>();
       response.put("error", clientAuthException.errorCode());
       response.put("error_description", clientAuthException.getMessage());
       return new OAuthPushedRequestResponse(
-          OAuthPushedRequestStatus.BAD_REQUEST, response, clientAuthException.responseHeaders());
+          OAuthPushedRequestStatus.UNAUTHORIZED, response, clientAuthException.responseHeaders());
     }
 
     if (exception instanceof OAuthBadRequestException badRequestException) {

@@ -21,6 +21,7 @@ import static org.idp.server.core.openid.token.handler.tokenrevocation.io.TokenR
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.openid.oauth.clientauthenticator.exception.ClientUnAuthorizedException;
+import org.idp.server.core.openid.oauth.clientauthenticator.exception.UseAttestationChallengeException;
 import org.idp.server.core.openid.oauth.configuration.exception.ClientConfigurationNotFoundException;
 import org.idp.server.core.openid.oauth.configuration.exception.ServerConfigurationNotFoundException;
 import org.idp.server.core.openid.token.OAuthToken;
@@ -73,6 +74,21 @@ public class TokenRevocationErrorHandler {
       return new TokenRevocationResponse(BAD_REQUEST, new OAuthToken(), contents);
     }
 
+    // draft-ietf-oauth-attestation-based-client-auth-11 Section 6.1: 400, unlike other failures.
+    if (exception instanceof UseAttestationChallengeException useAttestationChallenge) {
+      log.warn(
+          "Token revocation failed: status=bad_request, error={}, description={}",
+          useAttestationChallenge.errorCode(),
+          exception.getMessage());
+
+      Map<String, Object> contents = new HashMap<>();
+      contents.put("error", useAttestationChallenge.errorCode());
+      contents.put("error_description", exception.getMessage());
+
+      return new TokenRevocationResponse(
+          BAD_REQUEST, new OAuthToken(), contents, useAttestationChallenge.responseHeaders());
+    }
+
     // RFC 7009: invalid_client (401)
     if (exception instanceof ClientUnAuthorizedException clientUnAuthorized) {
       log.warn(
@@ -85,10 +101,7 @@ public class TokenRevocationErrorHandler {
       contents.put("error_description", exception.getMessage());
 
       return new TokenRevocationResponse(
-          clientUnAuthorized.isReportedAsBadRequest() ? BAD_REQUEST : UNAUTHORIZED,
-          new OAuthToken(),
-          contents,
-          clientUnAuthorized.responseHeaders());
+          UNAUTHORIZED, new OAuthToken(), contents, clientUnAuthorized.responseHeaders());
     }
 
     // Configuration errors (400)

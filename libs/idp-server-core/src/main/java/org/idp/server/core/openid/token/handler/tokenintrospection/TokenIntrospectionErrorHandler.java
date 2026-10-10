@@ -21,6 +21,7 @@ import static org.idp.server.core.openid.token.handler.tokenintrospection.io.Tok
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.openid.oauth.clientauthenticator.exception.ClientUnAuthorizedException;
+import org.idp.server.core.openid.oauth.clientauthenticator.exception.UseAttestationChallengeException;
 import org.idp.server.core.openid.oauth.configuration.exception.ClientConfigurationNotFoundException;
 import org.idp.server.core.openid.oauth.configuration.exception.ServerConfigurationNotFoundException;
 import org.idp.server.core.openid.oauth.dpop.DPoPProofInvalidException;
@@ -110,18 +111,31 @@ public class TokenIntrospectionErrorHandler {
       return new TokenIntrospectionResponse(INSUFFICIENT_SCOPE, contents);
     }
 
+    // draft-ietf-oauth-attestation-based-client-auth-11 Section 6.1: 400, unlike other failures.
+    if (exception instanceof UseAttestationChallengeException useAttestationChallenge) {
+      logTokenIntrospectionError(
+          "bad_request", useAttestationChallenge.errorCode(), exception.getMessage());
+
+      Map<String, Object> contents = new HashMap<>();
+      contents.put("error", useAttestationChallenge.errorCode());
+      contents.put("error_description", exception.getMessage());
+
+      return new TokenIntrospectionResponse(
+          BAD_REQUEST, contents, useAttestationChallenge.responseHeaders());
+    }
+
+    // RFC 7662 Section 2.3: invalid client credentials are answered with 401, whatever the
+    // method. "active": false is only for an authorized query, so it is not part of this response.
     if (exception instanceof ClientUnAuthorizedException clientUnAuthorized) {
       logTokenIntrospectionError(
           "invalid_client", clientUnAuthorized.errorCode(), exception.getMessage());
 
       Map<String, Object> contents = new HashMap<>();
-      contents.put("active", false);
       contents.put("error", clientUnAuthorized.errorCode());
       contents.put("error_description", exception.getMessage());
-      contents.put("status_code", 400);
 
       return new TokenIntrospectionResponse(
-          BAD_REQUEST, contents, clientUnAuthorized.responseHeaders());
+          UNAUTHORIZED, contents, clientUnAuthorized.responseHeaders());
     }
 
     if (exception instanceof ClientConfigurationNotFoundException) {

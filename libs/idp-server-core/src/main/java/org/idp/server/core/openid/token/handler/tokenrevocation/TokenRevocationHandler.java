@@ -71,7 +71,12 @@ public class TokenRevocationHandler {
         authorizationServerConfigurationQueryRepository.get(tenant);
     RequestedClientId requestedClientId = request.clientId();
     ClientConfiguration clientConfiguration =
-        clientConfigurationQueryRepository.get(tenant, requestedClientId);
+        clientAuthenticationHandler.findClient(
+            clientConfigurationQueryRepository,
+            tenant,
+            requestedClientId,
+            request.clientSecretBasic(),
+            authorizationServerConfiguration);
     TokenRevocationRequestContext tokenRevocationRequestContext =
         new TokenRevocationRequestContext(
             tenant,

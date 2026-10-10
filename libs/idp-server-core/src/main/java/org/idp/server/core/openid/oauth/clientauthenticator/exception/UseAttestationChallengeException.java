@@ -57,12 +57,6 @@ public class UseAttestationChallengeException extends ClientUnAuthorizedExceptio
     return Map.of(CHALLENGE_HEADER_NAME, challenge);
   }
 
-  /** Section 6.1: an Authorization Server responds with HTTP 400 (Bad Request). */
-  @Override
-  public boolean isReportedAsBadRequest() {
-    return true;
-  }
-
   public String challenge() {
     return challenge;
   }

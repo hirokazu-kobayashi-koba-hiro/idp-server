@@ -113,7 +113,12 @@ public class OAuthRequestHandler {
     AuthorizationServerConfiguration authorizationServerConfiguration =
         authorizationServerConfigurationQueryRepository.get(tenant);
     ClientConfiguration clientConfiguration =
-        clientConfigurationQueryRepository.get(tenant, clientId);
+        clientAuthenticationHandler.findClient(
+            clientConfigurationQueryRepository,
+            tenant,
+            clientId,
+            pushedRequest.clientSecretBasic(),
+            authorizationServerConfiguration);
 
     // RFC 9449 §10.1: PAR + DPoP integration
     // If a DPoP proof is presented at the PAR endpoint, verify it and bind the resulting JWK

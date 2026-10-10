@@ -23,6 +23,7 @@ import org.idp.server.core.extension.ciba.handler.io.CibaIssueResponse;
 import org.idp.server.core.extension.ciba.handler.io.CibaRequestStatus;
 import org.idp.server.core.extension.ciba.response.BackchannelAuthenticationErrorResponse;
 import org.idp.server.core.openid.oauth.clientauthenticator.exception.ClientUnAuthorizedException;
+import org.idp.server.core.openid.oauth.clientauthenticator.exception.UseAttestationChallengeException;
 import org.idp.server.core.openid.oauth.configuration.exception.ClientConfigurationNotFoundException;
 import org.idp.server.core.openid.oauth.configuration.exception.ServerConfigurationNotFoundException;
 import org.idp.server.core.openid.oauth.type.oauth.Error;
@@ -57,15 +58,27 @@ public class CibaRequestErrorHandler {
               badRequest.error(), badRequest.errorDescription()));
     }
 
+    // draft-ietf-oauth-attestation-based-client-auth-11 Section 6.1: 400, unlike other failures.
+    if (exception instanceof UseAttestationChallengeException useAttestationChallenge) {
+      log.warn(
+          "CIBA request failed: status=bad_request, error={}, description={}",
+          useAttestationChallenge.errorCode(),
+          exception.getMessage());
+      return new CibaIssueResponse(
+          CibaRequestStatus.BAD_REQUEST,
+          new BackchannelAuthenticationErrorResponse(
+              new Error(useAttestationChallenge.errorCode()),
+              new ErrorDescription(exception.getMessage())),
+          useAttestationChallenge.responseHeaders());
+    }
+
     if (exception instanceof ClientUnAuthorizedException clientUnAuthorized) {
       log.warn(
           "CIBA request failed: status=unauthorized, error={}, description={}",
           clientUnAuthorized.errorCode(),
           exception.getMessage());
       return new CibaIssueResponse(
-          clientUnAuthorized.isReportedAsBadRequest()
-              ? CibaRequestStatus.BAD_REQUEST
-              : CibaRequestStatus.UNAUTHORIZE,
+          CibaRequestStatus.UNAUTHORIZE,
           new BackchannelAuthenticationErrorResponse(
               new Error(clientUnAuthorized.errorCode()),
               new ErrorDescription(exception.getMessage())),

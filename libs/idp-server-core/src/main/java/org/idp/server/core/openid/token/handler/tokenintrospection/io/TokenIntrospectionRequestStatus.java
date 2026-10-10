@@ -19,6 +19,7 @@ package org.idp.server.core.openid.token.handler.tokenintrospection.io;
 public enum TokenIntrospectionRequestStatus {
   OK(200),
   BAD_REQUEST(400),
+  UNAUTHORIZED(401),
   INVALID_TOKEN(200),
   EXPIRED_TOKEN(200),
   INACTIVE_USER(200),

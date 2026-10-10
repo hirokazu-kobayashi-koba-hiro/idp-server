@@ -19,6 +19,7 @@ package org.idp.server.core.openid.token.handler.token;
 import static org.idp.server.core.openid.token.handler.token.io.TokenRequestStatus.*;
 
 import org.idp.server.core.openid.oauth.clientauthenticator.exception.ClientUnAuthorizedException;
+import org.idp.server.core.openid.oauth.clientauthenticator.exception.UseAttestationChallengeException;
 import org.idp.server.core.openid.oauth.configuration.exception.ClientConfigurationNotFoundException;
 import org.idp.server.core.openid.oauth.configuration.exception.ServerConfigurationNotFoundException;
 import org.idp.server.core.openid.oauth.dpop.DPoPProofInvalidException;
@@ -70,13 +71,27 @@ public class TokenRequestErrorHandler {
           BAD_REQUEST, new TokenErrorResponse(badRequest.error(), badRequest.errorDescription()));
     }
 
+    // draft-ietf-oauth-attestation-based-client-auth-11 Section 6.1: 400, unlike other failures.
+    if (exception instanceof UseAttestationChallengeException useAttestationChallenge) {
+      log.warn(
+          "Client authentication failed: error={}, reason={}",
+          useAttestationChallenge.errorCode(),
+          exception.getMessage());
+      return new TokenRequestResponse(
+          BAD_REQUEST,
+          new TokenErrorResponse(
+              new Error(useAttestationChallenge.errorCode()),
+              new ErrorDescription(exception.getLocalizedMessage())),
+          useAttestationChallenge.responseHeaders());
+    }
+
     if (exception instanceof ClientUnAuthorizedException clientUnAuthorized) {
       log.warn(
           "Client authentication failed: error={}, reason={}",
           clientUnAuthorized.errorCode(),
           exception.getMessage());
       return new TokenRequestResponse(
-          clientUnAuthorized.isReportedAsBadRequest() ? BAD_REQUEST : UNAUTHORIZE,
+          UNAUTHORIZE,
           new TokenErrorResponse(
               new Error(clientUnAuthorized.errorCode()),
               new ErrorDescription(exception.getLocalizedMessage())),

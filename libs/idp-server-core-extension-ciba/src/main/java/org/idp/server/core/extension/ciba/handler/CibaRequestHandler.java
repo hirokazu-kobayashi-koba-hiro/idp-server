@@ -112,7 +112,12 @@ public class CibaRequestHandler {
         authorizationServerConfigurationQueryRepository.get(tenant);
     RequestedClientId requestedClientId = request.clientId();
     ClientConfiguration clientConfiguration =
-        clientConfigurationQueryRepository.get(tenant, requestedClientId);
+        clientAuthenticationHandler.findClient(
+            clientConfigurationQueryRepository,
+            tenant,
+            requestedClientId,
+            request.clientSecretBasic(),
+            authorizationServerConfiguration);
     CibaRequestPattern pattern = parameters.analyze();
     CibaRequestContextCreator cibaRequestContextCreator = contextCreators.get(pattern);
 
