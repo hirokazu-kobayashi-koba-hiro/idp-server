@@ -34,10 +34,11 @@ import java.util.Objects;
  *   <li>{@link #attester_jwks} — a Client Attester signs the Client Attestation JWT and the server
  *       trusts the attester keys configured for the client
  *   <li>{@link #x5c} — a Client Attester signs the Client Attestation JWT and carries its
- *       certificate chain in the {@code x5c} JOSE header; the server trusts a configured root and
- *       validates the chain to it. Unlike {@link #attester_jwks} the attester can replace its
- *       signing key without every relying client being reconfigured, which is why deployments with
- *       a certificate hierarchy — EUDI Wallet among them — are shaped this way
+ *       certificate chain in the {@code x5c} JOSE header; the server trusts a configured trust
+ *       anchor (a root, or a CA below one) and validates the chain to it. Unlike {@link
+ *       #attester_jwks} the attester can replace its signing key without every relying client being
+ *       reconfigured, which is why deployments with a certificate hierarchy — EUDI Wallet among
+ *       them — are shaped this way
  *   <li>{@link #undefined} — not configured, or configured with an unknown value. No key resolver
  *       is available, so client authentication fails rather than falling back to a trust source the
  *       operator did not choose.

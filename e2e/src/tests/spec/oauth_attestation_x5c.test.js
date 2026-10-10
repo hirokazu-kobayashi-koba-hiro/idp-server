@@ -28,6 +28,8 @@ import { toEpocTime } from "../../lib/util";
 import {
   generateAttesterRoot,
   issueAttesterCertificate,
+  issueIntermediateCa,
+  privateJwkOf,
 } from "../../lib/attester/certificateChain";
 
 const ATTESTATION_TYP = "oauth-client-attestation+jwt";
@@ -40,6 +42,8 @@ let root;
 let otherRoot;
 let clientId;
 let instanceJwk;
+let issuingCa;
+let intermediateAnchoredClientId;
 
 const publicJwkOf = (privateJwk) => {
   const { d, p, q, dp, dq, qi, ...publicJwk } = privateJwk;
@@ -47,10 +51,10 @@ const publicJwkOf = (privateJwk) => {
 };
 
 /** The Client Attester signs, and carries its chain in x5c rather than a kid. */
-const createAttestationJwt = ({ attester, x5c, signingKey }) =>
+const createAttestationJwt = ({ attester, x5c, signingKey, subject = clientId }) =>
   createJwtWithPrivateKey({
     payload: {
-      sub: clientId,
+      sub: subject,
       iat: toEpocTime({ adjusted: 0 }),
       exp: toEpocTime({ adjusted: 300 }),
       cnf: { jwk: publicJwkOf(instanceJwk) },
@@ -88,12 +92,12 @@ const expectNoTrustedKey = (response) => {
   );
 };
 
-const requestTokenWith = async (attestationJwt) =>
+const requestTokenWith = async (attestationJwt, client = clientId) =>
   await requestToken({
     endpoint: serverConfig.tokenEndpoint,
     grantType: "client_credentials",
     scope: "account",
-    clientId,
+    clientId: client,
     additionalHeaders: {
       [ATTESTATION_HEADER]: attestationJwt,
       [POP_HEADER]: createPopJwt(),
@@ -140,6 +144,8 @@ beforeAll(async () => {
   root = generateAttesterRoot();
   otherRoot = generateAttesterRoot();
   clientId = await registerClient([root.base64Der]);
+  issuingCa = issueIntermediateCa({ parent: root, name: "attester-issuing-ca" });
+  intermediateAnchoredClientId = await registerClient([issuingCa.base64Der]);
 
   const jose = await import("jose");
   const { privateKey } = await jose.generateKeyPair("ES256", {
@@ -171,6 +177,19 @@ describe("draft-ietf-oauth-attestation-based-client-auth-11 §10.8: trust establ
         createAttestationJwt({ attester, x5c: attester.x5cWithoutRoot })
       );
       console.log("x5c chain without the root:", response.status);
+
+      expect(response.status).toBe(200);
+    }, 120000);
+
+    it("does not count the trust anchor carried in the chain against its own pathLenConstraint", async () => {
+      // The root allows one CA below it (pathLenConstraint=1). With [leaf, issuing CA, root] there
+      // is exactly one; the root itself is not part of the path (RFC 5280 §6.1) and is not a second.
+      const attester = await issueAttesterCertificate({ root: issuingCa, name: "attester-under-ca" });
+
+      const response = await requestTokenWith(
+        createAttestationJwt({ attester, x5c: attester.x5c })
+      );
+      console.log("[leaf, issuing CA, root] against the root:", response.status);
 
       expect(response.status).toBe(200);
     }, 120000);
@@ -234,6 +253,66 @@ describe("draft-ietf-oauth-attestation-based-client-auth-11 §10.8: trust establ
       expect(response.data.error_description).toContain(
         "reason=client attestation jwt validation failed: invalid signature"
       );
+    }, 120000);
+  });
+
+  describe("RFC 5280 §6: \"The selection of a trust anchor is a matter of policy\" — an intermediate CA as the trust anchor", () => {
+    // The client pins the CA that issues attester certificates, not the root above it. The path
+    // starts at the certificate that CA issued (RFC 5280 §6.1), so whether the chain also carries
+    // the CA, or the root beyond it, must not change the outcome (Issue #1957).
+    const requestAsIntermediateAnchoredClient = (attester, x5c) =>
+      requestTokenWith(
+        createAttestationJwt({ attester, x5c, subject: intermediateAnchoredClientId }),
+        intermediateAnchoredClientId
+      );
+
+    it("authenticates a chain that stops below the anchor: [leaf]", async () => {
+      const attester = await issueAttesterCertificate({ root: issuingCa, name: "attester-ica-1" });
+
+      const response = await requestAsIntermediateAnchoredClient(attester, [attester.x5c[0]]);
+      console.log("[leaf] against the issuing CA:", response.status);
+
+      expect(response.status).toBe(200);
+    }, 120000);
+
+    it("authenticates a chain that carries the anchor: [leaf, issuing CA]", async () => {
+      const attester = await issueAttesterCertificate({ root: issuingCa, name: "attester-ica-2" });
+
+      const response = await requestAsIntermediateAnchoredClient(attester, attester.x5cWithoutRoot);
+      console.log("[leaf, issuing CA] against the issuing CA:", response.status);
+
+      expect(response.status).toBe(200);
+    }, 120000);
+
+    it("authenticates a chain that carries certificates beyond the anchor: [leaf, issuing CA, root]", async () => {
+      const attester = await issueAttesterCertificate({ root: issuingCa, name: "attester-ica-3" });
+
+      const response = await requestAsIntermediateAnchoredClient(attester, attester.x5c);
+      console.log("[leaf, issuing CA, root] against the issuing CA:", response.status);
+
+      expect(response.status).toBe(200);
+    }, 120000);
+
+    it("rejects a leaf issued by another CA under the same root", async () => {
+      // This is what pinning the intermediate buys: a root that also issues for other purposes
+      // would accept this chain.
+      const otherCa = issueIntermediateCa({ parent: root, name: "other-issuing-ca" });
+      const other = await issueAttesterCertificate({ root: otherCa, name: "other-service" });
+
+      const response = await requestAsIntermediateAnchoredClient(other, other.x5c);
+      console.log("leaf under another CA against the issuing CA:", response.status);
+
+      expectNoTrustedKey(response);
+    }, 120000);
+
+    it("rejects a chain holding only the anchor, signed with the CA's own key", async () => {
+      // An empty path would make the CA's own key a signing key. The leaf has to be an end entity.
+      const caKey = { privateJwk: await privateJwkOf(issuingCa) };
+
+      const response = await requestAsIntermediateAnchoredClient(caKey, [issuingCa.base64Der]);
+      console.log("[issuing CA] signed by the issuing CA:", response.status);
+
+      expectNoTrustedKey(response);
     }, 120000);
   });
 

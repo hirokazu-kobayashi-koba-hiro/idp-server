@@ -51,7 +51,28 @@ export const generateAttesterRoot = () => {
     issuer: "attester-root",
     caPathLen: 1,
   });
-  return { keys, certificate: cert, base64Der: toBase64Der(cert) };
+  const base64Der = toBase64Der(cert);
+  return { keys, certificate: cert, base64Der, name: "attester-root", chain: [base64Der] };
+};
+
+/**
+ * A CA issued by `parent`, for deployments that pin the CA issuing the attester certificates
+ * rather than a root that also issues for other purposes (RFC 5280 Section 6: "The selection of a
+ * trust anchor is a matter of policy").
+ *
+ * @returns the same shape as a root, with `chain` holding this CA and everything above it
+ */
+export const issueIntermediateCa = ({ parent, name, pathLen = 0 }) => {
+  const keys = forge.pki.rsa.generateKeyPair(2048);
+  const cert = certificate({
+    publicKey: keys.publicKey,
+    signWith: parent.keys.privateKey,
+    subject: name,
+    issuer: parent.name,
+    caPathLen: pathLen,
+  });
+  const base64Der = toBase64Der(cert);
+  return { keys, certificate: cert, base64Der, name, chain: [base64Der, ...parent.chain] };
 };
 
 /**
@@ -60,8 +81,12 @@ export const generateAttesterRoot = () => {
  * RS256 rather than ES256 because forge builds certificates from RSA keys, and the same key has to
  * be usable by `jose` to sign the JWT.
  *
+ * `root` is the issuing CA: a root from {@link generateAttesterRoot} or a CA from
+ * {@link issueIntermediateCa}.
+ *
  * @returns privateJwk for signing, and both chain shapes: HAIP requires the trust anchor to be
- *   excluded, while an attester serialising its whole chain includes it, so both occur.
+ *   excluded, while an attester serialising its whole chain includes it, so both occur. `x5c`
+ *   carries the chain up to the self-signed root, `x5cWithoutRoot` everything below it.
  */
 export const issueAttesterCertificate = async ({ root, name = "attester" }) => {
   const { publicKey, privateKey } = await jose.generateKeyPair("RS256", {
@@ -74,13 +99,25 @@ export const issueAttesterCertificate = async ({ root, name = "attester" }) => {
     publicKey: forge.pki.publicKeyFromPem(publicKeyPem),
     signWith: root.keys.privateKey,
     subject: name,
-    issuer: "attester-root",
+    issuer: root.name,
   });
 
   const leafBase64 = toBase64Der(cert);
+  const chain = [leafBase64, ...root.chain];
   return {
     privateJwk,
-    x5c: [leafBase64, root.base64Der],
-    x5cWithoutRoot: [leafBase64],
+    x5c: chain,
+    x5cWithoutRoot: chain.slice(0, -1),
   };
+};
+
+/**
+ * The private key of a root or CA as a JWK, for tests that sign with the CA's own key — what a
+ * chain holding only the trust anchor would amount to.
+ */
+export const privateJwkOf = async (authority) => {
+  const pkcs8Pem = forge.pki.privateKeyInfoToPem(
+    forge.pki.wrapRsaPrivateKey(forge.pki.privateKeyToAsn1(authority.keys.privateKey))
+  );
+  return await jose.exportJWK(await jose.importPKCS8(pkcs8Pem, "RS256", { extractable: true }));
 };

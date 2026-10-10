@@ -130,7 +130,7 @@ public class IosAppAttestVerifier implements PlatformAttestationVerifier {
   /** Apple step 1: the chain terminates at a root held here rather than one it carries. */
   private void verifyChain(X509CertificateChain chain, IosAppAttestConfiguration configuration) {
     try {
-      chain.verifyToRoot(trustedRoots(configuration));
+      chain.verifyToTrustAnchor(trustedRoots(configuration));
     } catch (X509CertInvalidException e) {
       throw new IosAppAttestException("attestation chain does not verify: " + e.getMessage(), e);
     }
