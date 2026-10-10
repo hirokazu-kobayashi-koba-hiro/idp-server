@@ -102,6 +102,35 @@ cp .env.example .env.staging
 # The tests will automatically load .env.local if it exists
 ```
 
+### Running against MySQL (before a release)
+
+CI runs no MySQL job, so a MySQL-only SQL error goes unnoticed until someone starts the MySQL
+stack. Run the full suite on MySQL once before each release.
+
+1. Stop the PostgreSQL stack. Both compose files use the same container names.
+   ```bash
+   docker compose down
+   ```
+2. Start the MySQL stack (from the repository root). `.env` already holds `MYSQL_PASSWORD` and
+   `MYSQL_ROOT_PASSWORD`, so there is no need to run `init-generate-env.sh` again.
+   ```bash
+   docker compose -f docker-compose-mysql.yaml up -d --build
+   ```
+3. Register the admin tenant and the E2E test data.
+   ```bash
+   ./setup.sh
+   ./config/scripts/e2e-test-data.sh
+   ```
+4. Run the suite.
+   ```bash
+   cd e2e && npm test
+   ```
+5. Switch back to PostgreSQL.
+   ```bash
+   docker compose -f docker-compose-mysql.yaml down
+   docker compose up -d --build
+   ```
+
 ## Test Structure
 
 ```
