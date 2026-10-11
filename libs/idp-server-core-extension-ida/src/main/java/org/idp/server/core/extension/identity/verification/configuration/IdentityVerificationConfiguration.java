@@ -21,15 +21,21 @@ import org.idp.server.core.extension.identity.exception.IdentityVerificationAppl
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.configuration.common.IdentityVerificationCommonConfiguration;
+import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationProcessCaller;
 import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationProcessConfiguration;
 import org.idp.server.core.extension.identity.verification.configuration.registration.IdentityVerificationRegistrationConfig;
 import org.idp.server.core.extension.identity.verification.configuration.verified_claims.IdentityVerificationResultConfig;
 import org.idp.server.platform.http.HmacAuthenticationConfig;
 import org.idp.server.platform.json.JsonReadable;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
 import org.idp.server.platform.uuid.UuidConvertable;
 
 public class IdentityVerificationConfiguration implements JsonReadable, UuidConvertable {
+
+  private static final LoggerWrapper log =
+      LoggerWrapper.getLogger(IdentityVerificationConfiguration.class);
+
   String id;
   String type;
   boolean enabled = true;
@@ -151,6 +157,28 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
           "invalid configuration. type: " + process.name() + " is unregistered.");
     }
     return processes.get(process.name());
+  }
+
+  /**
+   * The process configuration, if {@code entry}'s endpoint may run it.
+   *
+   * <p>A process the endpoint may not run is reported exactly like one that is not registered, so
+   * the response does not reveal which processes exist for the other endpoint.
+   */
+  public IdentityVerificationProcessConfiguration getProcessConfig(
+      IdentityVerificationProcess process, IdentityVerificationProcessCaller entry) {
+    IdentityVerificationProcessConfiguration processConfiguration = getProcessConfig(process);
+    if (!processConfiguration.isCallableBy(entry)) {
+      log.warn(
+          "identity verification process is not callable from this endpoint: process={}, endpoint={}, caller={}, basic_auth_configured={}",
+          process.name(),
+          entry.name(),
+          processConfiguration.caller().name(),
+          processConfiguration.hasBasicAuth());
+      throw new IdentityVerificationApplicationConfigurationNotFoundException(
+          "invalid configuration. type: " + process.name() + " is unregistered.");
+    }
+    return processConfiguration;
   }
 
   public IdentityVerificationResultConfig result() {

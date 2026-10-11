@@ -31,6 +31,7 @@ import org.idp.server.core.extension.identity.verification.application.pre_hook.
 import org.idp.server.core.extension.identity.verification.application.validation.IdentityVerificationApplicationRequestValidator;
 import org.idp.server.core.extension.identity.verification.application.validation.IdentityVerificationApplicationValidationResult;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
+import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationProcessCaller;
 import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationProcessConfiguration;
 import org.idp.server.core.extension.identity.verification.io.*;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationApplicationCommandRepository;
@@ -105,7 +106,8 @@ public class IdentityVerificationApplicationEntryService
     IdentityVerificationConfiguration verificationConfiguration =
         configurationQueryRepository.get(tenant, type);
     IdentityVerificationProcessConfiguration processConfig =
-        verificationConfiguration.getProcessConfig(process);
+        verificationConfiguration.getProcessConfig(
+            process, IdentityVerificationProcessCaller.end_user);
 
     IdentityVerificationApplicationRequestValidator applicationValidator =
         new IdentityVerificationApplicationRequestValidator(
@@ -245,7 +247,8 @@ public class IdentityVerificationApplicationEntryService
     IdentityVerificationConfiguration verificationConfiguration =
         configurationQueryRepository.get(tenant, type);
     IdentityVerificationProcessConfiguration processConfig =
-        verificationConfiguration.getProcessConfig(process);
+        verificationConfiguration.getProcessConfig(
+            process, IdentityVerificationProcessCaller.end_user);
 
     IdentityVerificationApplicationRequestValidator applicationValidator =
         new IdentityVerificationApplicationRequestValidator(
