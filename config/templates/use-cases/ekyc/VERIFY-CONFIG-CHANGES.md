@@ -472,7 +472,7 @@ iv_callback "evaluate-result" '{"score": 40, "result": "pass"}'
 iv_list_applications | jq '.list[0] | {id, status}'
 # → status: "rejected"
 
-# テスト 4: score=70, result="pass" → 遷移なし（approved の score>=80 を満たさない、rejected にも該当しない）
+# テスト 4: score=70, result="pass" → examination_processing（approved の score>=80 を満たさない、rejected にも該当しない）
 iv_apply
 iv_callback "evaluate-result" '{"score": 70, "result": "pass"}'
 iv_list_applications | jq '.list[0] | {id, status}'
@@ -1053,7 +1053,7 @@ restore_iv_config
 |---|---------|------|
 | 3-1a | 文字列 eq で approved に遷移する | |
 | 3-1b | in 演算子で複数値が rejected に該当する | |
-| 3-1c | どちらにも該当しない値は遷移しない | |
+| 3-1c | どちらにも該当しない値は examination_processing になる | |
 | 3-2a | any_of グループ内 AND で全条件一致時のみ approved | |
 | 3-2b | any_of でいずれか一致時に rejected | |
 

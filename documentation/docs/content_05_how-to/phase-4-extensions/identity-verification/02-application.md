@@ -261,9 +261,9 @@ POST /{tenant-id}/internal/v1/identity-verification/callback/{verification-type}
 これらのフェーズにより、柔軟で拡張可能な申込み処理を実現しています。
 
 :::info コールバック経路も同一フェーズで処理されます
-`callback` プロセスも application 経路（apply/process）と**同じパイプライン**を通ります。そのため `pre_hook`（`verifications` の `process_sequence`・`additional_parameters`）はコールバックでも同じように適用され、`dependencies` / `allow_retry` による順序・再実行制御が効きます。
+コールバックで呼ぶ process も、エンドユーザー向けの入口（apply/process）と**同じパイプライン**を通ります。そのため `pre_hook`（`verifications` の `process_sequence`・`additional_parameters`）はコールバックでも同じように適用され、`dependencies` / `allow_retry` による順序・再実行制御が効きます。
 
-- コールバックは結果が外部から push されるため `execution` を省略でき、その場合は `no_action`（受信したリクエストボディがそのまま結果として取り込まれる）。
+- コールバックは結果が外部から push されるため `execution` を省略でき、その場合は `no_action`（外部 API は呼ばない。受信したリクエストボディは `transition` や `store` から `$.request_body` で参照できる）。
 - `execution` を設定すれば、コールバック受信時に外部API実行を行い、その応答 `$.response_body` で `transition` を駆動することもできます。
 :::
 
@@ -1184,7 +1184,7 @@ from で参照できるトップレベルのオブジェクトは以下の通り
 - transition に定義された状態ごとに条件を評価
 - 各状態の any_of → どれか1グループがすべて成立すればOK
 - 最初に成立した状態に遷移する
-- 条件が空、またはどれも成立しなければ遷移しない
+- 条件が空、またはどれも成立しなければ、エンドユーザー向けの入口では `applying`（申込み時は `requested`）、コールバックでは `examination_processing` になる。ただし、すでに先のステータスにいるときは戻らず、終端状態（`approved` / `rejected` / `cancelled` / `expired`）からは変わらない
 
 **pathの指定方法**
 

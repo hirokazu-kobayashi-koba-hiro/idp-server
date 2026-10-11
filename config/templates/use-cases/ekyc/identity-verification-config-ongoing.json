@@ -69,7 +69,7 @@
     },
     "callback-result": {
       "caller": "external_service",
-      "dependencies": { "required_processes": ["apply"], "allow_retry": false },
+      "dependencies": { "required_processes": ["apply"], "allow_retry": true },
       "pre_hook": { "verifications": [{ "type": "process_sequence" }] },
       "execution": { "type": "no_action" },
       "transition": {
