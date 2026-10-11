@@ -27,10 +27,15 @@ import org.idp.server.core.extension.identity.verification.configuration.registr
 import org.idp.server.core.extension.identity.verification.configuration.verified_claims.IdentityVerificationResultConfig;
 import org.idp.server.platform.http.HmacAuthenticationConfig;
 import org.idp.server.platform.json.JsonReadable;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
 import org.idp.server.platform.uuid.UuidConvertable;
 
 public class IdentityVerificationConfiguration implements JsonReadable, UuidConvertable {
+
+  private static final LoggerWrapper log =
+      LoggerWrapper.getLogger(IdentityVerificationConfiguration.class);
+
   String id;
   String type;
   boolean enabled = true;
@@ -164,6 +169,12 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
       IdentityVerificationProcess process, IdentityVerificationProcessCaller entry) {
     IdentityVerificationProcessConfiguration processConfiguration = getProcessConfig(process);
     if (!processConfiguration.isCallableBy(entry)) {
+      log.warn(
+          "identity verification process is not callable from this endpoint: process={}, endpoint={}, caller={}, basic_auth_configured={}",
+          process.name(),
+          entry.name(),
+          processConfiguration.caller().name(),
+          processConfiguration.hasBasicAuth());
       throw new IdentityVerificationApplicationConfigurationNotFoundException(
           "invalid configuration. type: " + process.name() + " is unregistered.");
     }

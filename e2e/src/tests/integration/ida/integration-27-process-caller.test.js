@@ -175,6 +175,11 @@ describe("Identity Verification - process caller (#1966)", () => {
     });
   };
 
+  const callFromExternalServiceWithId = async ({ type, applicationId, process, body }) => {
+    const url = `${backendUrl}/${tenantId}/internal/v1/identity-verification/callback/${type}/${applicationId}/${process}`;
+    return callProcess({ url, headers: { "Content-Type": "application/json" }, body });
+  };
+
   it("caller が無く basic_auth がある process は、エンドユーザー向けの入口から実行できない", async () => {
     const basicAuth = { username: "caller_cb_user", password: "caller_cb_password001" };
     const { type, accessToken, externalRef, applicationId } = await setUp({
@@ -218,6 +223,20 @@ describe("Identity Verification - process caller (#1966)", () => {
       body: { application_id: externalRef, result: "ok" }
     });
     expect(fromEndUserWithoutId.status).toBe(404);
+
+    // 登録されていない process と同じ応答にして、もう一方の入口用の process があるかを読ませない。
+    const unregisteredUrl = serverConfig.identityVerificationApplyEndpoint
+      .replace("{type}", type)
+      .replace("{process}", "no-such-process");
+    const unregistered = await callProcess({
+      url: unregisteredUrl, accessToken,
+      body: { application_id: externalRef, result: "ok" }
+    });
+    expect(unregistered.status).toBe(404);
+    expect(fromEndUserWithoutId.data).toEqual({
+      ...unregistered.data,
+      error_description: unregistered.data.error_description.replace("no-such-process", "callback-result")
+    });
     expect(await getApplicationStatus({ type, accessToken, applicationId })).toBe("requested");
 
     const fromExternalService = await callFromExternalService({
@@ -239,6 +258,13 @@ describe("Identity Verification - process caller (#1966)", () => {
       body: { application_id: externalRef, result: "ok" }
     });
     expect(fromExternalService.status).toBe(404);
+
+    const fromExternalServiceWithId = await callFromExternalServiceWithId({
+      type, applicationId,
+      process: "callback-result",
+      body: { application_id: externalRef, result: "ok" }
+    });
+    expect(fromExternalServiceWithId.status).toBe(404);
     expect(await getApplicationStatus({ type, accessToken, applicationId })).toBe("requested");
 
     const fromEndUser = await callFromEndUser({

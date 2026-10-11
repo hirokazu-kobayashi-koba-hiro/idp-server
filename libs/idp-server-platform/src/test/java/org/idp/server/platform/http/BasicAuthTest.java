@@ -45,5 +45,7 @@ class BasicAuthTest {
     assertFalse(configured.matches(new BasicAuth()));
     assertFalse(configured.matches(null));
     assertFalse(new BasicAuth().matches(new BasicAuth()));
+    assertFalse(new BasicAuth().matches(new BasicAuth("vendor", "secret")));
+    assertFalse(new BasicAuth("", "").matches(new BasicAuth("", "")));
   }
 }

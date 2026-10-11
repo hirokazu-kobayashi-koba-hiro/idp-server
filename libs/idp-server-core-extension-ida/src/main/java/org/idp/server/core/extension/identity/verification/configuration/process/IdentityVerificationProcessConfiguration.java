@@ -62,8 +62,9 @@ public class IdentityVerificationProcessConfiguration implements JsonReadable {
    * credentials. Any other process keeps running from both endpoints.
    */
   public boolean isCallableBy(IdentityVerificationProcessCaller entry) {
-    if (hasCaller()) {
-      return entry.name().equals(caller);
+    IdentityVerificationProcessCaller declared = caller();
+    if (declared.isDefined()) {
+      return declared == entry;
     }
     if (hasBasicAuth()) {
       return entry == IdentityVerificationProcessCaller.external_service;
@@ -71,12 +72,8 @@ public class IdentityVerificationProcessConfiguration implements JsonReadable {
     return true;
   }
 
-  public boolean hasCaller() {
-    return caller != null && !caller.isEmpty();
-  }
-
-  public String caller() {
-    return caller;
+  public IdentityVerificationProcessCaller caller() {
+    return IdentityVerificationProcessCaller.of(caller);
   }
 
   public boolean hasBasicAuth() {
@@ -232,7 +229,7 @@ public class IdentityVerificationProcessConfiguration implements JsonReadable {
 
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
-    if (hasCaller()) map.put("caller", caller);
+    if (caller().isDefined()) map.put("caller", caller);
     if (request != null) map.put("request", request.toMap());
     if (history != null) map.put("history", history.toMap());
     if (preHook != null) map.put("pre_hook", preHook.toMap());

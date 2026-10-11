@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.extension.identity.exception.IdentityVerificationApplicationConfigurationNotFoundException;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
+import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationProcessCaller;
 import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationProcessConfiguration;
 import org.idp.server.platform.json.JsonConverter;
 import org.junit.jupiter.api.DisplayName;
@@ -117,6 +118,35 @@ class IdentityVerificationProcessCallerTest {
 
     assertFalse(process.isCallableBy(end_user));
     assertFalse(process.isCallableBy(external_service));
+  }
+
+  @Test
+  @DisplayName("caller の値は end_user と external_service だけを受け付け、それ以外は unknown にする")
+  void callerResolvesOnlyDeclarableValues() {
+    assertEquals(end_user, IdentityVerificationProcessCaller.of("end_user"));
+    assertEquals(external_service, IdentityVerificationProcessCaller.of("external_service"));
+    assertEquals(
+        IdentityVerificationProcessCaller.undefined, IdentityVerificationProcessCaller.of(null));
+    assertEquals(
+        IdentityVerificationProcessCaller.undefined, IdentityVerificationProcessCaller.of(""));
+    assertEquals(
+        IdentityVerificationProcessCaller.unknown, IdentityVerificationProcessCaller.of("endUser"));
+    assertEquals(
+        IdentityVerificationProcessCaller.unknown,
+        IdentityVerificationProcessCaller.of("undefined"));
+    assertEquals(
+        IdentityVerificationProcessCaller.unknown, IdentityVerificationProcessCaller.of("unknown"));
+  }
+
+  @Test
+  @DisplayName("caller に undefined や unknown と書いても、どちらからも実行できない")
+  void reservedValuesRunFromNeither() {
+    for (String value : new String[] {"undefined", "unknown"}) {
+      IdentityVerificationProcessConfiguration process = processWith(Map.of("caller", value));
+
+      assertFalse(process.isCallableBy(end_user), value);
+      assertFalse(process.isCallableBy(external_service), value);
+    }
   }
 
   @Test
