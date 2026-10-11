@@ -425,7 +425,8 @@ function buildDescription(config, name, proc, kind, callbackLocator) {
 
   // サーバーが dependencies を確認するのは、pre_hook.verifications に process_sequence があるときだけ。
   // 再実行の確認は required_processes の有無に関係なく行う（allow_retry の既定は false）。
-  if (hasProcessSequenceVerification(proc)) {
+  // 初回申込み（initial）は毎回新しい申込みとして確認されるので、再実行の拒否は起きない。
+  if (hasProcessSequenceVerification(proc) && kind !== 'initial') {
     if (hasRequiredProcesses(proc)) {
       lines.push('');
       lines.push(`**前提プロセス**: ${requiredProcesses(proc).map((p) => `\`${p}\``).join('、')} の完了が必要`);
@@ -436,7 +437,7 @@ function buildDescription(config, name, proc, kind, callbackLocator) {
         ? '再実行できる（allow_retry: true）。'
         : kind === 'callback'
           ? '実行は 1 回だけ（allow_retry: false）。2 回目は 400 pre_hook_validation_failed。'
-          : '実行は 1 回だけ（allow_retry: false。失敗した試行も 1 回に数える）。2 回目は 400 pre_hook_validation_failed。'
+          : '実行は 1 回だけ（allow_retry: false。pre_hook・execution で失敗した試行も 1 回に数える）。2 回目は 400 pre_hook_validation_failed。'
     );
   }
 

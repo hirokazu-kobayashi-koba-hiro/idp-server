@@ -22,9 +22,10 @@ import org.idp.server.platform.exception.NotFoundException;
 /**
  * An identity verification application that cannot be used for the request.
  *
- * <p>Build it with {@link #byId} or {@link #byKey}. The repository uses them when nothing matches,
- * and the entry services use them when an application exists but was filed under another type, so
- * the two cases produce the same message and cannot be told apart (Issue #1969).
+ * <p>For an application, build it with {@link #byId} or {@link #byKey}. The repository uses them
+ * when nothing matches, and the entry services use them when an application exists but was filed
+ * under another type, so the two cases produce the same message and cannot be told apart (Issue
+ * #1969).
  */
 public class IdentityVerificationApplicationNotFoundException extends NotFoundException {
   public IdentityVerificationApplicationNotFoundException(String message) {

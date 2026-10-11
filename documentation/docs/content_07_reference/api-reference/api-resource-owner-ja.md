@@ -96,14 +96,15 @@
 ```json
 {
   "error": "invalid_request",
-  "error_description": "IdentityVerificationApplication not found (550e8400-e29b-41d4-a716-446655440000)"
+  "error_description": "<見つからなかったリソースの説明>"
 }
 ```
 
 **発生条件:**
-- 指定された申込みIDが存在しない
+- 指定されたリソースが存在しない
 - ユーザーに紐づくリソースが見つからない
-- 申込みの種別が、パスの `verification-type` と違う
+
+身元確認の申込みについては、各 API の節を参照してください。
 
 #### 検証エラー（400）
 
