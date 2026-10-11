@@ -55,7 +55,7 @@
 |--------------|---------------------------------------------|----|
 | `id`         | テンプレートのUUID                                 | ✅️ |
 | `type`       | 申込み種別（例: `investment-account-opening`）      | ✅️ |
-| `common`     | 共通設定。外部サービス。外部サービスのコールバック用の申込ID             | -  |
+| `common`     | 共通設定。コールバックで申込みを特定するキー（`callback_application_id_param`）など | -  |
 | `processes`  | 申込みプロセス。一連の身元確認のプロセスを定義する。複数登録可能            | ✅️ |
 | `result`     | `verified_claims` `source_details` のマッピング定義 | -  |
 | `attributes` | 申込参照APIのレスポンスに含める属性情報。                      | -  |
@@ -213,7 +213,6 @@ POST /{tenant-id}/internal/v1/identity-verification/callback/{verification-type}
  "id": "UUID",
  "type": "investment-account-opening"
  "common": {
-    "external_service": "mocky",
     "callback_application_id_param": "application_id"
   },
   "processes": {},
@@ -348,7 +347,7 @@ flowchart TD
 | フィールド | 型 | 説明 | 必須 |
 |---------|---|------|-----|
 | `required_processes` | string[] | このプロセスを実行する前に完了が必要なプロセス名のリスト | - |
-| `allow_retry` | boolean | プロセスの再実行を許可するか (`true`: 許可, `false`: 不可) | ✅ |
+| `allow_retry` | boolean | プロセスの再実行を許可するか (`true`: 許可, `false`: 不可)。省略時は `false` | - |
 
 **設定例**:
 
@@ -1707,7 +1706,6 @@ pre_hookコンポーネントに `condition` フィールドを追加します�
   "id": "666bae10-bc0d-41ce-92b4-53359b2f8439",
   "type": "investment-account-opening",
   "common": {
-    "external_service": "mocky",
     "callback_application_id_param": "application_id"
   },
   "processes": {

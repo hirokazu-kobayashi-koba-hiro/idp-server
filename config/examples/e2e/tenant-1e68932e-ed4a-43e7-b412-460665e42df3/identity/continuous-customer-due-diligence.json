@@ -1,8 +1,6 @@
 {
   "id": "3dadefa7-c6e1-4e53-887c-5e80555a85a9",
   "type": "continuous-customer-due-diligence",
-  "external_service": "mocky",
-  "external_application_id_param": "application_id",
   "approved_target_types": ["investment-account-opening", "nisa-account-opening"],
   "processes": {
     "apply": {

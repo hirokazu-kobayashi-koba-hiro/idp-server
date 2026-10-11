@@ -112,7 +112,7 @@ process の `response.body_mapping_rules` で組み立てたボディを返し�
 |---|---|---|
 | 400 | `invalid_request` | `request.schema` に合わない。`request.basic_auth` を設定した process で、Basic 認証が無い・一致しない |
 | 400 | `pre_hook_validation_failed` | `pre_hook.verifications` が失敗した |
-| 404 | `invalid_request` | `verification-type` の身元確認設定が無い、または無効（`enabled: false`）。process が無い、またはコールバックから実行できない。申込みが見つからない |
+| 404 | `invalid_request` | `verification-type` の身元確認設定が無い、または無効（`enabled: false`）。process が無い、またはコールバックから実行できない。申込みが見つからない、または申込みの種別がパスの `verification-type` と違う |
 | 4xx / 5xx | `execution_failed` | `execution.http_request` で呼び出した外部 API が失敗した。外部 API の状態コードを返す（idp-server が扱わないコードは、4xx なら 400、それ以外は 500） |
 | 400 | `external_service_error` | `pre_hook.additional_parameters` の `http_request` が失敗し、処理を止めた |
 | 4xx / 5xx | `sso_credentials_error` | `pre_hook.additional_parameters` の `sso_credentials` が失敗し、処理を止めた（トークンの取得が HTTP エラーのときはその状態コード、それ以外は 400） |

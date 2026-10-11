@@ -2,7 +2,6 @@
   "id": "d58a464d-c654-4d9a-a7d3-43e7420f7ebf",
   "type": "continuous-customer-due-diligence",
   "common": {
-    "external_service": "mocky",
     "callback_application_id_param": "application_id"
   },
   "processes": {

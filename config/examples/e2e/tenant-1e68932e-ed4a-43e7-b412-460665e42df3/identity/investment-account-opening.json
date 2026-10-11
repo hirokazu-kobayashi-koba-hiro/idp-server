@@ -2,7 +2,6 @@
   "id": "14775ce1-03ff-486f-bbcb-8321b6504fac",
   "type": "investment-account-opening",
   "common": {
-    "external_service": "mocky",
     "callback_application_id_param": "application_id"
   },
   "processes": {

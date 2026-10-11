@@ -19,6 +19,7 @@ package org.idp.server.usecases.application.enduser;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.core.extension.identity.exception.IdentityVerificationApplicationNotFoundException;
 import org.idp.server.core.extension.identity.verification.*;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplicationHandler;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplyingResult;
@@ -244,6 +245,9 @@ public class IdentityVerificationApplicationEntryService
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     IdentityVerificationApplication application =
         applicationQueryRepository.get(tenant, user, identifier);
+    if (!application.isOfType(type)) {
+      throw notFound(identifier);
+    }
     IdentityVerificationConfiguration verificationConfiguration =
         configurationQueryRepository.get(tenant, type);
     IdentityVerificationProcessConfiguration processConfig =
@@ -424,7 +428,11 @@ public class IdentityVerificationApplicationEntryService
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    applicationQueryRepository.get(tenant, user, identifier);
+    IdentityVerificationApplication application =
+        applicationQueryRepository.get(tenant, user, identifier);
+    if (!application.isOfType(type)) {
+      throw notFound(identifier);
+    }
     applicationCommandRepository.delete(tenant, user, identifier);
 
     eventPublisher.publish(
@@ -434,5 +442,15 @@ public class IdentityVerificationApplicationEntryService
         requestAttributes);
 
     return IdentityVerificationApplicationResponse.OK(Map.of());
+  }
+
+  /**
+   * The same exception the repository throws for an unknown id, so an application filed under
+   * another type cannot be told apart from one that does not exist (Issue #1969).
+   */
+  private IdentityVerificationApplicationNotFoundException notFound(
+      IdentityVerificationApplicationIdentifier identifier) {
+    return new IdentityVerificationApplicationNotFoundException(
+        String.format("IdentityVerificationApplication not found (%s)", identifier.value()));
   }
 }
