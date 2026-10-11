@@ -21,6 +21,7 @@ import org.idp.server.core.extension.identity.exception.IdentityVerificationAppl
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.configuration.common.IdentityVerificationCommonConfiguration;
+import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationProcessCaller;
 import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationProcessConfiguration;
 import org.idp.server.core.extension.identity.verification.configuration.registration.IdentityVerificationRegistrationConfig;
 import org.idp.server.core.extension.identity.verification.configuration.verified_claims.IdentityVerificationResultConfig;
@@ -151,6 +152,22 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
           "invalid configuration. type: " + process.name() + " is unregistered.");
     }
     return processes.get(process.name());
+  }
+
+  /**
+   * The process configuration, if {@code entry}'s endpoint may run it.
+   *
+   * <p>A process the endpoint may not run is reported exactly like one that is not registered, so
+   * the response does not reveal which processes exist for the other endpoint.
+   */
+  public IdentityVerificationProcessConfiguration getProcessConfig(
+      IdentityVerificationProcess process, IdentityVerificationProcessCaller entry) {
+    IdentityVerificationProcessConfiguration processConfiguration = getProcessConfig(process);
+    if (!processConfiguration.isCallableBy(entry)) {
+      throw new IdentityVerificationApplicationConfigurationNotFoundException(
+          "invalid configuration. type: " + process.name() + " is unregistered.");
+    }
+    return processConfiguration;
   }
 
   public IdentityVerificationResultConfig result() {

@@ -27,6 +27,7 @@ import org.idp.server.core.extension.identity.verification.application.pre_hook.
 import org.idp.server.core.extension.identity.verification.callback.validation.IdentityVerificationCallbackRequestValidator;
 import org.idp.server.core.extension.identity.verification.callback.validation.IdentityVerificationCallbackValidationResult;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
+import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationProcessCaller;
 import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationProcessConfiguration;
 import org.idp.server.core.extension.identity.verification.io.*;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationApplicationCommandRepository;
@@ -100,7 +101,8 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
         configurationQueryRepository.get(tenant, type);
 
     IdentityVerificationProcessConfiguration processConfiguration =
-        verificationConfiguration.getProcessConfig(process);
+        verificationConfiguration.getProcessConfig(
+            process, IdentityVerificationProcessCaller.external_service);
 
     IdentityVerificationCallbackRequestValidator validator =
         new IdentityVerificationCallbackRequestValidator(
@@ -144,7 +146,8 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
         configurationQueryRepository.get(tenant, type);
 
     IdentityVerificationProcessConfiguration processConfiguration =
-        verificationConfiguration.getProcessConfig(process);
+        verificationConfiguration.getProcessConfig(
+            process, IdentityVerificationProcessCaller.external_service);
 
     IdentityVerificationCallbackRequestValidator validator =
         new IdentityVerificationCallbackRequestValidator(

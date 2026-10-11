@@ -16,6 +16,8 @@
 
 package org.idp.server.platform.http;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.Objects;
 
 public class BasicAuth {
@@ -43,6 +45,26 @@ public class BasicAuth {
 
   boolean exists(String value) {
     return Objects.nonNull(value) && !value.isEmpty();
+  }
+
+  /**
+   * Whether the presented credentials match these configured ones, compared in constant time.
+   *
+   * <p>Use this to authenticate a request. {@link #equals} short-circuits on the first differing
+   * character, so its running time depends on how much of the secret the caller got right.
+   */
+  public boolean matches(BasicAuth presented) {
+    if (presented == null || !exists() || !presented.exists()) {
+      return false;
+    }
+    boolean usernameMatches = constantTimeEquals(username, presented.username);
+    boolean passwordMatches = constantTimeEquals(password, presented.password);
+    return usernameMatches & passwordMatches;
+  }
+
+  private static boolean constantTimeEquals(String expected, String actual) {
+    return MessageDigest.isEqual(
+        expected.getBytes(StandardCharsets.UTF_8), actual.getBytes(StandardCharsets.UTF_8));
   }
 
   @Override

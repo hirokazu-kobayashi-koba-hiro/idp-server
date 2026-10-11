@@ -40,6 +40,7 @@ public class IdentityVerificationProcessConfiguration implements JsonReadable {
   // needed.
   private static final String DUPLICATE_APPLICATION_VERIFIER = "duplicate_application";
 
+  String caller;
   IdentityVerificationRequestConfig request = new IdentityVerificationRequestConfig();
   IdentityVerificationHistoryConfig history = new IdentityVerificationHistoryConfig();
   IdentityVerificationPreHookConfig preHook = new IdentityVerificationPreHookConfig();
@@ -51,6 +52,32 @@ public class IdentityVerificationProcessConfiguration implements JsonReadable {
   ProcessDependencies dependencies = new ProcessDependencies();
 
   public IdentityVerificationProcessConfiguration() {}
+
+  /**
+   * Whether this process may run from the endpoint that {@code entry} uses.
+   *
+   * <p>An explicit {@code caller} allows exactly that endpoint; a value that names no caller allows
+   * none. Without {@code caller}, a process that configures {@code request.basic_auth} is treated
+   * as a callback from the external service, since only the callback endpoint checks those
+   * credentials. Any other process keeps running from both endpoints.
+   */
+  public boolean isCallableBy(IdentityVerificationProcessCaller entry) {
+    if (hasCaller()) {
+      return entry.name().equals(caller);
+    }
+    if (hasBasicAuth()) {
+      return entry == IdentityVerificationProcessCaller.external_service;
+    }
+    return true;
+  }
+
+  public boolean hasCaller() {
+    return caller != null && !caller.isEmpty();
+  }
+
+  public String caller() {
+    return caller;
+  }
 
   public boolean hasBasicAuth() {
     if (request == null) {
@@ -205,6 +232,7 @@ public class IdentityVerificationProcessConfiguration implements JsonReadable {
 
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
+    if (hasCaller()) map.put("caller", caller);
     if (request != null) map.put("request", request.toMap());
     if (history != null) map.put("history", history.toMap());
     if (preHook != null) map.put("pre_hook", preHook.toMap());
