@@ -418,7 +418,7 @@ components:
           description: |
             process を呼べる入口。`end_user` はエンドユーザー向けの API（`/v1/me/...`）だけ、`external_service` はコールバック API（`/internal/...`）だけ。
             省略すると、`request.basic_auth` があればコールバックだけ、なければ両方から呼べる。呼べない入口からは、登録されていない process と同じ 404 になる。
-            `end_user` に `request.basic_auth` を書くと 400。
+            `end_user` に `request.basic_auth`（`username` と `password` の両方）を書くと 400。
         request:
           $ref: '#/components/schemas/IdentityVerificationRequestConfig'
         pre_hook:

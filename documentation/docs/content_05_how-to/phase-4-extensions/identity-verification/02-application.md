@@ -248,7 +248,7 @@ POST /{tenant-id}/internal/v1/identity-verification/callback/{verification-type}
 
 - 呼べない入口からは、登録されていない process と同じ 404 を返します。
 - 承認や `verified_claims` の元になる値をリクエストボディ（`$.request_body`）から読む process は、`external_service` にしてください。エンドユーザー向けの入口から呼べると、本人が送った値がそのまま審査結果として扱われます。
-- 設定の登録・更新で、`caller` に `end_user` / `external_service` 以外を書くと 400 になります。`end_user` の process に `request.basic_auth` を書いた場合も 400 です（エンドユーザー向けの入口は `basic_auth` を確認しないため）。
+- 設定の登録・更新で、`caller` に `end_user` / `external_service` 以外を書くと 400 になります。`end_user` の process に `request.basic_auth` の `username` と `password` を両方書いた場合も 400 です（エンドユーザー向けの入口は `basic_auth` を確認しないため）。
 
 :::warning コールバック API はインターネットに公開しない
 `/{tenant-id}/internal/...` は、外部の身元確認サービスとの間だけで使う API です。ロードバランサーやネットワークの設定で、インターネットから届かないようにしてください。`request.basic_auth` は追加の防御で、公開しない前提の代わりにはなりません。

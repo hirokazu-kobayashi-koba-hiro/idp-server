@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.control_plane.management.identity.verification.validator;
+package org.idp.server.control_plane.management.identity.verification.verifier;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -26,19 +26,20 @@ import org.idp.server.platform.json.JsonConverter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-class IdentityVerificationProcessCallerValidatorTest {
+class IdentityVerificationConfigVerifierTest {
 
   private final JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   private static final Map<String, Object> BASIC_AUTH =
       Map.of("basic_auth", Map.of("username", "vendor", "password", "secret"));
 
-  private IdentityVerificationProcessCallerValidator validatorFor(Map<String, Object> processes) {
+  private Runnable verifierFor(Map<String, Object> processes) {
     Map<String, Object> payload =
         Map.of(
             "id", "0198e1c0-0000-7000-8000-00000000f967", "type", "probe", "processes", processes);
-    return new IdentityVerificationProcessCallerValidator(
-        jsonConverter.read(payload, IdentityVerificationConfiguration.class));
+    IdentityVerificationConfiguration configuration =
+        jsonConverter.read(payload, IdentityVerificationConfiguration.class);
+    return () -> new IdentityVerificationConfigVerifier().verify(configuration);
   }
 
   @Test
@@ -46,7 +47,7 @@ class IdentityVerificationProcessCallerValidatorTest {
   void acceptsConsistentCallers() {
     assertDoesNotThrow(
         () ->
-            validatorFor(
+            verifierFor(
                     Map.of(
                         "apply", Map.of("caller", "end_user"),
                         "callback-result",
@@ -54,7 +55,7 @@ class IdentityVerificationProcessCallerValidatorTest {
                         "evaluate-result", Map.of("caller", "external_service"),
                         "legacy", Map.of(),
                         "legacy-callback", Map.of("request", BASIC_AUTH)))
-                .validate());
+                .run());
   }
 
   @Test
@@ -63,7 +64,7 @@ class IdentityVerificationProcessCallerValidatorTest {
     InvalidRequestException exception =
         assertThrows(
             InvalidRequestException.class,
-            () -> validatorFor(Map.of("apply", Map.of("caller", "endUser"))).validate());
+            () -> verifierFor(Map.of("apply", Map.of("caller", "endUser"))).run());
 
     assertEquals(
         List.of("processes.apply.caller must be end_user or external_service: endUser"),
@@ -77,8 +78,8 @@ class IdentityVerificationProcessCallerValidatorTest {
         assertThrows(
             InvalidRequestException.class,
             () ->
-                validatorFor(Map.of("apply", Map.of("caller", "end_user", "request", BASIC_AUTH)))
-                    .validate());
+                verifierFor(Map.of("apply", Map.of("caller", "end_user", "request", BASIC_AUTH)))
+                    .run());
 
     assertEquals(1, exception.errorMessages().size());
     assertTrue(exception.errorMessages().get(0).startsWith("processes.apply.request.basic_auth"));

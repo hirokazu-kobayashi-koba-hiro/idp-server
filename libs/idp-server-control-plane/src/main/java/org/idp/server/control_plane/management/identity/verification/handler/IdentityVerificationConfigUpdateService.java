@@ -26,7 +26,7 @@ import org.idp.server.control_plane.management.identity.verification.io.Identity
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigRegistrationRequest;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigUpdateRequest;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigurationRequest;
-import org.idp.server.control_plane.management.identity.verification.validator.IdentityVerificationProcessCallerValidator;
+import org.idp.server.control_plane.management.identity.verification.verifier.IdentityVerificationConfigVerifier;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationConfigurationCommandRepository;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationConfigurationQueryRepository;
@@ -85,7 +85,7 @@ public class IdentityVerificationConfigUpdateService
 
     // Verified after the builder is populated so the refusal is audited with what was attempted.
     verifyTypeUnchanged(before, after);
-    new IdentityVerificationProcessCallerValidator(after).validate();
+    new IdentityVerificationConfigVerifier().verify(after);
 
     // 4. Build response
     JsonNodeWrapper beforeJson = JsonNodeWrapper.fromMap(before.toMap());

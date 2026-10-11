@@ -166,7 +166,7 @@ POST /{tenant-id}/v1/me/identity-verification/applications/{type}/cancel
 | `external_service` | コールバック（`/internal/...`）だけ |
 | 省略 | `request.basic_auth` があればコールバックだけ。なければ両方 |
 
-呼べない入口からは、登録されていない process と同じ 404 になります。設定の登録・更新では、上の 2 つ以外の値と、`end_user` に `request.basic_auth` を書いた設定を 400 にします。詳しくは [process を呼べる入口](../../content_05_how-to/phase-4-extensions/identity-verification/02-application.md#process-caller) を参照してください。
+呼べない入口からは、登録されていない process と同じ 404 になります。設定の登録・更新では、上の 2 つ以外の値と、`end_user` に `request.basic_auth`（`username` と `password` の両方）を書いた設定を 400 にします。詳しくは [process を呼べる入口](../../content_05_how-to/phase-4-extensions/identity-verification/02-application.md#process-caller) を参照してください。
 
 ---
 

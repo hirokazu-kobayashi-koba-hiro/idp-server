@@ -686,6 +686,7 @@ update_iv_config_json '{
       }
     },
     "callback-result": {
+      "caller": "external_service",
       "dependencies": { "required_processes": ["request-ekyc"], "allow_retry": false },
       "pre_hook": { "verifications": [{ "type": "process_sequence" }] },
       "execution": { "type": "no_action" },

@@ -337,13 +337,12 @@ echo "Application ID (ongoing): ${APPLICATION_ID_ONGOING}"
 
 ## Step 9c: 身元確認の承認 (ongoing-verification/callback-result)
 
-外部eKYCサービスからのコールバック結果を登録して申請を承認します。
+外部eKYCサービスからのコールバック結果を登録して申請を承認します。`callback-result` は `caller: external_service` のプロセスなので、コールバックの入口（`/internal/...`）から呼びます。ここでは外部サービスの代わりに呼びます。
 
 ```bash
 CALLBACK_RESPONSE=$(curl -s \
-  -X POST "${TENANT_BASE}/v1/me/identity-verification/applications/${IV_TYPE_ONGOING}/${APPLICATION_ID_ONGOING}/callback-result" \
+  -X POST "${TENANT_BASE}/internal/v1/identity-verification/callback/${IV_TYPE_ONGOING}/${APPLICATION_ID_ONGOING}/callback-result" \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
   -d '{"verification_result": "approved"}')
 
 echo "${CALLBACK_RESPONSE}" | jq .

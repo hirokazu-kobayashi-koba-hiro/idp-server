@@ -551,7 +551,7 @@ iv_apply() {
 #   iv_process "request-ekyc" '{"document_type":"x"}'   # ボディ付き
 iv_process() {
   local process_name="$1"
-  local body_json="${2:-{}}"
+  local body_json="${2:-"{}"}"
 
   local response http_code body
   response=$(curl -s -w "\n%{http_code}" \
@@ -573,7 +573,7 @@ iv_process() {
 #   iv_callback "callback-result" '{"result":"approved"}'
 iv_callback() {
   local process_name="$1"
-  local body_json="${2:-{}}"
+  local body_json="${2:-"{}"}"
 
   local response http_code body
   response=$(curl -s -w "\n%{http_code}" \
