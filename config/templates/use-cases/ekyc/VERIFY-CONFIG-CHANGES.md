@@ -409,7 +409,7 @@ iv_list_applications | jq '.list[0] | {id, status}'
 iv_apply
 iv_callback "evaluate-result" '{"verification_result": "pending"}'
 iv_list_applications | jq '.list[0] | {id, status}'
-# → status: "applying"（遷移なし）
+# → status: "examination_processing"（コールバックでどの条件にも一致しないとき）
 
 restore_iv_config
 ```
@@ -421,7 +421,7 @@ restore_iv_config
 | 1 | `"approved"` | HTTP 200 | approved |
 | 2 | `"rejected"` | HTTP 200 | rejected |
 | 3 | `"expired"` | HTTP 200 | rejected（`in` 演算子） |
-| 4 | `"pending"` | HTTP 200 | applying（遷移なし） |
+| 4 | `"pending"` | HTTP 200 | examination_processing（どの条件にも一致しない） |
 
 ### 3-2. 複合条件（any_of の AND/OR）
 
@@ -476,7 +476,7 @@ iv_list_applications | jq '.list[0] | {id, status}'
 iv_apply
 iv_callback "evaluate-result" '{"score": 70, "result": "pass"}'
 iv_list_applications | jq '.list[0] | {id, status}'
-# → status: "applying"
+# → status: "examination_processing"
 
 restore_iv_config
 ```
@@ -488,7 +488,7 @@ restore_iv_config
 | 1 | score=90, result="pass" | approved | グループ内 AND: 両方満たす |
 | 2 | score=90, result="fail" | rejected | グループ間 OR: result="fail" に該当 |
 | 3 | score=40, result="pass" | rejected | グループ間 OR: score<50 に該当 |
-| 4 | score=70, result="pass" | applying（遷移なし） | approved の score>=80 を満たさない、rejected にも該当しない |
+| 4 | score=70, result="pass" | examination_processing（どの条件にも一致しない） | approved の score>=80 を満たさない、rejected にも該当しない |
 
 ### 3-3. 利用可能な演算子一覧
 

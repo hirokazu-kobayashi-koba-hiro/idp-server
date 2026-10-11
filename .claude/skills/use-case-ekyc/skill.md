@@ -29,11 +29,11 @@ description: 身元確認/eKYCユースケースの設定ガイド。外部eKYC�
   "type": "{申込タイプ名}",
   "enabled": true,
   "common": {
-    "external_service": "{サービス名}",
     "callback_application_id_param": "application_id"
   },
   "processes": {
     "apply": {
+      "caller": "end_user",
       "request": {
         "schema": {
           "type": "object",
@@ -124,7 +124,7 @@ description: 身元確認/eKYCユースケースの設定ガイド。外部eKYC�
 | 必須入力項目 | `processes.apply.request.schema.required` | `["last_name", "first_name", "birthdate"]` |
 | 外部eKYCサービスURL | `processes.apply.execution.http_request.url` | `https://ekyc-vendor.example.com/api/verify` |
 | 認証方式 | `processes.{process}.execution.http_request.oauth_authorization` または `.hmac_authentication` | OAuth 2.0 / HMAC / Basic |
-| 審査結果の返し方 | 承認・却下を決める process に `"caller": "external_service"` | 外部サービスがコールバック（`/internal/v1/identity-verification/callback/{type}/{process}`）で返す。`$.request_body` で承認する process を本人の入口（`/v1/me/...`）から呼べる形にしない |
+| 審査結果の返し方 | 承認・却下を決める process に `"caller": "external_service"` | 外部サービスがコールバック（`/internal/v1/identity-verification/callback/{type}/{id}/{process}`。`common.callback_application_id_param` があれば `{id}` なしも可）で返す。`$.request_body` で承認する process は必ず `external_service` にする |
 | trust_framework | トップレベル `result.verified_claims_mapping_rules` 内 | `jp_aml`, `eidas` |
 | verified_claimsに含める属性 | トップレベル `result.verified_claims_mapping_rules` | family_name, given_name, birthdate, address等 |
 

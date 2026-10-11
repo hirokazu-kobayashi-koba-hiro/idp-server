@@ -93,9 +93,9 @@ process の `request.basic_auth` に `username` と `password` を両方書く�
 
 コールバックは、申込み API と同じフェーズ（request → pre_hook → execution → transition → store → response）で処理します。
 
-- `execution` を省略すると `no_action` になり、受け取ったリクエストボディが結果として扱われます（`$.request_body`）。
+- `execution` を省略すると `no_action` になり、外部 API は呼びません。受け取ったリクエストボディは、`transition` や `store` から `$.request_body` で参照できます。
 - `transition` の条件に一致しなければ、申込みのステータスは `examination_processing` になります。
-- 承認（`approved`）・却下（`rejected`）・取り消し（`cancelled`）・期限切れ（`expired`）になった申込みに同じコールバックを再送しても、ステータスは変わらず、承認時の処理（身元確認結果の登録・ユーザーの更新・イベントの発行）も繰り返しません。
+- 承認（`approved`）・却下（`rejected`）・取り消し（`cancelled`）・期限切れ（`expired`）になった申込みに同じコールバックを再送しても、ステータスは変わらず、承認時の処理（身元確認結果の登録・ユーザーの更新・イベントの発行）も繰り返しません。`pre_hook` と `execution`（外部 API の呼び出しを含む）、`application_details` の更新、process の実行回数の記録は、再送でも行います。
 - `dependencies.allow_retry: false` と `pre_hook.verifications` の `process_sequence` を設定した process は、2 回目の実行が 400（`pre_hook_validation_failed`）になります。
 
 ---
@@ -113,7 +113,8 @@ process の `response.body_mapping_rules` で組み立てたボディを返し�
 | 400 | `invalid_request` | `request.schema` に合わない。`request.basic_auth` を設定した process で、Basic 認証が無い・一致しない |
 | 400 | `pre_hook_validation_failed` | `pre_hook.verifications` が失敗した |
 | 404 | `invalid_request` | `verification-type` の身元確認設定が無い、または無効（`enabled: false`）。process が無い、またはコールバックから実行できない。申込みが見つからない |
-| 4xx / 5xx | — | `execution.http_request` で呼び出した外部 API が失敗した（その状態コードを返す） |
+| 4xx / 5xx | `execution_failed` | `execution.http_request` で呼び出した外部 API が失敗した（その状態コードを返す） |
+| 4xx / 5xx | `external_service_error` / `sso_credentials_error` など | `pre_hook.additional_parameters` の取得に失敗し、処理を止めた（状態コードは失敗の内容による。決まらないときは 400） |
 
 ```json
 {
