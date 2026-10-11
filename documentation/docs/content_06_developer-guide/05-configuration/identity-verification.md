@@ -1020,7 +1020,6 @@ Verificationsコンポーネントに`condition`フィールドを追加する�
   "processes": {
     "callback-result": {
       "caller": "external_service",
-      "type": "callback",
       "request": {
         "basic_auth": {
           "username": "external_service",
@@ -1116,7 +1115,7 @@ Content-Type: application/json
   },
   "processes": {
     "callback-result": {
-      "type": "callback",
+      "caller": "external_service",
       "request": {
         "schema": {
           "type": "object",
@@ -1645,7 +1644,7 @@ OIDC4IDA（OpenID Connect for Identity Assurance）準拠のverified_claims生�
       }
     },
     "callback-result": {
-      "type": "callback",
+      "caller": "external_service",
       "request": {
         "basic_auth": {
           "username": "kyc_callback_user",

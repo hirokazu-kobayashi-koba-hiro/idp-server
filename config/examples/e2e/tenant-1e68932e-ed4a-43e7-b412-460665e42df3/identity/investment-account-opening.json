@@ -264,7 +264,6 @@
     },
     "callback-examination": {
       "caller": "external_service",
-      "type": "callback",
       "request": {
         "basic_auth": {
           "username": "test_user",

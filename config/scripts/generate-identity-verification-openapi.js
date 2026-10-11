@@ -24,7 +24,7 @@
  *       POST /{tenant-id}/v1/me/identity-verification/applications/{type}/{process}
  *   - 継続プロセス（2番目以降、または dependencies.required_processes を持つもの）
  *       POST /{tenant-id}/v1/me/identity-verification/applications/{type}/{id}/{process}
- *   - コールバックプロセス（"type": "callback"）
+ *   - コールバックプロセス（"caller": "external_service"。省略時は request.basic_auth があるもの）
  *       POST /{tenant-id}/internal/v1/identity-verification/callback/{type}/{process}
  *
  * リクエストボディは `request.schema`（JSON Schema）から生成する。独自キーワード
@@ -200,9 +200,9 @@ function sanitizeSchema(schema) {
 }
 
 /**
- * プロセスを endpoint 種別に分類する。
- * - "type": "callback"、または request.basic_auth を持つ（外部サービス認証＝ユーザートークン
- *   なしで呼ばれる）プロセス → callback
+ * プロセスを endpoint 種別に分類する。サーバーが process を呼べる入口を決める規則（caller）に合わせる。
+ * - "caller": "external_service"、または caller を省略して request.basic_auth を持つプロセス → callback
+ * - caller が end_user / external_service 以外のプロセスは、どの入口からも呼べないので出力しない
  * - 先頭の非callbackプロセス → initial（required_processes 宣言があれば continuation）
  * - それ以外 → continuation
  */
@@ -210,8 +210,11 @@ function classifyProcesses(config) {
   const classified = [];
   let initialAssigned = false;
   for (const [name, proc] of Object.entries(config.processes)) {
-    const basicAuth = (proc.request && proc.request.basic_auth) || {};
-    const isCallback = proc.type === 'callback' || Object.keys(basicAuth).length > 0;
+    const caller = resolveCaller(proc);
+    if (caller === null) {
+      continue;
+    }
+    const isCallback = caller === 'external_service';
     let kind;
     if (isCallback) {
       kind = 'callback';
@@ -224,6 +227,19 @@ function classifyProcesses(config) {
     classified.push({ name, proc, kind });
   }
   return classified;
+}
+
+/**
+ * プロセスを呼べる入口を返す。caller を省略したときは、basic_auth（username と password の両方）が
+ * あれば external_service、なければ end_user（エンドユーザー向けの入口として出力する）。
+ * 知らない値は null。
+ */
+function resolveCaller(proc) {
+  if (proc.caller !== undefined && proc.caller !== null && proc.caller !== '') {
+    return proc.caller === 'end_user' || proc.caller === 'external_service' ? proc.caller : null;
+  }
+  const basicAuth = (proc.request && proc.request.basic_auth) || {};
+  return basicAuth.username && basicAuth.password ? 'external_service' : 'end_user';
 }
 
 function hasRequiredProcesses(proc) {

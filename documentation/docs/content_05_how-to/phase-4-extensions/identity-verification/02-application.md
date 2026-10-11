@@ -2078,7 +2078,6 @@ pre_hookコンポーネントに `condition` フィールドを追加します�
     },
     "callback-examination": {
       "caller": "external_service",
-      "type": "callback",
       "request": {
         "basic_auth": {
           "username": "test_user",
