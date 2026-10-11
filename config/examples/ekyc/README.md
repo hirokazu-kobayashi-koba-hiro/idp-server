@@ -181,7 +181,8 @@ curl -X POST https://api.local.test/44444444-3333-4444-4444-444444444444/v1/toke
    → no_action モードでは即座に受理
 
 2. evaluate-result（審査結果評価）
-   審査結果を評価し、approved（承認）または rejected（否認）に遷移
+   外部の審査サービスがコールバックの入口（/internal/...）から審査結果を返し、
+   approved（承認）または rejected（否認）に遷移（caller: external_service）
    → approved: { "approved": true }
    → rejected: { "rejected": true }
 ```

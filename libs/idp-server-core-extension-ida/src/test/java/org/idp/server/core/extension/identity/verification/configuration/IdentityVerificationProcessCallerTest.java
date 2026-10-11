@@ -21,6 +21,7 @@ import static org.idp.server.core.extension.identity.verification.configuration.
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.idp.server.core.extension.identity.exception.IdentityVerificationApplicationConfigurationNotFoundException;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
@@ -187,5 +188,30 @@ class IdentityVerificationProcessCallerTest {
     assertFalse(process.isCallableBy(end_user));
     assertTrue(process.isCallableBy(external_service));
     assertEquals("external_service", process.toMap().get("caller"));
+  }
+
+  @Test
+  @DisplayName("保存時に拒否する内容を、process の位置つきで返す")
+  void violationsArePrefixedWithProcess() {
+    assertEquals(
+        List.of("processes.probe-process.caller must be end_user or external_service: endUser"),
+        configurationWith(Map.of("caller", "endUser")).violations());
+    assertEquals(
+        1, configurationWith(withBasicAuth(Map.of("caller", "end_user"))).violations().size());
+    assertTrue(
+        configurationWith(withBasicAuth(Map.of("caller", "external_service")))
+            .violations()
+            .isEmpty());
+    assertTrue(configurationWith(Map.of()).violations().isEmpty());
+  }
+
+  @Test
+  @DisplayName("basic_auth が username だけなら、end_user でも拒否しない（実行時にも basic_auth とみなさない）")
+  void incompleteBasicAuthIsNotAViolation() {
+    Map<String, Object> process =
+        Map.of("caller", "end_user", "request", Map.of("basic_auth", Map.of("username", "vendor")));
+
+    assertTrue(configurationWith(process).violations().isEmpty());
+    assertFalse(processWith(process).hasBasicAuth());
   }
 }

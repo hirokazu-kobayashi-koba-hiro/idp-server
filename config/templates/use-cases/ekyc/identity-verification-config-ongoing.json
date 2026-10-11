@@ -68,8 +68,9 @@
       }
     },
     "callback-result": {
-      "required_processes": ["apply"],
-      "allow_retry": false,
+      "caller": "external_service",
+      "dependencies": { "required_processes": ["apply"], "allow_retry": true },
+      "pre_hook": { "verifications": [{ "type": "process_sequence" }] },
       "execution": { "type": "no_action" },
       "transition": {
         "approved": {

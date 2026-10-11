@@ -592,11 +592,11 @@ describe("identity-verification application", () => {
         .replace("{type}", type)
         .replace("{id}", applicationId)
       ;
+      // evaluate-result は外部サービスがコールバックで返す（caller: external_service）
       const evaluateResultResponse = await post({
         url: evaluateResultEndpoint,
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${accessToken}`
+          "Content-Type": "application/json"
         },
         body: {
           "approved": true,

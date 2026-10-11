@@ -99,6 +99,7 @@ describe("Identity Verification User Attribute Update", () => {
         }
       },
       "evaluate-result": {
+        "caller": "external_service",
         "execution": {
           "type": "no_action"
         },
@@ -181,11 +182,11 @@ describe("Identity Verification User Attribute Update", () => {
       .replace("{type}", type)
       .replace("{id}", applicationId);
 
+    // evaluate-result は外部サービスがコールバックで返す（caller: external_service）
     const evaluateResponse = await postWithJson({
       url: evaluateUrl,
       headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${accessToken}`
+        "Content-Type": "application/json"
       },
       body: evaluation || {
         "approved": true,

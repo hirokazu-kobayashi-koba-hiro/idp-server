@@ -29,11 +29,11 @@ description: 身元確認/eKYCユースケースの設定ガイド。外部eKYC�
   "type": "{申込タイプ名}",
   "enabled": true,
   "common": {
-    "external_service": "{サービス名}",
     "callback_application_id_param": "application_id"
   },
   "processes": {
     "apply": {
+      "caller": "end_user",
       "request": {
         "schema": {
           "type": "object",
@@ -48,17 +48,17 @@ description: 身元確認/eKYCユースケースの設定ガイド。外部eKYC�
         }
       },
       "execution": {
-        "function": "http_request",
+        "type": "http_request",
         "http_request": {
           "url": "{外部eKYCサービスURL}",
           "method": "POST",
           "auth_type": "oauth2",
           "oauth_authorization": {
-            "type": "password",
+            "type": "client_credentials",
             "token_endpoint": "{外部サービストークンエンドポイント}",
+            "client_authentication_type": "client_secret_post",
             "client_id": "{client_id}",
-            "username": "{username}",
-            "password": "{password}",
+            "client_secret": "{client_secret}",
             "scope": "application"
           },
           "header_mapping_rules": [
@@ -67,52 +67,41 @@ description: 身元確認/eKYCユースケースの設定ガイド。外部eKYC�
           "body_mapping_rules": [
             { "from": "$.request_body", "to": "*" }
           ]
-        },
-        "http_request_store": {
-          "key": "apply",
-          "interaction_mapping_rules": [
-            { "from": "$.response_body.application_id", "to": "external_application_id" }
-          ]
         }
       },
       "store": {
-        "mapping_rules": [
+        "application_details_mapping_rules": [
           { "from": "$.request_body", "to": "*" },
-          { "from": "$.additional_parameters.external_application_id", "to": "external_application_id" }
+          { "from": "$.response_body.application_id", "to": "application_id" }
         ]
       }
     },
     "callback-result": {
-      "required_processes": ["apply"],
-      "allow_retry": false,
-      "execution": {
-        "function": "no_op"
-      },
-      "transition": {
-        "rules": [
-          {
-            "to": "approved",
-            "conditions": [
-              {
-                "path": "$.request_body.verification_result",
-                "type": "string",
-                "operation": "eq",
-                "value": "approved"
-              }
-            ]
-          },
-          {
-            "to": "rejected",
-            "conditions": [
-              {
-                "path": "$.request_body.verification_result",
-                "type": "string",
-                "operation": "eq",
-                "value": "rejected"
-              }
-            ]
+      "caller": "external_service",
+      "request": {
+        "schema": {
+          "type": "object",
+          "required": ["application_id", "verification_result"],
+          "properties": {
+            "application_id": { "type": "string" },
+            "verification_result": { "type": "string" }
           }
-        ]
+        }
+      },
+      "dependencies": { "required_processes": ["apply"], "allow_retry": false },
+      "pre_hook": { "verifications": [{ "type": "process_sequence" }] },
+      "execution": { "type": "no_action" },
+      "transition": {
+        "approved": {
+          "any_of": [[
+            { "path": "$.request_body.verification_result", "type": "string", "operation": "eq", "value": "approved" }
+          ]]
+        },
+        "rejected": {
+          "any_of": [[
+            { "path": "$.request_body.verification_result", "type": "string", "operation": "eq", "value": "rejected" }
+          ]]
+        }
       }
     }
   },
@@ -135,6 +124,7 @@ description: 身元確認/eKYCユースケースの設定ガイド。外部eKYC�
 | 必須入力項目 | `processes.apply.request.schema.required` | `["last_name", "first_name", "birthdate"]` |
 | 外部eKYCサービスURL | `processes.apply.execution.http_request.url` | `https://ekyc-vendor.example.com/api/verify` |
 | 認証方式 | `processes.{process}.execution.http_request.oauth_authorization` または `.hmac_authentication` | OAuth 2.0 / HMAC / Basic |
+| 審査結果の返し方 | 承認・却下を決める process に `"caller": "external_service"` | 外部サービスがコールバック（`/internal/v1/identity-verification/callback/{type}/{id}/{process}`。`common.callback_application_id_param` があれば `{id}` なしも可）で返す。`$.request_body` で承認する process は必ず `external_service` にする |
 | trust_framework | トップレベル `result.verified_claims_mapping_rules` 内 | `jp_aml`, `eidas` |
 | verified_claimsに含める属性 | トップレベル `result.verified_claims_mapping_rules` | family_name, given_name, birthdate, address等 |
 

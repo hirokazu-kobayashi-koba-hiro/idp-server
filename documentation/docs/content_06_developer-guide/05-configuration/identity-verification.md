@@ -158,6 +158,16 @@ POST /{tenant-id}/v1/me/identity-verification/applications/{type}/cancel
 | `store` | 結果保存 | ❌ |
 | `response` | レスポンスマッピング | ❌ |
 
+フェーズのほかに、process を呼べる入口を `caller` で指定できます。
+
+| 値 | 呼べる入口 |
+|---|---|
+| `end_user` | エンドユーザー向け（`/v1/me/...`）だけ |
+| `external_service` | コールバック（`/internal/...`）だけ |
+| 省略 | `request.basic_auth` があればコールバックだけ。なければ両方 |
+
+呼べない入口からは、登録されていない process と同じ 404 になります。設定の登録・更新では、上の 2 つ以外の値と、`end_user` に `request.basic_auth`（`username` と `password` の両方）を書いた設定を 400 にします。詳しくは [process を呼べる入口](../../content_05_how-to/phase-4-extensions/identity-verification/02-application.md#process-caller) を参照してください。
+
 ---
 
 ## プロセス依存関係とシーケンス制御
@@ -1001,7 +1011,7 @@ Verificationsコンポーネントに`condition`フィールドを追加する�
 
 ### Callbackプロセス
 
-外部サービスからの非同期コールバックを受け取るプロセスです。
+外部サービスからの非同期コールバックを受け取るプロセスです。`caller: external_service` にして、エンドユーザー向けの入口から呼べないようにします。コールバック API（`/internal/...`）はインターネットに公開しない前提です。
 
 #### 基本設定
 
@@ -1009,7 +1019,7 @@ Verificationsコンポーネントに`condition`フィールドを追加する�
 {
   "processes": {
     "callback-result": {
-      "type": "callback",
+      "caller": "external_service",
       "request": {
         "basic_auth": {
           "username": "external_service",
@@ -1105,7 +1115,7 @@ Content-Type: application/json
   },
   "processes": {
     "callback-result": {
-      "type": "callback",
+      "caller": "external_service",
       "request": {
         "schema": {
           "type": "object",
@@ -1634,7 +1644,7 @@ OIDC4IDA（OpenID Connect for Identity Assurance）準拠のverified_claims生�
       }
     },
     "callback-result": {
-      "type": "callback",
+      "caller": "external_service",
       "request": {
         "basic_auth": {
           "username": "kyc_callback_user",

@@ -64,6 +64,7 @@
       }
     },
     "evaluate-result": {
+      "caller": "external_service",
       "execution": { "type": "no_action" },
       "transition": {
         "approved": {

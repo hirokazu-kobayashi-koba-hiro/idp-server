@@ -72,6 +72,25 @@ public class IdentityVerificationProcessConfiguration implements JsonReadable {
     return true;
   }
 
+  /**
+   * What this process says that the runtime would read differently (Issue #1966): a {@code caller}
+   * that names no caller, which no endpoint matches, and {@code request.basic_auth} on an {@code
+   * end_user} process, which the end-user endpoint never checks. Each entry is relative to the
+   * process, e.g. {@code "caller must be ..."}.
+   */
+  public List<String> violations() {
+    List<String> violations = new ArrayList<>();
+    IdentityVerificationProcessCaller declared = caller();
+    if (declared == IdentityVerificationProcessCaller.unknown) {
+      violations.add("caller must be end_user or external_service: " + caller);
+    }
+    if (declared == IdentityVerificationProcessCaller.end_user && hasBasicAuth()) {
+      violations.add(
+          "request.basic_auth is not checked for an end_user process. Remove it, or set caller to external_service");
+    }
+    return violations;
+  }
+
   public IdentityVerificationProcessCaller caller() {
     return IdentityVerificationProcessCaller.of(caller);
   }

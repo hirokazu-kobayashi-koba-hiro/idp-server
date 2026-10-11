@@ -167,7 +167,7 @@ Step 8: 身元確認設定作成（組織レベルAPI）
 - モード: `no_action`（ローカル開発用 - 外部サービス連携なし）
 
 ### evaluate-result（審査結果判定）
-管理者が審査結果を判定します。
+外部の審査サービスが、コールバックの入口（`/internal/...`）から審査結果を返します（`caller: external_service`）。本人がエンドユーザー向けの入口から呼ぶことはできません。
 
 - `approved: true` → 承認（身元確認完了）
 - `rejected: true` → 拒否

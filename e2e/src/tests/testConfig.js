@@ -61,7 +61,7 @@ function createServerConfig(tenantId, baseUrl = backendUrl) {
     identityVerificationApplicationsEndpoint: `${baseUrl}/${tenantId}/v1/me/identity-verification/applications`,
     identityVerificationApplicationsDeletionEndpoint: `${baseUrl}/${tenantId}/v1/me/identity-verification/applications/{type}/{id}`,
     identityVerificationApplicationsPublicCallbackEndpoint: `${baseUrl}/${tenantId}/internal/v1/identity-verification/callback/{type}/{callbackName}`,
-    identityVerificationApplicationsEvaluateResultEndpoint: `${baseUrl}/${tenantId}/v1/me/identity-verification/applications/{type}/{id}/evaluate-result`,
+    identityVerificationApplicationsEvaluateResultEndpoint: `${baseUrl}/${tenantId}/internal/v1/identity-verification/callback/{type}/{id}/evaluate-result`,
     identityVerificationResultEndpoint: `${baseUrl}/${tenantId}/internal/v1/identity-verification/results/{type}/registration`,
     identityVerificationResultResourceOwnerEndpoint: `${baseUrl}/${tenantId}/v1/me/identity-verification/results`,
     discoveryEndpoint: `${baseUrl}/${tenantId}/.well-known/openid-configuration`,

@@ -184,6 +184,23 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
     return processConfiguration;
   }
 
+  /**
+   * Every process's {@link IdentityVerificationProcessConfiguration#violations()}, each prefixed
+   * with where it is, e.g. {@code "processes.apply.caller must be ..."}.
+   */
+  public List<String> violations() {
+    List<String> violations = new ArrayList<>();
+    if (processes == null) {
+      return violations;
+    }
+    for (Map.Entry<String, IdentityVerificationProcessConfiguration> entry : processes.entrySet()) {
+      for (String violation : entry.getValue().violations()) {
+        violations.add("processes." + entry.getKey() + "." + violation);
+      }
+    }
+    return violations;
+  }
+
   public IdentityVerificationResultConfig result() {
     if (result == null) {
       return new IdentityVerificationResultConfig();

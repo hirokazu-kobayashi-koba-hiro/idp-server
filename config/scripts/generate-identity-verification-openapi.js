@@ -24,8 +24,11 @@
  *       POST /{tenant-id}/v1/me/identity-verification/applications/{type}/{process}
  *   - 継続プロセス（2番目以降、または dependencies.required_processes を持つもの）
  *       POST /{tenant-id}/v1/me/identity-verification/applications/{type}/{id}/{process}
- *   - コールバックプロセス（"type": "callback"）
+ *   - コールバックプロセス（"caller": "external_service"。省略時は request.basic_auth があるもの）
+ *       POST /{tenant-id}/internal/v1/identity-verification/callback/{type}/{id}/{process}
  *       POST /{tenant-id}/internal/v1/identity-verification/callback/{type}/{process}
+ *         （common.callback_application_id_param があるときだけ。申込みはボディの値で特定する）
+ *     security は request.basic_auth があるときだけ BasicAuth（無ければ認証なし）
  *
  * リクエストボディは `request.schema`（JSON Schema）から生成する。独自キーワード
  * （store / respond）は OpenAPI 非互換のため除去する。レスポンスは
@@ -200,9 +203,9 @@ function sanitizeSchema(schema) {
 }
 
 /**
- * プロセスを endpoint 種別に分類する。
- * - "type": "callback"、または request.basic_auth を持つ（外部サービス認証＝ユーザートークン
- *   なしで呼ばれる）プロセス → callback
+ * プロセスを endpoint 種別に分類する。サーバーが process を呼べる入口を決める規則（caller）に合わせる。
+ * - "caller": "external_service"、または caller を省略して request.basic_auth を持つプロセス → callback
+ * - caller が end_user / external_service 以外のプロセスは、どの入口からも呼べないので出力しない
  * - 先頭の非callbackプロセス → initial（required_processes 宣言があれば continuation）
  * - それ以外 → continuation
  */
@@ -210,8 +213,11 @@ function classifyProcesses(config) {
   const classified = [];
   let initialAssigned = false;
   for (const [name, proc] of Object.entries(config.processes)) {
-    const basicAuth = (proc.request && proc.request.basic_auth) || {};
-    const isCallback = proc.type === 'callback' || Object.keys(basicAuth).length > 0;
+    const caller = resolveCaller(proc);
+    if (caller === null) {
+      continue;
+    }
+    const isCallback = caller === 'external_service';
     let kind;
     if (isCallback) {
       kind = 'callback';
@@ -224,6 +230,29 @@ function classifyProcesses(config) {
     classified.push({ name, proc, kind });
   }
   return classified;
+}
+
+/**
+ * プロセスを呼べる入口を返す。caller を省略したときは、basic_auth（username と password の両方）が
+ * あれば external_service、なければ end_user（エンドユーザー向けの入口として出力する）。
+ * 知らない値は null。
+ */
+function resolveCaller(proc) {
+  if (proc.caller !== undefined && proc.caller !== null && proc.caller !== '') {
+    return proc.caller === 'end_user' || proc.caller === 'external_service' ? proc.caller : null;
+  }
+  return hasBasicAuth(proc) ? 'external_service' : 'end_user';
+}
+
+/** サーバーと同じく username と password の両方があるときだけ basic_auth とみなす */
+function hasBasicAuth(proc) {
+  const basicAuth = (proc.request && proc.request.basic_auth) || {};
+  return !!(basicAuth.username && basicAuth.password);
+}
+
+/** コールバックで申込みを特定するリクエストボディのキー（common.callback_application_id_param） */
+function callbackApplicationIdParam(config) {
+  return (config.common && config.common.callback_application_id_param) || null;
 }
 
 function hasRequiredProcesses(proc) {
@@ -327,7 +356,7 @@ const KIND_LABELS = {
 };
 
 /** プロセス設定から description（Markdown）を組み立てる */
-function buildDescription(config, name, proc, kind) {
+function buildDescription(config, name, proc, kind, callbackLocator) {
   const lines = [];
   lines.push(`**処理タイプ**: ${KIND_LABELS[kind]}`);
   lines.push('');
@@ -401,11 +430,15 @@ function buildDescription(config, name, proc, kind) {
     }
   }
 
-  if (kind === 'callback' && config.external_application_id_param) {
+  if (kind === 'callback') {
     lines.push('');
     lines.push(
-      `対象申込みはリクエストボディの \`${config.external_application_id_param}\`（external_application_id）で特定される。`
+      callbackLocator === 'param'
+        ? `対象申込みはリクエストボディの \`${callbackApplicationIdParam(config)}\`（common.callback_application_id_param）で特定される。`
+        : '対象申込みはパスの `{id}`（申込みID）で特定される。'
     );
+    lines.push('');
+    lines.push('コールバック API（`/internal/...`）はインターネットに公開しない前提。');
   }
 
   if (proc.transition && Object.keys(proc.transition).length > 0) {
@@ -469,7 +502,7 @@ function warnIfEmptySchema(configType, processName, schema) {
   }
 }
 
-function buildOperation(config, name, proc, kind, tag, options) {
+function buildOperation(config, name, proc, kind, tag, options, callbackLocator) {
   const summaryLabels = {
     initial: `身元確認申込み（${name}）`,
     continuation: `継続プロセス実行（${name}）`,
@@ -478,18 +511,21 @@ function buildOperation(config, name, proc, kind, tag, options) {
   const operation = {
     tags: [tag],
     summary: summaryLabels[kind],
-    description: buildDescription(config, name, proc, kind),
-    operationId: sanitizeOperationId(`${config.type}-${name}`),
+    description: buildDescription(config, name, proc, kind, callbackLocator),
+    operationId: sanitizeOperationId(
+      callbackLocator === 'param' ? `${config.type}-${name}-by-param` : `${config.type}-${name}`
+    ),
   };
 
   if (kind === 'callback') {
-    operation.security = [{ BasicAuth: [] }];
+    // サーバーがコールバックで確認するのは request.basic_auth だけ。無ければ認証なし。
+    operation.security = hasBasicAuth(proc) ? [{ BasicAuth: [] }] : [];
   } else {
     operation.security = [{ OAuth2: ['identity_verification_application'] }];
   }
 
   const parameters = tenantPathParameters(options);
-  if (kind === 'continuation') {
+  if (kind === 'continuation' || (kind === 'callback' && callbackLocator === 'id')) {
     parameters.push({ $ref: '#/components/parameters/ApplicationId' });
   }
   if (parameters.length > 0) {
@@ -1276,19 +1312,28 @@ function generateOpenApi(configEntries, options) {
     }
 
     for (const { name, proc, kind } of classifyProcesses(config)) {
-      let pathKey;
+      // コールバックは申込みIDをパスで渡す形を必ず出す。ボディから申込みを特定する形（{id} なし）は、
+      // サーバーが使う common.callback_application_id_param があるときだけ出す。
+      const targets = [];
       if (kind === 'callback') {
-        pathKey = `${bases.callback}/${config.type}/${name}`;
+        targets.push({ pathKey: `${bases.callback}/${config.type}/{id}/${name}`, locator: 'id' });
+        if (callbackApplicationIdParam(config)) {
+          targets.push({ pathKey: `${bases.callback}/${config.type}/${name}`, locator: 'param' });
+        }
       } else if (kind === 'initial') {
-        pathKey = `${bases.me}/${config.type}/${name}`;
+        targets.push({ pathKey: `${bases.me}/${config.type}/${name}` });
       } else {
-        pathKey = `${bases.me}/${config.type}/{id}/${name}`;
+        targets.push({ pathKey: `${bases.me}/${config.type}/{id}/${name}` });
       }
-      if (doc.paths[pathKey]) {
-        console.error(`警告: パスが重複しています（スキップ）: ${pathKey}`);
-        continue;
+      for (const { pathKey, locator } of targets) {
+        if (doc.paths[pathKey]) {
+          console.error(`警告: パスが重複しています（スキップ）: ${pathKey}`);
+          continue;
+        }
+        doc.paths[pathKey] = {
+          post: buildOperation(config, name, proc, kind, tag, options, locator),
+        };
       }
-      doc.paths[pathKey] = { post: buildOperation(config, name, proc, kind, tag, options) };
     }
 
     if (options.crud) {

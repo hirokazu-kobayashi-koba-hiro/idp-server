@@ -227,6 +227,9 @@ describe("Identity Verification Process Variations", () => {
             ]
           }
         },
+        // テストを簡単にするため、本人の入口から approved: true を送って承認している。
+        // 実際の設定では、承認の元を $.request_body から読む process は caller: external_service にして
+        // コールバックから呼ぶ（#1966）。
         "final-review": {
           "execution": { "type": "no_action" },
           "transition": {
