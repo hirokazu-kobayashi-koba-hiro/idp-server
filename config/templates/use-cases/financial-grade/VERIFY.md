@@ -593,14 +593,14 @@ echo "Application ID: ${APPLICATION_ID}"
 
 ### Step 22: 身元確認の承認（Evaluate Result）
 
-申請を承認します（本番環境では外部 eKYC サービスの審査結果に基づく）。
+申請を承認します。`evaluate-result` は `caller: external_service` のプロセスで、外部 eKYC サービスが審査結果をコールバックの入口（`/internal/...`）から返します。ここでは外部サービスの代わりに呼びます。
+
+> コールバックの入口はインターネットに公開しない前提です。本人のアクセストークンでは呼べません（エンドユーザー向けの入口から呼ぶと 404）。
 
 ```bash
 EVALUATE_RESPONSE=$(curl -s \
-  --cert "${CLIENT_CERT}" --key "${CLIENT_KEY}" \
-  -X POST "${MTLS_TENANT_BASE}/v1/me/identity-verification/applications/${IV_TYPE}/${APPLICATION_ID}/evaluate-result" \
+  -X POST "${TENANT_BASE}/internal/v1/identity-verification/callback/${IV_TYPE}/${APPLICATION_ID}/evaluate-result" \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer ${ACCESS_TOKEN_2}" \
   -d '{
     "approved": true,
     "rejected": false

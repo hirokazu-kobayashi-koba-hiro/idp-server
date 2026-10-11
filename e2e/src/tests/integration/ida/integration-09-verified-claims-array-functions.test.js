@@ -75,6 +75,7 @@ describe("Identity Verification - Array Functions in verified_claims", () => {
     const allProcesses = {
       ...processes,
       "evaluate-result": {
+        "caller": "external_service",
         "execution": { "type": "no_action" },
         "transition": {
           "approved": {
@@ -163,11 +164,11 @@ describe("Identity Verification - Array Functions in verified_claims", () => {
       .replace("{type}", configurationType)
       .replace("{id}", applicationId);
 
+    // evaluate-result は外部サービスがコールバックで返す（caller: external_service）
     const evaluateResponse = await post({
       url: evaluateResultEndpoint,
       headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${userAccessToken}`
+        "Content-Type": "application/json"
       },
       body: { "approved": true, "rejected": false }
     });

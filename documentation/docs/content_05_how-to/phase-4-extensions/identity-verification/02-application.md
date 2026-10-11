@@ -227,6 +227,33 @@ POST /{tenant-id}/internal/v1/identity-verification/callback/{verification-type}
 
 [外部ステム連携用インターナルAPI仕様（身元確認関連のコールバックAPIを含む）](/docs/content_07_reference/api-internal-ja/)
 
+### process を呼べる入口（`caller`） {#process-caller}
+
+エンドユーザー向けの申込み API とコールバック API は、同じ `processes` から process を引きます。process ごとに `caller` を書くと、呼べる入口を 1 つに限定できます。
+
+| `caller` | エンドユーザー向け（`/v1/me/...`） | コールバック（`/internal/...`） |
+|---|---|---|
+| `end_user` | 実行できる | 404 |
+| `external_service` | 404 | 実行できる |
+| 省略・`request.basic_auth` あり | 404 | 実行できる |
+| 省略・`request.basic_auth` なし | 実行できる | 実行できる |
+
+```json
+"evaluate-result": {
+  "caller": "external_service",
+  "execution": { "type": "no_action" },
+  "transition": { ... }
+}
+```
+
+- 呼べない入口からは、登録されていない process と同じ 404 を返します。
+- 承認や `verified_claims` の元になる値をリクエストボディ（`$.request_body`）から読む process は、`external_service` にしてください。エンドユーザー向けの入口から呼べると、本人が送った値がそのまま審査結果として扱われます。
+- 設定の登録・更新で、`caller` に `end_user` / `external_service` 以外を書くと 400 になります。`end_user` の process に `request.basic_auth` を書いた場合も 400 です（エンドユーザー向けの入口は `basic_auth` を確認しないため）。
+
+:::warning コールバック API はインターネットに公開しない
+`/{tenant-id}/internal/...` は、外部の身元確認サービスとの間だけで使う API です。ロードバランサーやネットワークの設定で、インターネットから届かないようにしてください。`request.basic_auth` は追加の防御で、公開しない前提の代わりにはなりません。
+:::
+
 ## process詳細
 
 身元確認申込みAPIの内部ロジックは、7つの主要なフェーズで構成されています。
@@ -1606,8 +1633,8 @@ pre_hookコンポーネントに `condition` フィールドを追加します�
 
 | エントリポイント | メソッド | 動作 |
 |---------------|---------|------|
-| 申込み承認（evaluate-result等） | `mergeVerifiedClaims` | キーレベルのマージ（`putAll`） |
-| コールバック承認（callback-result等） | `mergeVerifiedClaims` | キーレベルのマージ（`putAll`） |
+| エンドユーザー向けの入口で承認 | `mergeVerifiedClaims` | キーレベルのマージ（`putAll`） |
+| コールバックで承認（evaluate-result / callback-result 等） | `mergeVerifiedClaims` | キーレベルのマージ（`putAll`） |
 | 外部サービスからの直接登録 | `setVerifiedClaims` | 完全上書き |
 
 **`mergeVerifiedClaims`（putAll）の挙動**:
@@ -2050,6 +2077,7 @@ pre_hookコンポーネントに `condition` フィールドを追加します�
       }
     },
     "callback-examination": {
+      "caller": "external_service",
       "type": "callback",
       "request": {
         "basic_auth": {
@@ -2098,6 +2126,7 @@ pre_hookコンポーネントに `condition` フィールドを追加します�
       }
     },
     "callback-result": {
+      "caller": "external_service",
       "request": {
         "basic_auth": {
           "username": "test_user",

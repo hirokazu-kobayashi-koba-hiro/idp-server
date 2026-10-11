@@ -23,6 +23,7 @@ import org.idp.server.control_plane.management.identity.verification.io.Identity
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementStatus;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigRegistrationRequest;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigurationRequest;
+import org.idp.server.control_plane.management.identity.verification.validator.IdentityVerificationProcessCallerValidator;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationConfigurationCommandRepository;
 import org.idp.server.core.openid.identity.User;
@@ -63,6 +64,9 @@ public class IdentityVerificationConfigCreationService
 
     // 2. Populate builder with created configuration
     builder.withAfter(configuration);
+
+    // Validated after the builder is populated so the refusal is audited with what was attempted.
+    new IdentityVerificationProcessCallerValidator(configuration).validate();
 
     // 3. Build response
     Map<String, Object> contents = Map.of("result", configuration.toMap(), "dry_run", dryRun);

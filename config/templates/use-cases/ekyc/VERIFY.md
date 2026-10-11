@@ -374,13 +374,14 @@ curl -s \
 
 ## Step 10: 身元確認の承認 (Evaluate Result)
 
-申請を承認します（本番環境では外部 eKYC サービスの審査結果に基づく）。
+申請を承認します。`evaluate-result` は `caller: external_service` のプロセスで、外部 eKYC サービスが審査結果をコールバックの入口（`/internal/...`）から返します。ここでは外部サービスの代わりに呼びます。
+
+> コールバックの入口はインターネットに公開しない前提です。本人のアクセストークンでは呼べません（エンドユーザー向けの入口から呼ぶと 404）。
 
 ```bash
 EVALUATE_RESPONSE=$(curl -s \
-  -X POST "${TENANT_BASE}/v1/me/identity-verification/applications/${IV_TYPE}/${APPLICATION_ID}/evaluate-result" \
+  -X POST "${TENANT_BASE}/internal/v1/identity-verification/callback/${IV_TYPE}/${APPLICATION_ID}/evaluate-result" \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
   -d '{
     "approved": true,
     "rejected": false
@@ -499,9 +500,8 @@ APPLY_EMPTY=$(curl -s \
 APPLICATION_ID_EMPTY=$(echo "${APPLY_EMPTY}" | jq -r '.id')
 
 curl -s \
-  -X POST "${TENANT_BASE}/v1/me/identity-verification/applications/empty-result-test/${APPLICATION_ID_EMPTY}/evaluate-result" \
+  -X POST "${TENANT_BASE}/internal/v1/identity-verification/callback/empty-result-test/${APPLICATION_ID_EMPTY}/evaluate-result" \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
   -d '{"approved": true}'
 
 # verified_claims が変わっていないことを確認

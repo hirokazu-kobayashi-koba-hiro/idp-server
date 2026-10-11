@@ -159,9 +159,9 @@ describe("eKYC Use Case: verified_claims structure in AT and UserInfo", () => {
     expect(applyResp.status).toBe(200);
     const applicationId = applyResp.data.id;
 
+    // evaluate-result は外部サービスがコールバックで返す（caller: external_service）
     const evalResp = await postWithJson({
-      url: `${tenantBase}/v1/me/identity-verification/applications/${ivType}/${applicationId}/evaluate-result`,
-      headers: { Authorization: `Bearer ${token}` },
+      url: `${tenantBase}/internal/v1/identity-verification/callback/${ivType}/${applicationId}/evaluate-result`,
       body: { approved: true, rejected: false },
     });
     if (evalResp.status >= 400)
@@ -442,6 +442,7 @@ describe("eKYC Use Case: verified_claims structure in AT and UserInfo", () => {
             },
           },
           "evaluate-result": {
+            caller: "external_service",
             execution: { type: "no_action" },
             transition: {
               approved: {

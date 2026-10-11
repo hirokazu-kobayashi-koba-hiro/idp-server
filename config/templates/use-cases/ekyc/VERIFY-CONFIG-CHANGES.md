@@ -50,7 +50,8 @@ complete_auth_flow
 | `update_client` | クライアント設定を jq フィルタで更新 | `update_client '.scope = "openid profile"'` |
 | `iv_apply` | 身元確認申請 | `iv_apply "Tanaka" "Taro" "1990-01-15"` |
 | `iv_evaluate` | 審査結果判定 | `iv_evaluate approved` |
-| `iv_process` | 任意プロセス実行 | `iv_process "callback-result" '{"result":"approved"}'` |
+| `iv_process` | 本人が呼ぶプロセスを実行 | `iv_process "request-ekyc"` |
+| `iv_callback` | 外部サービスが呼ぶプロセスをコールバックで実行 | `iv_callback "callback-result" '{"result":"approved"}'` |
 | `iv_list_applications` | 申請一覧 | `iv_list_applications \| jq .` |
 | `iv_get_results` | 身元確認結果取得 | `iv_get_results \| jq .` |
 | `show_verified_claims` | ID Token の verified_claims 表示 | `show_verified_claims` |
@@ -388,25 +389,25 @@ update_iv_config '
 
 # テスト 1: 承認
 iv_apply
-iv_process "evaluate-result" '{"verification_result": "approved"}'
+iv_callback "evaluate-result" '{"verification_result": "approved"}'
 iv_list_applications | jq '.list[0] | {id, status}'
 # → status: "approved"
 
 # テスト 2: 拒否（各テストで新しい申請が必要）
 iv_apply
-iv_process "evaluate-result" '{"verification_result": "rejected"}'
+iv_callback "evaluate-result" '{"verification_result": "rejected"}'
 iv_list_applications | jq '.list[0] | {id, status}'
 # → status: "rejected"
 
 # テスト 3: expired も拒否に含まれる（in 演算子）
 iv_apply
-iv_process "evaluate-result" '{"verification_result": "expired"}'
+iv_callback "evaluate-result" '{"verification_result": "expired"}'
 iv_list_applications | jq '.list[0] | {id, status}'
 # → status: "rejected"
 
 # テスト 4: どちらにも該当しない
 iv_apply
-iv_process "evaluate-result" '{"verification_result": "pending"}'
+iv_callback "evaluate-result" '{"verification_result": "pending"}'
 iv_list_applications | jq '.list[0] | {id, status}'
 # → status: "applying"（遷移なし）
 
@@ -455,25 +456,25 @@ update_iv_config '
 
 # テスト 1: score=90, result="pass" → approved（グループ内 AND: 両方満たす）
 iv_apply
-iv_process "evaluate-result" '{"score": 90, "result": "pass"}'
+iv_callback "evaluate-result" '{"score": 90, "result": "pass"}'
 iv_list_applications | jq '.list[0] | {id, status}'
 # → status: "approved"
 
 # テスト 2: score=90, result="fail" → rejected（グループ間 OR: result="fail" に該当）
 iv_apply
-iv_process "evaluate-result" '{"score": 90, "result": "fail"}'
+iv_callback "evaluate-result" '{"score": 90, "result": "fail"}'
 iv_list_applications | jq '.list[0] | {id, status}'
 # → status: "rejected"
 
 # テスト 3: score=40, result="pass" → rejected（グループ間 OR: score<50 に該当）
 iv_apply
-iv_process "evaluate-result" '{"score": 40, "result": "pass"}'
+iv_callback "evaluate-result" '{"score": 40, "result": "pass"}'
 iv_list_applications | jq '.list[0] | {id, status}'
 # → status: "rejected"
 
 # テスト 4: score=70, result="pass" → 遷移なし（approved の score>=80 を満たさない、rejected にも該当しない）
 iv_apply
-iv_process "evaluate-result" '{"score": 70, "result": "pass"}'
+iv_callback "evaluate-result" '{"score": 70, "result": "pass"}'
 iv_list_applications | jq '.list[0] | {id, status}'
 # → status: "applying"
 
@@ -713,11 +714,11 @@ iv_process "request-ekyc"
 # テスト 3: callback-result を先に実行（依存関係テスト - request-ekyc 完了前）
 # ※ 新しい申請で試す
 iv_apply
-iv_process "callback-result" '{"result": "approved"}'  # → 400 依存関係エラー
+iv_callback "callback-result" '{"result": "approved"}'  # → 400 依存関係エラー
 
 # テスト 4: 正しい順序で実行
 iv_process "request-ekyc"
-iv_process "callback-result" '{"result": "approved"}'  # → 200 成功
+iv_callback "callback-result" '{"result": "approved"}'  # → 200 成功
 
 # 結果確認
 iv_list_applications | jq '.list[] | {id, status}'

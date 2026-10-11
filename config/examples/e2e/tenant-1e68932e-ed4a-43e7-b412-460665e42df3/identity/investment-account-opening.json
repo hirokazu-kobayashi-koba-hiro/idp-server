@@ -263,6 +263,7 @@
       }
     },
     "callback-examination": {
+      "caller": "external_service",
       "type": "callback",
       "request": {
         "basic_auth": {
@@ -297,6 +298,7 @@
       }
     },
     "callback-result": {
+      "caller": "external_service",
       "request": {
         "basic_auth": {
           "username": "test_user",

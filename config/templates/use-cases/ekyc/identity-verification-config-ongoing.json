@@ -68,6 +68,7 @@
       }
     },
     "callback-result": {
+      "caller": "external_service",
       "required_processes": ["apply"],
       "allow_retry": false,
       "execution": { "type": "no_action" },

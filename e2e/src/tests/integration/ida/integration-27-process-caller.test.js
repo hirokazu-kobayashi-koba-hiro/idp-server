@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeAll, afterAll } from "@jest/globals";
-import { get, postWithJson, deletion } from "../../../lib/http";
+import { get, postWithJson, putWithJson, deletion } from "../../../lib/http";
 import { requestToken } from "../../../api/oauthClient";
 import {
   backendUrl,
@@ -285,5 +285,66 @@ describe("Identity Verification - process caller (#1966)", () => {
     });
     expect(fromEndUser.status).toBe(200);
     expect(await getApplicationStatus({ type, accessToken, applicationId })).toBe("approved");
+  });
+
+  describe("設定を保存するときの検証", () => {
+    const configurationsUrl = `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations`;
+    const managementHeaders = () => ({
+      "Authorization": `Bearer ${orgAccessToken}`,
+      "Content-Type": "application/json"
+    });
+    const basicAuth = { username: "caller_cb_user", password: "caller_cb_password001" };
+
+    it("caller が知らない値なら、作成を 400 で拒否する", async () => {
+      const response = await postWithJson({
+        url: configurationsUrl,
+        headers: managementHeaders(),
+        body: buildConfig({
+          configId: uuidv4(),
+          type: `caller-${uuidv4().substring(0, 8)}`,
+          callbackResult: { "caller": "externalService", "request": { "schema": resultSchema } }
+        })
+      });
+
+      expect(response.status).toBe(400);
+      expect(response.data.error_messages).toEqual([
+        "processes.callback-result.caller must be end_user or external_service: externalService"
+      ]);
+    });
+
+    it("caller が end_user なのに basic_auth があれば、作成を 400 で拒否する", async () => {
+      const response = await postWithJson({
+        url: configurationsUrl,
+        headers: managementHeaders(),
+        body: buildConfig({
+          configId: uuidv4(),
+          type: `caller-${uuidv4().substring(0, 8)}`,
+          callbackResult: { "caller": "end_user", "request": { "basic_auth": basicAuth, "schema": resultSchema } }
+        })
+      });
+
+      expect(response.status).toBe(400);
+      expect(response.data.error_messages).toHaveLength(1);
+      expect(response.data.error_messages[0]).toContain("processes.callback-result.request.basic_auth");
+    });
+
+    it("更新でも同じく 400 で拒否し、保存済みの設定は変わらない", async () => {
+      const configId = uuidv4();
+      const type = `caller-${uuidv4().substring(0, 8)}`;
+      await registerConfiguration(
+        buildConfig({ configId, type, callbackResult: { "caller": "external_service", "request": { "schema": resultSchema } } })
+      );
+
+      const response = await putWithJson({
+        url: `${configurationsUrl}/${configId}`,
+        headers: managementHeaders(),
+        body: buildConfig({ configId, type, callbackResult: { "caller": "endUser", "request": { "schema": resultSchema } } })
+      });
+      expect(response.status).toBe(400);
+
+      const stored = await get({ url: `${configurationsUrl}/${configId}`, headers: managementHeaders() });
+      expect(stored.status).toBe(200);
+      expect(stored.data.processes["callback-result"].caller).toBe("external_service");
+    });
   });
 });

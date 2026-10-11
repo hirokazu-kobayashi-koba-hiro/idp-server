@@ -35,7 +35,8 @@
 #
 #   === 身元確認フロー ===
 #   iv_apply                     身元確認申請
-#   iv_process                   プロセス実行（任意のプロセス名）
+#   iv_process                   プロセス実行（本人が呼ぶプロセス）
+#   iv_callback                  コールバック実行（外部サービスが呼ぶプロセス）
 #   iv_evaluate                  審査結果判定（approved/rejected）
 #   iv_list_applications         申請一覧取得
 #   iv_get_results               身元確認結果取得
@@ -544,10 +545,10 @@ iv_apply() {
   echo "${body}"
 }
 
-# 任意のプロセスを実行
+# 本人が呼ぶプロセス（caller: end_user）を実行
 # 使用例:
 #   iv_process "request-ekyc"                           # ボディなし
-#   iv_process "callback-result" '{"result":"approved"}' # ボディ付き
+#   iv_process "request-ekyc" '{"document_type":"x"}'   # ボディ付き
 iv_process() {
   local process_name="$1"
   local body_json="${2:-{}}"
@@ -566,7 +567,28 @@ iv_process() {
   echo "${body}"
 }
 
-# 審査結果判定（デフォルト設定の evaluate-result 用）
+# 外部サービスが呼ぶプロセス（caller: external_service）を、コールバックの入口から実行
+# コールバックの入口（/internal/...）はインターネットに公開しない前提。ここでは外部サービスの代わりに呼ぶ
+# 使用例:
+#   iv_callback "callback-result" '{"result":"approved"}'
+iv_callback() {
+  local process_name="$1"
+  local body_json="${2:-{}}"
+
+  local response http_code body
+  response=$(curl -s -w "\n%{http_code}" \
+    -X POST "${TENANT_BASE}/internal/v1/identity-verification/callback/${IV_TYPE}/${APPLICATION_ID}/${process_name}" \
+    -H "Content-Type: application/json" \
+    -d "${body_json}")
+
+  http_code=$(echo "${response}" | tail -1)
+  body=$(echo "${response}" | sed '$d')
+
+  echo "← ${http_code} POST /callback/${IV_TYPE}/${APPLICATION_ID}/${process_name}" >&2
+  echo "${body}"
+}
+
+# 審査結果判定（デフォルト設定の evaluate-result 用。外部サービスの審査結果をコールバックで返す）
 # 使用例:
 #   iv_evaluate approved     # 承認
 #   iv_evaluate rejected     # 拒否
@@ -574,11 +596,11 @@ iv_evaluate() {
   local result="${1:-approved}"
 
   if [ "${result}" = "approved" ]; then
-    iv_process "evaluate-result" '{"approved": true, "rejected": false}'
+    iv_callback "evaluate-result" '{"approved": true, "rejected": false}'
   elif [ "${result}" = "rejected" ]; then
-    iv_process "evaluate-result" '{"approved": false, "rejected": true}'
+    iv_callback "evaluate-result" '{"approved": false, "rejected": true}'
   else
-    iv_process "evaluate-result" "{\"verification_result\": \"${result}\"}"
+    iv_callback "evaluate-result" "{\"verification_result\": \"${result}\"}"
   fi
 }
 
