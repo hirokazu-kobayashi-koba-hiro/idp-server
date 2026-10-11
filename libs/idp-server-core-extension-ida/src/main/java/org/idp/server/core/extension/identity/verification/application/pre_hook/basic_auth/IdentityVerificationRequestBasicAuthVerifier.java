@@ -70,7 +70,7 @@ public class IdentityVerificationRequestBasicAuthVerifier
       return IdentityVerificationRequestVerifiedResult.failure(errors);
     }
 
-    if (!configurationBasicAuth.equals(basicAuth)) {
+    if (!configurationBasicAuth.matches(basicAuth)) {
       log.error("identity-verification: {}. unmatch a basic authentication", type.name());
 
       List<String> errors = new ArrayList<>();

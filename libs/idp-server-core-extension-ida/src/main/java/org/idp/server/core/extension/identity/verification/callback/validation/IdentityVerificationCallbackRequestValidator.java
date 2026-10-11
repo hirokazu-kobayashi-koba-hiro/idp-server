@@ -60,7 +60,7 @@ public class IdentityVerificationCallbackRequestValidator {
         return new IdentityVerificationCallbackValidationResult(false, errors);
       }
 
-      if (!configurationBasicAuth.equals(basicAuth)) {
+      if (!configurationBasicAuth.matches(basicAuth)) {
         log.warn("Callback request basic authentication mismatch");
         List<String> errors = new ArrayList<>();
         errors.add("The identity verification request unmatch a basic authentication");
