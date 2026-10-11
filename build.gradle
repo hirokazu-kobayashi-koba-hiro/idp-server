@@ -1,5 +1,5 @@
 plugins {
-	id "com.diffplug.spotless" version "6.24.0"
+	id "com.diffplug.spotless" version "8.8.0"
 	id 'jacoco'
 }
 
@@ -40,10 +40,10 @@ subprojects {
 	tasks.register('addApacheLicenseHeader') {
 		group = 'license'
 		description = "Add Apache 2.0 license header to all .java files in ${project.name}"
+		def rootDirPath = project.projectDir.toPath()
 
 		doLast {
-			def rootDirPath = project.projectDir.toPath()
-            Files.walk(rootDirPath)
+			Files.walk(rootDirPath)
 					.filter { it.toString().endsWith('.java') }
 					.forEach { file ->
 						def content = file.toFile().getText('UTF-8')
@@ -82,12 +82,12 @@ tasks.register('addLicenseAll') {
 tasks.register('checkLicenseHeader') {
 	group = 'license'
 	description = 'Check that all .java files contain the Apache 2.0 license header'
+	def rootDirPath = project.projectDir.toPath()
 
 	doLast {
 		def excludeDirs = ['node_modules', '.gradle', 'build', 'out', 'target', '.idea']
 		def missing = []
 
-		def rootDirPath = project.projectDir.toPath()
 		Files.walk(rootDirPath)
 				.filter { file ->
 					def pathStr = file.toString()
