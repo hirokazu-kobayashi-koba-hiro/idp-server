@@ -33,7 +33,9 @@ public enum IdentityVerificationProcessCaller {
 
   /**
    * Resolves a configured value. A missing value is {@code undefined}; a value that names no caller
-   * is {@code unknown}, which no endpoint matches.
+   * is {@code unknown}, which no endpoint matches. Only {@code end_user} and {@code
+   * external_service} are accepted, so writing {@code "undefined"} in the configuration does not
+   * lift the restriction.
    */
   public static IdentityVerificationProcessCaller of(String value) {
     if (value == null || value.isEmpty()) {
@@ -47,7 +49,8 @@ public enum IdentityVerificationProcessCaller {
     return unknown;
   }
 
-  public boolean isDefined() {
+  /** Whether the configuration names a caller at all, including one that is {@code unknown}. */
+  public boolean isSpecified() {
     return this != undefined;
   }
 }

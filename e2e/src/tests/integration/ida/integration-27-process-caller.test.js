@@ -265,6 +265,17 @@ describe("Identity Verification - process caller (#1966)", () => {
       body: { application_id: externalRef, result: "ok" }
     });
     expect(fromExternalServiceWithId.status).toBe(404);
+
+    // コールバック側も、登録されていない process と同じ応答にする。
+    const unregistered = await callFromExternalService({
+      type, process: "no-such-process",
+      body: { application_id: externalRef, result: "ok" }
+    });
+    expect(unregistered.status).toBe(404);
+    expect(fromExternalService.data).toEqual({
+      ...unregistered.data,
+      error_description: unregistered.data.error_description.replace("no-such-process", "callback-result")
+    });
     expect(await getApplicationStatus({ type, accessToken, applicationId })).toBe("requested");
 
     const fromEndUser = await callFromEndUser({

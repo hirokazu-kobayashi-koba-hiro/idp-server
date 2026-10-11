@@ -63,7 +63,7 @@ public class IdentityVerificationProcessConfiguration implements JsonReadable {
    */
   public boolean isCallableBy(IdentityVerificationProcessCaller entry) {
     IdentityVerificationProcessCaller declared = caller();
-    if (declared.isDefined()) {
+    if (declared.isSpecified()) {
       return declared == entry;
     }
     if (hasBasicAuth()) {
@@ -229,7 +229,7 @@ public class IdentityVerificationProcessConfiguration implements JsonReadable {
 
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
-    if (caller().isDefined()) map.put("caller", caller);
+    if (caller().isSpecified()) map.put("caller", caller);
     if (request != null) map.put("request", request.toMap());
     if (history != null) map.put("history", history.toMap());
     if (preHook != null) map.put("pre_hook", preHook.toMap());

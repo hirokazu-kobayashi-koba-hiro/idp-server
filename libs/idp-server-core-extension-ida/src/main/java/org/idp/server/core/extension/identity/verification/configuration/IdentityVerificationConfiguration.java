@@ -164,6 +164,9 @@ public class IdentityVerificationConfiguration implements JsonReadable, UuidConv
    *
    * <p>A process the endpoint may not run is reported exactly like one that is not registered, so
    * the response does not reveal which processes exist for the other endpoint.
+   *
+   * @param entry the endpoint making the call: {@code end_user} or {@code external_service}. The
+   *     other values describe a configuration, not an endpoint, and must not be passed here.
    */
   public IdentityVerificationProcessConfiguration getProcessConfig(
       IdentityVerificationProcess process, IdentityVerificationProcessCaller entry) {

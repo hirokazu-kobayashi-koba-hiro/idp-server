@@ -171,10 +171,21 @@ class IdentityVerificationProcessCallerTest {
   }
 
   @Test
-  @DisplayName("caller は管理 API の応答に返る")
+  @DisplayName("caller は保存して読み直しても残り、管理 API の応答にも返る")
   void callerSurvivesRoundTrip() {
-    Map<String, Object> roundTripped = processWith(Map.of("caller", "external_service")).toMap();
+    IdentityVerificationConfiguration configuration =
+        configurationWith(Map.of("caller", "external_service"));
 
-    assertEquals("external_service", roundTripped.get("caller"));
+    String stored = jsonConverter.write(configuration);
+    IdentityVerificationConfiguration reloaded =
+        jsonConverter.read(stored, IdentityVerificationConfiguration.class);
+    IdentityVerificationProcessConfiguration process =
+        reloaded.getProcessConfig(new IdentityVerificationProcess("probe-process"));
+
+    assertTrue(stored.contains("\"caller\":\"external_service\""), stored);
+    assertFalse(stored.contains("\"log\""), "the logger must not be stored: " + stored);
+    assertFalse(process.isCallableBy(end_user));
+    assertTrue(process.isCallableBy(external_service));
+    assertEquals("external_service", process.toMap().get("caller"));
   }
 }
