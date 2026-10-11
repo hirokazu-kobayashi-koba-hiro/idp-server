@@ -246,7 +246,7 @@ public class IdentityVerificationApplicationEntryService
     IdentityVerificationApplication application =
         applicationQueryRepository.get(tenant, user, identifier);
     if (!application.isOfType(type)) {
-      throw notFound(identifier);
+      throw IdentityVerificationApplicationNotFoundException.byId(identifier);
     }
     IdentityVerificationConfiguration verificationConfiguration =
         configurationQueryRepository.get(tenant, type);
@@ -431,7 +431,7 @@ public class IdentityVerificationApplicationEntryService
     IdentityVerificationApplication application =
         applicationQueryRepository.get(tenant, user, identifier);
     if (!application.isOfType(type)) {
-      throw notFound(identifier);
+      throw IdentityVerificationApplicationNotFoundException.byId(identifier);
     }
     applicationCommandRepository.delete(tenant, user, identifier);
 
@@ -442,15 +442,5 @@ public class IdentityVerificationApplicationEntryService
         requestAttributes);
 
     return IdentityVerificationApplicationResponse.OK(Map.of());
-  }
-
-  /**
-   * The same exception the repository throws for an unknown id, so an application filed under
-   * another type cannot be told apart from one that does not exist (Issue #1969).
-   */
-  private IdentityVerificationApplicationNotFoundException notFound(
-      IdentityVerificationApplicationIdentifier identifier) {
-    return new IdentityVerificationApplicationNotFoundException(
-        String.format("IdentityVerificationApplication not found (%s)", identifier.value()));
   }
 }

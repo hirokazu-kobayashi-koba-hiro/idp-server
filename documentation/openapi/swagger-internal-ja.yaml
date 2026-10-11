@@ -49,7 +49,6 @@ paths:
            "id": "UUID",
            "type": "investment-account-opening"
            "common": {
-              "external_service": "mocky",
               "callback_application_id_param": "application_number"
             },
             "processes": {},

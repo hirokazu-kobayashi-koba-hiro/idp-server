@@ -1263,12 +1263,6 @@ paths:
           schema:
             type: string
           description: 外部連携先の申請ID
-        - name: external_service
-          in: query
-          required: false
-          schema:
-            type: string
-          description: 連携先の外部サービス名
         - in: query
           name: verified_claims.<key>
           schema:

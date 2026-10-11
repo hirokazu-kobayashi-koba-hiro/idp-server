@@ -191,6 +191,15 @@ describe("Identity Verification - application type must match the path (#1969)",
     const unknown = await callProcess({ url: processUrl(typeB, unknownId), accessToken, body: {} });
     expectSameAsUnknown(mismatched, unknown, applicationId, unknownId);
 
+    // 404 のあと、申込みには process の試行も記録されていない
+    const afterMismatch = await get({
+      url: serverConfig.identityVerificationApplicationsEndpoint + `?id=${applicationId}&type=${typeA}`,
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    expect(afterMismatch.status).toBe(200);
+    expect(afterMismatch.data.list[0].status).toBe("requested");
+    expect(afterMismatch.data.list[0].processes.update).toBeUndefined();
+
     const matched = await callProcess({ url: processUrl(typeA, applicationId), accessToken, body: {} });
     expect(matched.status).toBe(200);
   });

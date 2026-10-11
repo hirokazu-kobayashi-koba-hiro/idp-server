@@ -16,10 +16,31 @@
 
 package org.idp.server.core.extension.identity.exception;
 
+import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationIdentifier;
 import org.idp.server.platform.exception.NotFoundException;
 
+/**
+ * An identity verification application that cannot be used for the request.
+ *
+ * <p>Build it with {@link #byId} or {@link #byKey}. The repository uses them when nothing matches,
+ * and the entry services use them when an application exists but was filed under another type, so
+ * the two cases produce the same message and cannot be told apart (Issue #1969).
+ */
 public class IdentityVerificationApplicationNotFoundException extends NotFoundException {
   public IdentityVerificationApplicationNotFoundException(String message) {
     super(message);
+  }
+
+  /** No application with this id (or none the request may use). */
+  public static IdentityVerificationApplicationNotFoundException byId(
+      IdentityVerificationApplicationIdentifier identifier) {
+    return new IdentityVerificationApplicationNotFoundException(
+        String.format("IdentityVerificationApplication not found (%s)", identifier.value()));
+  }
+
+  /** No application whose {@code key} is {@code value} (or none the request may use). */
+  public static IdentityVerificationApplicationNotFoundException byKey(String key, String value) {
+    return new IdentityVerificationApplicationNotFoundException(
+        String.format("IdentityVerificationApplication not found key: %s id: %s", key, value));
   }
 }

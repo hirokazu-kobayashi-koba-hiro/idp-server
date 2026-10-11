@@ -423,15 +423,20 @@ function buildDescription(config, name, proc, kind, callbackLocator) {
   lines.push('');
   lines.push(...flow);
 
-  // サーバーが dependencies を確認するのは、pre_hook.verifications に process_sequence があるときだけ
-  if (hasRequiredProcesses(proc) && hasProcessSequenceVerification(proc)) {
-    lines.push('');
-    lines.push(`**前提プロセス**: ${requiredProcesses(proc).map((p) => `\`${p}\``).join('、')} の完了が必要`);
+  // サーバーが dependencies を確認するのは、pre_hook.verifications に process_sequence があるときだけ。
+  // 再実行の確認は required_processes の有無に関係なく行う（allow_retry の既定は false）。
+  if (hasProcessSequenceVerification(proc)) {
+    if (hasRequiredProcesses(proc)) {
+      lines.push('');
+      lines.push(`**前提プロセス**: ${requiredProcesses(proc).map((p) => `\`${p}\``).join('、')} の完了が必要`);
+    }
     lines.push('');
     lines.push(
       (proc.dependencies || {}).allow_retry
         ? '再実行できる（allow_retry: true）。'
-        : '実行は 1 回だけ（allow_retry: false）。2 回目は 400 pre_hook_validation_failed。'
+        : kind === 'callback'
+          ? '実行は 1 回だけ（allow_retry: false）。2 回目は 400 pre_hook_validation_failed。'
+          : '実行は 1 回だけ（allow_retry: false。失敗した試行も 1 回に数える）。2 回目は 400 pre_hook_validation_failed。'
     );
   }
 
