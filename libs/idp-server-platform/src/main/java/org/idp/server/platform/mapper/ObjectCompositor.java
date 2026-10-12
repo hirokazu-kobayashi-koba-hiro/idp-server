@@ -66,11 +66,12 @@ public class ObjectCompositor {
   Map<CompositionKey, Object> flatMap;
 
   /**
-   * Constructs a new ObjectCompositor.
+   * Constructs a new ObjectCompositor. Only {@link MappingRuleObjectMapper} builds the flat map, so
+   * the constructor is package-private.
    *
    * @param flatMap flat key-value map to be composed
    */
-  public ObjectCompositor(Map<CompositionKey, Object> flatMap) {
+  ObjectCompositor(Map<CompositionKey, Object> flatMap) {
     this.flatMap = flatMap;
   }
 

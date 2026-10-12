@@ -37,7 +37,9 @@ import java.util.Objects;
  * <p>A path that splits into a single name segment equals the literal of that segment, as the
  * string keys did before. A key keeps the position where it was first written, so with the rules
  * {@code "*"} (writing {@code a}), {@code a.b} and {@code a}, the last value of {@code a} is
- * composed before {@code a.b}, and {@code a.b} is written into it.
+ * composed before {@code a.b}, and {@code a.b} is written into it. One difference from the string
+ * keys: a path ending with {@code .}, such as {@code "a."}, splits into the same segments as {@code
+ * "a"} and so equals it.
  */
 public class CompositionKey {
 
