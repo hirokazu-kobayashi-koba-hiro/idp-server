@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.platform.exception.InvalidConfigurationException;
 
 /**
  * ObjectCompositor reconstructs a nested {@code Map<String, Object>} structure from a flat map with
@@ -56,7 +57,8 @@ public class ObjectCompositor {
 
   /**
    * The largest list index a key may use. A list is padded with {@code null} up to the index, so
-   * the index is capped (Issue #1971).
+   * the index is capped (Issue #1971). Only a {@code to} path in a configuration can hold an index,
+   * so a larger one is a configuration error.
    */
   static final int MAX_LIST_INDEX = 999;
 
@@ -110,7 +112,7 @@ public class ObjectCompositor {
    * @param root the root object to insert into
    * @param key the key whose segments give the path
    * @param value the value to insert
-   * @throws IllegalArgumentException if an index is larger than {@link #MAX_LIST_INDEX}
+   * @throws InvalidConfigurationException if an index is larger than {@link #MAX_LIST_INDEX}
    * @throws IllegalStateException if an index meets a map
    */
   private void insertValue(Map<String, Object> root, CompositionKey key, Object value) {
@@ -165,7 +167,7 @@ public class ObjectCompositor {
     String digits = segment.value();
     if (digits.length() > String.valueOf(MAX_LIST_INDEX).length()
         || Integer.parseInt(digits) > MAX_LIST_INDEX) {
-      throw new IllegalArgumentException(
+      throw new InvalidConfigurationException(
           String.format(
               "List index must be %d or less: %s (key: %s)", MAX_LIST_INDEX, digits, key));
     }

@@ -227,6 +227,23 @@ describe("Identity Verification: process_sequence and mapping hardening (Issue #
     expect(JSON.stringify(response.data)).toContain("allow_during_statuses");
   });
 
+  it("returns a configuration error when a to path index is over 999", async () => {
+    const accessToken = await createTestUser();
+    const type = uuidv4();
+    const overLimit = configuration(type);
+    overLimit.processes.apply.store.application_details_mapping_rules = [
+      { from: "$.request_body.name", to: "items.1000" }
+    ];
+    await registerConfiguration(overLimit);
+
+    const response = await callApply(accessToken, type, "apply", { name: "Test User" });
+    expect(response.status).toBe(500);
+    expect(response.data).toEqual({
+      error: "server_error",
+      error_description: "The server has a configuration error. Please contact the administrator."
+    });
+  });
+
   it("writes keys expanded by \"*\" as-is", async () => {
     const accessToken = await createTestUser();
     const type = uuidv4();

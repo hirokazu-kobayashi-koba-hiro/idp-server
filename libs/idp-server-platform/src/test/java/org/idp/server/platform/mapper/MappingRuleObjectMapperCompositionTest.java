@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.platform.exception.InvalidConfigurationException;
 import org.idp.server.platform.json.path.JsonPathWrapper;
 import org.junit.jupiter.api.Test;
 
@@ -117,7 +118,8 @@ class MappingRuleObjectMapperCompositionTest {
         List.of(String.valueOf(ObjectCompositor.MAX_LIST_INDEX + 1), "99999999999999999999")) {
       List<MappingRule> rules = List.of(new MappingRule("$.value", "items." + index + ".name"));
       assertThrows(
-          IllegalArgumentException.class, () -> MappingRuleObjectMapper.execute(rules, jsonPath));
+          InvalidConfigurationException.class,
+          () -> MappingRuleObjectMapper.execute(rules, jsonPath));
     }
   }
 
