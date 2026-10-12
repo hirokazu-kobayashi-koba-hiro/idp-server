@@ -15,7 +15,7 @@ import { v4 as uuidv4 } from "uuid";
  *
  * - A request that process_sequence rejects (required process not completed / status not allowed)
  *   is not recorded as an attempt, so the process runs once its prerequisite is met
- *   (allow_retry: false).
+ *   (allow_retry: false). A request that another pre_hook verification rejects is still recorded.
  * - A process with allow_during_statuses called without an application is rejected with 400, not
  *   500.
  * - allow_during_statuses accepts only application status values (lower case).
@@ -142,6 +142,24 @@ describe("Identity Verification: process_sequence and mapping hardening (Issue #
         caller: "end_user",
         pre_hook: processSequence,
         dependencies: { allow_during_statuses: ["applying"] }
+      },
+      guarded: {
+        caller: "end_user",
+        pre_hook: {
+          verifications: [
+            {
+              type: "assert",
+              details: {
+                assertions: [
+                  {
+                    condition: { operation: "exists", path: "$.request_body.confirmed" },
+                    message: "confirmed is required"
+                  }
+                ]
+              }
+            }
+          ]
+        }
       }
     }
   });
@@ -175,6 +193,28 @@ describe("Identity Verification: process_sequence and mapping hardening (Issue #
       call_count: 1,
       success_count: 1,
       failure_count: 0
+    });
+  });
+
+  it("still records a call that another pre_hook verification rejects", async () => {
+    const accessToken = await createTestUser();
+    const type = uuidv4();
+    await registerConfiguration(configuration(type));
+
+    const applyResponse = await callApply(accessToken, type, "apply", { name: "Test User" });
+    expect(applyResponse.status).toBe(200);
+    const applicationId = applyResponse.data.id;
+
+    const rejected = await callProcess(accessToken, type, applicationId, "guarded");
+    expect(rejected.status).toBe(400);
+    expect(rejected.data.error).toBe("pre_hook_validation_failed");
+    expect(rejected.data.error_messages).toEqual(["confirmed is required"]);
+
+    const application = await getApplication(accessToken, applicationId);
+    expect(application.processes["guarded"]).toEqual({
+      call_count: 1,
+      success_count: 0,
+      failure_count: 1
     });
   });
 
@@ -224,7 +264,10 @@ describe("Identity Verification: process_sequence and mapping hardening (Issue #
 
     const response = await postConfiguration(invalid);
     expect(response.status).toBe(400);
-    expect(JSON.stringify(response.data)).toContain("allow_during_statuses");
+    expect(response.data.error_messages).toHaveLength(1);
+    expect(response.data.error_messages[0]).toContain(
+      "processes.while-applying.dependencies.allow_during_statuses has an unknown status: APPLYING"
+    );
   });
 
   it("returns a configuration error when a to path index is over 999", async () => {

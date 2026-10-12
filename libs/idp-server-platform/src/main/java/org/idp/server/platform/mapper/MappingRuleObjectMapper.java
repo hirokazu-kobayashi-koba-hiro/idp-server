@@ -156,7 +156,7 @@ public class MappingRuleObjectMapper {
       writeResult(rule, finalValue, flatMap);
     }
 
-    Map<String, Object> result = ObjectCompositor.of(flatMap).composite();
+    Map<String, Object> result = new ObjectCompositor(flatMap).composite();
 
     logOutput(result);
 

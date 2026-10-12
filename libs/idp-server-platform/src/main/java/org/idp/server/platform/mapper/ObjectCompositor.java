@@ -23,8 +23,8 @@ import java.util.Map;
 import org.idp.server.platform.exception.InvalidConfigurationException;
 
 /**
- * ObjectCompositor reconstructs a nested {@code Map<String, Object>} structure from a flat map with
- * dot-separated keys, optionally supporting array indexes.
+ * ObjectCompositor reconstructs a nested {@code Map<String, Object>} structure from a flat map
+ * whose keys are split into map keys and list indexes.
  *
  * <p>For example:
  *
@@ -65,30 +65,13 @@ public class ObjectCompositor {
   /** Flat map to be transformed. */
   Map<CompositionKey, Object> flatMap;
 
-  private ObjectCompositor() {}
-
   /**
-   * Constructs a new ObjectCompositor from dot-separated paths.
-   *
-   * @param flatMap flat key-value map to be composed; each key is read with {@link
-   *     CompositionKey#path(String)}
-   */
-  public ObjectCompositor(Map<String, Object> flatMap) {
-    this.flatMap = new LinkedHashMap<>();
-    for (Map.Entry<String, Object> entry : flatMap.entrySet()) {
-      this.flatMap.put(CompositionKey.path(entry.getKey()), entry.getValue());
-    }
-  }
-
-  /**
-   * Constructs a new ObjectCompositor from keys that are already split.
+   * Constructs a new ObjectCompositor.
    *
    * @param flatMap flat key-value map to be composed
    */
-  public static ObjectCompositor of(Map<CompositionKey, Object> flatMap) {
-    ObjectCompositor compositor = new ObjectCompositor();
-    compositor.flatMap = flatMap;
-    return compositor;
+  public ObjectCompositor(Map<CompositionKey, Object> flatMap) {
+    this.flatMap = flatMap;
   }
 
   /**
@@ -163,13 +146,19 @@ public class ObjectCompositor {
     }
   }
 
+  /**
+   * Reads an index segment as a number. Leading zeros are dropped first, so {@code "0001"} is index
+   * 1.
+   *
+   * @throws InvalidConfigurationException if the index is larger than {@link #MAX_LIST_INDEX}
+   */
   private int toIndex(CompositionKey key, CompositionKey.Segment segment) {
-    String digits = segment.value();
+    String digits = segment.value().replaceFirst("^0+(?=\\d)", "");
     if (digits.length() > String.valueOf(MAX_LIST_INDEX).length()
         || Integer.parseInt(digits) > MAX_LIST_INDEX) {
       throw new InvalidConfigurationException(
           String.format(
-              "List index must be %d or less: %s (key: %s)", MAX_LIST_INDEX, digits, key));
+              "List index must be %d or less: %s (key: %s)", MAX_LIST_INDEX, segment.value(), key));
     }
     return Integer.parseInt(digits);
   }

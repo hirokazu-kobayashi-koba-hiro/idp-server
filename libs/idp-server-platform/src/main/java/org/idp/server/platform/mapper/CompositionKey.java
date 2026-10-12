@@ -34,8 +34,10 @@ import java.util.Objects;
  *       segment, even if it contains {@code .} or digits (Issue #1971).
  * </ul>
  *
- * <p>A path without {@code .} or digits and a literal of the same text are equal, so a later rule
- * replaces an earlier one regardless of which kind wrote it.
+ * <p>A path that splits into a single name segment equals the literal of that segment, as the
+ * string keys did before. A key keeps the position where it was first written, so with the rules
+ * {@code "*"} (writing {@code a}), {@code a.b} and {@code a}, the last value of {@code a} is
+ * composed before {@code a.b}, and {@code a.b} is written into it.
  */
 public class CompositionKey {
 

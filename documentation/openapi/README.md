@@ -30,7 +30,7 @@ node config/scripts/generate-identity-verification-openapi.js <config.json> \
 | プロセス | エンドポイント |
 |---------|--------------|
 | 先頭の非callbackプロセス（初回申込み） | `POST /{tenant-id}/v1/me/identity-verification/applications/{type}/{process}` |
-| 2番目以降 / `required_processes` あり（継続） | `POST /{tenant-id}/v1/me/identity-verification/applications/{type}/{id}/{process}` |
+| 2番目以降 / `dependencies` に `required_processes` か `allow_during_statuses` あり（継続） | `POST /{tenant-id}/v1/me/identity-verification/applications/{type}/{id}/{process}` |
 | `"caller": "external_service"`、または `caller` を省略して `request.basic_auth` あり | `POST /{tenant-id}/internal/v1/identity-verification/callback/{type}/{id}/{process}`。`common.callback_application_id_param` があれば `.../callback/{type}/{process}`（ボディの値で申込みを特定）も出す |
 | `registration` 型設定（直接登録） | `POST /{tenant-id}/internal/v1/identity-verification/results/{type}/registration` |
 

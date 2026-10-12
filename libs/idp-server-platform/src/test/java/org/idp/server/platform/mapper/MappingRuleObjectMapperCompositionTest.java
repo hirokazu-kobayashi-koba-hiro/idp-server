@@ -65,6 +65,25 @@ class MappingRuleObjectMapperCompositionTest {
   }
 
   @Test
+  void pathKeyOfTheSameNameTakesThePositionOfTheWildcardKey() {
+    JsonPathWrapper jsonPath =
+        new JsonPathWrapper(
+            """
+            {"body": {"a": {"x": 1}}, "b": 2, "replacement": {"y": 3}}
+            """);
+
+    Map<String, Object> result =
+        MappingRuleObjectMapper.execute(
+            List.of(
+                new MappingRule("$.body", "*"),
+                new MappingRule("$.b", "a.b"),
+                new MappingRule("$.replacement", "a")),
+            jsonPath);
+
+    assertEquals(Map.of("y", 3, "b", 2), result.get("a"));
+  }
+
+  @Test
   void pathRuleCanWriteIntoWildcardMap() {
     JsonPathWrapper jsonPath =
         new JsonPathWrapper(
@@ -108,6 +127,17 @@ class MappingRuleObjectMapperCompositionTest {
     List<?> items = (List<?>) result.get("items");
     assertEquals(ObjectCompositor.MAX_LIST_INDEX + 1, items.size());
     assertEquals("last", items.get(ObjectCompositor.MAX_LIST_INDEX));
+  }
+
+  @Test
+  void indexWithLeadingZerosIsReadAsANumber() {
+    JsonPathWrapper jsonPath = new JsonPathWrapper("{\"value\": \"b\"}");
+
+    Map<String, Object> result =
+        MappingRuleObjectMapper.execute(
+            List.of(new MappingRule("$.value", "items.0001")), jsonPath);
+
+    assertEquals(Arrays.asList(null, "b"), result.get("items"));
   }
 
   @Test
