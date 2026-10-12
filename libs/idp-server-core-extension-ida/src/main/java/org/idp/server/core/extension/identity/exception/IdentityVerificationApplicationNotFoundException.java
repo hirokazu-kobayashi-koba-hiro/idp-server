@@ -24,8 +24,7 @@ import org.idp.server.platform.exception.NotFoundException;
  *
  * <p>For an application, build it with {@link #byId} or {@link #byKey}. The repository uses them
  * when nothing matches, and the entry services use them when an application exists but was filed
- * under another type, so the two cases produce the same message and cannot be told apart (Issue
- * #1969).
+ * under another type, so the two cases produce the same exception and message (Issue #1969).
  */
 public class IdentityVerificationApplicationNotFoundException extends NotFoundException {
   public IdentityVerificationApplicationNotFoundException(String message) {
