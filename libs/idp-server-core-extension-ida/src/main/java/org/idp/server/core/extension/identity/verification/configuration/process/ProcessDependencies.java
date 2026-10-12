@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationStatus;
 import org.idp.server.platform.json.JsonReadable;
 
 /**
@@ -34,7 +35,7 @@ import org.idp.server.platform.json.JsonReadable;
  *   "dependencies": {
  *     "required_processes": ["apply", "crm-registration"],
  *     "allow_retry": false,
- *     "allow_during_statuses": ["REQUESTED", "APPLYING"]
+ *     "allow_during_statuses": ["requested", "applying"]
  *   }
  * }
  * }</pre>
@@ -109,6 +110,28 @@ public class ProcessDependencies implements JsonReadable {
    */
   public boolean hasStatusRestrictions() {
     return allowDuringStatuses != null && !allowDuringStatuses.isEmpty();
+  }
+
+  /**
+   * Values in {@code allow_during_statuses} that are not an application status. The status is
+   * compared as the API returns it ({@code requested}, {@code applying}, ...), so any other value,
+   * including an upper-case one, never matches (Issue #1971).
+   */
+  public List<String> violations() {
+    List<String> violations = new ArrayList<>();
+    if (allowDuringStatuses == null) {
+      return violations;
+    }
+    List<String> statuses = IdentityVerificationApplicationStatus.applicationValues();
+    for (String status : allowDuringStatuses) {
+      if (!statuses.contains(status)) {
+        violations.add(
+            String.format(
+                "dependencies.allow_during_statuses has an unknown status: %s. Use one of: %s",
+                status, String.join(", ", statuses)));
+      }
+    }
+    return violations;
   }
 
   /**

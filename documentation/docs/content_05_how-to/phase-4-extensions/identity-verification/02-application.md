@@ -348,6 +348,7 @@ flowchart TD
 |---------|---|------|-----|
 | `required_processes` | string[] | このプロセスを実行する前に完了が必要なプロセス名のリスト | - |
 | `allow_retry` | boolean | プロセスの再実行を許可するか (`true`: 許可, `false`: 不可)。省略時は `false` | - |
+| `allow_during_statuses` | string[] | このプロセスを実行できる申込みのステータス（`requested` / `applying` / `applied` / `examination_processing` / `approved` / `rejected` / `expired` / `cancelled`）。申込み ID なしでは実行できない | - |
 
 **設定例**:
 
@@ -398,6 +399,9 @@ flowchart TD
 
 1. **依存プロセスの完了チェック**: `required_processes` に指定されたプロセスがすべて正常完了しているか
 2. **リトライ制御**: `allow_retry: false` のプロセスが既に実行済みの場合、再実行を拒否
+3. **ステータス制限**: `allow_during_statuses` があれば、申込みのステータスがそのどれかか
+
+`process_sequence` で断られた呼び出しは、プロセスの実行に数えません。前提を満たしたあとに呼べば実行できます。ほかの `pre_hook` や `execution` で失敗した呼び出しは、`/v1/me/...` の申込み ID 付きの呼び出しなら実行に数えます。コールバックで失敗した呼び出しは数えません。
 
 **エラーレスポンス**:
 

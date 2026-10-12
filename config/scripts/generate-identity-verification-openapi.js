@@ -206,7 +206,8 @@ function sanitizeSchema(schema) {
  * プロセスを endpoint 種別に分類する。サーバーが process を呼べる入口を決める規則（caller）に合わせる。
  * - "caller": "external_service"、または caller を省略して request.basic_auth を持つプロセス → callback
  * - caller が end_user / external_service 以外のプロセスは、どの入口からも呼べないので出力しない
- * - 先頭の非callbackプロセス → initial（required_processes 宣言があれば continuation）
+ * - 先頭の非callbackプロセス → initial（required_processes か allow_during_statuses の宣言があれば
+ *   continuation。どちらも申込みがある前提の宣言なので、申込み ID なしの入口は出さない）
  * - それ以外 → continuation
  */
 function classifyProcesses(config) {
@@ -221,7 +222,7 @@ function classifyProcesses(config) {
     let kind;
     if (isCallback) {
       kind = 'callback';
-    } else if (!initialAssigned && !hasRequiredProcesses(proc)) {
+    } else if (!initialAssigned && !hasRequiredProcesses(proc) && !hasAllowDuringStatuses(proc)) {
       kind = 'initial';
       initialAssigned = true;
     } else {
@@ -263,6 +264,16 @@ function hasRequiredProcesses(proc) {
 function requiredProcesses(proc) {
   const deps = proc.dependencies || {};
   return Array.isArray(deps.required_processes) ? deps.required_processes : [];
+}
+
+function hasAllowDuringStatuses(proc) {
+  return allowDuringStatuses(proc).length > 0;
+}
+
+/** dependencies.allow_during_statuses */
+function allowDuringStatuses(proc) {
+  const deps = proc.dependencies || {};
+  return Array.isArray(deps.allow_during_statuses) ? deps.allow_during_statuses : [];
 }
 
 function hasProcessSequenceVerification(proc) {
@@ -431,13 +442,17 @@ function buildDescription(config, name, proc, kind, callbackLocator) {
       lines.push('');
       lines.push(`**前提プロセス**: ${requiredProcesses(proc).map((p) => `\`${p}\``).join('、')} の完了が必要`);
     }
+    if (hasAllowDuringStatuses(proc)) {
+      lines.push('');
+      lines.push(`**実行できるステータス**: ${allowDuringStatuses(proc).map((s) => `\`${s}\``).join('、')}`);
+    }
     lines.push('');
     lines.push(
       (proc.dependencies || {}).allow_retry
         ? '再実行できる（allow_retry: true）。'
         : kind === 'callback'
           ? '実行は 1 回だけ（allow_retry: false）。2 回目は 400 pre_hook_validation_failed。'
-          : '実行は 1 回だけ（allow_retry: false。pre_hook・execution で失敗した試行も 1 回に数える）。2 回目は 400 pre_hook_validation_failed。'
+          : '実行は 1 回だけ（allow_retry: false。pre_hook・execution で失敗した試行も 1 回に数える。process_sequence で断られた呼び出しは数えない）。2 回目は 400 pre_hook_validation_failed。'
     );
   }
 
@@ -871,9 +886,10 @@ function buildErrorResponseComponents() {
           },
           process_sequence_error: {
             value: {
-              error: 'invalid_request',
-              error_description: 'Process sequence violation',
-              error_messages: ["process 'complete-verification' is not available at current state"],
+              error: 'pre_hook_validation_failed',
+              error_description: 'Pre-hook validation failed for identity verification request',
+              error_messages: ["Process 'crm-registration' requires completion of: apply. Missing: apply"],
+              error_details: {},
             },
           },
           pre_hook_validation_failed: {
@@ -883,6 +899,7 @@ function buildErrorResponseComponents() {
               error_messages: [
                 'User claim verification failed. unmatched: $.request_body.email_address, user:email',
               ],
+              error_details: { verification_failure: true },
             },
           },
           external_service_400: {

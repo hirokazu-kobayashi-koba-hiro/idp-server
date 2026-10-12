@@ -53,7 +53,8 @@ import org.idp.server.platform.mapper.functions.ValueFunction;
  *       </ul>
  *   <li><b>Result writing (writeResult)</b> — Write the final value to the output map:
  *       <ul>
- *         <li>{@code to: "*"} — Expand a Map value into the output (putAll)
+ *         <li>{@code to: "*"} — Expand a Map value into the output (putAll). Its keys are used
+ *             as-is, not read as paths
  *         <li>{@code to: "a.b.c"} — Write to a nested path, reconstructed by {@link
  *             ObjectCompositor}
  *       </ul>
@@ -141,7 +142,7 @@ public class MappingRuleObjectMapper {
 
     logInputs(mappingRules, jsonPath);
 
-    Map<String, Object> flatMap = new LinkedHashMap<>();
+    Map<CompositionKey, Object> flatMap = new LinkedHashMap<>();
 
     for (MappingRule rule : mappingRules) {
       // Check condition before executing the rule
@@ -304,16 +305,17 @@ public class MappingRuleObjectMapper {
    * Write the final value to the output map.
    *
    * <p>If {@code to} is {@code "*"}, the value must be a Map and its entries are expanded into the
-   * output (putAll semantics). Otherwise, the value is written at the specified key path (e.g.,
-   * {@code "claims.given_name"}), later reconstructed into nested structure by {@link
-   * ObjectCompositor}.
+   * output (putAll semantics). The keys come from the source data, so they are written as literal
+   * keys: a key such as {@code "a.0"} is not read as a path (Issue #1971). Otherwise, the value is
+   * written at the specified key path (e.g., {@code "claims.given_name"}), later reconstructed into
+   * nested structure by {@link ObjectCompositor}.
    */
-  static void writeResult(MappingRule rule, Object value, Map<String, Object> flatMap) {
+  static void writeResult(MappingRule rule, Object value, Map<CompositionKey, Object> flatMap) {
     if ("*".equals(rule.to())) {
       if (value instanceof Map<?, ?> mapValue) {
         for (Map.Entry<?, ?> entry : mapValue.entrySet()) {
           if (entry.getKey() instanceof String key) {
-            flatMap.put(key, entry.getValue());
+            flatMap.put(CompositionKey.literal(key), entry.getValue());
           }
         }
       } else if (value == null) {
@@ -323,7 +325,7 @@ public class MappingRuleObjectMapper {
         log.error("'*' requires Map but got: type={}", value.getClass().getSimpleName());
       }
     } else {
-      flatMap.put(rule.to(), value);
+      flatMap.put(CompositionKey.path(rule.to()), value);
     }
   }
 

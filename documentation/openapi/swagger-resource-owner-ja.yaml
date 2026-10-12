@@ -1523,16 +1523,19 @@ components:
                   - "address is not a object"
             process_sequence_error:
               value:
-                error: "invalid_request"
-                error_description: "Process sequence violation"
+                error: "pre_hook_validation_failed"
+                error_description: "Pre-hook validation failed for identity verification request"
                 error_messages:
-                  - "process 'complete-verification' is not available at current state"
+                  - "Process 'crm-registration' requires completion of: apply. Missing: apply"
+                error_details: {}
             pre_hook_validation_failed:
               value:
                 error: "pre_hook_validation_failed"
                 error_description: "Pre-hook validation failed for identity verification request"
                 error_messages:
                   - "User claim verification failed. unmatched: $.request_body.email_address, user:email"
+                error_details:
+                  verification_failure: true
             external_service_400:
               value:
                 error: "execution_failed"

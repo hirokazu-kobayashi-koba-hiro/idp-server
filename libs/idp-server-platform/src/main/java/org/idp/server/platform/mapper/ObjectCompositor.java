@@ -20,10 +20,11 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.platform.exception.InvalidConfigurationException;
 
 /**
- * ObjectCompositor reconstructs a nested {@code Map<String, Object>} structure from a flat map with
- * dot-separated keys, optionally supporting array indexes.
+ * ObjectCompositor reconstructs a nested {@code Map<String, Object>} structure from a flat map
+ * whose keys are split into map keys and list indexes.
  *
  * <p>For example:
  *
@@ -48,21 +49,29 @@ import java.util.Map;
  *   }
  * }
  * }</pre>
+ *
+ * <p>Keys are {@link CompositionKey}s. A key copied by {@code to: "*"} is a literal: it is not
+ * split, so {@code "a.0"} stays a single map key.
  */
 public class ObjectCompositor {
 
-  /** Regex used to split flat keys. */
-  private static final String regex = "\\.";
+  /**
+   * The largest list index a key may use. A list is padded with {@code null} up to the index, so
+   * the index is capped (Issue #1971). Only a {@code to} path in a configuration can hold an index,
+   * so a larger one is a configuration error.
+   */
+  static final int MAX_LIST_INDEX = 999;
 
   /** Flat map to be transformed. */
-  Map<String, Object> flatMap;
+  Map<CompositionKey, Object> flatMap;
 
   /**
-   * Constructs a new ObjectCompositor.
+   * Constructs a new ObjectCompositor. Only {@link MappingRuleObjectMapper} builds the flat map, so
+   * the constructor is package-private.
    *
    * @param flatMap flat key-value map to be composed
    */
-  public ObjectCompositor(Map<String, Object> flatMap) {
+  ObjectCompositor(Map<CompositionKey, Object> flatMap) {
     this.flatMap = flatMap;
   }
 
@@ -74,80 +83,88 @@ public class ObjectCompositor {
    */
   public Map<String, Object> composite() {
     Map<String, Object> result = new LinkedHashMap<>();
-    for (Map.Entry<String, Object> entry : flatMap.entrySet()) {
-      String[] keys = entry.getKey().split(regex);
-      insertValue(result, keys, entry.getValue());
+    for (Map.Entry<CompositionKey, Object> entry : flatMap.entrySet()) {
+      insertValue(result, entry.getKey(), entry.getValue());
     }
     return result;
   }
 
   /**
-   * Inserts a value into the nested structure according to the provided key path. Supports both map
-   * and list nodes based on key pattern (e.g., "0" for list index). Also supports special wildcard
-   * key "*" for top-level expansion.
-   *
-   * <p>Special behavior for "*":
-   *
-   * <ul>
-   *   <li>If the key path is exactly "*", and the value is a {@code Map}, its entries are merged
-   *       into the root level.
-   *   <li>Other usages of "*" (e.g. "claims.*.value") are not supported in this method and must be
-   *       handled earlier.
-   * </ul>
+   * Inserts a value into the nested structure according to the key's segments. An index segment
+   * selects a list element, and a name segment selects a map entry.
    *
    * @param root the root object to insert into
-   * @param keys the path keys split by delimiter
+   * @param key the key whose segments give the path
    * @param value the value to insert
+   * @throws InvalidConfigurationException if an index is larger than {@link #MAX_LIST_INDEX}
+   * @throws IllegalStateException if an index meets a map
    */
-  private void insertValue(Map<String, Object> root, String[] keys, Object value) {
+  private void insertValue(Map<String, Object> root, CompositionKey key, Object value) {
+    List<CompositionKey.Segment> segments = key.segments();
     Object current = root;
-    if (keys.length == 1 && keys[0].equals("*") && value instanceof Map) {
-      //      root.putAll((Map<String, ?>) value);
-    } else {
-      for (int i = 0; i < keys.length; i++) {
-        String key = keys[i];
-        boolean isLast = i == keys.length - 1;
-        boolean isIndex = key.matches("\\d+");
+    for (int i = 0; i < segments.size(); i++) {
+      CompositionKey.Segment segment = segments.get(i);
+      boolean isLast = i == segments.size() - 1;
 
-        if (isIndex) {
-          int index = Integer.parseInt(key);
-          List<Object> list;
+      if (segment.isIndex()) {
+        int index = toIndex(key, segment);
+        List<Object> list;
 
-          if (current instanceof List) {
-            list = (List<Object>) current;
-          } else if (current instanceof Map) {
-            throw new IllegalStateException("Expected List but found Map at index: " + key);
-          } else {
-            list = new ArrayList<>();
-            current = list;
-          }
-
-          while (list.size() <= index) {
-            list.add(null);
-          }
-
-          if (isLast) {
-            list.set(index, value);
-          } else {
-            if (list.get(index) == null) {
-              list.set(
-                  index, keys[i + 1].matches("\\d+") ? new ArrayList<>() : new LinkedHashMap<>());
-            }
-            current = list.get(index);
-          }
-
+        if (current instanceof List) {
+          list = (List<Object>) current;
+        } else if (current instanceof Map) {
+          throw new IllegalStateException(
+              "Expected List but found Map at index: " + segment.value());
         } else {
-          Map<String, Object> map = (Map<String, Object>) current;
-          if (isLast) {
-            map.put(key, value);
-          } else {
-            if (!map.containsKey(key)) {
-              map.put(key, keys[i + 1].matches("\\d+") ? new ArrayList<>() : new LinkedHashMap<>());
-            }
-            current = map.get(key);
+          list = new ArrayList<>();
+          current = list;
+        }
+
+        while (list.size() <= index) {
+          list.add(null);
+        }
+
+        if (isLast) {
+          list.set(index, value);
+        } else {
+          if (list.get(index) == null) {
+            list.set(index, newContainer(segments.get(i + 1)));
           }
+          current = list.get(index);
+        }
+
+      } else {
+        Map<String, Object> map = (Map<String, Object>) current;
+        if (isLast) {
+          map.put(segment.value(), value);
+        } else {
+          if (!map.containsKey(segment.value())) {
+            map.put(segment.value(), newContainer(segments.get(i + 1)));
+          }
+          current = map.get(segment.value());
         }
       }
     }
+  }
+
+  /**
+   * Reads an index segment as a number. Leading zeros are dropped first, so {@code "0001"} is index
+   * 1.
+   *
+   * @throws InvalidConfigurationException if the index is larger than {@link #MAX_LIST_INDEX}
+   */
+  private int toIndex(CompositionKey key, CompositionKey.Segment segment) {
+    String digits = segment.value().replaceFirst("^0+(?=\\d)", "");
+    if (digits.length() > String.valueOf(MAX_LIST_INDEX).length()
+        || Integer.parseInt(digits) > MAX_LIST_INDEX) {
+      throw new InvalidConfigurationException(
+          String.format(
+              "List index must be %d or less: %s (key: %s)", MAX_LIST_INDEX, segment.value(), key));
+    }
+    return Integer.parseInt(digits);
+  }
+
+  private Object newContainer(CompositionKey.Segment next) {
+    return next.isIndex() ? new ArrayList<>() : new LinkedHashMap<>();
   }
 }

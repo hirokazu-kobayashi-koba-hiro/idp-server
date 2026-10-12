@@ -62,7 +62,7 @@ import org.idp.server.platform.type.RequestAttributes;
  *     },
  *     "cancel": {
  *       "dependencies": {
- *         "allow_during_statuses": ["REQUESTED", "APPLYING"]
+ *         "allow_during_statuses": ["requested", "applying"]
  *       }
  *     }
  *   }
@@ -75,8 +75,10 @@ import org.idp.server.platform.type.RequestAttributes;
  *   <li>Missing dependency: "Process 'crm-registration' requires completion of: apply. Missing:
  *       apply"
  *   <li>Retry denied: "Process 'apply' does not allow retry and has already been executed"
- *   <li>Status restriction: "Process 'cancel' cannot be executed during status: APPROVED. Allowed
- *       statuses: REQUESTED, APPLYING"
+ *   <li>Status restriction: "Process 'cancel' cannot be executed during status: approved. Allowed
+ *       statuses: requested, applying"
+ *   <li>Status restriction without an application: "Process 'cancel' cannot be executed before the
+ *       application exists. Allowed statuses: requested, applying"
  * </ul>
  *
  * <p><b>Integration:</b>
@@ -157,8 +159,14 @@ public class ProcessSequenceVerifier implements IdentityVerificationApplicationR
               "Process '%s' does not allow retry and has already been executed", process.name()));
     }
 
-    // 3. Check status restrictions
-    if (dependencies.hasStatusRestrictions()) {
+    // 3. Check status restrictions. A request without an application (the first process) has no
+    // status, so no allowed status matches (Issue #1971).
+    if (dependencies.hasStatusRestrictions() && !currentApplication.exists()) {
+      errors.add(
+          String.format(
+              "Process '%s' cannot be executed before the application exists. Allowed statuses: %s",
+              process.name(), String.join(", ", dependencies.allowDuringStatuses())));
+    } else if (dependencies.hasStatusRestrictions()) {
       String currentStatus = currentApplication.status().value();
       if (!dependencies.isAllowedDuringStatus(currentStatus)) {
         log.warn(
@@ -182,7 +190,7 @@ public class ProcessSequenceVerifier implements IdentityVerificationApplicationR
           process.name(),
           errors.size(),
           errors);
-      return IdentityVerificationApplicationRequestVerifiedResult.failure(errors);
+      return IdentityVerificationApplicationRequestVerifiedResult.notExecutable(errors);
     }
 
     log.debug("Process sequence validation passed: process={}", process.name());
