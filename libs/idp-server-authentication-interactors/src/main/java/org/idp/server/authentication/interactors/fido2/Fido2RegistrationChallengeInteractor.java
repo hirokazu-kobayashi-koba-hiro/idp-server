@@ -249,7 +249,7 @@ public class Fido2RegistrationChallengeInteractor implements AuthenticationInter
     // Resolve username from transaction.user() only (prevent username manipulation)
     User authenticatedUser = transaction.user();
     TenantIdentityPolicy identityPolicy = tenant.identityPolicyConfig();
-    String authenticatedUsername = resolveUsernameFromUser(authenticatedUser, identityPolicy);
+    String authenticatedUsername = Fido2Username.of(authenticatedUser, identityPolicy).value();
 
     if (authenticatedUsername == null || authenticatedUsername.isEmpty()) {
       log.warn("Cannot resolve username from authenticated user: {}", authenticatedUser.sub());
@@ -328,36 +328,6 @@ public class Fido2RegistrationChallengeInteractor implements AuthenticationInter
     }
 
     return satisfied;
-  }
-
-  /**
-   * Resolves username from User based on Tenant Identity Policy.
-   *
-   * @param user the user
-   * @param identityPolicy the tenant identity policy
-   * @return username, or empty string if not resolvable
-   */
-  private String resolveUsernameFromUser(User user, TenantIdentityPolicy identityPolicy) {
-    switch (identityPolicy.uniqueKeyType()) {
-      case USERNAME:
-      case USERNAME_OR_EXTERNAL_USER_ID:
-        return user.preferredUsername();
-
-      case EMAIL:
-      case EMAIL_OR_EXTERNAL_USER_ID:
-        return user.email();
-
-      case PHONE:
-      case PHONE_OR_EXTERNAL_USER_ID:
-        return user.phoneNumber();
-
-      case EXTERNAL_USER_ID:
-        return user.externalUserId();
-
-      default:
-        // Fallback to preferredUsername
-        return user.preferredUsername();
-    }
   }
 
   private boolean isResetAction(AuthenticationTransaction transaction) {
