@@ -1523,10 +1523,10 @@ components:
                   - "address is not a object"
             process_sequence_error:
               value:
-                error: "invalid_request"
-                error_description: "Process sequence violation"
+                error: "pre_hook_validation_failed"
+                error_description: "Pre-hook validation failed for identity verification request"
                 error_messages:
-                  - "process 'complete-verification' is not available at current state"
+                  - "Process 'complete-verification' requires completion of: apply. Missing: apply"
             pre_hook_validation_failed:
               value:
                 error: "pre_hook_validation_failed"

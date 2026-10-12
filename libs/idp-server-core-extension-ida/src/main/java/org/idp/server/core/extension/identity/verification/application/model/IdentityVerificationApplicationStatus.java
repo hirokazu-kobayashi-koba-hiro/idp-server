@@ -88,6 +88,17 @@ public enum IdentityVerificationApplicationStatus {
         .toList();
   }
 
+  /**
+   * The values an application can have, i.e. every status but {@code UNDEFINED} and {@code
+   * UNKNOWN}.
+   */
+  public static List<String> applicationValues() {
+    return Arrays.stream(values())
+        .filter(status -> status != UNDEFINED && status != UNKNOWN)
+        .map(IdentityVerificationApplicationStatus::value)
+        .toList();
+  }
+
   public boolean isApproved() {
     return this == APPROVED;
   }

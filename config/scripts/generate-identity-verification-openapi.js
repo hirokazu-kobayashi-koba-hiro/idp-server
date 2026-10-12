@@ -431,13 +431,18 @@ function buildDescription(config, name, proc, kind, callbackLocator) {
       lines.push('');
       lines.push(`**前提プロセス**: ${requiredProcesses(proc).map((p) => `\`${p}\``).join('、')} の完了が必要`);
     }
+    const allowDuringStatuses = (proc.dependencies || {}).allow_during_statuses || [];
+    if (allowDuringStatuses.length > 0) {
+      lines.push('');
+      lines.push(`**実行できるステータス**: ${allowDuringStatuses.map((s) => `\`${s}\``).join('、')}`);
+    }
     lines.push('');
     lines.push(
       (proc.dependencies || {}).allow_retry
         ? '再実行できる（allow_retry: true）。'
         : kind === 'callback'
           ? '実行は 1 回だけ（allow_retry: false）。2 回目は 400 pre_hook_validation_failed。'
-          : '実行は 1 回だけ（allow_retry: false。pre_hook・execution で失敗した試行も 1 回に数える）。2 回目は 400 pre_hook_validation_failed。'
+          : '実行は 1 回だけ（allow_retry: false。pre_hook・execution で失敗した試行も 1 回に数える。process_sequence で断られた呼び出しは数えない）。2 回目は 400 pre_hook_validation_failed。'
     );
   }
 

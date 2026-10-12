@@ -72,6 +72,14 @@ public class IdentityVerificationApplyingResult {
     return verifyResult.isError() || executionResult.isError();
   }
 
+  /**
+   * Whether this request counts as an attempt of the process. It is not one when {@code
+   * process_sequence} rejected it before the process ran (Issue #1971).
+   */
+  public boolean isAttempt() {
+    return verifyResult.isAttempt();
+  }
+
   public IdentityVerificationApplicationResponse errorResponse() {
 
     if (verifyResult.isError()) {

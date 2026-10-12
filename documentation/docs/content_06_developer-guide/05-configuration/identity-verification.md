@@ -184,6 +184,7 @@ POST /{tenant-id}/v1/me/identity-verification/applications/{type}/cancel
 |---------|---|------|-----|
 | `required_processes` | string[] | このプロセスを実行する前に完了が必要なプロセス名のリスト | ❌ |
 | `allow_retry` | boolean | プロセスの再実行を許可するか (`true`: 許可, `false`: 不可)。省略時は `false` | - |
+| `allow_during_statuses` | string[] | このプロセスを実行できる申込みのステータス（`requested` / `applying` / `applied` / `examination_processing` / `approved` / `rejected` / `expired` / `cancelled`）。申込み ID なしでは実行できない | - |
 
 ### 設定例
 
@@ -253,8 +254,9 @@ POST /{tenant-id}/v1/me/identity-verification/applications/{type}/cancel
 ### 動作の仕組み
 
 1. **依存関係チェック**: `required_processes`に指定されたプロセスがすべて正常完了している場合のみ実行可能
-2. **リトライ制御**: `allow_retry: false`のプロセスは一度だけ実行可能。再実行しようとするとエラー
-3. **process_sequence検証**: `pre_hook.verifications`に`process_sequence`タイプを追加することで依存関係を強制
+2. **リトライ制御**: `allow_retry: false`のプロセスは一度だけ実行可能。再実行しようとするとエラー。`process_sequence`で断られた呼び出しは実行に数えない
+3. **ステータス制限**: `allow_during_statuses`があれば、申込みのステータスがそのどれかの場合のみ実行可能
+4. **process_sequence検証**: `pre_hook.verifications`に`process_sequence`タイプを追加することで依存関係を強制
 
 ### 実行順序の例
 
@@ -492,6 +494,7 @@ Pre Hookは2つのコンポーネントで構成されます：
 **動作**:
 - `required_processes`に指定されたプロセスがすべて完了しているかチェック
 - `allow_retry: false`の場合、既に実行済みのプロセスの再実行を拒否
+- `allow_during_statuses`がある場合、申込みのステータスがそのどれかでなければ拒否（申込み ID なしでも拒否）
 
 **エラー例**:
 ```json

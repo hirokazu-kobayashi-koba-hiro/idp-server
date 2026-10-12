@@ -288,14 +288,16 @@ public class IdentityVerificationApplicationEntryService
     // Record the process attempt for both success and failure. updateProcessWith advances
     // success_count or failure_count from applyingResult, so failure_count-based conditions
     // (lock_conditions / retry limits) work for failed attempts too (#1608). An unsuccessful
-    // attempt
-    // (verification / pre-hook / execution error) holds the status in place; only successful
-    // attempts
-    // re-evaluate it, and the result is reconciled to forbid backward / terminal-overwriting
-    // transitions. (#1617)
-    IdentityVerificationApplication updated =
-        application.updateProcessWith(process, applyingResult, verificationConfiguration);
-    applicationCommandRepository.update(tenant, updated);
+    // attempt (verification / pre-hook / execution error) holds the status in place; only
+    // successful attempts re-evaluate it, and the result is reconciled to forbid backward /
+    // terminal-overwriting transitions. (#1617)
+    // A request that process_sequence rejects is not an attempt: the process may not run yet, and
+    // recording it would count it toward allow_retry. (#1971)
+    IdentityVerificationApplication updated = application;
+    if (applyingResult.isAttempt()) {
+      updated = application.updateProcessWith(process, applyingResult, verificationConfiguration);
+      applicationCommandRepository.update(tenant, updated);
+    }
 
     if (applyingResult.isError()) {
       SecurityEventType securityEventType =

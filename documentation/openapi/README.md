@@ -37,7 +37,7 @@ node config/scripts/generate-identity-verification-openapi.js <config.json> \
 - リクエストボディは `request.schema` から生成（独自キーワード `store` / `respond` は除去）
 - レスポンスは `response.body_mapping_rules` から導出（初回申込みのみ `id` がサーバー付与）
 - pre_hook 検証・transition 条件・store 保存項目は description に自動記載
-- 前提プロセス（`dependencies.required_processes`）と再実行（`allow_retry`、既定 `false`）は、`pre_hook.verifications` に `process_sequence` があるときだけ記載（サーバーもそのときだけ確認する）。再実行は初回申込みのプロセスには記載しない（毎回新しい申込みとして確認されるため）。process の直下に書いた `required_processes` / `allow_retry` は読まない
+- 前提プロセス（`dependencies.required_processes`）・実行できるステータス（`allow_during_statuses`）・再実行（`allow_retry`、既定 `false`）は、`pre_hook.verifications` に `process_sequence` があるときだけ記載（サーバーもそのときだけ確認する）。再実行は初回申込みのプロセスには記載しない（毎回新しい申込みとして確認されるため）。process の直下に書いた `required_processes` / `allow_retry` は読まない
 - 認証情報（basic_auth / oauth の資格情報）は仕様書に出力されない
 - コールバックの `security` は `request.basic_auth`（`username` と `password` の両方）があるときだけ `BasicAuth`。無ければ認証なしとして出力する
 - `--tenant-id` 指定時はパス・OAuth URL の `{tenant-id}` を実IDに置換（パラメータ定義も除去）

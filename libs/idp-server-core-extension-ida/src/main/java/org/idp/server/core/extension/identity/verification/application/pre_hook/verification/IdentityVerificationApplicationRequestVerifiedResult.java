@@ -26,22 +26,36 @@ public class IdentityVerificationApplicationRequestVerifiedResult {
 
   boolean valid;
   List<String> errors;
+  boolean attempt;
 
-  private IdentityVerificationApplicationRequestVerifiedResult(boolean valid, List<String> errors) {
+  private IdentityVerificationApplicationRequestVerifiedResult(
+      boolean valid, List<String> errors, boolean attempt) {
     this.valid = valid;
     this.errors = errors;
+    this.attempt = attempt;
   }
 
   public static IdentityVerificationApplicationRequestVerifiedResult empty() {
-    return new IdentityVerificationApplicationRequestVerifiedResult(false, List.of());
+    return new IdentityVerificationApplicationRequestVerifiedResult(false, List.of(), true);
   }
 
   public static IdentityVerificationApplicationRequestVerifiedResult success() {
-    return new IdentityVerificationApplicationRequestVerifiedResult(true, List.of());
+    return new IdentityVerificationApplicationRequestVerifiedResult(true, List.of(), true);
   }
 
   public static IdentityVerificationApplicationRequestVerifiedResult failure(List<String> errors) {
-    return new IdentityVerificationApplicationRequestVerifiedResult(false, errors);
+    return new IdentityVerificationApplicationRequestVerifiedResult(false, errors, true);
+  }
+
+  /**
+   * The process may not run now ({@code process_sequence}: a required process is not completed, the
+   * status is not allowed, or a retry is not allowed). The request is not an attempt of the
+   * process, so it is not recorded against it and does not count toward {@code allow_retry} (Issue
+   * #1971).
+   */
+  public static IdentityVerificationApplicationRequestVerifiedResult notExecutable(
+      List<String> errors) {
+    return new IdentityVerificationApplicationRequestVerifiedResult(false, errors, false);
   }
 
   public boolean isValid() {
@@ -50,6 +64,11 @@ public class IdentityVerificationApplicationRequestVerifiedResult {
 
   public boolean isError() {
     return !valid;
+  }
+
+  /** Whether the request counts as an attempt of the process. See {@link #notExecutable}. */
+  public boolean isAttempt() {
+    return attempt;
   }
 
   public List<String> errors() {
