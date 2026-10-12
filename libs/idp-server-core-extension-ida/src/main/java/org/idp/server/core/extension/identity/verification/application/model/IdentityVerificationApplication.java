@@ -254,6 +254,15 @@ public class IdentityVerificationApplication {
     return identifier;
   }
 
+  /**
+   * Whether this application was filed under {@code type} (Issue #1969). An application is looked
+   * up by its id alone, so the {@code type} in the request path has to be compared separately
+   * before the application is processed under that type's configuration.
+   */
+  public boolean isOfType(IdentityVerificationType type) {
+    return identityVerificationType != null && identityVerificationType.equals(type);
+  }
+
   public IdentityVerificationType identityVerificationType() {
     return identityVerificationType;
   }

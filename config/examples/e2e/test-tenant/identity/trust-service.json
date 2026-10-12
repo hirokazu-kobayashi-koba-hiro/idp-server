@@ -1,7 +1,6 @@
 {
   "id": "8c91feb0-97d5-41ce-b041-ad2ab2c65158",
   "type": "trust-service",
-  "external_service": "mocky",
   "registration": {
     "basic_auth": {
       "username": "test_user",

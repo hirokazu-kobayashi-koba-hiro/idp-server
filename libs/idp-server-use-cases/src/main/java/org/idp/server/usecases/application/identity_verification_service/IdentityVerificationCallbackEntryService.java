@@ -17,6 +17,7 @@
 package org.idp.server.usecases.application.identity_verification_service;
 
 import java.util.Map;
+import org.idp.server.core.extension.identity.exception.IdentityVerificationApplicationNotFoundException;
 import org.idp.server.core.extension.identity.verification.*;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplicationHandler;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplyingResult;
@@ -120,6 +121,10 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
     log.info("IdentityVerification callback received {}: {}", applicationIdParams, applicationId);
     IdentityVerificationApplication application =
         applicationQueryRepository.get(tenant, applicationIdParams, applicationId);
+    if (!application.isOfType(type)) {
+      throw IdentityVerificationApplicationNotFoundException.byKey(
+          applicationIdParams, applicationId);
+    }
 
     return updateApplicationAndCreateResponse(
         type,
@@ -162,6 +167,9 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
 
     IdentityVerificationApplication application =
         applicationQueryRepository.get(tenant, identifier);
+    if (!application.isOfType(type)) {
+      throw IdentityVerificationApplicationNotFoundException.byId(identifier);
+    }
 
     return updateApplicationAndCreateResponse(
         type,

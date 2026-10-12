@@ -1,8 +1,6 @@
 {
   "id": "7e5c5afe-ae23-45ad-8668-6be49b98533d",
   "type": "authentication-assurance",
-  "external_service": "mocky",
-  "external_application_id_param": "application_id",
   "processes": {
     "apply": {
       "request": {

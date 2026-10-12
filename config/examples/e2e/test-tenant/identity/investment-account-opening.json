@@ -5,7 +5,6 @@
     "label": "証券口座開設"
   },
   "common": {
-    "external_service": "mocky",
     "callback_application_id_param": "application_id"
   },
   "processes": {

@@ -95,14 +95,16 @@
 
 ```json
 {
-  "error": "not_found",
-  "error_description": "The requested resource was not found"
+  "error": "invalid_request",
+  "error_description": "<見つからなかったリソースの説明>"
 }
 ```
 
 **発生条件:**
-- 指定された申込みIDが存在しない
+- 指定されたリソースが存在しない
 - ユーザーに紐づくリソースが見つからない
+
+身元確認の申込みについては、各 API の節を参照してください。
 
 #### 検証エラー（400）
 
@@ -342,10 +344,12 @@ POST /{tenant-id}/v1/me/identity-verification/applications/{verification-type}/{
 
 ```json
 {
-  "error": "not_found",
-  "error_description": "Application not found or does not belong to this user"
+  "error": "invalid_request",
+  "error_description": "IdentityVerificationApplication not found (550e8400-e29b-41d4-a716-446655440000)"
 }
 ```
+
+申込みが存在しない、本人の申込みではない、申込みの種別がパスの `verification-type` と違う、のいずれも同じ応答です。
 
 #### エラーレスポンス（400 Bad Request - プロセスシーケンス違反）
 
@@ -429,10 +433,12 @@ DELETE /{tenant-id}/v1/me/identity-verification/applications/{verification-type}
 
 ```json
 {
-  "error": "not_found",
-  "error_description": "Application not found"
+  "error": "invalid_request",
+  "error_description": "IdentityVerificationApplication not found (550e8400-e29b-41d4-a716-446655440000)"
 }
 ```
+
+申込みが存在しない、本人の申込みではない、申込みの種別がパスの `verification-type` と違う、のいずれも同じ応答です。
 
 #### エラーレスポンス（400 Bad Request）
 

@@ -1,7 +1,5 @@
 {
   "type": "ongoing-verification",
-  "external_service": "ekyc-vendor",
-  "external_application_id_param": "application_id",
   "processes": {
     "apply": {
       "request": {
@@ -34,7 +32,6 @@
           "method": "POST",
           "auth_type": "oauth2",
           "oauth_authorization": {
-            "auth_type": "oauth2",
             "type": "client_credentials",
             "token_endpoint": "http://host.docker.internal:4002/oauth/token",
             "client_authentication_type": "client_secret_post",

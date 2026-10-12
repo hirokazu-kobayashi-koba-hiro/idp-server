@@ -1,8 +1,6 @@
 {
   "id": "55555555-8888-4444-4444-555555555555",
   "type": "linked-accounts-management",
-  "external_service": "mock",
-  "external_application_id_param": "application_id",
   "processes": {
     "apply": {
       "request": {

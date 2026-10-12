@@ -1,7 +1,5 @@
 {
   "type": "authentication-assurance",
-  "external_service": "mock",
-  "external_application_id_param": "application_id",
   "processes": {
     "apply": {
       "request": {

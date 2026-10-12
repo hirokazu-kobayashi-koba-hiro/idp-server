@@ -45,8 +45,7 @@
 |---------------------------------|-------------------------------|
 | `id`                            | テンプレートのUUID                   |
 | `type`                          | ワークフロー種別（例: `trust-service`）  |
-| `external_service`              | 外部ワークフロー名（例: `mocky`）         |
-| `verified_claims_configuration` | verified_claimsへのマッピング定義（※後述） |
+| `result`                        | verified_claims などへのマッピング定義（※後述） |
 | `registration`                  | 身元確認結果登録API定義                 |
 
 ### `registration`設定
@@ -173,40 +172,36 @@
 
 
 
-## 🔧 verified_claims_configuration
+## 🔧 result.verified_claims_mapping_rules
 
-外部から取得したデータを、`verified_claims` にどのようにマッピングするかを定義します。  
+登録 API のリクエストボディを、`verified_claims` にどのようにマッピングするかを定義します。
 マッピングルール形式で記述し、柔軟な変換に対応。
 
 ### 例
 
 ```json
 {
-  "verified_claims_configuration": {
-    "mapping_rules": [
+  "result": {
+    "verified_claims_mapping_rules": [
       {
-        "from": "$.verification.trust_framework",
+        "from": "$.request_body.trust_framework",
         "to": "verification.trust_framework"
       },
       {
-        "from": "$.verification.evidence[0].type",
+        "from": "$.request_body.evidence[0].type",
         "to": "verification.evidence.0.type"
       },
       {
-        "from": "$.verification.evidence[0].check_details[0].check_method",
+        "from": "$.request_body.evidence[0].check_details[0].check_method",
         "to": "verification.evidence.0.check_details.0.check_method"
       },
       {
-        "from": "$.verification.evidence[0].check_details[0].organization",
-        "to": "verification.evidence.0.check_details.0.organization"
-      },
-      {
-        "from": "$.claims.given_name",
+        "from": "$.request_body.claims.given_name",
         "to": "claims.given_name"
       },
       {
-        "from": "$.claims.address.postal_code",
-        "to": "claims.address.postal_code"
+        "static_value": "jpki",
+        "to": "verification.evidence.0.check_details.0.organization"
       }
     ]
   }
@@ -215,11 +210,10 @@
 
 | フィールド          | 説明                                                       |
 |----------------|----------------------------------------------------------|
-| `from`         | JSONPathでデータの抽出元を指定                                      |
+| `from`         | JSONPathでデータの抽出元を指定（登録 API のリクエストボディは `$.request_body`） |
+| `static_value` | `from` の代わりに固定値を指定                                     |
 | `to`           | verified_claimsの構造に沿った出力先パス                              |
-| `convert_type` | 省略可。型変換が必要な場合に指定（`string`, `int`, `boolean`, `datetime`） |
-
-※ convert_type が省略された場合は自動判定。必要に応じて型変換は TypeConverter により実施されます。
+| `functions`    | 省略可。値の変換（`convert_type` による型変換など）                         |
 
 ### verified_claimsスキーマの例
 

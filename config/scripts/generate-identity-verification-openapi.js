@@ -259,12 +259,15 @@ function hasRequiredProcesses(proc) {
   return requiredProcesses(proc).length > 0;
 }
 
-/** dependencies.required_processes（現行）とプロセス直下 required_processes（旧形式）の両対応 */
+/** dependencies.required_processes（サーバーが読むのはここだけ。process 直下の書き方は読まれない） */
 function requiredProcesses(proc) {
   const deps = proc.dependencies || {};
-  const current = Array.isArray(deps.required_processes) ? deps.required_processes : [];
-  const legacy = Array.isArray(proc.required_processes) ? proc.required_processes : [];
-  return current.length > 0 ? current : legacy;
+  return Array.isArray(deps.required_processes) ? deps.required_processes : [];
+}
+
+function hasProcessSequenceVerification(proc) {
+  const verifications = ((proc.pre_hook || {}).verifications) || [];
+  return verifications.some((v) => v && v.type === 'process_sequence');
 }
 
 /** response.body_mapping_rules からレスポンススキーマを導出する */
@@ -420,14 +423,22 @@ function buildDescription(config, name, proc, kind, callbackLocator) {
   lines.push('');
   lines.push(...flow);
 
-  if (hasRequiredProcesses(proc)) {
-    lines.push('');
-    lines.push(`**前提プロセス**: ${requiredProcesses(proc).map((p) => `\`${p}\``).join('、')} の完了が必要`);
-    const allowRetry = (proc.dependencies || {}).allow_retry || proc.allow_retry;
-    if (allowRetry) {
+  // サーバーが dependencies を確認するのは、pre_hook.verifications に process_sequence があるときだけ。
+  // 再実行の確認は required_processes の有無に関係なく行う（allow_retry の既定は false）。
+  // 初回申込み（initial）は毎回新しい申込みとして確認されるので、再実行の拒否は起きない。
+  if (hasProcessSequenceVerification(proc) && kind !== 'initial') {
+    if (hasRequiredProcesses(proc)) {
       lines.push('');
-      lines.push('リトライ実行が許可されている（allow_retry: true）。');
+      lines.push(`**前提プロセス**: ${requiredProcesses(proc).map((p) => `\`${p}\``).join('、')} の完了が必要`);
     }
+    lines.push('');
+    lines.push(
+      (proc.dependencies || {}).allow_retry
+        ? '再実行できる（allow_retry: true）。'
+        : kind === 'callback'
+          ? '実行は 1 回だけ（allow_retry: false）。2 回目は 400 pre_hook_validation_failed。'
+          : '実行は 1 回だけ（allow_retry: false。pre_hook・execution で失敗した試行も 1 回に数える）。2 回目は 400 pre_hook_validation_failed。'
+    );
   }
 
   if (kind === 'callback') {
@@ -457,9 +468,6 @@ function buildDescription(config, name, proc, kind, callbackLocator) {
 function buildTagDescription(config, source) {
   const lines = [];
   lines.push(`身元確認タイプ \`${config.type}\` のAPI（生成元: ${source}）。`);
-  if (config.external_service) {
-    lines.push(`外部サービス: \`${config.external_service}\``);
-  }
   const result = config.result || {};
   const verifiedClaimsRules = result.verified_claims_mapping_rules || [];
   if (verifiedClaimsRules.length > 0) {

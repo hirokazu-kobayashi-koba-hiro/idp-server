@@ -183,7 +183,7 @@ POST /{tenant-id}/v1/me/identity-verification/applications/{type}/cancel
 | フィールド | 型 | 説明 | 必須 |
 |---------|---|------|-----|
 | `required_processes` | string[] | このプロセスを実行する前に完了が必要なプロセス名のリスト | ❌ |
-| `allow_retry` | boolean | プロセスの再実行を許可するか (`true`: 許可, `false`: 不可) | ✅ |
+| `allow_retry` | boolean | プロセスの再実行を許可するか (`true`: 許可, `false`: 不可)。省略時は `false` | - |
 
 ### 設定例
 
@@ -1426,19 +1426,13 @@ OIDC4IDA（OpenID Connect for Identity Assurance）準拠のverified_claims生�
 ```json
 {
   "common": {
-    "external_service": "kyc-provider",
     "callback_application_id_param": "application_id"
   }
 }
 ```
 
 **フィールド説明**:
-- `external_service`: 外部サービスの識別名（ログ・監査用）
-- `callback_application_id_param`: コールバック時に使用する申請ID識別パラメータ名
-
-**使用シーン**:
-- 複数プロセスで共通する外部サービス名の定義
-- コールバック処理での申請ID識別
+- `callback_application_id_param`: コールバックで申込みを特定するキー。申込み時に `store.application_details_mapping_rules` でこのキーに保存した値と、コールバックのリクエストボディの同じキーの値を照合する（`{id}` なしのコールバック API で使う）
 
 ---
 
@@ -1466,7 +1460,6 @@ OIDC4IDA（OpenID Connect for Identity Assurance）準拠のverified_claims生�
   "id": "666bae10-bc0d-41ce-92b4-53359b2f8439",
   "type": "investment-account-opening",
   "common": {
-    "external_service": "kyc-provider",
     "callback_application_id_param": "application_id"
   },
   "processes": {

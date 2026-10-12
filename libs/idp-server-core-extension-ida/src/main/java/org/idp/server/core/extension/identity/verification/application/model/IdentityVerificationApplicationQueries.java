@@ -85,14 +85,6 @@ public class IdentityVerificationApplicationQueries implements UuidConvertable {
     return values.get("external_application_id");
   }
 
-  public boolean hasExternalService() {
-    return values.containsKey("external_service");
-  }
-
-  public String externalService() {
-    return values.get("external_service");
-  }
-
   public boolean hasStatus() {
     return values.containsKey("status");
   }

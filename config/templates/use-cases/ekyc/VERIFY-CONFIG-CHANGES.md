@@ -629,8 +629,6 @@ restore_iv_config
 update_iv_config_json '{
   "id": "'${IV_CONFIG_ID}'",
   "type": "authentication-assurance",
-  "external_service": "ekyc-vendor",
-  "external_application_id_param": "application_id",
   "processes": {
     "apply": {
       "request": {

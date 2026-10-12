@@ -48,8 +48,7 @@ public class IdentityVerificationApplicationQueryDataSource
     Map<String, String> result = executor.selectOne(tenant, user, identifier);
 
     if (result == null || result.isEmpty()) {
-      throw new IdentityVerificationApplicationNotFoundException(
-          String.format("IdentityVerificationApplication not found (%s)", identifier.value()));
+      throw IdentityVerificationApplicationNotFoundException.byId(identifier);
     }
 
     return ModelConverter.convert(result);
@@ -61,8 +60,7 @@ public class IdentityVerificationApplicationQueryDataSource
     Map<String, String> result = executor.selectOne(tenant, identifier);
 
     if (result == null || result.isEmpty()) {
-      throw new IdentityVerificationApplicationNotFoundException(
-          String.format("IdentityVerificationApplication not found (%s)", identifier.value()));
+      throw IdentityVerificationApplicationNotFoundException.byId(identifier);
     }
 
     return ModelConverter.convert(result);
@@ -90,18 +88,14 @@ public class IdentityVerificationApplicationQueryDataSource
       }
 
       if (result == null || result.isEmpty()) {
-        throw new IdentityVerificationApplicationNotFoundException(
-            String.format(
-                "IdentityVerificationApplication not found key: %s id: %s", key, identifier));
+        throw IdentityVerificationApplicationNotFoundException.byKey(key, identifier);
       }
 
       return ModelConverter.convert(result);
     } catch (SqlTooManyResultsException tooManyResultsException) {
 
       log.error("IdentityVerificationApplication is too many found", tooManyResultsException);
-      throw new IdentityVerificationApplicationNotFoundException(
-          String.format(
-              "IdentityVerificationApplication not found key: %s id: %s", key, identifier));
+      throw IdentityVerificationApplicationNotFoundException.byKey(key, identifier);
     }
   }
 
