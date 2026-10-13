@@ -450,6 +450,37 @@
       "streamingInterval": 0
     },
     {
+      "uuid": "fido-uaf-authentication-device-check",
+      "type": "http",
+      "documentation": "FIDO-UAF authentication that reports the authenticated device as user_id (echoes authenticated_device_id from the request)",
+      "method": "post",
+      "endpoint": "fido-uaf/authentication-device-check",
+      "responses": [
+        {
+          "uuid": "fido-uaf-authentication-device-check-200",
+          "body": "{\n  \"status\": \"string\",\n  \"user_id\": \"{{ body 'authenticated_device_id' }}\"\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
       "uuid": "1b9599b7-ebfc-4450-b1c5-26fe78bb14cc",
       "type": "http",
       "documentation": "042b7ec8-d777-4e97-9d88-d1f9b32ca5a7",
@@ -2445,6 +2476,10 @@
     {
       "type": "route",
       "uuid": "4711f4fd-0823-4a8d-89f9-06f94c4c21af"
+    },
+    {
+      "type": "route",
+      "uuid": "fido-uaf-authentication-device-check"
     },
     {
       "type": "route",
