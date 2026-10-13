@@ -96,6 +96,24 @@ public class Fido2DeregistrationInteractor implements AuthenticationInteractor {
           DefaultSecurityEventType.fido2_deregistration_failure);
     }
 
+    Fido2Username username = Fido2Username.of(transaction.user(), tenant.identityPolicyConfig());
+    if (!username.exists()) {
+      log.warn(
+          "FIDO2 deregistration: cannot resolve username from user: {}", transaction.user().sub());
+
+      Map<String, Object> errorResponse = new HashMap<>();
+      errorResponse.put("error", "forbidden");
+      errorResponse.put("error_description", "Cannot resolve username of the authenticated user");
+
+      return AuthenticationInteractionRequestResult.clientError(
+          errorResponse,
+          type,
+          operationType(),
+          method(),
+          transaction.user(),
+          DefaultSecurityEventType.fido2_deregistration_failure);
+    }
+
     AuthenticationConfiguration configuration = configurationRepository.get(tenant, "fido2");
     AuthenticationInteractionConfig authenticationInteractionConfig =
         configuration.getAuthenticationConfig("fido2-deregistration");
@@ -103,8 +121,10 @@ public class Fido2DeregistrationInteractor implements AuthenticationInteractor {
 
     AuthenticationExecutor executor = authenticationExecutors.get(execution.function());
 
+    // Force the transaction user's username so the executor deletes only that user's credential
+    // (a username in the request body is overwritten, never trusted)
     AuthenticationExecutionRequest authenticationExecutionRequest =
-        new AuthenticationExecutionRequest(request.toMap());
+        new AuthenticationExecutionRequest(request.toMap()).add("username", username.value());
     AuthenticationExecutionResult executionResult =
         executor.execute(
             tenant,

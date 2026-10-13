@@ -43,7 +43,6 @@ import org.idp.server.platform.json.path.JsonPathWrapper;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.mapper.MappingRuleObjectMapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.multi_tenancy.tenant.policy.TenantIdentityPolicy;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.security.type.DeviceInfo;
 import org.idp.server.platform.type.RequestAttributes;
@@ -282,7 +281,7 @@ public class Fido2RegistrationInteractor implements AuthenticationInteractor {
     // Strategy 1: Use transaction.user() only (prevent user impersonation)
     User transactionUser = transaction.user();
     String transactionUsername =
-        resolveUsernameFromUser(transactionUser, tenant.identityPolicyConfig());
+        Fido2Username.of(transactionUser, tenant.identityPolicyConfig()).value();
 
     if (!username.equals(transactionUsername)) {
       // Different username → reject (prevent registering device for different user)
@@ -461,35 +460,5 @@ public class Fido2RegistrationInteractor implements AuthenticationInteractor {
       return defaultValue;
     }
     return value;
-  }
-
-  /**
-   * Resolves username from User based on Tenant Identity Policy.
-   *
-   * @param user the user
-   * @param identityPolicy the tenant identity policy
-   * @return username, or empty string if not resolvable
-   */
-  private String resolveUsernameFromUser(User user, TenantIdentityPolicy identityPolicy) {
-    switch (identityPolicy.uniqueKeyType()) {
-      case USERNAME:
-      case USERNAME_OR_EXTERNAL_USER_ID:
-        return user.preferredUsername();
-
-      case EMAIL:
-      case EMAIL_OR_EXTERNAL_USER_ID:
-        return user.email();
-
-      case PHONE:
-      case PHONE_OR_EXTERNAL_USER_ID:
-        return user.phoneNumber();
-
-      case EXTERNAL_USER_ID:
-        return user.externalUserId();
-
-      default:
-        // Fallback to preferredUsername
-        return user.preferredUsername();
-    }
   }
 }

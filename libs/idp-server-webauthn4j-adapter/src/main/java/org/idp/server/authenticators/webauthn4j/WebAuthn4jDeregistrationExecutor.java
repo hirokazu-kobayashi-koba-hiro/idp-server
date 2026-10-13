@@ -34,6 +34,12 @@ import org.idp.server.platform.type.RequestAttributes;
  *
  * <p>This executor handles the deletion of WebAuthn/FIDO2 credentials from the repository. It
  * requires the credential_id to be provided in the request.
+ *
+ * <p>The credential is deleted only when its username matches the {@code username} in the request.
+ * That username must be set by the caller from the transaction user, as {@code
+ * Fido2DeregistrationInteractor} does by overwriting any client-supplied value. Wiring this
+ * executor to an interaction that passes the client request through unchanged would let the client
+ * choose the owner to check against.
  */
 public class WebAuthn4jDeregistrationExecutor implements AuthenticationExecutor {
 
@@ -63,7 +69,7 @@ public class WebAuthn4jDeregistrationExecutor implements AuthenticationExecutor 
       AuthenticationExecutionConfig configuration) {
 
     try {
-      String credentialId = request.getValueAsString("credential_id");
+      String credentialId = request.optValueAsString("credential_id", null);
       if (credentialId == null || credentialId.isEmpty()) {
         log.warn("webauthn4j deregistration failed: credential_id is required");
         Map<String, Object> errorResponse = new HashMap<>();
@@ -72,11 +78,26 @@ public class WebAuthn4jDeregistrationExecutor implements AuthenticationExecutor 
         return AuthenticationExecutionResult.clientError(errorResponse);
       }
 
+      // Set by Fido2DeregistrationInteractor from the transaction user, not by the client
+      String username = request.optValueAsString("username", null);
+      if (username == null || username.isEmpty()) {
+        log.warn("webauthn4j deregistration failed: owner username is required");
+        Map<String, Object> errorResponse = new HashMap<>();
+        errorResponse.put("error", "invalid_request");
+        errorResponse.put("error_description", "username is required");
+        return AuthenticationExecutionResult.clientError(errorResponse);
+      }
+
       log.debug("webauthn4j deregistration, attempting to delete credential: {}", credentialId);
 
-      // Verify credential exists before deletion
+      // Verify credential exists and belongs to the user before deletion
       WebAuthn4jCredential credential = credentialRepository.get(tenant, credentialId);
-      String username = credential.username();
+      if (!username.equals(credential.username())) {
+        log.warn(
+            "webauthn4j deregistration failed: credential owner mismatch. credential_id: {}",
+            credentialId);
+        return credentialNotFound();
+      }
 
       // Delete the credential
       credentialRepository.delete(tenant, credentialId);
@@ -96,10 +117,7 @@ public class WebAuthn4jDeregistrationExecutor implements AuthenticationExecutor 
 
     } catch (NotFoundException e) {
       log.warn("webauthn4j deregistration failed: credential not found - {}", e.getMessage());
-      Map<String, Object> errorResponse = new HashMap<>();
-      errorResponse.put("error", "credential_not_found");
-      errorResponse.put("error_description", "The specified credential was not found");
-      return AuthenticationExecutionResult.clientError(errorResponse);
+      return credentialNotFound();
 
     } catch (Exception e) {
       log.error("webauthn4j unexpected error during deregistration", e);
@@ -108,5 +126,16 @@ public class WebAuthn4jDeregistrationExecutor implements AuthenticationExecutor 
       errorResponse.put("error_description", "An unexpected error occurred during deregistration");
       return AuthenticationExecutionResult.serverError(errorResponse);
     }
+  }
+
+  /**
+   * Another user's credential is reported the same as a missing one, so the response does not
+   * reveal whether the credential exists.
+   */
+  private AuthenticationExecutionResult credentialNotFound() {
+    Map<String, Object> errorResponse = new HashMap<>();
+    errorResponse.put("error", "credential_not_found");
+    errorResponse.put("error_description", "The specified credential was not found");
+    return AuthenticationExecutionResult.clientError(errorResponse);
   }
 }
