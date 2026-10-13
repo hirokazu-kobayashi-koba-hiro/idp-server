@@ -885,6 +885,41 @@ components:
               description: 追加パラメータ設定
               items:
                 $ref: '#/components/schemas/AuthenticationAdditionalParameterConfig'
+            verifications:
+              type: array
+              description: |
+                実行の後に行う照合。現在は FIDO-UAF 認証（fido-uaf-authentication）で使用する。
+                設定した照合は毎回実行し、未知の type や不正な details は照合失敗として扱う。
+              items:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    description: 照合の種類
+                    enum:
+                      - match
+                  details:
+                    type: object
+                    description: 照合の設定（type が match の場合は rules）
+                    properties:
+                      rules:
+                        type: array
+                        items:
+                          type: object
+                          required:
+                            - path
+                            - target_path
+                          properties:
+                            path:
+                              type: string
+                              description: 照合する値の JSONPath
+                            target_path:
+                              type: string
+                              description: 比較対象の値の JSONPath
+                            operation:
+                              type: string
+                              description: 比較の演算子（省略時は eq）
+                              default: eq
           additionalProperties: true
         response:
           type: object

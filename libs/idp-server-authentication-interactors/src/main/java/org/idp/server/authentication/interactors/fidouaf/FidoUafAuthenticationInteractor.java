@@ -28,6 +28,8 @@ import org.idp.server.core.openid.authentication.interaction.execution.Authentic
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutionResult;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutor;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutors;
+import org.idp.server.core.openid.authentication.interaction.post_hook.AuthenticationPostHookVerificationResult;
+import org.idp.server.core.openid.authentication.interaction.post_hook.AuthenticationPostHookVerifiers;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionQueryRepository;
 import org.idp.server.core.openid.identity.User;
@@ -46,6 +48,7 @@ public class FidoUafAuthenticationInteractor implements AuthenticationInteractor
   AuthenticationConfigurationQueryRepository configurationQueryRepository;
   AuthenticationInteractionQueryRepository authenticationInteractionQueryRepository;
   FidoUafAdditionalRequestResolvers additionalRequestResolvers;
+  AuthenticationPostHookVerifiers postHookVerifiers = new AuthenticationPostHookVerifiers();
   LoggerWrapper log = LoggerWrapper.getLogger(FidoUafAuthenticationInteractor.class);
 
   public FidoUafAuthenticationInteractor(
@@ -128,12 +131,22 @@ public class FidoUafAuthenticationInteractor implements AuthenticationInteractor
           DefaultSecurityEventType.fido_uaf_authentication_failure);
     }
 
+    // Read the challenge once, so the verifications and the user resolution use the same device_id
     FidoUafInteraction interaction =
         authenticationInteractionQueryRepository.get(
             tenant,
             transaction.identifier(),
             "fido-uaf-authentication-challenge",
             FidoUafInteraction.class);
+
+    AuthenticationPostHookVerificationResult verificationResult =
+        postHookVerifiers.verifyAll(
+            authenticationInteractionConfig.postHook(),
+            postHookContext(request, requestAttributes, executionResult, interaction));
+    if (verificationResult.isFailure()) {
+      return postHookFailure(verificationResult, type);
+    }
+
     String deviceId = interaction.deviceId();
     User user = userQueryRepository.findByAuthenticationDevice(tenant, deviceId);
 
@@ -167,5 +180,52 @@ public class FidoUafAuthenticationInteractor implements AuthenticationInteractor
         user,
         contents,
         DefaultSecurityEventType.fido_uaf_authentication_success);
+  }
+
+  /**
+   * Creates the context of the post_hook verifications.
+   *
+   * <p>The roots are {@code $.request_body}, {@code $.request_attributes}, {@code $.interaction}
+   * and the execution result such as {@code $.execution_http_request}. {@code $.interaction} is
+   * always the challenge that the user resolution uses, regardless of {@code previous_interaction}.
+   */
+  private Map<String, Object> postHookContext(
+      AuthenticationInteractionRequest request,
+      RequestAttributes requestAttributes,
+      AuthenticationExecutionResult executionResult,
+      FidoUafInteraction interaction) {
+
+    Map<String, Object> context = new HashMap<>(executionResult.contents());
+    context.put("request_body", request.toMap());
+    context.put("request_attributes", requestAttributes.toMap());
+    context.put("interaction", interaction.toMap());
+    return context;
+  }
+
+  /**
+   * Rejects the authentication because a post_hook verification failed.
+   *
+   * <p>The result has no user, so this rejection does not count toward the policy's lock
+   * conditions.
+   */
+  private AuthenticationInteractionRequestResult postHookFailure(
+      AuthenticationPostHookVerificationResult verificationResult,
+      AuthenticationInteractionType type) {
+
+    log.warn(
+        "FIDO-UAF authentication post_hook verification failed. errors={}",
+        verificationResult.errors());
+
+    Map<String, Object> errorContents = new HashMap<>();
+    errorContents.put("error", "invalid_request");
+    errorContents.put(
+        "error_description", "FIDO-UAF authentication result did not pass the verification.");
+
+    return AuthenticationInteractionRequestResult.clientError(
+        errorContents,
+        type,
+        operationType(),
+        method(),
+        DefaultSecurityEventType.fido_uaf_authentication_failure);
   }
 }

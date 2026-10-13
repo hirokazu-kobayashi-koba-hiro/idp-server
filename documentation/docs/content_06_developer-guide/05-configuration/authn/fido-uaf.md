@@ -135,6 +135,72 @@ FIDO-UAF認証を使用するには、テナントに `type = "fido-uaf"` の認
    `/v1/authorizations/{id}/fido-uaf-authentication` に送信
 3. サーバー側で応答を検証し、成功時に `Authentication` オブジェクトを生成して返却
 
+### 認証したデバイスの照合（post_hook）
+
+`fido-uaf-authentication` の `post_hook.verifications` を設定すると、FIDO サーバーでの検証が成功したあとに、その結果を idp-server でも照合します。照合に失敗したときは認証を失敗にします。
+
+FIDO サーバーがチャレンジのデバイス以外の鍵による応答を受け付ける場合は、FIDO サーバーが返す「実際に認証したデバイスの ID」と、チャレンジで使った `device_id` を照合してください。
+
+```json
+"fido-uaf-authentication": {
+  "execution": { ... },
+  "post_hook": {
+    "verifications": [
+      {
+        "type": "match",
+        "details": {
+          "rules": [
+            {
+              "path": "$.execution_http_request.response_body.<認証したデバイスの ID の項目>",
+              "operation": "eq",
+              "target_path": "$.interaction.device_id"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "response": { ... }
+}
+```
+
+| 項目 | 説明 |
+|------|------|
+| `type` | 検証の種類。現在は `match` のみ |
+| `details.rules[].path` | 照合する値の JSONPath |
+| `details.rules[].target_path` | 比較対象の値の JSONPath |
+| `details.rules[].operation` | 比較の演算子（省略時は `eq`）。`eq` / `ne` / `in` / `nin` / `contains` / `regex` など、認証ポリシーの条件と同じ演算子を使える |
+
+JSONPath で参照できるのは次の値です。
+
+| パス | 内容 |
+|------|------|
+| `$.execution_http_request` | FIDO サーバーへのリクエストの結果（`response_body` など）。`execution.function` が `http_requests` のときは `$.execution_http_requests` |
+| `$.interaction` | チャレンジで保存したデータ。ユーザーの特定に使う `device_id` は `$.interaction.device_id`。`execution.previous_interaction` の設定によらない |
+| `$.request_body` | クライアントからのリクエストボディ |
+| `$.request_attributes` | リクエスト属性 |
+
+- 設定した検証は毎回必ず実行します。条件付きでスキップする設定はありません。
+- 次のときは照合失敗として扱います。
+  - どちらかのパスに値が無い
+  - 未知の `type` / `operation`
+  - `rules` が空、または形が不正
+  - JSONPath が不正
+- 値が無いと照合失敗になるため、`exists` は常に成立し、`missing` は常に失敗します。この 2 つは使わないでください。
+- `[*]` などで配列を返すパスは、該当が無いと空の配列（値あり）になります。`ne` / `nin` と組み合わせるときは注意してください。
+- `$.request_body` と `$.request_attributes` はクライアントが決める値です。照合の両側をクライアントの値にしないでください。`regex` では `target_path` の値をパターンとして使うので、`target_path` にもクライアントの値を使わないでください。
+
+照合に失敗したときは、次のエラーを返します。
+
+```json
+{
+  "error": "invalid_request",
+  "error_description": "FIDO-UAF authentication result did not pass the verification."
+}
+```
+
+`post_hook` を設定しないときは照合しません。
+
 ---
 
 ## デバイス登録の制約
