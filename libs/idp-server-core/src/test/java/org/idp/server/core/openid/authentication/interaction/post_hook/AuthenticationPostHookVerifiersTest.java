@@ -104,6 +104,16 @@ class AuthenticationPostHookVerifiersTest {
   }
 
   @Test
+  @DisplayName("fails when a verification is null")
+  void failsWithNullVerification() {
+    AuthenticationPostHookConfig postHook = postHook("[ null ]");
+
+    assertTrue(verifiers.verifyAll(postHook, context).isFailure());
+    // toMap keeps the null element, so a stored configuration still fails
+    assertDoesNotThrow(postHook::toMap);
+  }
+
+  @Test
   @DisplayName("fails when the rules are empty or malformed")
   void failsWithMalformedRules() {
     assertTrue(verifiers.verifyAll(postHook(details("{ \"rules\": [] }")), context).isFailure());

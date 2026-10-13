@@ -60,7 +60,10 @@ public class AuthenticationPostHookConfig implements JsonReadable {
     map.put("additional_parameters", userMappingRulesAsMap());
     map.put(
         "verifications",
-        verifications().stream().map(AuthenticationVerificationConfig::toMap).toList());
+        // Keep a null element as it is, so that the verification fails instead of disappearing
+        verifications().stream()
+            .map(verification -> verification == null ? null : verification.toMap())
+            .toList());
     return map;
   }
 }

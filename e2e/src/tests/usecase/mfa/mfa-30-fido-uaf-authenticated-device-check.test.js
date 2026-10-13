@@ -1,5 +1,5 @@
-import { describe, expect, it, beforeAll } from "@jest/globals";
-import { get, postWithJson } from "../../../lib/http";
+import { describe, expect, it, beforeAll, afterAll } from "@jest/globals";
+import { deletion, get, postWithJson } from "../../../lib/http";
 import { requestToken } from "../../../api/oauthClient";
 import { onboarding } from "../../../api/managementClient";
 import { generateRS256KeyPair } from "../../../lib/jose";
@@ -23,6 +23,8 @@ describe("Use Case: FIDO-UAF authenticated device check with post_hook", () => {
   const clientId = uuidv4();
   const clientSecret = `client-secret-${timestamp}`;
 
+  let systemAccessToken;
+  let adminAccessToken;
   let owner;
   let other;
 
@@ -97,7 +99,26 @@ describe("Use Case: FIDO-UAF authenticated device check with post_hook", () => {
     expect(challenge.status).toBe(200);
 
     const body = authenticatedDeviceId ? { authenticated_device_id: authenticatedDeviceId } : {};
-    return interact(authId, "fido-uaf-authentication", body);
+    const response = await interact(authId, "fido-uaf-authentication", body);
+    return { authId, response };
+  };
+
+  /** Completes the authorization and returns the sub of the ID token. */
+  const authorizedSub = async (authId) => {
+    const authorize = await interact(authId, "authorize");
+    expect(authorize.status).toBe(200);
+    const code = new URL(authorize.data.redirect_uri).searchParams.get("code");
+    const token = await requestToken({
+      endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+      grantType: "authorization_code",
+      code,
+      redirectUri,
+      clientId,
+      clientSecret,
+    });
+    expect(token.status).toBe(200);
+    const payload = token.data.id_token.split(".")[1];
+    return JSON.parse(Buffer.from(payload, "base64url").toString()).sub;
   };
 
   beforeAll(async () => {
@@ -111,6 +132,7 @@ describe("Use Case: FIDO-UAF authenticated device check with post_hook", () => {
       clientSecret: adminServerConfig.adminClient.clientSecret,
     });
     expect(systemToken.status).toBe(200);
+    systemAccessToken = systemToken.data.access_token;
 
     const { jwks } = await generateRS256KeyPair();
     const onboardingRequest = {
@@ -174,7 +196,7 @@ describe("Use Case: FIDO-UAF authenticated device check with post_hook", () => {
       },
     };
     const onboardingResponse = await onboarding({
-      headers: { Authorization: `Bearer ${systemToken.data.access_token}` },
+      headers: { Authorization: `Bearer ${systemAccessToken}` },
       body: onboardingRequest,
     });
     expect(onboardingResponse.status).toBe(201);
@@ -189,10 +211,11 @@ describe("Use Case: FIDO-UAF authenticated device check with post_hook", () => {
       clientSecret: onboardingResponse.data.client.client_secret,
     });
     expect(adminToken.status).toBe(200);
+    adminAccessToken = adminToken.data.access_token;
     const management = (path, body) =>
       postWithJson({
         url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/${path}`,
-        headers: { Authorization: `Bearer ${adminToken.data.access_token}` },
+        headers: { Authorization: `Bearer ${adminAccessToken}` },
         body,
       });
 
@@ -281,17 +304,33 @@ describe("Use Case: FIDO-UAF authenticated device check with post_hook", () => {
     other = await registerUserWithDevice();
   });
 
-  it("succeeds when the FIDO server authenticated the device of the challenge", async () => {
-    const response = await authenticate({
+  afterAll(async () => {
+    if (adminAccessToken) {
+      await deletion({
+        url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}`,
+        headers: { Authorization: `Bearer ${adminAccessToken}` },
+      }).catch(() => {});
+    }
+    if (systemAccessToken) {
+      await deletion({
+        url: `${backendUrl}/v1/management/orgs/${organizationId}`,
+        headers: { Authorization: `Bearer ${systemAccessToken}` },
+      }).catch(() => {});
+    }
+  });
+
+  it("succeeds and logs in the owner when the FIDO server authenticated the device of the challenge", async () => {
+    const { authId, response } = await authenticate({
       challengeDeviceId: owner.deviceId,
       authenticatedDeviceId: owner.deviceId,
     });
 
     expect(response.status).toBe(200);
+    expect(await authorizedSub(authId)).toBe(owner.sub);
   });
 
   it("rejects when the FIDO server authenticated another device", async () => {
-    const response = await authenticate({
+    const { response } = await authenticate({
       challengeDeviceId: owner.deviceId,
       authenticatedDeviceId: other.deviceId,
     });
@@ -303,8 +342,9 @@ describe("Use Case: FIDO-UAF authenticated device check with post_hook", () => {
     );
   });
 
-  it("rejects when the FIDO server does not report the authenticated device", async () => {
-    const response = await authenticate({ challengeDeviceId: owner.deviceId });
+  // The mock returns an empty user_id when authenticated_device_id is not sent
+  it("rejects when the FIDO server reports an empty device", async () => {
+    const { response } = await authenticate({ challengeDeviceId: owner.deviceId });
 
     expect(response.status).toBe(400);
     expect(response.data.error).toBe("invalid_request");

@@ -57,6 +57,12 @@ public class AuthenticationPostHookVerifiers {
 
     for (AuthenticationVerificationConfig verificationConfig : postHookConfig.verifications()) {
 
+      if (verificationConfig == null) {
+        log.error("post_hook verification misconfigured: null element");
+        return AuthenticationPostHookVerificationResult.failure(
+            List.of("post_hook verification is misconfigured. null element."));
+      }
+
       AuthenticationPostHookVerifier verifier = verifiers.get(verificationConfig.type());
       if (verifier == null) {
         log.error("post_hook verifier is undefined. type: {}", verificationConfig.type());

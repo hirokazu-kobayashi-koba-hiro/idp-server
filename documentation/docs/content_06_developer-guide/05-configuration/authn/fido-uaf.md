@@ -175,7 +175,7 @@ JSONPath で参照できるのは次の値です。
 
 | パス | 内容 |
 |------|------|
-| `$.execution_http_request` | FIDO サーバーへのリクエストの結果（`response_body` など） |
+| `$.execution_http_request` | FIDO サーバーへのリクエストの結果（`response_body` など）。`execution.function` が `http_requests` のときは `$.execution_http_requests` |
 | `$.interaction` | チャレンジで保存したデータ。ユーザーの特定に使う `device_id` は `$.interaction.device_id`。`execution.previous_interaction` の設定によらない |
 | `$.request_body` | クライアントからのリクエストボディ |
 | `$.request_attributes` | リクエスト属性 |
@@ -186,8 +186,9 @@ JSONPath で参照できるのは次の値です。
   - 未知の `type` / `operation`
   - `rules` が空、または形が不正
   - JSONPath が不正
+- 値が無いと照合失敗になるため、`exists` は常に成立し、`missing` は常に失敗します。この 2 つは使わないでください。
 - `[*]` などで配列を返すパスは、該当が無いと空の配列（値あり）になります。`ne` / `nin` と組み合わせるときは注意してください。
-- `$.request_body` と `$.request_attributes` はクライアントが決める値です。照合の両側をクライアントの値にしないでください。
+- `$.request_body` と `$.request_attributes` はクライアントが決める値です。照合の両側をクライアントの値にしないでください。`regex` では `target_path` の値をパターンとして使うので、`target_path` にもクライアントの値を使わないでください。
 
 照合に失敗したときは、次のエラーを返します。
 
