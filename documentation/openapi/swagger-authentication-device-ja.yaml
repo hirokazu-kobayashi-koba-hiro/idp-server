@@ -423,6 +423,9 @@ paths:
         - ユーザーが認証済みである必要があります（未認証の場合は401 Unauthorized）
         - 認証ポリシーに`device_registration_conditions`が設定されている場合、
           その条件を満たす必要があります（満たさない場合は403 Forbidden）
+        - `device_id` はユーザーに登録されたデバイスである必要があります。
+          そうでない場合は、FIDOサーバーにリクエストを送らずに400 Bad Request（`invalid_request`）を返します
+        - FIDOサーバーに送る `device_id` は、確認した値で上書きされます
       parameters:
         - in: path
           name: tenant-id
@@ -440,7 +443,16 @@ paths:
           application/json:
             schema:
               type: object
-              description: FIDOサーバーの仕様に沿った任意のリクエストボディ
+              description: |
+                FIDOサーバーの仕様に沿った任意のリクエストボディ。
+                `device_id` は必須
+              required:
+                - device_id
+              properties:
+                device_id:
+                  type: string
+                  description: 解除するデバイスのID。ユーザーに登録されたデバイスである必要があります
+              additionalProperties: true
       responses:
         '200':
           description: FIDO解除成功

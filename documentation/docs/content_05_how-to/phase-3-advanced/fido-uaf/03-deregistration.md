@@ -116,9 +116,18 @@ Content-Type: application/json
 POST {tenant-id}/v1/authentications/{id}/fido-uaf-deregistration
 
 {
- FIDOサーバーのAPI仕様に沿ったパラメータを指定する
+  "device_id": "UUID",
+  FIDOサーバーのAPI仕様に沿ったパラメータを指定する
 }
 ```
+
+### リクエストボディのパラメータ説明
+
+| パラメータ名      | 必須 | 説明        |
+|-------------|----|-----------|
+| `device_id` | ✅️ | 解除する認証デバイスID。ユーザーに登録されたデバイスである必要があります。 |
+
+`device_id` がユーザーに登録されたデバイスでない場合は、FIDOサーバーにリクエストを送らずに `400 Bad Request`（`invalid_request`）を返します。FIDOサーバーに送る `device_id` は、確認した値で上書きされます。
 
 * レスポンス `200 OK`
 
