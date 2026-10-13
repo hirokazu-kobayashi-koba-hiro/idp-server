@@ -24,7 +24,6 @@ import org.idp.server.core.openid.authentication.config.AuthenticationConfigurat
 import org.idp.server.core.openid.authentication.config.AuthenticationExecutionConfig;
 import org.idp.server.core.openid.authentication.config.AuthenticationInteractionConfig;
 import org.idp.server.core.openid.authentication.config.AuthenticationResponseConfig;
-import org.idp.server.core.openid.authentication.interaction.AuthenticationInteraction;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutionRequest;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutionResult;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutor;
@@ -132,21 +131,22 @@ public class FidoUafAuthenticationInteractor implements AuthenticationInteractor
           DefaultSecurityEventType.fido_uaf_authentication_failure);
     }
 
-    AuthenticationPostHookVerificationResult verificationResult =
-        postHookVerifiers.verifyAll(
-            authenticationInteractionConfig.postHook(),
-            postHookContext(
-                tenant, transaction, request, requestAttributes, execution, executionResult));
-    if (verificationResult.isFailure()) {
-      return postHookFailure(verificationResult, type);
-    }
-
+    // Read the challenge once, so the verifications and the user resolution use the same device_id
     FidoUafInteraction interaction =
         authenticationInteractionQueryRepository.get(
             tenant,
             transaction.identifier(),
             "fido-uaf-authentication-challenge",
             FidoUafInteraction.class);
+
+    AuthenticationPostHookVerificationResult verificationResult =
+        postHookVerifiers.verifyAll(
+            authenticationInteractionConfig.postHook(),
+            postHookContext(request, requestAttributes, executionResult, interaction));
+    if (verificationResult.isFailure()) {
+      return postHookFailure(verificationResult, type);
+    }
+
     String deviceId = interaction.deviceId();
     User user = userQueryRepository.findByAuthenticationDevice(tenant, deviceId);
 
@@ -185,31 +185,20 @@ public class FidoUafAuthenticationInteractor implements AuthenticationInteractor
   /**
    * Creates the context of the post_hook verifications.
    *
-   * <p>The roots are the same as those of the http_request execution: {@code $.request_body},
-   * {@code $.request_attributes} and {@code $.interaction}, plus the execution result such as
-   * {@code $.execution_http_request}.
+   * <p>The roots are {@code $.request_body}, {@code $.request_attributes}, {@code $.interaction}
+   * and the execution result such as {@code $.execution_http_request}. {@code $.interaction} is
+   * always the challenge that the user resolution uses, regardless of {@code previous_interaction}.
    */
   private Map<String, Object> postHookContext(
-      Tenant tenant,
-      AuthenticationTransaction transaction,
       AuthenticationInteractionRequest request,
       RequestAttributes requestAttributes,
-      AuthenticationExecutionConfig execution,
-      AuthenticationExecutionResult executionResult) {
+      AuthenticationExecutionResult executionResult,
+      FidoUafInteraction interaction) {
 
     Map<String, Object> context = new HashMap<>(executionResult.contents());
     context.put("request_body", request.toMap());
     context.put("request_attributes", requestAttributes.toMap());
-    // $.interaction comes only from the stored interaction, never from the execution result
-    context.remove("interaction");
-    if (execution.hasPreviousInteraction()) {
-      AuthenticationInteraction previousInteraction =
-          authenticationInteractionQueryRepository.find(
-              tenant, transaction.identifier(), execution.previousInteraction().key());
-      if (previousInteraction.exists()) {
-        context.put("interaction", previousInteraction.payload());
-      }
-    }
+    context.put("interaction", interaction.toMap());
     return context;
   }
 

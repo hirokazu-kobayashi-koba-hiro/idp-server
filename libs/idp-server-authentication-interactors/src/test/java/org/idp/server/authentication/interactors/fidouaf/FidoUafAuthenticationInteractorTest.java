@@ -125,6 +125,22 @@ class FidoUafAuthenticationInteractorTest {
   }
 
   @Test
+  @DisplayName("uses the challenge as $.interaction even if the execution result has interaction")
+  void ignoresInteractionInExecutionResult() {
+    AuthenticationInteractionRequestResult result =
+        interactWithContents(
+            MATCH_POST_HOOK,
+            Map.of(
+                "execution_http_request",
+                Map.of("response_body", Map.of("user_id", OTHER_DEVICE)),
+                "interaction",
+                Map.of("device_id", OTHER_DEVICE)));
+
+    assertEquals(AuthenticationInteractionStatus.CLIENT_ERROR, result.status());
+    assertTrue(lookedUpDeviceIds.isEmpty());
+  }
+
+  @Test
   @DisplayName("keeps the current behavior without post_hook")
   void succeedsWithoutPostHook() {
     AuthenticationInteractionRequestResult result = interact("", Map.of("status", "ok"));
@@ -135,9 +151,13 @@ class FidoUafAuthenticationInteractorTest {
 
   private AuthenticationInteractionRequestResult interact(
       String postHook, Map<String, Object> fidoResponseBody) {
-    StaticExecutor executor =
-        new StaticExecutor(
-            Map.of("execution_http_request", Map.of("response_body", fidoResponseBody)));
+    return interactWithContents(
+        postHook, Map.of("execution_http_request", Map.of("response_body", fidoResponseBody)));
+  }
+
+  private AuthenticationInteractionRequestResult interactWithContents(
+      String postHook, Map<String, Object> executionContents) {
+    StaticExecutor executor = new StaticExecutor(executionContents);
     FidoUafAuthenticationInteractor interactor =
         new FidoUafAuthenticationInteractor(
             new AuthenticationExecutors(Map.of(executor.function(), executor)),
@@ -262,8 +282,7 @@ class FidoUafAuthenticationInteractorTest {
     @Override
     public AuthenticationInteraction find(
         Tenant tenant, AuthenticationTransactionIdentifier identifier, String key) {
-      return new AuthenticationInteraction(
-          identifier.value(), key, Map.of("device_id", CHALLENGE_DEVICE));
+      throw new UnsupportedOperationException();
     }
   }
 
@@ -284,10 +303,7 @@ class FidoUafAuthenticationInteractorTest {
             "type": "fido-uaf",
             "interactions": {
               "fido-uaf-authentication": {
-                "execution": {
-                  "function": "static",
-                  "previous_interaction": { "key": "fido-uaf-authentication-challenge" }
-                },
+                "execution": { "function": "static" },
                 %s
                 "response": { "body_mapping_rules": [ { "from": "$", "to": "*" } ] }
               }

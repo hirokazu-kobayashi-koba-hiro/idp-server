@@ -16,6 +16,8 @@
 
 package org.idp.server.authentication.interactors.fidouaf;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.platform.json.JsonReadable;
 
 public class FidoUafInteraction implements JsonReadable {
@@ -30,5 +32,11 @@ public class FidoUafInteraction implements JsonReadable {
 
   public String deviceId() {
     return deviceId;
+  }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("device_id", deviceId);
+    return map;
   }
 }

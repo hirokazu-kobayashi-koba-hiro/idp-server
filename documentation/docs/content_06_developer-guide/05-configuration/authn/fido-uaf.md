@@ -143,11 +143,7 @@ FIDO サーバーがチャレンジのデバイス以外の鍵による応答を
 
 ```json
 "fido-uaf-authentication": {
-  "execution": {
-    "function": "http_request",
-    "previous_interaction": { "key": "fido-uaf-authentication-challenge" },
-    "http_request": { ... }
-  },
+  "execution": { ... },
   "post_hook": {
     "verifications": [
       {
@@ -170,22 +166,28 @@ FIDO サーバーがチャレンジのデバイス以外の鍵による応答を
 
 | 項目 | 説明 |
 |------|------|
-| `type` | 検証の種類。現在は `match` のみ。未知の値は照合失敗として扱う |
+| `type` | 検証の種類。現在は `match` のみ |
 | `details.rules[].path` | 照合する値の JSONPath |
 | `details.rules[].target_path` | 比較対象の値の JSONPath |
-| `details.rules[].operation` | 比較の演算子（省略時は `eq`） |
+| `details.rules[].operation` | 比較の演算子（省略時は `eq`）。`eq` / `ne` / `in` / `nin` / `contains` / `regex` など、認証ポリシーの条件と同じ演算子を使える |
 
 JSONPath で参照できるのは次の値です。
 
 | パス | 内容 |
 |------|------|
 | `$.execution_http_request` | FIDO サーバーへのリクエストの結果（`response_body` など） |
-| `$.interaction` | `execution.previous_interaction` で指定した前のステップの保存データ。チャレンジの `device_id` は `$.interaction.device_id` |
+| `$.interaction` | チャレンジで保存したデータ。ユーザーの特定に使う `device_id` は `$.interaction.device_id`。`execution.previous_interaction` の設定によらない |
 | `$.request_body` | クライアントからのリクエストボディ |
 | `$.request_attributes` | リクエスト属性 |
 
-- どちらかのパスに値が無いときは、照合失敗として扱います。
 - 設定した検証は毎回必ず実行します。条件付きでスキップする設定はありません。
+- 次のときは照合失敗として扱います。
+  - どちらかのパスに値が無い
+  - 未知の `type` / `operation`
+  - `rules` が空、または形が不正
+  - JSONPath が不正
+- `[*]` などで配列を返すパスは、該当が無いと空の配列（値あり）になります。`ne` / `nin` と組み合わせるときは注意してください。
+- `$.request_body` と `$.request_attributes` はクライアントが決める値です。照合の両側をクライアントの値にしないでください。
 
 照合に失敗したときは、次のエラーを返します。
 
