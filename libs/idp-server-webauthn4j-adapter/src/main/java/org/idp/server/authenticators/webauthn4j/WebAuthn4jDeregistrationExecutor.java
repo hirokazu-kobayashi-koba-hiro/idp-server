@@ -34,6 +34,12 @@ import org.idp.server.platform.type.RequestAttributes;
  *
  * <p>This executor handles the deletion of WebAuthn/FIDO2 credentials from the repository. It
  * requires the credential_id to be provided in the request.
+ *
+ * <p>The credential is deleted only when its username matches the {@code username} in the request.
+ * That username must be set by the caller from the transaction user, as {@code
+ * Fido2DeregistrationInteractor} does by overwriting any client-supplied value. Wiring this
+ * executor to an interaction that passes the client request through unchanged would let the client
+ * choose the owner to check against.
  */
 public class WebAuthn4jDeregistrationExecutor implements AuthenticationExecutor {
 
@@ -63,7 +69,7 @@ public class WebAuthn4jDeregistrationExecutor implements AuthenticationExecutor 
       AuthenticationExecutionConfig configuration) {
 
     try {
-      String credentialId = request.getValueAsString("credential_id");
+      String credentialId = request.optValueAsString("credential_id", null);
       if (credentialId == null || credentialId.isEmpty()) {
         log.warn("webauthn4j deregistration failed: credential_id is required");
         Map<String, Object> errorResponse = new HashMap<>();

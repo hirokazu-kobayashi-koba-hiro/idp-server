@@ -360,4 +360,27 @@ describe("FIDO2 deregistration - credential ownership", () => {
     });
     expect(ownerResponse.status).toBe(200);
   });
+
+  it("ignores a username in the request body and checks against the signed-in user", async () => {
+    const owner = await registerUserWithPasskey();
+    const other = await registerUserWithPasskey();
+    const authId = await signInWithEmail(other.email);
+
+    const response = await postWithJson({
+      url: authorizationsUrl(authId, "fido2-deregistration"),
+      body: { credential_id: owner.credentialId, username: owner.email },
+    });
+    console.log("username in body:", response.status, response.data);
+
+    expect(response.status).toBe(400);
+    expect(response.data.error).toBe("credential_not_found");
+
+    // The owner can still delete it, so it was not removed
+    const ownerAuthId = await signInWithEmail(owner.email);
+    const ownerResponse = await postWithJson({
+      url: authorizationsUrl(ownerAuthId, "fido2-deregistration"),
+      body: { credential_id: owner.credentialId },
+    });
+    expect(ownerResponse.status).toBe(200);
+  });
 });

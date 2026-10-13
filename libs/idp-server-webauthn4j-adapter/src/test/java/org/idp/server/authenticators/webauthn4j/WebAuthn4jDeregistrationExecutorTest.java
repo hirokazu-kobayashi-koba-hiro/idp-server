@@ -79,6 +79,19 @@ class WebAuthn4jDeregistrationExecutorTest {
   }
 
   @Test
+  @DisplayName("rejects a request without credential_id as a client error")
+  void rejectsWithoutCredentialId() {
+    InMemoryCredentialRepository repository = new InMemoryCredentialRepository();
+    repository.store(credential(CREDENTIAL_ID, OWNER));
+
+    AuthenticationExecutionResult result = execute(repository, Map.of("username", OWNER));
+
+    assertTrue(result.isClientError());
+    assertEquals("invalid_request", error(result));
+    assertTrue(repository.deleted.isEmpty());
+  }
+
+  @Test
   @DisplayName("reports a missing credential as not found")
   void rejectsMissingCredential() {
     InMemoryCredentialRepository repository = new InMemoryCredentialRepository();
