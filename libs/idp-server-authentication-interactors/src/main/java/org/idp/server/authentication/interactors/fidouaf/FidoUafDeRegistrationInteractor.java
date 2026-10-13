@@ -220,6 +220,9 @@ public class FidoUafDeRegistrationInteractor implements AuthenticationInteractor
   /**
    * Rejects a device_id that is not one of the transaction user's devices, before anything is sent
    * to the FIDO server.
+   *
+   * <p>The result carries no user, the same as the invalid request branch, so this rejection does
+   * not count toward the policy's lock conditions.
    */
   private AuthenticationInteractionRequestResult deviceNotOwned(
       Tenant tenant, AuthenticationTransaction transaction, AuthenticationInteractionType type) {
@@ -237,7 +240,6 @@ public class FidoUafDeRegistrationInteractor implements AuthenticationInteractor
         type,
         operationType(),
         method(),
-        transaction.user(),
         DefaultSecurityEventType.fido_uaf_deregistration_failure);
   }
 
