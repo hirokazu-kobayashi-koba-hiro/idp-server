@@ -131,6 +131,11 @@ public class FidoUafDeRegistrationInteractor implements AuthenticationInteractor
             DefaultSecurityEventType.fido_uaf_deregistration_failure);
       }
 
+      String deviceId = request.getValueAsString("device_id");
+      if (!transaction.user().hasAuthenticationDevice(deviceId)) {
+        return deviceNotOwned(tenant, transaction, type);
+      }
+
       AuthenticationConfiguration configuration =
           configurationQueryRepository.get(tenant, "fido-uaf");
       AuthenticationInteractionConfig authenticationInteractionConfig =
@@ -142,6 +147,8 @@ public class FidoUafDeRegistrationInteractor implements AuthenticationInteractor
       Map<String, Object> additionalRequests =
           additionalRequestResolvers.resolveAll(tenant, type, request, transaction);
       executionRequest.putAll(additionalRequests);
+      // Send the verified device_id, so the FIDO server deletes only the user's own device
+      executionRequest.put("device_id", deviceId);
 
       AuthenticationExecutionRequest authenticationExecutionRequest =
           new AuthenticationExecutionRequest(executionRequest);
@@ -176,7 +183,6 @@ public class FidoUafDeRegistrationInteractor implements AuthenticationInteractor
             DefaultSecurityEventType.fido_uaf_deregistration_failure);
       }
 
-      String deviceId = request.getValueAsString("device_id");
       User user = transaction.user();
 
       User removedDeviceUser = user.removeAuthenticationDevice(deviceId);
@@ -209,6 +215,30 @@ public class FidoUafDeRegistrationInteractor implements AuthenticationInteractor
           method(),
           DefaultSecurityEventType.fido_uaf_deregistration_failure);
     }
+  }
+
+  /**
+   * Rejects a device_id that is not one of the transaction user's devices, before anything is sent
+   * to the FIDO server.
+   */
+  private AuthenticationInteractionRequestResult deviceNotOwned(
+      Tenant tenant, AuthenticationTransaction transaction, AuthenticationInteractionType type) {
+    log.warn(
+        "FIDO-UAF deregistration rejected: device is not owned by user={}, tenant={}",
+        transaction.user().sub(),
+        tenant.identifier().value());
+
+    Map<String, Object> errorResponse = new HashMap<>();
+    errorResponse.put("error", "invalid_request");
+    errorResponse.put("error_description", "The specified device is not registered to the user.");
+
+    return AuthenticationInteractionRequestResult.clientError(
+        errorResponse,
+        type,
+        operationType(),
+        method(),
+        transaction.user(),
+        DefaultSecurityEventType.fido_uaf_deregistration_failure);
   }
 
   /**
