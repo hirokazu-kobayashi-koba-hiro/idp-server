@@ -24,6 +24,7 @@ import org.idp.server.platform.json.JsonReadable;
 
 public class AuthenticationPostHookConfig implements JsonReadable {
   List<AuthenticationAdditionalParameterConfig> additionalParameters = new ArrayList<>();
+  List<AuthenticationVerificationConfig> verifications = new ArrayList<>();
 
   public AuthenticationPostHookConfig() {}
 
@@ -43,9 +44,23 @@ public class AuthenticationPostHookConfig implements JsonReadable {
         .toList();
   }
 
+  public List<AuthenticationVerificationConfig> verifications() {
+    if (verifications == null) {
+      return new ArrayList<>();
+    }
+    return verifications;
+  }
+
+  public boolean hasVerifications() {
+    return !verifications().isEmpty();
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("additional_parameters", userMappingRulesAsMap());
+    map.put(
+        "verifications",
+        verifications().stream().map(AuthenticationVerificationConfig::toMap).toList());
     return map;
   }
 }

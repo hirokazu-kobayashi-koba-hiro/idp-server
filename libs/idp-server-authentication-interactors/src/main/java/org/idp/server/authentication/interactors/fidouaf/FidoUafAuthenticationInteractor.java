@@ -24,10 +24,13 @@ import org.idp.server.core.openid.authentication.config.AuthenticationConfigurat
 import org.idp.server.core.openid.authentication.config.AuthenticationExecutionConfig;
 import org.idp.server.core.openid.authentication.config.AuthenticationInteractionConfig;
 import org.idp.server.core.openid.authentication.config.AuthenticationResponseConfig;
+import org.idp.server.core.openid.authentication.interaction.AuthenticationInteraction;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutionRequest;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutionResult;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutor;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutors;
+import org.idp.server.core.openid.authentication.interaction.post_hook.AuthenticationPostHookVerificationResult;
+import org.idp.server.core.openid.authentication.interaction.post_hook.AuthenticationPostHookVerifiers;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionQueryRepository;
 import org.idp.server.core.openid.identity.User;
@@ -46,6 +49,7 @@ public class FidoUafAuthenticationInteractor implements AuthenticationInteractor
   AuthenticationConfigurationQueryRepository configurationQueryRepository;
   AuthenticationInteractionQueryRepository authenticationInteractionQueryRepository;
   FidoUafAdditionalRequestResolvers additionalRequestResolvers;
+  AuthenticationPostHookVerifiers postHookVerifiers = new AuthenticationPostHookVerifiers();
   LoggerWrapper log = LoggerWrapper.getLogger(FidoUafAuthenticationInteractor.class);
 
   public FidoUafAuthenticationInteractor(
@@ -128,6 +132,15 @@ public class FidoUafAuthenticationInteractor implements AuthenticationInteractor
           DefaultSecurityEventType.fido_uaf_authentication_failure);
     }
 
+    AuthenticationPostHookVerificationResult verificationResult =
+        postHookVerifiers.verifyAll(
+            authenticationInteractionConfig.postHook(),
+            postHookContext(
+                tenant, transaction, request, requestAttributes, execution, executionResult));
+    if (verificationResult.isFailure()) {
+      return postHookFailure(verificationResult, type);
+    }
+
     FidoUafInteraction interaction =
         authenticationInteractionQueryRepository.get(
             tenant,
@@ -167,5 +180,63 @@ public class FidoUafAuthenticationInteractor implements AuthenticationInteractor
         user,
         contents,
         DefaultSecurityEventType.fido_uaf_authentication_success);
+  }
+
+  /**
+   * Creates the context of the post_hook verifications.
+   *
+   * <p>The roots are the same as those of the http_request execution: {@code $.request_body},
+   * {@code $.request_attributes} and {@code $.interaction}, plus the execution result such as
+   * {@code $.execution_http_request}.
+   */
+  private Map<String, Object> postHookContext(
+      Tenant tenant,
+      AuthenticationTransaction transaction,
+      AuthenticationInteractionRequest request,
+      RequestAttributes requestAttributes,
+      AuthenticationExecutionConfig execution,
+      AuthenticationExecutionResult executionResult) {
+
+    Map<String, Object> context = new HashMap<>(executionResult.contents());
+    context.put("request_body", request.toMap());
+    context.put("request_attributes", requestAttributes.toMap());
+    // $.interaction comes only from the stored interaction, never from the execution result
+    context.remove("interaction");
+    if (execution.hasPreviousInteraction()) {
+      AuthenticationInteraction previousInteraction =
+          authenticationInteractionQueryRepository.find(
+              tenant, transaction.identifier(), execution.previousInteraction().key());
+      if (previousInteraction.exists()) {
+        context.put("interaction", previousInteraction.payload());
+      }
+    }
+    return context;
+  }
+
+  /**
+   * Rejects the authentication because a post_hook verification failed.
+   *
+   * <p>The result has no user, so this rejection does not count toward the policy's lock
+   * conditions.
+   */
+  private AuthenticationInteractionRequestResult postHookFailure(
+      AuthenticationPostHookVerificationResult verificationResult,
+      AuthenticationInteractionType type) {
+
+    log.warn(
+        "FIDO-UAF authentication post_hook verification failed. errors={}",
+        verificationResult.errors());
+
+    Map<String, Object> errorContents = new HashMap<>();
+    errorContents.put("error", "invalid_request");
+    errorContents.put(
+        "error_description", "FIDO-UAF authentication result did not pass the verification.");
+
+    return AuthenticationInteractionRequestResult.clientError(
+        errorContents,
+        type,
+        operationType(),
+        method(),
+        DefaultSecurityEventType.fido_uaf_authentication_failure);
   }
 }
