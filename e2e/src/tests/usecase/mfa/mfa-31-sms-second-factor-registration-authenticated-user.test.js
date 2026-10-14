@@ -26,7 +26,7 @@ import {
  * this transaction. A user only identified by login_hint is not enough.
  *
  * Setup: Password (1st) + SMS (2nd, requires_user, allow_registration), internal OTP
- * (sender_type=no_action, code read back via the Management API), one user without a phone.
+ * (sender_type=no_action, code read back via the Management API). Each test creates its own user.
  */
 describe("MFA Use Case: SMS 2nd factor registers a phone number only for an authenticated user", () => {
   let systemAccessToken;
@@ -35,7 +35,6 @@ describe("MFA Use Case: SMS 2nd factor registers a phone number only for an auth
   let clientId;
   let clientSecret;
   let mgmtAccessToken;
-  let testEmail;
   const testPassword = "SmsRegPass_1!";
   const redirectUri =
     "https://www.certification.openid.net/test/a/idp_oidc_basic/callback";
@@ -61,6 +60,38 @@ describe("MFA Use Case: SMS 2nd factor registers a phone number only for an auth
     expect(authResp.status).toBe(302);
     const { params } = convertNextAction(authResp.headers.location);
     return params.get("id");
+  };
+
+  const usersUrl = () =>
+    `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/users`;
+
+  const createUser = async ({ phoneNumber } = {}) => {
+    const sub = uuidv4();
+    const email = `sms-reg-user-${sub}@mfa-sms-reg.example.com`;
+    const createResp = await postWithJson({
+      url: usersUrl(),
+      headers: { Authorization: `Bearer ${mgmtAccessToken}` },
+      body: {
+        sub,
+        provider_id: "idp-server",
+        name: "MFA SMS Registration User",
+        email,
+        email_verified: true,
+        ...(phoneNumber ? { phone_number: phoneNumber, phone_number_verified: true } : {}),
+        raw_password: testPassword,
+      },
+    });
+    expect(createResp.status).toBe(201);
+    return { sub, email };
+  };
+
+  const getUser = async (sub) => {
+    const resp = await get({
+      url: `${usersUrl()}/${sub}`,
+      headers: { Authorization: `Bearer ${mgmtAccessToken}` },
+    });
+    expect(resp.status).toBe(200);
+    return resp.data;
   };
 
   const readVerificationCode = async (authId) => {
@@ -192,33 +223,6 @@ describe("MFA Use Case: SMS 2nd factor registers a phone number only for an auth
 
     const configurationsUrl = `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/authentication-configurations`;
 
-    const initialRegResp = await postWithJson({
-      url: configurationsUrl,
-      headers: { Authorization: `Bearer ${mgmtAccessToken}` },
-      body: {
-        id: uuidv4(),
-        type: "initial-registration",
-        attributes: {},
-        metadata: {},
-        interactions: {
-          "initial-registration": {
-            request: {
-              schema: {
-                type: "object",
-                required: ["email", "password", "name"],
-                properties: {
-                  name: { type: "string", maxLength: 255 },
-                  email: { type: "string", format: "email", maxLength: 255 },
-                  password: { type: "string", maxLength: 64, minLength: 8 },
-                },
-              },
-            },
-          },
-        },
-      },
-    });
-    expect(initialRegResp.status).toBe(201);
-
     const passwordAuthResp = await postWithJson({
       url: configurationsUrl,
       headers: { Authorization: `Bearer ${mgmtAccessToken}` },
@@ -324,7 +328,7 @@ describe("MFA Use Case: SMS 2nd factor registers a phone number only for an auth
             description: "mfa_password_sms_registration",
             priority: 1,
             conditions: {},
-            available_methods: ["password", "sms", "initial-registration"],
+            available_methods: ["password", "sms"],
             step_definitions: [
               {
                 method: "password",
@@ -355,14 +359,6 @@ describe("MFA Use Case: SMS 2nd factor registers a phone number only for an auth
                     value: 1,
                   },
                 ],
-                [
-                  {
-                    path: "$.initial-registration.success_count",
-                    type: "integer",
-                    operation: "gte",
-                    value: 1,
-                  },
-                ],
               ],
             },
           },
@@ -370,36 +366,6 @@ describe("MFA Use Case: SMS 2nd factor registers a phone number only for an auth
       },
     });
     expect(authPolicyResp.status).toBe(201);
-
-    // A user without a phone number
-    testEmail = `sms-reg-user-${timestamp}@mfa-sms-reg.example.com`;
-    const regAuthResp = await getAuthorizations({
-      endpoint: `${backendUrl}/${tenantId}/v1/authorizations`,
-      clientId,
-      responseType: "code",
-      state: `reg-${timestamp}`,
-      scope: "openid profile email",
-      redirectUri,
-    });
-    expect(regAuthResp.status).toBe(302);
-    const regAuthId = convertNextAction(regAuthResp.headers.location).params.get("id");
-
-    const regResp = await postWithJson({
-      url: `${backendUrl}/${tenantId}/v1/authorizations/${regAuthId}/initial-registration`,
-      body: {
-        email: testEmail,
-        password: testPassword,
-        name: "MFA SMS Registration User",
-      },
-    });
-    expect(regResp.status).toBe(200);
-
-    const regAuthorize = await authorize({
-      endpoint: `${backendUrl}/${tenantId}/v1/authorizations/{id}/authorize`,
-      id: regAuthId,
-      body: {},
-    });
-    expect(regAuthorize.status).toBe(200);
   });
 
   afterAll(async () => {
@@ -418,7 +384,8 @@ describe("MFA Use Case: SMS 2nd factor registers a phone number only for an auth
   });
 
   it("does not register a phone number for a user only identified by login_hint", async () => {
-    const authId = await startAuthorization(`email:${testEmail}`);
+    const user = await createUser();
+    const authId = await startAuthorization(`email:${user.email}`);
 
     const challengeResp = await postWithJson({
       url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/sms-authentication-challenge`,
@@ -430,15 +397,31 @@ describe("MFA Use Case: SMS 2nd factor registers a phone number only for an auth
     expect(challengeResp.data.error_description).toBe(
       "User must be authenticated before registering a phone number."
     );
+    expect((await getUser(user.sub)).phone_number).toBeUndefined();
+  });
+
+  it("sends the code to a user who already has a phone number, even if only identified by login_hint", async () => {
+    const phone = newPhone();
+    const user = await createUser({ phoneNumber: phone });
+    const authId = await startAuthorization(`email:${user.email}`);
+
+    const challengeResp = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/sms-authentication-challenge`,
+      body: { template: "authentication" },
+    });
+
+    expect(challengeResp.status).toBe(200);
+    expect((await getUser(user.sub)).phone_number).toBe(phone);
   });
 
   it("registers a phone number after the 1st factor succeeds", async () => {
-    const authId = await startAuthorization(`email:${testEmail}`);
+    const user = await createUser();
+    const authId = await startAuthorization(`email:${user.email}`);
 
     const passwordResp = await postAuthentication({
       endpoint: `${backendUrl}/${tenantId}/v1/authorizations/{id}/password-authentication`,
       id: authId,
-      body: { username: testEmail, password: testPassword },
+      body: { username: user.email, password: testPassword },
     });
     expect(passwordResp.status).toBe(200);
 
@@ -478,7 +461,7 @@ describe("MFA Use Case: SMS 2nd factor registers a phone number only for an auth
       authorizationHeader: createBearerHeader(tokenResp.data.access_token),
     });
     expect(userinfoResp.status).toBe(200);
-    expect(userinfoResp.data.email).toBe(testEmail);
+    expect(userinfoResp.data.email).toBe(user.email);
     expect(userinfoResp.data.phone_number).toBe(phone);
   });
 });

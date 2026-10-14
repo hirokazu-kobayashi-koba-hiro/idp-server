@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.idp.server.authentication.interactors.fido2.Fido2DeregistrationInteractor;
 import org.idp.server.authentication.interactors.fido2.Fido2RegistrationInteractor;
+import org.idp.server.authentication.interactors.fidouaf.FidoUafDeRegistrationInteractor;
 import org.idp.server.authentication.interactors.fidouaf.FidoUafRegistrationInteractor;
 import org.idp.server.core.openid.authentication.OperationType;
 import org.junit.jupiter.api.Test;
@@ -48,5 +49,12 @@ class DeviceRegistrationOperationTypeTest {
     assertEquals(
         OperationType.DE_REGISTRATION,
         new Fido2DeregistrationInteractor(null, null).operationType());
+  }
+
+  @Test
+  void fidoUafDeregistrationIsADeregistration() {
+    assertEquals(
+        OperationType.DE_REGISTRATION,
+        new FidoUafDeRegistrationInteractor(null, null, null).operationType());
   }
 }

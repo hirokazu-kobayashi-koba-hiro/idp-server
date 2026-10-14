@@ -115,13 +115,18 @@ FIDO2デバイスの登録（`fido2-registration-challenge` および `fido2-reg
 
 `login_hint` でユーザーを指定しただけでは認証済みになりません。また、デバイスの登録・削除の成功は認証として数えません（`amr` にも入らず、`amr` で決まる `acr` や `level_of_authentication_scopes` も満たしません）。
 
-外部 API 認証（`external-api-authentication`）の成功も認証として数えます。本人を確かめない interaction（外部の処理を始めるだけのものなど）を使う場合は、`device_registration_conditions` で登録の条件を絞ってください。
+次の成功も認証として数えます。これらで本人を確かめていない場合は、`device_registration_conditions` で登録の条件を絞ってください。
+
+* 外部 API 認証（`external-api-authentication`）。外部の処理を始めるだけの interaction なども含む
+* ナンバーマッチング（`authentication-device-number-matching`）。照合するのはデバイス ID と、チャレンジの応答で返るコードだけ
 
 この制約により、FIDO2デバイスのみでユーザー登録を完結することはできません。ユーザーは最初にパスワード認証やEmail認証など、他の認証方式で認証を行う必要があります。
 
 ### device_registration_conditions ポリシー
 
 認証ポリシーの `device_registration_conditions` を設定することで、デバイス登録に必要な認証レベル（ACR）を強制できます。
+
+この条件を見るのは登録（`fido2-registration-challenge` / `fido2-registration`）だけで、削除（`fido2-deregistration`）には効きません。
 
 例えば、以下の設定ではEmail認証または既存のFIDO2デバイスでの認証を完了しないとデバイス登録ができません：
 

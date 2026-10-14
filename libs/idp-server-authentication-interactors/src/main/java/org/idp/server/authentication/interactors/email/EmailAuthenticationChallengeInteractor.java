@@ -106,7 +106,7 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
             operationType(),
             method(),
             response,
-            DefaultSecurityEventType.email_verification_failure);
+            DefaultSecurityEventType.email_verification_request_failure);
       }
 
       String email = resolveEmail(transaction, request);
