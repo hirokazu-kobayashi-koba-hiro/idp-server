@@ -110,6 +110,33 @@ describe("MFA Use Case: SMS 2nd factor registers a phone number only for an auth
     return interactionResp.data.payload.verification_code;
   };
 
+  const authorizeAndGetUserinfo = async (authId) => {
+    const authorizeResp = await authorize({
+      endpoint: `${backendUrl}/${tenantId}/v1/authorizations/{id}/authorize`,
+      id: authId,
+      body: {},
+    });
+    expect(authorizeResp.status).toBe(200);
+    const authResult = convertToAuthorizationResponse(authorizeResp.data.redirect_uri);
+
+    const tokenResp = await requestToken({
+      endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+      grantType: "authorization_code",
+      code: authResult.code,
+      redirectUri,
+      clientId,
+      clientSecret,
+    });
+    expect(tokenResp.status).toBe(200);
+
+    const userinfoResp = await getUserinfo({
+      endpoint: `${backendUrl}/${tenantId}/v1/userinfo`,
+      authorizationHeader: createBearerHeader(tokenResp.data.access_token),
+    });
+    expect(userinfoResp.status).toBe(200);
+    return userinfoResp.data;
+  };
+
   beforeAll(async () => {
     const tokenResponse = await requestToken({
       endpoint: adminServerConfig.tokenEndpoint,
@@ -400,17 +427,33 @@ describe("MFA Use Case: SMS 2nd factor registers a phone number only for an auth
     expect((await getUser(user.sub)).phone_number).toBeUndefined();
   });
 
-  it("sends the code to a user who already has a phone number, even if only identified by login_hint", async () => {
+  it("keeps the registered phone number of a user only identified by login_hint", async () => {
     const phone = newPhone();
     const user = await createUser({ phoneNumber: phone });
     const authId = await startAuthorization(`email:${user.email}`);
 
+    // The challenge is sent, but to the registered number; the requested one is ignored
     const challengeResp = await postWithJson({
       url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/sms-authentication-challenge`,
-      body: { template: "authentication" },
+      body: { phone_number: newPhone(), template: "authentication" },
     });
-
     expect(challengeResp.status).toBe(200);
+
+    const smsAuthResp = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/sms-authentication`,
+      body: { verification_code: await readVerificationCode(authId) },
+    });
+    expect(smsAuthResp.status).toBe(200);
+
+    const passwordResp = await postAuthentication({
+      endpoint: `${backendUrl}/${tenantId}/v1/authorizations/{id}/password-authentication`,
+      id: authId,
+      body: { username: user.email, password: testPassword },
+    });
+    expect(passwordResp.status).toBe(200);
+
+    const userinfo = await authorizeAndGetUserinfo(authId);
+    expect(userinfo.phone_number).toBe(phone);
     expect((await getUser(user.sub)).phone_number).toBe(phone);
   });
 
@@ -438,30 +481,8 @@ describe("MFA Use Case: SMS 2nd factor registers a phone number only for an auth
     });
     expect(smsAuthResp.status).toBe(200);
 
-    const authorizeResp = await authorize({
-      endpoint: `${backendUrl}/${tenantId}/v1/authorizations/{id}/authorize`,
-      id: authId,
-      body: {},
-    });
-    expect(authorizeResp.status).toBe(200);
-    const authResult = convertToAuthorizationResponse(authorizeResp.data.redirect_uri);
-
-    const tokenResp = await requestToken({
-      endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
-      grantType: "authorization_code",
-      code: authResult.code,
-      redirectUri,
-      clientId,
-      clientSecret,
-    });
-    expect(tokenResp.status).toBe(200);
-
-    const userinfoResp = await getUserinfo({
-      endpoint: `${backendUrl}/${tenantId}/v1/userinfo`,
-      authorizationHeader: createBearerHeader(tokenResp.data.access_token),
-    });
-    expect(userinfoResp.status).toBe(200);
-    expect(userinfoResp.data.email).toBe(user.email);
-    expect(userinfoResp.data.phone_number).toBe(phone);
+    const userinfo = await authorizeAndGetUserinfo(authId);
+    expect(userinfo.email).toBe(user.email);
+    expect(userinfo.phone_number).toBe(phone);
   });
 });
