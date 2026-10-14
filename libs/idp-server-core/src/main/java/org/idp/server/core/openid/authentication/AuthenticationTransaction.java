@@ -419,6 +419,11 @@ public class AuthenticationTransaction {
    *
    * <p>Derived rather than stored: {@code flow} and {@code interactions} are both persisted
    * columns, so an existing transaction answers this without a schema change.
+   *
+   * <p><b>When adding a new place that creates a transaction</b>, check this method. Any flow but
+   * {@code oauth} is trusted from the start, so a new entry point whose user is not established by
+   * an access token or a client-authenticated request (for example, one reached without any
+   * authentication) must be added to the untrusted case here.
    */
   public boolean hasTrustedUser() {
     if (!hasUser()) {
