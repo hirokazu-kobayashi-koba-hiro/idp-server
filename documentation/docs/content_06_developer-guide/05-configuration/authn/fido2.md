@@ -113,7 +113,9 @@ FIDO2デバイスの登録（`fido2-registration-challenge` および `fido2-reg
 * CIBA のリクエスト
 * `/me` の API（アクセストークンのユーザー）
 
-`login_hint` でユーザーを指定しただけでは認証済みになりません。また、デバイスの登録・削除の成功は認証として数えません（`amr` にも入りません）。
+`login_hint` でユーザーを指定しただけでは認証済みになりません。また、デバイスの登録・削除の成功は認証として数えません（`amr` にも入らず、`amr` で決まる `acr` や `level_of_authentication_scopes` も満たしません）。
+
+外部 API 認証（`external-api-authentication`）の成功も認証として数えます。本人を確かめない interaction（外部の処理を始めるだけのものなど）を使う場合は、`device_registration_conditions` で登録の条件を絞ってください。
 
 この制約により、FIDO2デバイスのみでユーザー登録を完結することはできません。ユーザーは最初にパスワード認証やEmail認証など、他の認証方式で認証を行う必要があります。
 

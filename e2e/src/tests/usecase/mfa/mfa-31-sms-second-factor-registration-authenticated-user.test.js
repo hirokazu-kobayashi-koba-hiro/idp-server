@@ -426,6 +426,10 @@ describe("MFA Use Case: SMS 2nd factor registers a phone number only for an auth
     });
 
     expect(challengeResp.status).toBe(400);
+    expect(challengeResp.data.error).toBe("unauthorized");
+    expect(challengeResp.data.error_description).toBe(
+      "User must be authenticated before registering a phone number."
+    );
   });
 
   it("registers a phone number after the 1st factor succeeds", async () => {

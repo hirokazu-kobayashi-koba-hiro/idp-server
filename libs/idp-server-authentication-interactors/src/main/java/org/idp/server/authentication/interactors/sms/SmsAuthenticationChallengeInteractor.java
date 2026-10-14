@@ -91,6 +91,23 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
       AuthenticationExecutionConfig executionConfig = authenticationInteractionConfig.execution();
 
       String providerId = request.optValueAsString("provider_id", "idp-server");
+      if (registersForUnauthenticatedUser(transaction)) {
+        log.warn("2nd factor registration requires an authenticated user. method={}", method());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("error", "unauthorized");
+        response.put(
+            "error_description", "User must be authenticated before registering a phone number.");
+
+        return new AuthenticationInteractionRequestResult(
+            AuthenticationInteractionStatus.CLIENT_ERROR,
+            type,
+            operationType(),
+            method(),
+            response,
+            DefaultSecurityEventType.sms_verification_challenge_failure);
+      }
+
       String phoneNumber = resolvePhoneNumber(transaction, request);
 
       if (phoneNumber.isEmpty()) {
@@ -211,6 +228,22 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
           method(),
           DefaultSecurityEventType.sms_verification_challenge_failure);
     }
+  }
+
+  /**
+   * Whether this 2nd factor would register a new phone number for a user who is only identified,
+   * not authenticated (for example, named by login_hint). Registering writes to the user.
+   */
+  private boolean registersForUnauthenticatedUser(AuthenticationTransaction transaction) {
+    AuthenticationStepDefinition stepDefinition = transaction.getCurrentStepDefinition(method());
+    if (stepDefinition == null
+        || !stepDefinition.requiresUser()
+        || !stepDefinition.allowRegistration()) {
+      return false;
+    }
+    return transaction.hasUser()
+        && !transaction.user().hasPhoneNumber()
+        && !transaction.hasTrustedUser();
   }
 
   private String resolvePhoneNumber(

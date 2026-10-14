@@ -92,6 +92,23 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
       AuthenticationExecutionConfig execution = authenticationConfig.execution();
 
       String providerId = request.optValueAsString("provider_id", "idp-server");
+      if (registersForUnauthenticatedUser(transaction)) {
+        log.warn("2nd factor registration requires an authenticated user. method={}", method());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("error", "unauthorized");
+        response.put(
+            "error_description", "User must be authenticated before registering an email address.");
+
+        return new AuthenticationInteractionRequestResult(
+            AuthenticationInteractionStatus.CLIENT_ERROR,
+            type,
+            operationType(),
+            method(),
+            response,
+            DefaultSecurityEventType.email_verification_failure);
+      }
+
       String email = resolveEmail(transaction, request);
 
       if (email.isEmpty()) {
@@ -208,6 +225,20 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
           method(),
           DefaultSecurityEventType.email_verification_request_failure);
     }
+  }
+
+  /**
+   * Whether this 2nd factor would register a new email address for a user who is only identified,
+   * not authenticated (for example, named by login_hint). Registering writes to the user.
+   */
+  private boolean registersForUnauthenticatedUser(AuthenticationTransaction transaction) {
+    AuthenticationStepDefinition stepDefinition = transaction.getCurrentStepDefinition(method());
+    if (stepDefinition == null
+        || !stepDefinition.requiresUser()
+        || !stepDefinition.allowRegistration()) {
+      return false;
+    }
+    return transaction.hasUser() && !transaction.user().hasEmail() && !transaction.hasTrustedUser();
   }
 
   private String resolveEmail(
