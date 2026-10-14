@@ -229,7 +229,7 @@ FIDO-UAFデバイスの登録（`fido-uaf-registration-challenge` および `fid
 次の成功も認証として数えます。これらで本人を確かめていない場合は、`device_registration_conditions` で登録の条件を絞ってください。
 
 * 外部 API 認証（`external-api-authentication`）。外部の処理を始めるだけの interaction なども含む
-* ナンバーマッチング（`authentication-device-number-matching`）。デバイスでの操作が成功したことを見るもので、認可リクエストを操作している本人までは確かめない
+* ナンバーマッチング（`authentication-device-number-matching`）。コードと `device_id` が一致するかを見るもので、デバイスの持ち主であることの確認（鍵による所持の確認や生体認証）はしない
 
 この制約により、FIDO-UAFデバイスのみでユーザー登録を完結することはできません。ユーザーは最初にパスワード認証やEmail認証など、他の認証方式で認証を行う必要があります。
 
