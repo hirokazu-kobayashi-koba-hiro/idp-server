@@ -22,14 +22,15 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
 import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.oauth.type.AuthFlow;
 import org.idp.server.core.openid.oauth.type.StandardAuthFlow;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.junit.jupiter.api.Test;
 
 /**
  * Issue #1862: {@link AuthenticationTransaction#hasTrustedUser()} separates "who is this
- * transaction about" from "who established that". Only a verified factor and a client-authenticated
- * CIBA request may reach an external endpoint as {@code $.user}.
+ * transaction about" from "who established that". Only a verified factor, a client-authenticated
+ * CIBA request and an access token (a /me operation) establish the user.
  */
 class AuthenticationTransactionTrustedUserTest {
 
@@ -39,9 +40,14 @@ class AuthenticationTransactionTrustedUserTest {
 
   private static AuthenticationTransaction transaction(
       StandardAuthFlow flow, User user, AuthenticationInteractionResults results) {
+    return transaction(flow.toAuthFlow(), user, results);
+  }
+
+  private static AuthenticationTransaction transaction(
+      AuthFlow flow, User user, AuthenticationInteractionResults results) {
     AuthenticationRequest request =
         new AuthenticationRequest(
-            flow.toAuthFlow(),
+            flow,
             null,
             null,
             new RequestedClientId("client"),
@@ -121,5 +127,44 @@ class AuthenticationTransactionTrustedUserTest {
         transaction(StandardAuthFlow.CIBA, user(), new AuthenticationInteractionResults());
 
     assertTrue(transaction.hasTrustedUser());
+  }
+
+  @Test
+  void aSucceededRegistrationIsNotAnAuthentication() {
+    // Registering a device says nothing about who the hinted user is.
+    AuthenticationTransaction transaction =
+        transaction(StandardAuthFlow.OAUTH, user(), results("REGISTRATION", 1));
+
+    assertFalse(transaction.hasTrustedUser());
+  }
+
+  @Test
+  void aUserOperationUserIsTrustedFromTheFirstInteraction() {
+    // A /me operation is minted for the access token's user.
+    AuthenticationTransaction transaction =
+        transaction(
+            StandardAuthFlow.FIDO2_REGISTRATION, user(), new AuthenticationInteractionResults());
+
+    assertTrue(transaction.hasTrustedUser());
+  }
+
+  @Test
+  void aUserOperationUnderATenantDefinedFlowIsTrusted() {
+    // The /me minter accepts any flow name but oauth and ciba, so a tenant may use its own.
+    AuthenticationTransaction transaction =
+        transaction(
+            new AuthFlow("tenant-mfa-registration"),
+            user(),
+            new AuthenticationInteractionResults());
+
+    assertTrue(transaction.hasTrustedUser());
+  }
+
+  @Test
+  void aTransactionWithoutAFlowHasNoTrustedUser() {
+    AuthenticationTransaction transaction =
+        transaction(new AuthFlow(), user(), new AuthenticationInteractionResults());
+
+    assertFalse(transaction.hasTrustedUser());
   }
 }

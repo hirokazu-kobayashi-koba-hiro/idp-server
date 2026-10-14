@@ -390,11 +390,14 @@ public class AuthenticationTransaction {
   }
 
   /**
-   * Whether the user in this transaction may be forwarded to an external endpoint as the {@code
-   * $.user} projection.
+   * Whether the user in this transaction has been proven, not just named.
+   *
+   * <p>Used to decide whether the user may be forwarded to an external endpoint as the {@code
+   * $.user} projection, and whether an interaction may write to the user (register or remove a
+   * device, set a contact).
    *
    * <p>{@link #user()} answers "who is this transaction about", which is not the same as "who has
-   * been proven to be here". The user is filled in from three places, and only two of them carry a
+   * been proven to be here". The user is filled in from four places, and only three of them carry a
    * guarantee:
    *
    * <ul>
@@ -402,12 +405,17 @@ public class AuthenticationTransaction {
    *   <li><b>A client-authenticated request</b> — a CIBA backchannel request names the user, and
    *       the client authenticated before the transaction was created ({@code
    *       CibaRequestHandler#handle}). The client vouches for the identity; that is what CIBA is.
+   *   <li><b>An access token</b> — a user operation ({@code /me/...}) is minted for the token's
+   *       user ({@code MfaRegistrationTransactionCreator}). Its flow is anything but {@code oauth}
+   *       and {@code ciba}, which that minter rejects ({@link
+   *       StandardAuthFlow#isDedicatedEndpointOnly}).
    *   <li><b>An unverified hint</b> — a {@code login_hint} on the authorization endpoint, which
    *       takes no client authentication. Anyone can name anyone.
    * </ul>
    *
-   * <p>The third case is why this method exists. Projecting there would let an unverified caller
-   * pick whose allow-listed attributes get sent to the tenant's external API.
+   * <p>The last case is why this method exists. Trusting it would let an unverified caller pick
+   * whose allow-listed attributes get sent to the tenant's external API, or whose account a device
+   * gets registered to.
    *
    * <p>Derived rather than stored: {@code flow} and {@code interactions} are both persisted
    * columns, so an existing transaction answers this without a schema change.
@@ -419,7 +427,12 @@ public class AuthenticationTransaction {
     if (hasInteractions() && interactionResults.containsAnySuccess()) {
       return true;
     }
-    return StandardAuthFlow.CIBA.toAuthFlow().equals(flow());
+    AuthFlow flow = flow();
+    if (flow == null || !flow.exists()) {
+      return false;
+    }
+    // Only an oauth transaction takes its user from an unverified hint
+    return !StandardAuthFlow.OAUTH.toAuthFlow().equals(flow);
   }
 
   public boolean hasAuthenticationDevice() {

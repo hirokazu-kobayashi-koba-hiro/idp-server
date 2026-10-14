@@ -89,7 +89,7 @@ public class FidoUafDeRegistrationInteractor implements AuthenticationInteractor
       log.debug("FidoUafDeRegistrationInteractor called");
 
       // Verify user is authenticated
-      if (!transaction.hasUser()) {
+      if (!transaction.hasTrustedUser()) {
         log.warn(
             "FIDO-UAF deregistration rejected: no authenticated user in transaction, tenant={}",
             tenant.identifier().value());

@@ -73,6 +73,11 @@ public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
   }
 
   @Override
+  public OperationType operationType() {
+    return OperationType.REGISTRATION;
+  }
+
+  @Override
   public boolean isBrowserBased() {
     return false;
   }
@@ -94,7 +99,7 @@ public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
     log.debug("FidoUafRegistrationInteractor called");
 
     // Verify user is authenticated
-    if (!transaction.hasUser()) {
+    if (!transaction.hasTrustedUser()) {
       log.warn(
           "FIDO-UAF registration rejected: no authenticated user in transaction, tenant={}",
           tenant.identifier().value());

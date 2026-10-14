@@ -228,7 +228,8 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
         return email;
       }
 
-      if (stepDefinition.allowRegistration()) {
+      // Registering a new address writes to the user, so a user only named by a hint is not enough
+      if (stepDefinition.allowRegistration() && transaction.hasTrustedUser()) {
         String email = request.optValueAsString("email", "");
         log.debug("2nd factor: using authenticated user's email. email={}", email);
         return email;

@@ -63,6 +63,11 @@ public class Fido2DeregistrationInteractor implements AuthenticationInteractor {
   }
 
   @Override
+  public OperationType operationType() {
+    return OperationType.DE_REGISTRATION;
+  }
+
+  @Override
   public String method() {
     return StandardAuthenticationMethod.FIDO2.type();
   }
@@ -79,7 +84,7 @@ public class Fido2DeregistrationInteractor implements AuthenticationInteractor {
     log.debug("Fido2DeregistrationInteractor called");
 
     // FIDO2 deregistration requires authenticated session
-    if (!transaction.hasUser()) {
+    if (!transaction.hasTrustedUser()) {
       log.warn("FIDO2 deregistration: unauthenticated request");
 
       Map<String, Object> errorResponse = new HashMap<>();

@@ -231,7 +231,8 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
         return phoneNumber;
       }
 
-      if (stepDefinition.allowRegistration()) {
+      // Registering a new number writes to the user, so a user only named by a hint is not enough
+      if (stepDefinition.allowRegistration() && transaction.hasTrustedUser()) {
         String phoneNumber = request.optValueAsString("phone_number", "");
         log.debug("2nd factor: using authenticated user's phone. phoneNumber={}", phoneNumber);
         return phoneNumber;
