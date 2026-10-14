@@ -76,6 +76,8 @@ public class CibaAuthenticationTransactionCreator {
       Tenant tenant, CibaIssueResponse cibaIssueResponse) {
     BackchannelAuthenticationRequest backchannelAuthenticationRequest = cibaIssueResponse.request();
     ExpiresIn expiresIn = cibaIssueResponse.expiresIn();
+    // The user is named by a client-authenticated request; AuthenticationTransaction#hasTrustedUser
+    // keys on this flow
     StandardAuthFlow standardAuthFlow = StandardAuthFlow.CIBA;
     TenantIdentifier tenantIdentifier = tenant.identifier();
     TenantAttributes tenantAttributes = tenant.attributes();

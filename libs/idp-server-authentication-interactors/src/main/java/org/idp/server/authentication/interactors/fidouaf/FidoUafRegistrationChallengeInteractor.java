@@ -94,7 +94,7 @@ public class FidoUafRegistrationChallengeInteractor implements AuthenticationInt
     log.debug("FidoUafRegistrationChallengeInteractor called");
 
     // Verify user is authenticated
-    if (!transaction.hasUser()) {
+    if (!transaction.hasTrustedUser()) {
       log.warn(
           "FIDO-UAF registration challenge rejected: no authenticated user in transaction, tenant={}",
           tenant.identifier().value());

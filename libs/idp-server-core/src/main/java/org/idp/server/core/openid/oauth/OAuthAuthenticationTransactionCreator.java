@@ -89,6 +89,8 @@ public class OAuthAuthenticationTransactionCreator {
       Tenant tenant, OAuthRequestResponse requestResponse, User resolvedUser) {
 
     AuthorizationRequest authorizationRequest = requestResponse.authorizationRequest();
+    // The user comes from an unverified login_hint; AuthenticationTransaction#hasTrustedUser keys
+    // on this flow
     StandardAuthFlow standardAuthFlow = StandardAuthFlow.OAUTH;
     TenantIdentifier tenantIdentifier = tenant.identifier();
     TenantAttributes tenantAttributes = tenant.attributes();

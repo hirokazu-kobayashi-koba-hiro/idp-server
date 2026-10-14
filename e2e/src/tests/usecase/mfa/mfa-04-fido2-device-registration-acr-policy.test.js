@@ -1372,6 +1372,44 @@ describe("Use Case: FIDO2 Device Registration with ACR Policy", () => {
 
     console.log("✓ FIDO2 registration correctly rejected (user not authenticated)\n");
 
+    // Step: A user named by login_hint is identified, not authenticated
+    console.log("=== Step: Attempt FIDO2 Registration (login_hint only) ===");
+
+    const hintedAuthParams = new URLSearchParams({
+      response_type: "code",
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      scope: "openid profile email",
+      state: `state_hinted_${timestamp}`,
+      login_hint: `email:${onboardingRequest.user.email}`,
+    });
+
+    const hintedAuthorizeResponse = await get({
+      url: `${backendUrl}/${tenantId}/v1/authorizations?${hintedAuthParams.toString()}`,
+      headers: {},
+    });
+
+    expect(hintedAuthorizeResponse.status).toBe(302);
+    const hintedAuthId = new URL(hintedAuthorizeResponse.headers.location, backendUrl).searchParams.get("id");
+
+    for (const interaction of ["fido2-registration-challenge", "fido2-registration"]) {
+      const hintedResponse = await postWithJson({
+        url: `${backendUrl}/${tenantId}/v1/authorizations/${hintedAuthId}/${interaction}`,
+        // The hinted user's own username, so that only the authentication requirement can reject it
+        body:
+          interaction === "fido2-registration-challenge"
+            ? { ...fido2ChallengeRequestBody, username: onboardingRequest.user.email }
+            : {},
+      });
+
+      console.log(`${interaction} response (login_hint only):`, hintedResponse.status, hintedResponse.data);
+      expect(hintedResponse.status).toBe(400);
+      expect(hintedResponse.data.error).toBe("unauthorized");
+      expect(hintedResponse.data.error_description).toContain("requires authenticated session");
+    }
+
+    console.log("✓ FIDO2 registration correctly rejected (user only named by login_hint)\n");
+
     // Verify security event was logged
     console.log("=== Step: Verify Security Event Logging ===");
 

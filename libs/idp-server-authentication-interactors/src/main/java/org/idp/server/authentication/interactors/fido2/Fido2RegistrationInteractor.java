@@ -66,6 +66,11 @@ public class Fido2RegistrationInteractor implements AuthenticationInteractor {
   }
 
   @Override
+  public OperationType operationType() {
+    return OperationType.REGISTRATION;
+  }
+
+  @Override
   public String method() {
     return StandardAuthenticationMethod.FIDO2.type();
   }
@@ -82,7 +87,7 @@ public class Fido2RegistrationInteractor implements AuthenticationInteractor {
     log.debug("WebAuthnRegistrationInteractor called");
 
     // FIDO2 registration requires authenticated session
-    if (!transaction.hasUser()) {
+    if (!transaction.hasTrustedUser()) {
       log.warn("FIDO2 registration: unauthenticated request");
 
       Map<String, Object> errorResponse = new HashMap<>();

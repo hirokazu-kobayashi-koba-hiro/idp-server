@@ -218,6 +218,19 @@ FIDO-UAFデバイスの登録（`fido-uaf-registration-challenge` および `fid
 }
 ```
 
+「認証済み」として扱うのは、次のどれかです。
+
+* 同じ認可リクエストで、認証（パスワード、Email、SMS、新規登録など）が成功している
+* CIBA のリクエスト
+* `/me` の API（アクセストークンのユーザー）
+
+`login_hint` でユーザーを指定しただけでは認証済みになりません。また、デバイスの登録・削除の成功は認証として数えません（`amr` にも入らず、`amr` で決まる `acr` や `level_of_authentication_scopes` も満たしません）。
+
+次の成功も認証として数えます。これらで本人を確かめていない場合は、`device_registration_conditions` で登録の条件を絞ってください。
+
+* 外部 API 認証（`external-api-authentication`）。外部の処理を始めるだけの interaction なども含む
+* ナンバーマッチング（`authentication-device-number-matching`）。照合するのはデバイス ID と、チャレンジの応答で返るコードだけ
+
 この制約により、FIDO-UAFデバイスのみでユーザー登録を完結することはできません。ユーザーは最初にパスワード認証やEmail認証など、他の認証方式で認証を行う必要があります。
 
 ### device_registration_conditions ポリシー

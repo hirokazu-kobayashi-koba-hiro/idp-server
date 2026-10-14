@@ -51,6 +51,8 @@ public class MfaRegistrationTransactionCreator {
         new AuthenticationTransactionIdentifier(UUID.randomUUID().toString());
     AuthorizationIdentifier authorizationIdentifier = new AuthorizationIdentifier();
 
+    // The user is the access token's; AuthenticationTransaction#hasTrustedUser trusts any flow but
+    // oauth, which this minter never receives (StandardAuthFlow#isDedicatedEndpointOnly)
     AuthenticationRequest authenticationRequest =
         toAuthenticationRequest(tenant, user, oAuthToken, authFlow);
     AuthenticationTransactionAttributes attributes =

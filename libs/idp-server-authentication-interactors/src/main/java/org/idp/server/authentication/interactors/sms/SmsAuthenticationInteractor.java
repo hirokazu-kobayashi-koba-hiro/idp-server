@@ -324,7 +324,8 @@ public class SmsAuthenticationInteractor implements AuthenticationInteractor {
             phoneNumber);
         return User.notFound();
       }
-      if (allowRegistration) {
+      // Registering a new number writes to the user, so a user only named by a hint is not enough
+      if (allowRegistration && transaction.hasTrustedUser()) {
         log.info(
             "2nd factor requires authenticated and allowRegistration. method={}, phoneNumber={}",
             method(),

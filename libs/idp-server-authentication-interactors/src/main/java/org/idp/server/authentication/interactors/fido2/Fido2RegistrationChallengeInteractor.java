@@ -82,7 +82,7 @@ public class Fido2RegistrationChallengeInteractor implements AuthenticationInter
     log.debug("WebAuthnRegistrationChallengeInteractor called");
 
     // FIDO2 registration requires authenticated session
-    if (!transaction.hasUser()) {
+    if (!transaction.hasTrustedUser()) {
       log.warn("FIDO2 registration challenge: unauthenticated request");
 
       Map<String, Object> errorResponse = new HashMap<>();
