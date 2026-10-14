@@ -1395,7 +1395,11 @@ describe("Use Case: FIDO2 Device Registration with ACR Policy", () => {
     for (const interaction of ["fido2-registration-challenge", "fido2-registration"]) {
       const hintedResponse = await postWithJson({
         url: `${backendUrl}/${tenantId}/v1/authorizations/${hintedAuthId}/${interaction}`,
-        body: interaction === "fido2-registration-challenge" ? fido2ChallengeRequestBody : {},
+        // The hinted user's own username, so that only the authentication requirement can reject it
+        body:
+          interaction === "fido2-registration-challenge"
+            ? { ...fido2ChallengeRequestBody, username: onboardingRequest.user.email }
+            : {},
       });
 
       console.log(`${interaction} response (login_hint only):`, hintedResponse.status, hintedResponse.data);
