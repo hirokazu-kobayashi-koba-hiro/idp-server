@@ -94,7 +94,7 @@ describe("MFA Use Case: SMS 2nd factor registers a phone number only for an auth
     return resp.data;
   };
 
-  const readVerificationCode = async (authId) => {
+  const readInteractionPayload = async (authId, interactionType) => {
     const txnListResp = await get({
       url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/authentication-transactions?authorization_id=${authId}`,
       headers: { Authorization: `Bearer ${mgmtAccessToken}` },
@@ -103,12 +103,15 @@ describe("MFA Use Case: SMS 2nd factor registers a phone number only for an auth
     const transactionId = txnListResp.data.list[0].id;
 
     const interactionResp = await get({
-      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/authentication-interactions/${transactionId}/sms-authentication-challenge`,
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/authentication-interactions/${transactionId}/${interactionType}`,
       headers: { Authorization: `Bearer ${mgmtAccessToken}` },
     });
     expect(interactionResp.status).toBe(200);
-    return interactionResp.data.payload.verification_code;
+    return interactionResp.data.payload;
   };
+
+  const readVerificationCode = async (authId) =>
+    (await readInteractionPayload(authId, "sms-authentication-challenge")).verification_code;
 
   const authorizeAndGetUserinfo = async (authId) => {
     const authorizeResp = await authorize({
@@ -427,17 +430,23 @@ describe("MFA Use Case: SMS 2nd factor registers a phone number only for an auth
     expect((await getUser(user.sub)).phone_number).toBeUndefined();
   });
 
-  it("keeps the registered phone number of a user only identified by login_hint", async () => {
+  it("sends the code to the registered phone number of a user only identified by login_hint", async () => {
     const phone = newPhone();
     const user = await createUser({ phoneNumber: phone });
     const authId = await startAuthorization(`email:${user.email}`);
 
-    // The challenge is sent, but to the registered number; the requested one is ignored
     const challengeResp = await postWithJson({
       url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/sms-authentication-challenge`,
       body: { phone_number: newPhone(), template: "authentication" },
     });
     expect(challengeResp.status).toBe(200);
+
+    // The code goes to the registered number; the requested one is not used
+    const challengeRequest = await readInteractionPayload(
+      authId,
+      "sms-authentication-challenge-request"
+    );
+    expect(challengeRequest.phone_number).toBe(phone);
 
     const smsAuthResp = await postWithJson({
       url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/sms-authentication`,
