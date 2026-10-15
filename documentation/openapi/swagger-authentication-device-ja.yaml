@@ -223,9 +223,10 @@ paths:
         FIDOサーバーから取得したチャレンジ情報をそのまま返却する。
 
         **セキュリティ制約**:
-        - ユーザーが認証済みである必要があります（未認証の場合は401 Unauthorized）
+        - ユーザーが認証済みである必要があります（未認証の場合は400 Bad Request（`unauthorized`））
         - 認証ポリシーに`device_registration_conditions`が設定されている場合、
-          その条件を満たす必要があります（満たさない場合は403 Forbidden）
+          その条件を満たす必要があります（満たさない場合は400 Bad Request（`forbidden`））
+        - FIDOサーバーがエラーを返した場合は、そのステータスコード（401、403 など）をそのまま返します
       parameters:
         - in: path
           name: tenant-id
@@ -277,9 +278,10 @@ paths:
         クライアントから送信されたFIDO応答を受け取り、登録を完了させる。
 
         **セキュリティ制約**:
-        - ユーザーが認証済みである必要があります（未認証の場合は401 Unauthorized）
+        - ユーザーが認証済みである必要があります（未認証の場合は400 Bad Request（`unauthorized`））
         - 認証ポリシーに`device_registration_conditions`が設定されている場合、
-          その条件を満たす必要があります（満たさない場合は403 Forbidden）
+          その条件を満たす必要があります（満たさない場合は400 Bad Request（`forbidden`））
+        - FIDOサーバーがエラーを返した場合は、そのステータスコード（401、403 など）をそのまま返します
       parameters:
         - in: path
           name: tenant-id
@@ -420,9 +422,10 @@ paths:
         クライアントから送信されたFIDO応答を受け取り解除を完了させる。
 
         **セキュリティ制約**:
-        - ユーザーが認証済みである必要があります（未認証の場合は401 Unauthorized）
+        - ユーザーが認証済みである必要があります（未認証の場合は400 Bad Request（`unauthorized`））
         - 認証ポリシーに`device_registration_conditions`が設定されている場合、
-          その条件を満たす必要があります（満たさない場合は403 Forbidden）
+          その条件を満たす必要があります（満たさない場合は400 Bad Request（`forbidden`））
+        - FIDOサーバーがエラーを返した場合は、そのステータスコード（401、403 など）をそのまま返します
         - `device_id` はユーザーに登録されたデバイスである必要があります。
           そうでない場合は、FIDOサーバーにリクエストを送らずに400 Bad Request（`invalid_request`）を返します
         - FIDOサーバーに送る `device_id` は、確認した値で上書きされます

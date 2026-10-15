@@ -1096,7 +1096,7 @@ components:
 
             新しいFIDOデバイスを登録できません。
 
-            条件を満たさない場合は403 Forbidden、未認証の場合は401 Unauthorizedを返します。
+            条件を満たさない場合は400 Bad Request（`forbidden`）、未認証の場合は400 Bad Request（`unauthorized`）を返します。
 
             '
           allOf:
