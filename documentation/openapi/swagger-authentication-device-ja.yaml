@@ -334,7 +334,10 @@ paths:
       tags:
         - FIDO-UAF
       summary: FIDO-UAF 認証チャレンジ
-      description: FIDOサーバーから取得したチャレンジ情報をそのまま返却する。
+      description: |
+        FIDOサーバーから取得したチャレンジ情報をそのまま返却する。
+
+        FIDOサーバーがエラーを返した場合、定義済みのステータス（401、403、429、503 など）はそのまま返します。
       parameters:
         - in: path
           name: tenant-id
@@ -362,23 +365,30 @@ paths:
                 type: object
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/FidoServerError'
+        '403':
+          $ref: '#/components/responses/FidoServerError'
         '404':
           $ref: '#/components/responses/NotFound'
         '429':
-          $ref: '#/components/responses/TooManyRequests'
+          $ref: '#/components/responses/FidoServerError'
         '500':
           $ref: '#/components/responses/InternalServerError'
         '503':
-          $ref: '#/components/responses/ServiceUnavailable'
+          $ref: '#/components/responses/FidoServerError'
         '504':
-          $ref: '#/components/responses/GatewayTimeout'
+          $ref: '#/components/responses/FidoServerError'
 
   /{tenant-id}/v1/authentications/{id}/fido-uaf-authentication:
     post:
       tags:
         - FIDO-UAF
       summary: FIDO-UAF 認証
-      description: クライアントから送信されたFIDO応答を受け取り、認証を完了させる。
+      description: |
+        クライアントから送信されたFIDO応答を受け取り、認証を完了させる。
+
+        FIDOサーバーがエラーを返した場合、定義済みのステータス（401、403、429、503 など）はそのまま返します。
       parameters:
         - in: path
           name: tenant-id
@@ -402,16 +412,20 @@ paths:
           description: FIDO認証成功
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/FidoServerError'
+        '403':
+          $ref: '#/components/responses/FidoServerError'
         '404':
           $ref: '#/components/responses/NotFound'
         '429':
-          $ref: '#/components/responses/TooManyRequests'
+          $ref: '#/components/responses/FidoServerError'
         '500':
           $ref: '#/components/responses/InternalServerError'
         '503':
-          $ref: '#/components/responses/ServiceUnavailable'
+          $ref: '#/components/responses/FidoServerError'
         '504':
-          $ref: '#/components/responses/GatewayTimeout'
+          $ref: '#/components/responses/FidoServerError'
 
   /{tenant-id}/v1/authentications/{id}/fido-uaf-deregistration:
     post:
@@ -835,7 +849,9 @@ components:
         - idp-server がFIDOサーバーに接続できない場合は503、時間内に応答が無い場合は504を返す
 
         本文は `response.body_mapping_rules` で実行結果を写したもの。
-        429・503・504 は、API Gateway が返却することもある（本文は `message` のみ）
+        429・503・504 は、API Gateway が返却することもある（本文は `message` のみ）。
+        504 は idp-server と FIDO サーバー間の通信遅延が原因の場合もあります。
+        認証トランザクションの有効期限（`expires_at`）内であれば同じトランザクションで再試行できます。
       content:
         application/json:
           schema:
@@ -877,7 +893,7 @@ components:
         レート制限超過。
 
         クライアントが短時間に過剰なリクエストを送信した場合に返却されます。
-        API Gateway がリクエストをアプリケーションに到達させる前に返却することもあります。
+        このレスポンスは API Gateway がリクエストをアプリケーションに到達させる前に返却します。
 
         `Retry-After` ヘッダーが含まれる場合は、指定された秒数後にリトライしてください。
         認証デバイスがトランザクションをポーリングする場合は、ポーリング間隔を広げてください。
@@ -910,7 +926,7 @@ components:
         サービス一時利用不可。
 
         バックエンドサーバーが利用できない状態です（メンテナンス中を含む）。
-        API Gateway がバックエンドへの接続に失敗した場合に返却することもあります。
+        このレスポンスは API Gateway がバックエンドへの接続に失敗した場合に返却します。
 
         `Retry-After` ヘッダーが含まれる場合は、指定された秒数後にリトライしてください。
       headers:
@@ -938,10 +954,9 @@ components:
         ゲートウェイタイムアウト。
 
         バックエンドサーバーからの応答が制限時間内に返却されませんでした。
-        API Gateway がバックエンドの応答を待機してタイムアウトした場合に返却することもあります。
+        このレスポンスは API Gateway がバックエンドの応答を待機してタイムアウトした場合に返却します。
 
         ネットワークの一時的な問題の可能性があります。時間をおいてリトライしてください。
-        FIDO-UAF 系 API では、idp-server と FIDO サーバー間の通信遅延が原因の場合もあります。
         認証トランザクションの有効期限（`expires_at`）内であれば同じトランザクションで再試行できます。
       content:
         application/json:
