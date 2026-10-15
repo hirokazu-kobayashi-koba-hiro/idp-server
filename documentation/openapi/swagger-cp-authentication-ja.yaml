@@ -1094,7 +1094,7 @@ components:
 
             この条件が設定されている場合、ユーザーは指定された認証方式を完了しないと
 
-            新しいFIDOデバイスを登録できません。
+            新しいFIDOデバイスを登録できません。FIDO-UAFでは登録解除にも適用されます。
 
             条件を満たさない場合は400 Bad Request（`forbidden`）、未認証の場合は400 Bad Request（`unauthorized`）を返します。
 

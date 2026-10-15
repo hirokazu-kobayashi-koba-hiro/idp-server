@@ -226,7 +226,7 @@ paths:
         - ユーザーが認証済みである必要があります（未認証の場合は400 Bad Request（`unauthorized`））
         - 認証ポリシーに`device_registration_conditions`が設定されている場合、
           その条件を満たす必要があります（満たさない場合は400 Bad Request（`forbidden`））
-        - FIDOサーバーがエラーを返した場合は、そのステータスコード（401、403 など）をそのまま返します
+        - FIDOサーバーがエラーを返した場合、定義済みのステータス（401、403、429、503 など）はそのまま返します
       parameters:
         - in: path
           name: tenant-id
@@ -255,9 +255,9 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          $ref: '#/components/responses/FidoServerError'
         '403':
-          $ref: '#/components/responses/Forbidden'
+          $ref: '#/components/responses/FidoServerError'
         '404':
           $ref: '#/components/responses/NotFound'
         '429':
@@ -281,7 +281,7 @@ paths:
         - ユーザーが認証済みである必要があります（未認証の場合は400 Bad Request（`unauthorized`））
         - 認証ポリシーに`device_registration_conditions`が設定されている場合、
           その条件を満たす必要があります（満たさない場合は400 Bad Request（`forbidden`））
-        - FIDOサーバーがエラーを返した場合は、そのステータスコード（401、403 など）をそのまま返します
+        - FIDOサーバーがエラーを返した場合、定義済みのステータス（401、403、429、503 など）はそのまま返します
       parameters:
         - in: path
           name: tenant-id
@@ -315,9 +315,9 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          $ref: '#/components/responses/FidoServerError'
         '403':
-          $ref: '#/components/responses/Forbidden'
+          $ref: '#/components/responses/FidoServerError'
         '404':
           $ref: '#/components/responses/NotFound'
         '429':
@@ -425,7 +425,7 @@ paths:
         - ユーザーが認証済みである必要があります（未認証の場合は400 Bad Request（`unauthorized`））
         - 認証ポリシーに`device_registration_conditions`が設定されている場合、
           その条件を満たす必要があります（満たさない場合は400 Bad Request（`forbidden`））
-        - FIDOサーバーがエラーを返した場合は、そのステータスコード（401、403 など）をそのまま返します
+        - FIDOサーバーがエラーを返した場合、定義済みのステータス（401、403、429、503 など）はそのまま返します
         - `device_id` はユーザーに登録されたデバイスである必要があります。
           そうでない場合は、FIDOサーバーにリクエストを送らずに400 Bad Request（`invalid_request`）を返します
         - FIDOサーバーに送る `device_id` は、確認した値で上書きされます
@@ -467,9 +467,9 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          $ref: '#/components/responses/FidoServerError'
         '403':
-          $ref: '#/components/responses/Forbidden'
+          $ref: '#/components/responses/FidoServerError'
         '404':
           $ref: '#/components/responses/NotFound'
         '429':
@@ -800,10 +800,18 @@ components:
               value:
                 error: "invalid_request"
                 error_description: "FIDO2 authentication succeeded but user could not be resolved"
+            unauthenticated_user:
+              value:
+                error: "unauthorized"
+                error_description: "User must be authenticated before registering a FIDO-UAF device."
+            device_registration_conditions_not_met:
+              value:
+                error: "forbidden"
+                error_description: "Current authentication level does not meet device registration requirements. Please complete required authentication steps (e.g., MFA or existing device authentication)."
 
     Unauthorized:
       description: |
-        認証エラー。ユーザーが未認証、またはアクセストークンが無効・期限切れ
+        デバイス認証のエラー。Authorization ヘッダーが無い、またはアクセストークン・JWT が無効・期限切れ
       content:
         application/json:
           schema:
@@ -811,25 +819,20 @@ components:
             properties:
               error:
                 type: string
-                example: "unauthorized"
+                example: "invalid_request"
               error_description:
                 type: string
-                example: "User must be authenticated before registering a FIDO-UAF device."
+                example: "Authorization header is required for device authentication"
 
-    Forbidden:
+    FidoServerError:
       description: |
-        認可エラー。認証レベル（ACR）がデバイス登録ポリシーの要件を満たしていない
+        FIDOサーバーが返したエラー。ステータスはFIDOサーバーの応答のまま返す。
+        本文は `response.body_mapping_rules` でFIDOサーバーの応答を写したもの
       content:
         application/json:
           schema:
             type: object
-            properties:
-              error:
-                type: string
-                example: "forbidden"
-              error_description:
-                type: string
-                example: "Current authentication level does not meet device registration requirements."
+            description: FIDOサーバーの仕様と `body_mapping_rules` の設定による
 
     NotFound:
       description: |
