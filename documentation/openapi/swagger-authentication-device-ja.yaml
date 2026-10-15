@@ -261,13 +261,13 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
         '429':
-          $ref: '#/components/responses/TooManyRequests'
+          $ref: '#/components/responses/FidoServerError'
         '500':
           $ref: '#/components/responses/InternalServerError'
         '503':
-          $ref: '#/components/responses/ServiceUnavailable'
+          $ref: '#/components/responses/FidoServerError'
         '504':
-          $ref: '#/components/responses/GatewayTimeout'
+          $ref: '#/components/responses/FidoServerError'
 
   /{tenant-id}/v1/authentications/{id}/fido-uaf-registration:
     post:
@@ -321,13 +321,13 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
         '429':
-          $ref: '#/components/responses/TooManyRequests'
+          $ref: '#/components/responses/FidoServerError'
         '500':
           $ref: '#/components/responses/InternalServerError'
         '503':
-          $ref: '#/components/responses/ServiceUnavailable'
+          $ref: '#/components/responses/FidoServerError'
         '504':
-          $ref: '#/components/responses/GatewayTimeout'
+          $ref: '#/components/responses/FidoServerError'
 
   /{tenant-id}/v1/authentications/{id}/fido-uaf-authentication-challenge:
     post:
@@ -473,13 +473,13 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
         '429':
-          $ref: '#/components/responses/TooManyRequests'
+          $ref: '#/components/responses/FidoServerError'
         '500':
           $ref: '#/components/responses/InternalServerError'
         '503':
-          $ref: '#/components/responses/ServiceUnavailable'
+          $ref: '#/components/responses/FidoServerError'
         '504':
-          $ref: '#/components/responses/GatewayTimeout'
+          $ref: '#/components/responses/FidoServerError'
 
   /{tenant-id}/v1/authentications/{id}/authentication-cancel:
     post:
@@ -814,7 +814,7 @@ components:
     Unauthorized:
       description: |
         デバイス認証のエラー。Authorization ヘッダーが無い・形式が不正、デバイスが存在しない、
-        またはアクセストークン・JWT が無効・期限切れ・そのデバイスに紐づいていない
+        アクセストークンが無効・期限切れ・そのデバイスに紐づいていない、または JWT の署名を検証できない
       content:
         application/json:
           schema:
@@ -829,8 +829,13 @@ components:
 
     FidoServerError:
       description: |
-        FIDOサーバーが返したエラー。ステータスはFIDOサーバーの応答のまま返す。
-        本文は `response.body_mapping_rules` でFIDOサーバーの応答を写したもの
+        FIDOサーバーとのやり取りで起きたエラー。
+
+        - FIDOサーバーがエラーを返した場合、定義済みのステータス（401、403、429、503 など）はそのまま返す
+        - idp-server がFIDOサーバーに接続できない場合は503、時間内に応答が無い場合は504を返す
+
+        本文は `response.body_mapping_rules` で実行結果を写したもの。
+        429・503・504 は、API Gateway が返却することもある（本文は `message` のみ）
       content:
         application/json:
           schema:
