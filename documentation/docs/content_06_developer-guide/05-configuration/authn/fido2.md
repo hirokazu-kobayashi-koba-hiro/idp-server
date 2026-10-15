@@ -118,7 +118,7 @@ FIDO2デバイスの登録（`fido2-registration-challenge` および `fido2-reg
 次の成功も認証として数えます。これらで本人を確かめていない場合は、`device_registration_conditions` で登録の条件を絞ってください。
 
 * 外部 API 認証（`external-api-authentication`）。外部の処理を始めるだけの interaction なども含む
-* ナンバーマッチング（`authentication-device-number-matching`）。照合するのはデバイス ID と、チャレンジの応答で返るコードだけ
+* ナンバーマッチング（`authentication-device-number-matching`）。転記されたコードと、`device_id`（紐づいた認証デバイスか）を照合するもので、デバイスの持ち主であることの確認（鍵による所持の確認や生体認証）はしない
 
 この制約により、FIDO2デバイスのみでユーザー登録を完結することはできません。ユーザーは最初にパスワード認証やEmail認証など、他の認証方式で認証を行う必要があります。
 
