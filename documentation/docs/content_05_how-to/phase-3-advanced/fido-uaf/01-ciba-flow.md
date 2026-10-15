@@ -311,7 +311,7 @@ FIDOサーバから取得したレスポンスをそのまま返却します。
 #### リクエスト
 
 ```
-GET {tenant-id}/.well-known/fido-uaf/facets
+GET {tenant-id}/.well-known/fido/facets
 Content-Type: application/json
 ```
 

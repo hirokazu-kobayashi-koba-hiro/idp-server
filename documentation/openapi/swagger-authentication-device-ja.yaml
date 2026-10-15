@@ -184,12 +184,15 @@ paths:
         '504':
           $ref: '#/components/responses/GatewayTimeout'
 
-  /{tenant-id}/.well-known/fido-uaf/facets:
+  /{tenant-id}/.well-known/fido/facets:
     get:
       tags:
         - FIDO-UAF
       summary: FIDO-UAF Facet情報の取得
-      description: FIDOクライアントが信頼できるアプリとして動作するためのFacet IDリストを取得する。
+      description: |
+        FIDOクライアントが信頼できるアプリとして動作するためのFacet IDリストを取得する。
+
+        FIDOサーバーがエラーを返した場合、定義済みのステータス（401、403、429、503 など）はそのまま返します。
       parameters:
         - in: path
           name: tenant-id
@@ -205,14 +208,18 @@ paths:
                 type: object
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/FidoServerError'
+        '403':
+          $ref: '#/components/responses/FidoServerError'
         '429':
-          $ref: '#/components/responses/TooManyRequests'
+          $ref: '#/components/responses/FidoServerError'
         '500':
           $ref: '#/components/responses/InternalServerError'
         '503':
-          $ref: '#/components/responses/ServiceUnavailable'
+          $ref: '#/components/responses/FidoServerError'
         '504':
-          $ref: '#/components/responses/GatewayTimeout'
+          $ref: '#/components/responses/FidoServerError'
 
   /{tenant-id}/v1/authentications/{id}/fido-uaf-registration-challenge:
     post:
@@ -846,12 +853,19 @@ components:
         FIDOサーバーとのやり取りで起きたエラー。
 
         - FIDOサーバーがエラーを返した場合、定義済みのステータス（401、403、429、503 など）はそのまま返す
-        - idp-server がFIDOサーバーに接続できない場合は503、時間内に応答が無い場合は504を返す
+        - idp-server がFIDOサーバーに接続できない場合は503、時間内に応答が無い場合は504、
+          そのほかの通信エラーは502、想定外のエラーは500を返す
 
         本文は `response.body_mapping_rules` で実行結果を写したもの。
         429・503・504 は、API Gateway が返却することもある（本文は `message` のみ）。
-        504 は idp-server と FIDO サーバー間の通信遅延が原因の場合もあります。
-        認証トランザクションの有効期限（`expires_at`）内であれば同じトランザクションで再試行できます。
+        `Retry-After` ヘッダーが含まれる場合は、指定された秒数後にリトライする。
+        認証トランザクションを伴う API では、有効期限（`expires_at`）内であれば同じトランザクションで再試行できる。
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: リトライまでの推奨待機時間（秒）。API Gateway が返却した場合に含まれることがある
+          required: false
       content:
         application/json:
           schema:
