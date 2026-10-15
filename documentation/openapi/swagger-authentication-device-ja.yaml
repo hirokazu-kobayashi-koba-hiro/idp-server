@@ -801,17 +801,20 @@ components:
                 error: "invalid_request"
                 error_description: "FIDO2 authentication succeeded but user could not be resolved"
             unauthenticated_user:
+              summary: FIDO-UAF の登録チャレンジ・登録で未認証の場合（登録解除では文言が deregistering になる）
               value:
                 error: "unauthorized"
                 error_description: "User must be authenticated before registering a FIDO-UAF device."
             device_registration_conditions_not_met:
+              summary: FIDO-UAF の登録チャレンジ・登録で device_registration_conditions を満たさない場合（登録解除では文言が deregistration になる）
               value:
                 error: "forbidden"
                 error_description: "Current authentication level does not meet device registration requirements. Please complete required authentication steps (e.g., MFA or existing device authentication)."
 
     Unauthorized:
       description: |
-        デバイス認証のエラー。Authorization ヘッダーが無い、またはアクセストークン・JWT が無効・期限切れ
+        デバイス認証のエラー。Authorization ヘッダーが無い・形式が不正、デバイスが存在しない、
+        またはアクセストークン・JWT が無効・期限切れ・そのデバイスに紐づいていない
       content:
         application/json:
           schema:
