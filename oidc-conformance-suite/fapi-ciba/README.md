@@ -76,8 +76,14 @@ Block name: 'Verify token endpoint response is pending or slow_down'
 Condition: CheckTokenEndpointHttpStatus400   actual = 200, expected = 400
 ```
 
-suite のポーリング間隔は約 5 秒なので、既定で **12 秒**待ってから承認する
-（`CIBA_APPROVE_DELAY_MS` で変更可能）。人がデバイスで承認する実際の間合いにも近い。
+suite はテストの説明で「`WAITING` になるまで応答しないこと」と求めている。approver は
+テストが `WAITING` になるのを待ってから承認する（上限は `CIBA_WAIT_TIMEOUT_MS`。
+到達しなければそのまま承認する）。固定の待ち時間ではないので、suite のポーリング間隔に
+依存しない。
+
+テスト名を取れない、または suite への問い合わせに失敗したときは、待たずに承認する。
+また、テストは作成直後に一瞬 `WAITING` に見えることがあり、そのときも待たずに承認される。
+承認されてはいけないテストは、下の表で `ignore` にする。
 
 ### テストごとの振る舞い
 
@@ -87,7 +93,7 @@ suite のポーリング間隔は約 5 秒なので、既定で **12 秒**待っ
 |---|---|---|
 | `approve`（既定） | 大半 | デバイスで承認する |
 | `cancel` | `user-rejects-authentication` | 拒否して `access_denied` を返させる |
-| `ignore` | `auth-req-id-expired` | 何もしない（認証要求の期限切れを確認する） |
+| `ignore` | `auth-req-id-expired`、`multiple-call-to-token-endpoint` | 何もしない（認証要求の期限切れや、承認前の応答を確認する）。`multiple-call-to-token-endpoint` は poll モードの前提 |
 
 ## 環境変数
 
@@ -96,6 +102,7 @@ suite のポーリング間隔は約 5 秒なので、既定で **12 秒**待っ
 | `SUITE` | `https://localhost:8443` | suite の API（テスト名の判別に使う） |
 | `IDP_BASE_URL` | `https://api.local.test` | idp-server |
 | `IDP_ROOT_CA` | `<repo>/docker/nginx/certs/rootCA.pem` | ローカル CA |
-| `CIBA_APPROVE_DELAY_MS` | `12000` | 承認までの待ち時間 |
+| `CIBA_WAIT_TIMEOUT_MS` | `30000` | テストが `WAITING` になるのを待つ上限 |
 | `CIBA_TENANT_ID` / `CIBA_DEVICE_ID` | financial-grade の値 | 対象テナント / デバイス |
-| `CIBA_USERNAME` / `CIBA_PASSWORD` | `fapi-ciba-test@example.com` | 承認に使うユーザー |
+| `CIBA_USERNAME` / `CIBA_PASSWORD` | `fapi-ciba-test@example.com` / `FapiCibaTestSecure123!` | 承認に使うユーザー |
+| `CIBA_LOG` | `ciba-approver/approver.log` | ログの出力先 |

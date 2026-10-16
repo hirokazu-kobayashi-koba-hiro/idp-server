@@ -67,11 +67,19 @@ function call(method, path, body) {
  *
  *   approve(既定) デバイスで承認する
  *   cancel        デバイスで拒否し、access_denied を返させる
- *   ignore        何もしない（認証要求の期限切れを確認するテスト）
+ *   ignore        何もしない（認証要求の期限切れや、承認前の応答を確認するテスト）
+ *
+ * multiple-call-to-token-endpoint は、承認前に、全テスト共通の 2 回（5 秒間隔）に続けて
+ * トークンリクエストを最大 20 回連続で送り、すべて承認前の応答（authorization_pending など）で
+ * あることを確かめて終わる。途中で承認すると 200 が返って落ちる。poll モードではテストが
+ * WAITING に入らないが、作成直後に一瞬 WAITING に見えるため、既定の approve では承認されてしまう。
+ * これは poll モードの動き。ping モードでは連続送信のあと WAITING に入って承認を待ち、既定の
+ * approve で通るので、ping を流すときはこの行を poll に限る（今の run.sh は poll だけ）。
  */
 const BEHAVIORS = [
   { match: /user-rejects-authentication/, action: "cancel" },
   { match: /auth-req-id-expired/, action: "ignore" },
+  { match: /multiple-call-to-token-endpoint/, action: "ignore" },
 ];
 
 const actionFor = (testName) =>
@@ -163,7 +171,7 @@ for (;;) {
 
     try {
       if (action === "ignore") {
-        log("    放置する（期限切れを確認するテスト）");
+        log("    放置する（期限切れや承認前の応答を確認するテスト）");
       } else {
         const proceed = test ? await waitUntilWaiting(test.testId) : true;
         if (!proceed) {
