@@ -81,6 +81,10 @@ suite はテストの説明で「`WAITING` になるまで応答しないこと�
 到達しなければそのまま承認する）。固定の待ち時間ではないので、suite のポーリング間隔に
 依存しない。
 
+テスト名を取れない、または suite への問い合わせに失敗したときは、待たずに承認する。
+また、テストは作成直後に一瞬 `WAITING` に見えることがあり、そのときも待たずに承認される。
+承認されてはいけないテストは、下の表で `ignore` にする。
+
 ### テストごとの振る舞い
 
 `approver.mjs` の `BEHAVIORS` にテスト名で列挙する。
@@ -100,4 +104,5 @@ suite はテストの説明で「`WAITING` になるまで応答しないこと�
 | `IDP_ROOT_CA` | `<repo>/docker/nginx/certs/rootCA.pem` | ローカル CA |
 | `CIBA_WAIT_TIMEOUT_MS` | `30000` | テストが `WAITING` になるのを待つ上限 |
 | `CIBA_TENANT_ID` / `CIBA_DEVICE_ID` | financial-grade の値 | 対象テナント / デバイス |
-| `CIBA_USERNAME` / `CIBA_PASSWORD` | `fapi-ciba-test@example.com` | 承認に使うユーザー |
+| `CIBA_USERNAME` / `CIBA_PASSWORD` | `fapi-ciba-test@example.com` / `FapiCibaTestSecure123!` | 承認に使うユーザー |
+| `CIBA_LOG` | `ciba-approver/approver.log` | ログの出力先 |

@@ -71,9 +71,10 @@ function call(method, path, body) {
  *
  * multiple-call-to-token-endpoint は、承認前に、全テスト共通の 2 回（5 秒間隔）に続けて
  * トークンリクエストを最大 20 回連続で送り、すべて承認前の応答（authorization_pending など）で
- * あることを確かめて終わる。途中で承認すると 200 が返って落ちる。
- * これは poll モードの動き。ping モードでは連続送信のあと承認を待つため、ping を流すなら
- * ここを変える必要がある（今の run.sh は poll だけ）。
+ * あることを確かめて終わる。途中で承認すると 200 が返って落ちる。poll モードではテストが
+ * WAITING に入らないが、作成直後に一瞬 WAITING に見えるため、既定の approve では承認されてしまう。
+ * これは poll モードの動き。ping モードでは連続送信のあと WAITING に入って承認を待ち、既定の
+ * approve で通るので、ping を流すときはこの行を poll に限る（今の run.sh は poll だけ）。
  */
 const BEHAVIORS = [
   { match: /user-rejects-authentication/, action: "cancel" },
