@@ -67,11 +67,15 @@ function call(method, path, body) {
  *
  *   approve(既定) デバイスで承認する
  *   cancel        デバイスで拒否し、access_denied を返させる
- *   ignore        何もしない（認証要求の期限切れを確認するテスト）
+ *   ignore        何もしない（認証要求の期限切れや、承認前の応答を確認するテスト）
+ *
+ * multiple-call-to-token-endpoint は、承認前のトークンリクエストを 5 秒あけて 2 回送り、
+ * どちらも authorization_pending であることを確かめて終わる。承認すると 2 回目が 200 になる。
  */
 const BEHAVIORS = [
   { match: /user-rejects-authentication/, action: "cancel" },
   { match: /auth-req-id-expired/, action: "ignore" },
+  { match: /multiple-call-to-token-endpoint/, action: "ignore" },
 ];
 
 const actionFor = (testName) =>
@@ -163,7 +167,7 @@ for (;;) {
 
     try {
       if (action === "ignore") {
-        log("    放置する（期限切れを確認するテスト）");
+        log("    放置する（期限切れや承認前の応答を確認するテスト）");
       } else {
         const proceed = test ? await waitUntilWaiting(test.testId) : true;
         if (!proceed) {
