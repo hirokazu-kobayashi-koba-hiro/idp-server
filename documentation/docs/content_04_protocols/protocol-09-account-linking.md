@@ -148,7 +148,7 @@ pending ──[start] 操作者を照合──▶ authorized ──[callback] �
 コールバックは外部IdPからのクロスサイトのトップレベル GET です。`SameSite=Lax` はこの遷移をちょうど許可しますが、`Strict` だと Cookie が送られず連携が必ず失敗します。そのため `IDP_LINK_BINDING` は `Lax` 固定で、テナントの `cookie_same_site` には従いません。
 :::
 
-`/linking/start` は idp-server のブラウザセッションから操作者を解決します。セッションが無い場合は 401 を返します。
+`/linking/start` は idp-server のブラウザセッションから操作者を解決します。セッションが無い場合は、戻り先へ `linking=failed&error=login_required` を返します（[ブラウザ遷移の失敗](#ブラウザ遷移の失敗)）。
 
 ### RP 側の前提: トップレベル遷移で開くこと
 
@@ -199,7 +199,7 @@ iframe に埋め込むと third-party 文脈になり、Safari の ITP と Chrom
 }
 ```
 
-`external_user_id` へのマッピングは必須です。この値が外部アカウントの識別子として `UNIQUE (tenant_id, provider, federated_user_id)` に使われます。
+外部アカウントの識別子（`federated_user_id`）は、ID Token が返れば検証した `sub`、無ければ userinfo の `external_user_id` へのマッピングから取ります。どちらも無い連携先（OAuth 2.0 の委譲だけ）でも連携できますが、同じ外部アカウントかを判定できないので、連携するたびに新しい連携として増えます。
 
 `scopes_supported` は `link` のリクエストで `scope` を省略したときの既定値です。
 
