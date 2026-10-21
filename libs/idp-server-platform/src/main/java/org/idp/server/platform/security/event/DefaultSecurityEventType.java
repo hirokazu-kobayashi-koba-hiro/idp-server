@@ -131,6 +131,9 @@ public enum DefaultSecurityEventType {
   // External IdP account linking
   external_account_linked("External IdP account was linked"),
   external_account_unlinked("External IdP account link was removed"),
+  external_account_unlinked_by_admin(
+      "External IdP account link was removed by administrator. Kept apart from the user's own"
+          + " unlink so an audit can tell who removed it"),
   external_account_link_failed(
       "External IdP account linking failed. A run of these points at an attempt to attach someone"
           + " else's external account, so it is recorded even when the cause is a user mistake"),
