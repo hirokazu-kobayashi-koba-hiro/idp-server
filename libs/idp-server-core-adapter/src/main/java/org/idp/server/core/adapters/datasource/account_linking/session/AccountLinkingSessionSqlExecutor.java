@@ -17,10 +17,12 @@
 package org.idp.server.core.adapters.datasource.account_linking.session;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import org.idp.server.account_linking.AccountLinkingSession;
 import org.idp.server.account_linking.AccountLinkingSessionStatus;
 import org.idp.server.account_linking.AccountLinkingState;
+import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface AccountLinkingSessionSqlExecutor {
@@ -44,4 +46,8 @@ public interface AccountLinkingSessionSqlExecutor {
   void delete(Tenant tenant, AccountLinkingState state);
 
   Map<String, String> selectOne(Tenant tenant, AccountLinkingState state);
+
+  void deleteAll(Tenant tenant, UserIdentifier userIdentifier);
+
+  List<Map<String, String>> selectListByUser(Tenant tenant, UserIdentifier userIdentifier);
 }

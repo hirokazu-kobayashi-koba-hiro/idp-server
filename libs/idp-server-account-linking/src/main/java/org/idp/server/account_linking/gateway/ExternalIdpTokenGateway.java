@@ -19,6 +19,7 @@ package org.idp.server.account_linking.gateway;
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
@@ -38,6 +39,15 @@ import org.idp.server.platform.log.LoggerWrapper;
  * both the lazy refresh and the explicit refresh endpoint go through one implementation.
  */
 public class ExternalIdpTokenGateway {
+
+  /**
+   * How long one call to the external IdP may take.
+   *
+   * <p>These calls run inside a database transaction, and on unlink under a row lock. The client
+   * has only a connect timeout, so without this a provider that accepts the connection and never
+   * answers would hold both until it gave up.
+   */
+  static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(10);
 
   HttpRequestExecutor httpRequestExecutor;
   LoggerWrapper log = LoggerWrapper.getLogger(ExternalIdpTokenGateway.class);
@@ -78,6 +88,7 @@ public class ExternalIdpTokenGateway {
       HttpRequest.Builder builder =
           HttpRequest.newBuilder()
               .uri(new URI(configuration.tokenEndpoint()))
+              .timeout(REQUEST_TIMEOUT)
               .header("Content-Type", "application/x-www-form-urlencoded")
               .header("Accept", "application/json")
               .POST(HttpRequest.BodyPublishers.ofString(httpQueryParams.params()));
@@ -96,6 +107,56 @@ public class ExternalIdpTokenGateway {
           500,
           Map.of(),
           Map.of("error", "server_error", "error_description", "unexpected network error"));
+    }
+  }
+
+  /**
+   * Asks the external IdP to revoke a token (RFC 7009), authenticating as the linking client.
+   *
+   * <p>Best effort: a failure is logged and reported as {@code false}, never thrown, so that a link
+   * can always be removed even when the external IdP cannot be reached.
+   *
+   * @param configuration the OIDC client settings of the linking provider
+   * @param revocationEndpoint the external IdP's revocation endpoint
+   * @param token the token to revoke
+   * @param tokenTypeHint {@code refresh_token} or {@code access_token}
+   * @return whether the external IdP accepted the revocation
+   */
+  public boolean revoke(
+      OidcSsoConfiguration configuration,
+      String revocationEndpoint,
+      String token,
+      String tokenTypeHint) {
+    try {
+      boolean clientSecretBasic = isClientSecretBasic(configuration);
+      Map<String, String> params = new HashMap<>();
+      params.put("token", token);
+      params.put("token_type_hint", tokenTypeHint);
+      params.put("client_id", configuration.clientId());
+      if (!clientSecretBasic) {
+        params.put("client_secret", configuration.clientSecret());
+      }
+
+      HttpRequest.Builder builder =
+          HttpRequest.newBuilder()
+              .uri(new URI(revocationEndpoint))
+              .timeout(REQUEST_TIMEOUT)
+              .header("Content-Type", "application/x-www-form-urlencoded")
+              .POST(HttpRequest.BodyPublishers.ofString(new HttpQueryParams(params).params()));
+      if (clientSecretBasic) {
+        builder.header("Authorization", basicAuthenticationValue(configuration));
+      }
+
+      HttpRequestResult httpResult = httpRequestExecutor.execute(builder.build());
+      if (httpResult.statusCode() >= 400) {
+        log.warn(
+            "Account linking token revocation was refused: status={}", httpResult.statusCode());
+        return false;
+      }
+      return true;
+    } catch (Exception e) {
+      log.warn("Account linking token revocation failed: {}", e.getMessage());
+      return false;
     }
   }
 

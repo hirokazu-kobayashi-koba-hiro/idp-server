@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 import org.idp.server.account_linking.AccountLinkingSession;
 import org.idp.server.account_linking.AccountLinkingSessionStatus;
 import org.idp.server.account_linking.AccountLinkingState;
+import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface AccountLinkingSessionCommandRepository {
@@ -48,4 +49,7 @@ public interface AccountLinkingSessionCommandRepository {
   void update(Tenant tenant, AccountLinkingSession session);
 
   void delete(Tenant tenant, AccountLinkingState state);
+
+  /** Removes every linking session the user started. Used by the user lifecycle executor. */
+  void deleteAll(Tenant tenant, UserIdentifier userIdentifier);
 }

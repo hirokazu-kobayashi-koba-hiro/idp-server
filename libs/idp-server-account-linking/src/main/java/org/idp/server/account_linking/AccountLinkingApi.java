@@ -70,6 +70,14 @@ public interface AccountLinkingApi {
   AccountLinkingResult findList(
       TenantIdentifier tenantIdentifier, User user, RequestAttributes requestAttributes);
 
+  /** Removes one of the caller's linked accounts, revoking its tokens at the external IdP first. */
+  AccountLinkingResult unlink(
+      TenantIdentifier tenantIdentifier,
+      User user,
+      OAuthToken oAuthToken,
+      AccountAlias alias,
+      RequestAttributes requestAttributes);
+
   /**
    * Hands the stored access token of one linked account to an authenticated client.
    *

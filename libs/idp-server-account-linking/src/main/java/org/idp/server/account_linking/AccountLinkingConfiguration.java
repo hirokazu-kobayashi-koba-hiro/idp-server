@@ -29,10 +29,20 @@ import org.idp.server.platform.json.JsonReadable;
 public class AccountLinkingConfiguration implements JsonReadable {
 
   String duplicateLinkPolicy;
+  String revocationEndpoint;
 
   public AccountLinkingConfiguration() {}
 
   public DuplicateLinkPolicy duplicateLinkPolicy() {
     return DuplicateLinkPolicy.of(duplicateLinkPolicy);
+  }
+
+  /** The external IdP's token revocation endpoint (RFC 7009), used when a link is removed. */
+  public String revocationEndpoint() {
+    return revocationEndpoint;
+  }
+
+  public boolean hasRevocationEndpoint() {
+    return revocationEndpoint != null && !revocationEndpoint.isBlank();
   }
 }

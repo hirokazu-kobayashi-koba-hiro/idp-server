@@ -35,14 +35,36 @@ public class AccountLinkingConfigurationResolver {
   }
 
   public AccountLinkingProviderConfiguration resolve(Tenant tenant, ExternalIdpProvider provider) {
+    return resolve(tenant, provider, false);
+  }
+
+  /**
+   * Resolves the provider even when an operator has disabled it.
+   *
+   * <p>Only for revoking tokens already issued under it. Disabling a provider is a natural first
+   * step when retiring it or responding to an incident, and that is exactly when the stored tokens
+   * still have to be revoked; new links must not start, which {@link #resolve(Tenant,
+   * ExternalIdpProvider)} keeps refusing.
+   */
+  public AccountLinkingProviderConfiguration resolveIncludingDisabled(
+      Tenant tenant, ExternalIdpProvider provider) {
+    return resolve(tenant, provider, true);
+  }
+
+  private AccountLinkingProviderConfiguration resolve(
+      Tenant tenant, ExternalIdpProvider provider, boolean includeDisabled) {
     SsoProvider ssoProvider = new SsoProvider(provider.value());
 
     OidcSsoConfiguration oidc =
         configurationQueryRepository.get(
-            tenant, FEDERATION_TYPE, ssoProvider, OidcSsoConfiguration.class);
+            tenant, FEDERATION_TYPE, ssoProvider, OidcSsoConfiguration.class, includeDisabled);
     AccountLinkingConfiguration linking =
         configurationQueryRepository.get(
-            tenant, FEDERATION_TYPE, ssoProvider, AccountLinkingConfiguration.class);
+            tenant,
+            FEDERATION_TYPE,
+            ssoProvider,
+            AccountLinkingConfiguration.class,
+            includeDisabled);
 
     return new AccountLinkingProviderConfiguration(oidc, linking);
   }

@@ -16,11 +16,16 @@
 
 package org.idp.server.account_linking.repository;
 
+import java.util.List;
 import org.idp.server.account_linking.AccountLinkingSession;
 import org.idp.server.account_linking.AccountLinkingState;
+import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface AccountLinkingSessionQueryRepository {
 
   AccountLinkingSession find(Tenant tenant, AccountLinkingState state);
+
+  /** Every linking session the user started, in any status. */
+  List<AccountLinkingSession> findList(Tenant tenant, UserIdentifier userIdentifier);
 }

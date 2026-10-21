@@ -8,9 +8,10 @@ import {
   serverConfig
 } from "../../testConfig";
 import { authorize, postAuthentication, requestToken } from "../../../api/oauthClient";
-import { get, post, postWithJson } from "../../../lib/http";
+import { deletion, get, post, postWithJson } from "../../../lib/http";
 import { requestAuthorizations } from "../../../oauth/request";
 import { convertNextAction } from "../../../lib/util";
+import { v4 as uuidv4 } from "uuid";
 
 /**
  * 外部IdPアカウント連携 (#1531)
@@ -69,6 +70,21 @@ describe("account linking", () => {
       },
     });
 
+  /** 組織管理 API を叩くための管理者トークン。 */
+  const requestAdminAccessToken = async () => {
+    const adminTokenResponse = await requestToken({
+      endpoint: serverConfig.tokenEndpoint,
+      grantType: "password",
+      username: serverConfig.oauth.username,
+      password: serverConfig.oauth.password,
+      scope: clientSecretPostClient.scope,
+      clientId: clientSecretPostClient.clientId,
+      clientSecret: clientSecretPostClient.clientSecret,
+    });
+    expect(adminTokenResponse.status).toBe(200);
+    return adminTokenResponse.data.access_token;
+  };
+
   /**
    * 外部IdP でログインして同意し、連携 callback の URL を得る。
    *
@@ -92,17 +108,7 @@ describe("account linking", () => {
     });
     expect(challengeResponse.status).toBe(200);
 
-    const adminTokenResponse = await requestToken({
-      endpoint: serverConfig.tokenEndpoint,
-      grantType: "password",
-      username: serverConfig.oauth.username,
-      password: serverConfig.oauth.password,
-      scope: clientSecretPostClient.scope,
-      clientId: clientSecretPostClient.clientId,
-      clientSecret: clientSecretPostClient.clientSecret,
-    });
-    expect(adminTokenResponse.status).toBe(200);
-    const adminAccessToken = adminTokenResponse.data.access_token;
+    const adminAccessToken = await requestAdminAccessToken();
 
     const transactionResponse = await get({
       url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${federationServerConfig.tenantId}/authentication-transactions?authorization_id=${id}`,
@@ -157,6 +163,36 @@ describe("account linking", () => {
 
     return completeResponse.data.alias;
   };
+
+  const READ_TOKEN_SCOPE = "linked_account:read_token";
+
+  /** 保管された外部トークンを、クライアント認証 + ユーザーのアクセストークンで取り出す。 */
+  const retrieveToken = async ({ alias, token, clientId, clientSecret, headers = {} }) => {
+    const params = new URLSearchParams();
+    params.append("token", token);
+    if (clientId) params.append("client_id", clientId);
+    if (clientSecret) params.append("client_secret", clientSecret);
+    return await post({
+      url: `${backendUrl}/${serverConfig.tenantId}/v1/linked-external-accounts/${alias}/token`,
+      headers,
+      body: params.toString(),
+    });
+  };
+
+  const listAliases = async (accessToken) => {
+    const response = await get({
+      url: `${backendUrl}/${serverConfig.tenantId}/v1/me/linked-external-accounts`,
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    expect(response.status).toBe(200);
+    return response.data.list.map((it) => it.alias);
+  };
+
+  const unlink = async (accessToken, alias) =>
+    await deletion({
+      url: `${backendUrl}/${serverConfig.tenantId}/v1/me/linked-external-accounts/${alias}`,
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
 
   describe("success pattern", () => {
 
@@ -326,21 +362,6 @@ describe("account linking", () => {
 
   describe("stored token retrieval", () => {
 
-    const READ_TOKEN_SCOPE = "linked_account:read_token";
-
-    /** 保管された外部トークンを、クライアント認証 + ユーザーのアクセストークンで取り出す。 */
-    const retrieveToken = async ({ alias, token, clientId, clientSecret, headers = {} }) => {
-      const params = new URLSearchParams();
-      params.append("token", token);
-      if (clientId) params.append("client_id", clientId);
-      if (clientSecret) params.append("client_secret", clientSecret);
-      return await post({
-        url: `${backendUrl}/${serverConfig.tenantId}/v1/linked-external-accounts/${alias}/token`,
-        headers,
-        body: params.toString(),
-      });
-    };
-
     it("hands out only the external access token, which works at the external IdP", async () => {
       const accessToken = await login(ownerUser, `openid profile email ${READ_TOKEN_SCOPE}`);
       const alias = await linkOnce(accessToken, PROVIDER, "openid profile email offline_access");
@@ -464,6 +485,169 @@ describe("account linking", () => {
       });
       console.log(response.status, response.data);
       expect(response.status).toBe(404);
+    });
+  });
+
+  describe("unlink", () => {
+
+    it("removes the link and revokes its tokens at the external IdP", async () => {
+      const accessToken = await login(ownerUser, `openid profile email ${READ_TOKEN_SCOPE}`);
+      const alias = await linkOnce(accessToken, PROVIDER, "openid profile email offline_access");
+
+      const tokenResponse = await retrieveToken({
+        alias,
+        token: accessToken,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      expect(tokenResponse.status).toBe(200);
+      const externalAccessToken = tokenResponse.data.access_token;
+
+      const unlinkResponse = await unlink(accessToken, alias);
+      expect(unlinkResponse.status).toBe(204);
+
+      expect(await listAliases(accessToken)).not.toContain(alias);
+
+      const afterResponse = await retrieveToken({
+        alias,
+        token: accessToken,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      expect(afterResponse.status).toBe(404);
+
+      // 行を消すだけでは、写し取られたトークンは外部IdP側で生き続ける。解除は外部でも失効させる。
+      const userinfoResponse = await get({
+        url: `${backendUrl}/${federationServerConfig.tenantId}/v1/userinfo`,
+        headers: { Authorization: `Bearer ${externalAccessToken}` },
+      });
+      expect(userinfoResponse.status).toBe(401);
+
+      const againResponse = await unlink(accessToken, alias);
+      expect(againResponse.status).toBe(404);
+      expect(againResponse.data.error).toBe("not_found");
+    });
+
+    it("answers 404 for another user's alias and leaves it in place", async () => {
+      const ownerAccessToken = await login(ownerUser);
+      const alias = await linkOnce(ownerAccessToken, PROVIDER, "openid profile email offline_access");
+
+      const otherAccessToken = await login(otherUser);
+      const response = await unlink(otherAccessToken, alias);
+      expect(response.status).toBe(404);
+
+      expect(await listAliases(ownerAccessToken)).toContain(alias);
+    });
+  });
+
+  describe("user deletion", () => {
+
+    /** 消してよい使い捨てのユーザーを作る。既存のテストユーザーは他のテストが使う。 */
+    const createDisposableUser = async () => {
+      const email = `account-linking-${Date.now()}@example.com`;
+      const password = "successUserCode001";
+      const response = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/users`,
+        headers: { Authorization: `Bearer ${await requestAdminAccessToken()}` },
+        body: {
+          sub: uuidv4(),
+          provider_id: "idp-server",
+          name: email,
+          email,
+          raw_password: password,
+        },
+      });
+      expect(response.status).toBe(201);
+      return { username: email, password };
+    };
+
+    /** 外部IdP 側でトークンがまだ有効か。外部IdP役テナントにも同じ client が居る。 */
+    const isActiveAtExternalIdp = async (token) => {
+      const params = new URLSearchParams();
+      params.append("token", token);
+      params.append("client_id", clientSecretPostClient.clientId);
+      params.append("client_secret", clientSecretPostClient.clientSecret);
+      const response = await post({
+        url: `${backendUrl}/${federationServerConfig.tenantId}/v1/tokens/introspection`,
+        body: params.toString(),
+      });
+      expect(response.status).toBe(200);
+      return response.data.active;
+    };
+
+    /** 後始末は非同期のライフサイクル処理なので、外部IdP で失効するまで少し待つ。 */
+    const waitUntilInactiveAtExternalIdp = async (token) => {
+      let active = await isActiveAtExternalIdp(token);
+      for (let i = 0; i < 20 && active; i++) {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        active = await isActiveAtExternalIdp(token);
+      }
+      return active;
+    };
+
+    // 識別子を持たない OAuth 2.0 の連携先を使う。OIDC 側は外部アカウントが既存ユーザーに連携済みで、
+    // duplicate_link_policy=reject により別ユーザーへは連携できない。
+    it("revokes the linked accounts' tokens at the external IdP when the user is deleted", async () => {
+      const user = await createDisposableUser();
+      const accessToken = await login(user, `openid profile email ${READ_TOKEN_SCOPE}`);
+      const alias = await linkOnce(accessToken, "account-linking-oauth2");
+
+      const tokenResponse = await retrieveToken({
+        alias,
+        token: accessToken,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      expect(tokenResponse.status).toBe(200);
+      const externalAccessToken = tokenResponse.data.access_token;
+      expect(await isActiveAtExternalIdp(externalAccessToken)).toBe(true);
+
+      const deleteResponse = await deletion({
+        url: `${backendUrl}/${serverConfig.tenantId}/v1/me`,
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      expect(deleteResponse.status).toBe(204);
+
+      // linked_external_accounts は user に FK を張っていないので、後始末はライフサイクルの
+      // executor の仕事。
+      expect(await waitUntilInactiveAtExternalIdp(externalAccessToken)).toBe(false);
+    });
+
+    it("cleans up the same way when an administrator deletes the user", async () => {
+      const user = await createDisposableUser();
+      const accessToken = await login(user, `openid profile email ${READ_TOKEN_SCOPE}`);
+      const alias = await linkOnce(accessToken, "account-linking-oauth2");
+
+      const tokenResponse = await retrieveToken({
+        alias,
+        token: accessToken,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      expect(tokenResponse.status).toBe(200);
+      const externalAccessToken = tokenResponse.data.access_token;
+
+      // コールバックまで進めて complete しない連携も残しておく。ユーザーが消えると誰も確定できない。
+      const parkedLink = await startLink(accessToken, "account-linking-oauth2", "account offline_access");
+      expect(parkedLink.status).toBe(201);
+      const parkedStart = await get({ url: parkedLink.data.start_url });
+      expect(parkedStart.status).toBe(302);
+      const parkedCallback = await get({ url: await consentAtExternalIdp(parkedStart.headers.location) });
+      expect(parkedCallback.status).toBe(302);
+
+      const userinfoResponse = await get({
+        url: `${backendUrl}/${serverConfig.tenantId}/v1/userinfo`,
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      expect(userinfoResponse.status).toBe(200);
+
+      const deleteResponse = await deletion({
+        url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/users/${userinfoResponse.data.sub}`,
+        headers: { Authorization: `Bearer ${await requestAdminAccessToken()}` },
+      });
+      expect(deleteResponse.status).toBe(204);
+
+      expect(await waitUntilInactiveAtExternalIdp(externalAccessToken)).toBe(false);
     });
   });
 

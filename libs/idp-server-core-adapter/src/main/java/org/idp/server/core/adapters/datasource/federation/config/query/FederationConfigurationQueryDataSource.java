@@ -40,7 +40,18 @@ public class FederationConfigurationQueryDataSource
   @Override
   public <T> T get(
       Tenant tenant, FederationType federationType, SsoProvider ssoProvider, Class<T> clazz) {
-    Map<String, String> result = executor.selectOne(tenant, federationType, ssoProvider);
+    return get(tenant, federationType, ssoProvider, clazz, false);
+  }
+
+  @Override
+  public <T> T get(
+      Tenant tenant,
+      FederationType federationType,
+      SsoProvider ssoProvider,
+      Class<T> clazz,
+      boolean includeDisabled) {
+    Map<String, String> result =
+        executor.selectOne(tenant, federationType, ssoProvider, includeDisabled);
 
     if (Objects.isNull(result) || result.isEmpty()) {
       throw new FederationConfigurationNotFoundException(

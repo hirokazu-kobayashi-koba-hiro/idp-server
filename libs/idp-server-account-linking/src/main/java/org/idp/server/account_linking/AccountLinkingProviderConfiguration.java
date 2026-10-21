@@ -47,4 +47,12 @@ public class AccountLinkingProviderConfiguration {
   public DuplicateLinkPolicy duplicateLinkPolicy() {
     return linking.duplicateLinkPolicy();
   }
+
+  public boolean hasRevocationEndpoint() {
+    return linking.hasRevocationEndpoint();
+  }
+
+  public String revocationEndpoint() {
+    return linking.revocationEndpoint();
+  }
 }

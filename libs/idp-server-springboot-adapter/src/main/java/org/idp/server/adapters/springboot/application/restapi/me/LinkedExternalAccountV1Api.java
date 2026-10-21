@@ -18,6 +18,7 @@ package org.idp.server.adapters.springboot.application.restapi.me;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
+import org.idp.server.account_linking.AccountAlias;
 import org.idp.server.account_linking.AccountLinkingApi;
 import org.idp.server.account_linking.AccountLinkingState;
 import org.idp.server.account_linking.ExternalIdpProvider;
@@ -110,7 +111,28 @@ public class LinkedExternalAccountV1Api implements ParameterTransformable {
     return toResponseEntity(response);
   }
 
+  @DeleteMapping("/{alias}")
+  public ResponseEntity<?> unlink(
+      @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @PathVariable("alias") String alias,
+      HttpServletRequest httpServletRequest) {
+
+    User user = resourceOwnerPrincipal.getUser();
+    OAuthToken oAuthToken = resourceOwnerPrincipal.getOAuthToken();
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    AccountLinkingResult response =
+        accountLinkingApi.unlink(
+            tenantIdentifier, user, oAuthToken, new AccountAlias(alias), requestAttributes);
+
+    return toResponseEntity(response);
+  }
+
   private ResponseEntity<?> toResponseEntity(AccountLinkingResult response) {
+    if (response.statusCode() == HttpStatus.NO_CONTENT.value()) {
+      return ResponseEntity.noContent().build();
+    }
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
     return new ResponseEntity<>(
