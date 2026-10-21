@@ -701,6 +701,13 @@ describe("account linking", () => {
       expect((await unlink(accessToken, `${PROVIDER}-1`)).status).toBe(403);
     });
 
+    it("refuses to start a link to a provider that is not configured", async () => {
+      const accessToken = await login(ownerUser);
+      const response = await startLink(accessToken, "no-such-provider");
+      expect(response.status).toBe(400);
+      expect(response.data.error).toBe("invalid_request");
+    });
+
     it("lets linked_account:manage list too, since managing needs the list", async () => {
       const accessToken = await login(ownerUser);
       expect((await listWith(accessToken)).status).toBe(200);

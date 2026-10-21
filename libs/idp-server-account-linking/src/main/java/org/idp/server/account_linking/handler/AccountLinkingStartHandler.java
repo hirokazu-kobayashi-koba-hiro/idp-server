@@ -20,11 +20,13 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.account_linking.*;
+import org.idp.server.account_linking.AccountLinkingConfigurationResolver;
 import org.idp.server.account_linking.io.AccountLinkingResult;
 import org.idp.server.account_linking.io.AccountLinkingStartRequest;
 import org.idp.server.account_linking.io.AccountLinkingStatus;
 import org.idp.server.account_linking.repository.AccountLinkingSessionCommandRepository;
 import org.idp.server.account_linking.validator.AccountLinkingStartRequestValidator;
+import org.idp.server.account_linking.verifier.LinkingProviderVerifier;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
@@ -38,6 +40,7 @@ public class AccountLinkingStartHandler {
   public static final long SESSION_DURATION_SECONDS = 900;
 
   AccountLinkingStartRequestValidator validator;
+  LinkingProviderVerifier providerVerifier;
   AccountLinkingSessionCommandRepository sessionCommandRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
   AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
@@ -47,8 +50,10 @@ public class AccountLinkingStartHandler {
       AccountLinkingSessionCommandRepository sessionCommandRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository,
       AuthorizationServerConfigurationQueryRepository
-          authorizationServerConfigurationQueryRepository) {
+          authorizationServerConfigurationQueryRepository,
+      AccountLinkingConfigurationResolver configurationResolver) {
     this.validator = new AccountLinkingStartRequestValidator();
+    this.providerVerifier = new LinkingProviderVerifier(configurationResolver);
     this.sessionCommandRepository = sessionCommandRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
     this.authorizationServerConfigurationQueryRepository =
@@ -64,6 +69,7 @@ public class AccountLinkingStartHandler {
       ClientConfiguration clientConfiguration =
           clientConfigurationQueryRepository.get(tenant, request.oAuthToken().requestedClientId());
       validator.validate(request, clientConfiguration.linkingReturnUris());
+      providerVerifier.verify(tenant, request.provider());
 
       LocalDateTime now = SystemDateTime.now();
       AccountLinkingPkce pkce = AccountLinkingPkce.generate();

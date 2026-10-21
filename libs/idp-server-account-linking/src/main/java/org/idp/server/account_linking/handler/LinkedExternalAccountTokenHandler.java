@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.account_linking.AccountLinkingConfigurationResolver;
 import org.idp.server.account_linking.AccountLinkingScope;
+import org.idp.server.account_linking.ExternalTokenLifetime;
 import org.idp.server.account_linking.LinkedExternalAccount;
 import org.idp.server.account_linking.exception.LinkedExternalAccountTokenException;
 import org.idp.server.account_linking.gateway.ExternalIdpTokenGateway;
@@ -31,6 +32,7 @@ import org.idp.server.account_linking.io.LinkedExternalAccountTokenRequest;
 import org.idp.server.account_linking.io.LinkedExternalAccountTokenResult;
 import org.idp.server.account_linking.repository.LinkedExternalAccountCommandRepository;
 import org.idp.server.account_linking.repository.LinkedExternalAccountQueryRepository;
+import org.idp.server.core.openid.federation.FederationConfigurationNotFoundException;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
@@ -253,8 +255,7 @@ public class LinkedExternalAccountTokenHandler {
           "The stored token has expired and cannot be refreshed. Link the account again.");
     }
 
-    OidcSsoConfiguration configuration =
-        configurationResolver.resolve(tenant, locked.provider()).oidc();
+    OidcSsoConfiguration configuration = providerConfiguration(tenant, locked);
     OidcTokenResult tokenResult =
         tokenGateway.refresh(configuration, aesCipher.decrypt(locked.encryptedRefreshToken()));
 
@@ -265,6 +266,26 @@ public class LinkedExternalAccountTokenHandler {
     LinkedExternalAccount refreshed = withRefreshedTokens(locked, configuration, tokenResult, now);
     accountCommandRepository.update(tenant, refreshed);
     return refreshed;
+  }
+
+  /**
+   * The provider's settings for a refresh.
+   *
+   * <p>An operator may have removed or disabled the provider since the account was linked. The
+   * stored refresh token cannot be spent without them, so the caller is told to link again, as for
+   * any refresh that cannot be made.
+   */
+  private OidcSsoConfiguration providerConfiguration(Tenant tenant, LinkedExternalAccount account) {
+    try {
+      return configurationResolver.resolve(tenant, account.provider()).oidc();
+    } catch (FederationConfigurationNotFoundException exception) {
+      log.warn(
+          "Linking provider is no longer configured. provider={}, alias={}",
+          account.provider().value(),
+          account.accountAlias().value());
+      throw LinkedExternalAccountTokenException.relinkRequired(
+          "The linking provider is no longer available. Link the account again.");
+    }
   }
 
   private LinkedExternalAccountTokenException refreshFailure(
@@ -293,7 +314,7 @@ public class LinkedExternalAccountTokenHandler {
 
     EncryptedData accessToken = aesCipher.encrypt(tokenResult.accessToken());
     LocalDateTime accessTokenExpiresAt =
-        tokenResult.hasExpiresIn() ? now.plusSeconds(tokenResult.expiresIn()) : null;
+        ExternalTokenLifetime.accessTokenExpiresAt(tokenResult, now);
 
     // A provider that does not rotate answers without a refresh token; the stored one stays valid.
     if (!tokenResult.hasRefreshToken()) {
@@ -309,7 +330,7 @@ public class LinkedExternalAccountTokenHandler {
         accessToken,
         aesCipher.encrypt(tokenResult.refreshToken()),
         accessTokenExpiresAt,
-        now.plusSeconds(configuration.refreshTokenExpiresIn()),
+        ExternalTokenLifetime.refreshTokenExpiresAt(configuration, now),
         now);
   }
 

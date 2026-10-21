@@ -16,7 +16,7 @@ set -e
 #
 #   strict は同一サイトなのでログインは通るが、/linking/start への遷移が
 #   cross-site の top-level navigation になるため OP セッション Cookie が送られず、
-#   アカウント連携だけが 401 になる。
+#   アカウント連携だけが RP の戻り先へ linking=failed&error=login_required で戻される。
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
@@ -33,7 +33,7 @@ case "${1:-}" in
     echo "  same-site      auth.local.test    SameSite=Lax    どのブラウザでも通る"
     echo "  cross-site     auth.idp.local     SameSite=None   Safari はログイン不可"
     echo "  cross-site-cp  auth-cp.idp.local  SameSite=None   + context path"
-    echo "  strict         auth.local.test    SameSite=Strict ログインは通るが連携が 401"
+    echo "  strict         auth.local.test    SameSite=Strict ログインは通るが連携は login_required で戻る"
     exit 1
     ;;
 esac

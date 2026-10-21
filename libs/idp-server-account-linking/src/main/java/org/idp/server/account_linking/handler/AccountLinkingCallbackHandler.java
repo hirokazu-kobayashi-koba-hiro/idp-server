@@ -49,8 +49,6 @@ public class AccountLinkingCallbackHandler {
 
   static final String DEFAULT_ENCRYPTION_KEY_ID = "default";
 
-  static final long DEFAULT_ACCESS_TOKEN_LIFETIME = 3600;
-
   AccountLinkingSessionQueryRepository sessionQueryRepository;
   AccountLinkingSessionCommandRepository sessionCommandRepository;
   AccountLinkingConfigurationResolver configurationResolver;
@@ -247,21 +245,11 @@ public class AccountLinkingCallbackHandler {
         .encryptedAccessToken(accessToken)
         .encryptedRefreshToken(refreshToken)
         .encryptionKeyId(DEFAULT_ENCRYPTION_KEY_ID)
-        .accessTokenExpiresAt(now.plusSeconds(accessTokenLifetime(tokenResult)))
+        .accessTokenExpiresAt(ExternalTokenLifetime.accessTokenExpiresAt(tokenResult, now))
         .refreshTokenExpiresAt(
-            refreshToken == null ? null : now.plusSeconds(configuration.refreshTokenExpiresIn()))
+            refreshToken == null
+                ? null
+                : ExternalTokenLifetime.refreshTokenExpiresAt(configuration, now))
         .build();
-  }
-
-  /**
-   * The access token's lifetime in seconds.
-   *
-   * <p>{@code expires_in} is only RECOMMENDED (RFC 6749 §5.1), and some providers leave it out. A
-   * token stored without an expiry would count as expired from the start and be refreshed on every
-   * retrieval, so an hour is assumed instead; a token that dies earlier is refreshed or reported as
-   * needing a new link when it is next used.
-   */
-  private long accessTokenLifetime(OidcTokenResult tokenResult) {
-    return tokenResult.hasExpiresIn() ? tokenResult.expiresIn() : DEFAULT_ACCESS_TOKEN_LIFETIME;
   }
 }

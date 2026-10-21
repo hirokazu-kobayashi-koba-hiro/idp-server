@@ -49,7 +49,7 @@ public class AccountLinkingV1Api implements ParameterTransformable {
   @GetMapping("/start")
   public ResponseEntity<?> start(
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      @RequestParam("state") String state,
+      @RequestParam(value = "state", required = false) String state,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
