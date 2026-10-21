@@ -47,7 +47,6 @@ const IdpServer = ({
     checks: ["pkce", "state"],
     token: {
       async request(context: { params: { code: string } }) {
-        console.log("------------- token request -----------------");
         const { code } = context.params;
         const params = new URLSearchParams({
           grant_type: "authorization_code",
@@ -66,12 +65,11 @@ const IdpServer = ({
           body: params,
         });
         if (!response.ok) {
-          console.log(response);
+          console.error("token request failed", response.status);
           return {};
         }
 
         const body = await response.json();
-        console.log("token", body);
 
         return {
           ...body,
@@ -87,7 +85,6 @@ const IdpServer = ({
           id_token: string;
         };
       }) {
-        console.log(context.params);
         const { access_token, refresh_token, expires_at, id_token } =
           context.params;
 
@@ -99,12 +96,11 @@ const IdpServer = ({
           },
         });
         if (!response.ok) {
-          console.log(response);
+          console.error("userinfo request failed", response.status);
           return {};
         }
 
         const body = await response.json();
-        console.log("userinfo", body);
 
         return {
           access_token,
@@ -146,9 +142,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     async jwt({ token, account }) {
-      console.log("--------------- jwt ----------------");
-      console.log(token);
-      console.log(account);
       if (account) {
         token.provider = account.provider;
         token.accessToken = account.access_token;
@@ -158,10 +151,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       return token;
     },
-    async session({ session, token, trigger, newSession }) {
-      console.log("------------- session -----------------");
+    async session({ session, token }) {
       // Note, that `rest.session` can be any arbitrary object, remember to validate it!
-      console.log(session, token, trigger, newSession);
 
       session.accessToken = token.accessToken as string | undefined;
       session.refreshToken = token.refreshToken as string | undefined;
@@ -172,7 +163,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   events: {
     async signOut() {
-      console.log("------------- signOut event -----------------");
       // Note: RP-Initiated Logout はブラウザリダイレクト方式に変更
       // LogoutButton コンポーネントから直接 IDP server の /v1/logout にリダイレクトする
       // これにより Cookie が正しく送信され、セッションが確実に削除される
