@@ -16,14 +16,11 @@ export default function AuthHandler({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const pathname = usePathname();
 
   const goToPage = async () => {
     await sleep(500);
-    if (session) {
-      console.log(session);
-    }
     if (pathname && pathname !== "/") {
       // pathname にはクエリが含まれない。落とすと、戻り先に付いた結果（?linked= など）が消える。
       router.push(`${pathname}${window.location.search}${window.location.hash}`);
