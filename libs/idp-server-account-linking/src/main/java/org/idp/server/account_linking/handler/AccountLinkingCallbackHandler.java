@@ -49,6 +49,8 @@ public class AccountLinkingCallbackHandler {
 
   static final String DEFAULT_ENCRYPTION_KEY_ID = "default";
 
+  static final long DEFAULT_ACCESS_TOKEN_LIFETIME = 3600;
+
   AccountLinkingSessionQueryRepository sessionQueryRepository;
   AccountLinkingSessionCommandRepository sessionCommandRepository;
   AccountLinkingConfigurationResolver configurationResolver;
@@ -82,21 +84,26 @@ public class AccountLinkingCallbackHandler {
     Tenant tenant = request.tenant();
     AccountLinkingState state = request.state();
     LocalDateTime now = SystemDateTime.now();
-    AccountLinkingSession session = null;
 
+    AccountLinkingSession session = sessionQueryRepository.find(tenant, state);
+    AccountLinkingResult unverified = verifyBrowser(tenant, session, request, now);
+    if (unverified != null) {
+      return unverified;
+    }
+
+    // From here the browser is the one that started this link, so every failure goes back to the
+    // RP with the state, whatever raised it. Only the session is dropped: the external IdP has
+    // answered this authorization request, or its code has been spent, and neither can be retried.
     try {
-      session = getSession(tenant, state);
-      session.verifyNotExpired(now);
-
-      // Before anything else, and before the session is claimed: a browser that cannot present the
-      // secret issued at /linking/start is not the one that started this link, and its
-      // authorization code must not be redeemed. Rejecting here leaves the session usable by the
-      // browser that can. A denial is checked the same way, so that a request carrying someone
-      // else's state cannot end their link.
-      session.verifyBrowserBinding(request.browserBindingSecret());
-
       if (request.hasError()) {
-        return denied(tenant, session, request);
+        log.warn(
+            "Account linking denied at the external identity provider. error={}",
+            AccountLinkingReturnError.fromExternal(request.error()).value());
+        return failed(tenant, session, AccountLinkingReturnError.fromExternal(request.error()));
+      }
+      if (!request.hasCode()) {
+        log.warn("Account linking callback carried neither a code nor an error.");
+        return failed(tenant, session, AccountLinkingReturnError.SERVER_ERROR);
       }
 
       // Claimed before the exchange: a request that loses here must not redeem the code, because
@@ -107,8 +114,13 @@ public class AccountLinkingCallbackHandler {
           AccountLinkingSessionStatus.AUTHORIZED,
           AccountLinkingSessionStatus.PARKED,
           now)) {
-        throw new AccountLinkingSessionStateException(
-            "Account linking session is not awaiting a callback.");
+        // Another callback of this same browser got here first and is redeeming the code. Leave
+        // its session alone and send this one to the error page.
+        return errorPage(
+            tenant,
+            session,
+            new AccountLinkingSessionStateException(
+                "Account linking session is not awaiting a callback."));
       }
 
       ParkedCredentials credentials = exchange(tenant, session, request.code(), now);
@@ -117,43 +129,75 @@ public class AccountLinkingCallbackHandler {
       return AccountLinkingResult.redirect(
           AccountLinkingReturnUri.done(session.redirectUri(), state).value());
 
-    } catch (ExternalIdpRequestFailedException exception) {
-      // The code is spent and the session cannot be retried, so it is dropped rather than left
-      // parked with nothing in it. The browser has been confirmed as the one that started the
-      // link, so it goes back to the RP with the state.
-      sessionCommandRepository.delete(tenant, state);
-      return errorHandler
-          .handle(exception)
-          .redirectingTo(
-              AccountLinkingReturnUri.failed(
-                      session.redirectUri(), AccountLinkingReturnError.SERVER_ERROR, state)
-                  .value());
     } catch (Exception exception) {
-      // The link is unknown or the browser is not the one that started it: there is no return URI
-      // this browser may be sent to.
-      AccountLinkingResult failure = errorHandler.handle(exception);
-      return failure.redirectingTo(new AccountLinkingErrorPage(tenant, failure.status()).value());
+      errorHandler.handle(exception);
+      return failed(tenant, session, AccountLinkingReturnError.SERVER_ERROR);
     }
   }
 
   /**
-   * The user declined, or the provider failed, at the external IdP.
+   * Checks that this callback belongs to a link awaiting it, from the browser that started it.
    *
-   * <p>The session is dropped: the provider has answered this authorization request and will not
-   * answer it again.
+   * <p>The status is looked at before the binding. A link that has already moved on is most often
+   * the same browser coming back — a reload, or the back button after the cookie was spent — and
+   * telling that user the link was started elsewhere would be wrong, as would counting it as a
+   * binding mismatch.
+   *
+   * <p>A browser that cannot present the secret issued at {@code /linking/start} is not the one
+   * that started this link: its authorization code is never redeemed, and a denial from it does not
+   * end the link. The session is left for the browser that can.
+   *
+   * @return the error page to send the browser to, or {@code null} when the browser is verified
    */
-  private AccountLinkingResult denied(
-      Tenant tenant, AccountLinkingSession session, AccountLinkingCallbackRequest request) {
-    log.warn("Account linking denied at the external identity provider. error={}", request.error());
+  private AccountLinkingResult verifyBrowser(
+      Tenant tenant,
+      AccountLinkingSession session,
+      AccountLinkingCallbackRequest request,
+      LocalDateTime now) {
+    try {
+      if (!session.exists()) {
+        throw new AccountLinkingNotFoundException("Account linking session not found.");
+      }
+      session.verifyNotExpired(now);
+      if (!session.status().isAuthorized()) {
+        throw new AccountLinkingSessionStateException(
+            "Account linking session is not awaiting a callback.");
+      }
+      session.verifyBrowserBinding(request.browserBindingSecret());
+      return null;
+    } catch (Exception exception) {
+      return errorPage(tenant, session, exception);
+    }
+  }
+
+  private AccountLinkingResult errorPage(
+      Tenant tenant, AccountLinkingSession session, Exception exception) {
+    AccountLinkingResult failure = errorHandler.handle(exception);
+    AccountLinkingResult redirect =
+        failure.redirectingTo(new AccountLinkingErrorPage(tenant, failure.status()).value());
+    return session.exists() ? withSessionContext(redirect, session) : redirect;
+  }
+
+  /** Drops the session and sends the verified browser back to the RP with the state. */
+  private AccountLinkingResult failed(
+      Tenant tenant, AccountLinkingSession session, AccountLinkingReturnError error) {
     sessionCommandRepository.delete(tenant, session.state());
 
-    return AccountLinkingResult.redirect(
-        AccountLinkingReturnUri.failed(
-                session.redirectUri(),
-                AccountLinkingReturnError.fromExternal(request.error()),
-                session.state())
-            .value(),
-        DefaultSecurityEventType.external_account_link_failed);
+    return withSessionContext(
+        AccountLinkingResult.redirect(
+            AccountLinkingReturnUri.failed(session.redirectUri(), error, session.state()).value(),
+            DefaultSecurityEventType.external_account_link_failed),
+        session);
+  }
+
+  /**
+   * Names the user and client the link belongs to on the event. A run of failures is only useful if
+   * it says whose link was being targeted.
+   */
+  private AccountLinkingResult withSessionContext(
+      AccountLinkingResult result, AccountLinkingSession session) {
+    return result.withContext(
+        session.requestedClientId(), new User().setSub(session.userIdentifier().value()));
   }
 
   private ParkedCredentials exchange(
@@ -166,7 +210,7 @@ public class AccountLinkingCallbackHandler {
         tokenGateway.exchangeAuthorizationCode(
             configuration, code, configuration.redirectUri(), session.codeVerifier());
 
-    if (tokenResult.isError()) {
+    if (tokenResult.isError() || !tokenResult.hasAccessToken()) {
       log.warn(
           "Account linking token exchange failed. provider={}, status={}",
           session.provider().value(),
@@ -203,17 +247,21 @@ public class AccountLinkingCallbackHandler {
         .encryptedAccessToken(accessToken)
         .encryptedRefreshToken(refreshToken)
         .encryptionKeyId(DEFAULT_ENCRYPTION_KEY_ID)
-        .accessTokenExpiresAt(now.plusSeconds(tokenResult.expiresIn()))
+        .accessTokenExpiresAt(now.plusSeconds(accessTokenLifetime(tokenResult)))
         .refreshTokenExpiresAt(
             refreshToken == null ? null : now.plusSeconds(configuration.refreshTokenExpiresIn()))
         .build();
   }
 
-  private AccountLinkingSession getSession(Tenant tenant, AccountLinkingState state) {
-    AccountLinkingSession session = sessionQueryRepository.find(tenant, state);
-    if (!session.exists()) {
-      throw new AccountLinkingNotFoundException("Account linking session not found.");
-    }
-    return session;
+  /**
+   * The access token's lifetime in seconds.
+   *
+   * <p>{@code expires_in} is only RECOMMENDED (RFC 6749 §5.1), and some providers leave it out. A
+   * token stored without an expiry would count as expired from the start and be refreshed on every
+   * retrieval, so an hour is assumed instead; a token that dies earlier is refreshed or reported as
+   * needing a new link when it is next used.
+   */
+  private long accessTokenLifetime(OidcTokenResult tokenResult) {
+    return tokenResult.hasExpiresIn() ? tokenResult.expiresIn() : DEFAULT_ACCESS_TOKEN_LIFETIME;
   }
 }

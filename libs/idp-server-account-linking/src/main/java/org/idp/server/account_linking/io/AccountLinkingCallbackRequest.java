@@ -67,6 +67,10 @@ public class AccountLinkingCallbackRequest {
     return errorDescription;
   }
 
+  public boolean hasCode() {
+    return code != null && !code.isEmpty();
+  }
+
   public boolean hasError() {
     return error != null && !error.isEmpty();
   }

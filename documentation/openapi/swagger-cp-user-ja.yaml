@@ -891,6 +891,20 @@ paths:
       responses:
         '200':
           description: dry run の結果（実際には解除していません）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  sub:
+                    type: string
+                    description: 対象ユーザーの識別子
+                  alias:
+                    type: string
+                  dry_run:
+                    type: boolean
         '204':
           description: 連携を正常に解除しました
         '403':
@@ -1777,7 +1791,7 @@ components:
         federated_user_id:
           type: string
           nullable: true
-          description: 外部IdP側のアカウント識別子。連携先が名乗らない場合（OAuth 2.0 の委譲のみ）は null
+          description: 外部IdP側のアカウント識別子。ID Token の sub、無ければ userinfo から得た値。どちらも無い場合（userinfo を持たない OAuth 2.0 の委譲）は null
         federated_username:
           type: string
           nullable: true
