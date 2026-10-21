@@ -22,6 +22,8 @@ const SCOPE_LABELS: Record<string, string> = {
   phone: "Your phone number",
   address: "Your address",
   offline_access: "Keep you signed in",
+  "linked_account:read": "See which external accounts you have linked",
+  "linked_account:manage": "Link and unlink your external accounts",
   "linked_account:read_token": "Use your linked external accounts",
 };
 

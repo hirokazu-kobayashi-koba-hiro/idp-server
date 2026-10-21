@@ -56,12 +56,18 @@ RPアプリ                       idp-server                    外部IdP
 
 ### RPが呼ぶもの（Bearer 必須）
 
-| エンドポイント | 用途 |
-|---|---|
-| `POST /{tenant-id}/v1/me/linked-external-accounts/link/{provider}` | 連携の開始。`{ redirect_uri, scope }` を受け取り `{ start_url, state, expires_in }` を返す |
-| `POST /{tenant-id}/v1/me/linked-external-accounts/complete` | 連携の確定。`{ state }` を受け取る |
-| `GET /{tenant-id}/v1/me/linked-external-accounts` | 連携一覧 |
-| `DELETE /{tenant-id}/v1/me/linked-external-accounts/{alias}` | 連携の解除。成功時は 204 |
+| エンドポイント | 用途 | 必要な scope |
+|---|---|---|
+| `POST /{tenant-id}/v1/me/linked-external-accounts/link/{provider}` | 連携の開始。`{ redirect_uri, scope }` を受け取り `{ start_url, state, expires_in }` を返す | `linked_account:manage` |
+| `POST /{tenant-id}/v1/me/linked-external-accounts/complete` | 連携の確定。`{ state }` を受け取る | `linked_account:manage` |
+| `GET /{tenant-id}/v1/me/linked-external-accounts` | 連携一覧 | `linked_account:read` または `linked_account:manage` |
+| `DELETE /{tenant-id}/v1/me/linked-external-accounts/{alias}` | 連携の解除。成功時は 204 | `linked_account:manage` |
+
+scope が足りないときは `403` `{ "error": "insufficient_scope", "scope": "..." }` を返します。
+
+scope は「連携を見る」（`read`）と「連携を管理する」（`manage`）の 2 つに分けています。連携の追加と解除は分けません。管理する画面は両方を使い、外す連携を選ぶには一覧も要るので、`manage` は一覧も含みます。保管トークンの取得（`linked_account:read_token`）は別の許可で、`read` / `manage` のどちらにも含まれず、どちらも含みません。
+
+連携の確定は、連携を始めたクライアントのトークンでしか受け付けません。同じユーザーでも、別のクライアントのトークンでは `403` になります。
 
 `{provider}` には連携先の設定名（`sso_provider`）を指定します。
 
@@ -216,6 +222,8 @@ iframe に埋め込むと third-party 文脈になり、Safari の ITP と Chrom
 
 ### クライアント
 
+連携の API を呼ぶクライアントは、ユーザーのトークンで `linked_account:read` / `linked_account:manage` を得る必要があります。テナントの `scopes_supported` と、クライアントの `scope` の両方に追加してください。どちらかが無いと scope が付与されず、常に `403` になります。
+
 連携完了後の戻り先を `extension.linking_return_uris` に登録します。
 
 ```json
@@ -354,7 +362,7 @@ token={ユーザーのアクセストークン}&client_id=...&client_secret=...
 | ステータス | 発生条件 |
 |---|---|
 | 400 | `redirect_uri` が未指定、または allow-list に無い |
-| 403 | 操作者が連携セッションのユーザーと一致しない |
+| 403 | 操作者が連携セッションのユーザーと一致しない / 確定したクライアントが連携を始めたクライアントと違う / `insufficient_scope`（`linked_account:read` / `linked_account:manage` が無い） |
 | 404 | `state` に対応する連携セッションが無い / 解除する `alias` が呼び出したユーザーの連携に無い（`error` は `not_found`） |
 | 409 | 連携セッションが期限切れ、または期待する状態でない / 同じ外部アカウントが既に他のユーザーに紐付いている（`duplicate_link_policy: reject` のとき） |
 

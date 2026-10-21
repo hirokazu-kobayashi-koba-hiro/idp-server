@@ -103,10 +103,11 @@ public class LinkedExternalAccountV1Api implements ParameterTransformable {
       HttpServletRequest httpServletRequest) {
 
     User user = resourceOwnerPrincipal.getUser();
+    OAuthToken oAuthToken = resourceOwnerPrincipal.getOAuthToken();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     AccountLinkingResult response =
-        accountLinkingApi.findList(tenantIdentifier, user, requestAttributes);
+        accountLinkingApi.findList(tenantIdentifier, user, oAuthToken, requestAttributes);
 
     return toResponseEntity(response);
   }

@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.account_linking.AccountLinkingConfigurationResolver;
+import org.idp.server.account_linking.AccountLinkingScope;
 import org.idp.server.account_linking.LinkedExternalAccount;
 import org.idp.server.account_linking.exception.LinkedExternalAccountTokenException;
 import org.idp.server.account_linking.gateway.ExternalIdpTokenGateway;
@@ -65,7 +66,7 @@ import org.idp.server.platform.security.event.DefaultSecurityEventType;
 public class LinkedExternalAccountTokenHandler {
 
   /** The scope a user grants for a client to read their linked accounts' tokens. */
-  public static final String READ_TOKEN_SCOPE = "linked_account:read_token";
+  public static final String READ_TOKEN_SCOPE = AccountLinkingScope.READ_TOKEN;
 
   /**
    * How close to expiry an access token is refreshed before it is handed out.

@@ -42,7 +42,9 @@ describe("account linking", () => {
   };
 
   /** RP でログインし、アクセストークンを得る。cookie jar に OP セッションが載る。 */
-  const login = async (user, scope = "openid profile email") => {
+  const MANAGE_SCOPE = "linked_account:manage";
+
+  const login = async (user, scope = `openid profile email ${MANAGE_SCOPE}`) => {
     const { status, authorizationResponse } = await requestAuthorizations({
       endpoint: serverConfig.authorizationEndpoint,
       clientId: clientSecretPostClient.clientId,
@@ -378,7 +380,7 @@ describe("account linking", () => {
   describe("stored token retrieval", () => {
 
     it("hands out only the external access token, which works at the external IdP", async () => {
-      const accessToken = await login(ownerUser, `openid profile email ${READ_TOKEN_SCOPE}`);
+      const accessToken = await login(ownerUser, `openid profile email ${MANAGE_SCOPE} ${READ_TOKEN_SCOPE}`);
       const alias = await linkOnce(accessToken, PROVIDER, "openid profile email offline_access");
 
       const response = await retrieveToken({
@@ -434,7 +436,7 @@ describe("account linking", () => {
     });
 
     it("refuses a public client", async () => {
-      const accessToken = await login(ownerUser, `openid profile email ${READ_TOKEN_SCOPE}`);
+      const accessToken = await login(ownerUser, `openid profile email ${MANAGE_SCOPE} ${READ_TOKEN_SCOPE}`);
 
       const response = await retrieveToken({
         alias: `${PROVIDER}-1`,
@@ -447,7 +449,7 @@ describe("account linking", () => {
     });
 
     it("refuses a client that fails authentication", async () => {
-      const accessToken = await login(ownerUser, `openid profile email ${READ_TOKEN_SCOPE}`);
+      const accessToken = await login(ownerUser, `openid profile email ${MANAGE_SCOPE} ${READ_TOKEN_SCOPE}`);
 
       const response = await retrieveToken({
         alias: `${PROVIDER}-1`,
@@ -462,7 +464,7 @@ describe("account linking", () => {
 
     it("refuses a user token issued to another client", async () => {
       // 漏れたユーザーのトークンを別の confidential client が持ち込んでも、外部トークンは出さない。
-      const accessToken = await login(ownerUser, `openid profile email ${READ_TOKEN_SCOPE}`);
+      const accessToken = await login(ownerUser, `openid profile email ${MANAGE_SCOPE} ${READ_TOKEN_SCOPE}`);
 
       const basic = Buffer.from(
         `${clientSecretBasicClient.clientId}:${clientSecretBasicClient.clientSecret}`
@@ -490,7 +492,7 @@ describe("account linking", () => {
     });
 
     it("answers 404 for an alias the user has not linked", async () => {
-      const accessToken = await login(ownerUser, `openid profile email ${READ_TOKEN_SCOPE}`);
+      const accessToken = await login(ownerUser, `openid profile email ${MANAGE_SCOPE} ${READ_TOKEN_SCOPE}`);
 
       const response = await retrieveToken({
         alias: `${PROVIDER}-9999`,
@@ -506,7 +508,7 @@ describe("account linking", () => {
   describe("unlink", () => {
 
     it("removes the link and revokes its tokens at the external IdP", async () => {
-      const accessToken = await login(ownerUser, `openid profile email ${READ_TOKEN_SCOPE}`);
+      const accessToken = await login(ownerUser, `openid profile email ${MANAGE_SCOPE} ${READ_TOKEN_SCOPE}`);
       const alias = await linkOnce(accessToken, PROVIDER, "openid profile email offline_access");
 
       const tokenResponse = await retrieveToken({
@@ -604,7 +606,7 @@ describe("account linking", () => {
     // duplicate_link_policy=reject により別ユーザーへは連携できない。
     it("revokes the linked accounts' tokens at the external IdP when the user is deleted", async () => {
       const user = await createDisposableUser();
-      const accessToken = await login(user, `openid profile email ${READ_TOKEN_SCOPE}`);
+      const accessToken = await login(user, `openid profile email ${MANAGE_SCOPE} ${READ_TOKEN_SCOPE}`);
       const alias = await linkOnce(accessToken, "account-linking-oauth2");
 
       const tokenResponse = await retrieveToken({
@@ -630,7 +632,7 @@ describe("account linking", () => {
 
     it("cleans up the same way when an administrator deletes the user", async () => {
       const user = await createDisposableUser();
-      const accessToken = await login(user, `openid profile email ${READ_TOKEN_SCOPE}`);
+      const accessToken = await login(user, `openid profile email ${MANAGE_SCOPE} ${READ_TOKEN_SCOPE}`);
       const alias = await linkOnce(accessToken, "account-linking-oauth2");
 
       const tokenResponse = await retrieveToken({
@@ -663,6 +665,94 @@ describe("account linking", () => {
       expect(deleteResponse.status).toBe(204);
 
       expect(await waitUntilInactiveAtExternalIdp(externalAccessToken)).toBe(false);
+    });
+  });
+
+  describe("user scopes", () => {
+
+    const listWith = async (accessToken) =>
+      await get({
+        url: `${backendUrl}/${serverConfig.tenantId}/v1/me/linked-external-accounts`,
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+    it("refuses a user token carrying neither linked_account:read nor linked_account:manage", async () => {
+      const accessToken = await login(ownerUser, "openid profile email");
+
+      const list = await listWith(accessToken);
+      expect(list.status).toBe(403);
+      expect(list.data.error).toBe("insufficient_scope");
+      expect(list.data.scope).toBe("linked_account:read");
+
+      const start = await startLink(accessToken);
+      expect(start.status).toBe(403);
+      expect(start.data.scope).toBe(MANAGE_SCOPE);
+
+      const removal = await unlink(accessToken, `${PROVIDER}-1`);
+      expect(removal.status).toBe(403);
+      expect(removal.data.scope).toBe(MANAGE_SCOPE);
+    });
+
+    it("lets linked_account:read list, and nothing more", async () => {
+      const accessToken = await login(ownerUser, "openid profile email linked_account:read");
+
+      expect((await listWith(accessToken)).status).toBe(200);
+      expect((await startLink(accessToken)).status).toBe(403);
+      expect((await unlink(accessToken, `${PROVIDER}-1`)).status).toBe(403);
+    });
+
+    it("lets linked_account:manage list too, since managing needs the list", async () => {
+      const accessToken = await login(ownerUser);
+      expect((await listWith(accessToken)).status).toBe(200);
+    });
+
+    it("refuses to complete a link from a client other than the one that started it", async () => {
+      const accessToken = await login(ownerUser);
+      const linkResponse = await startLink(accessToken, "account-linking-oauth2", "account offline_access");
+      expect(linkResponse.status).toBe(201);
+      const startResponse = await get({ url: linkResponse.data.start_url });
+      const callbackResponse = await get({
+        url: await consentAtExternalIdp(startResponse.headers.location),
+      });
+      expect(callbackResponse.status).toBe(302);
+
+      // 同じユーザーが別のクライアントで得た、manage 付きのトークン。
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretBasicClient.clientId,
+        redirectUri: clientSecretBasicClient.redirectUri,
+        responseType: "code",
+        state: "account-linking-other-client",
+        scope: `openid ${MANAGE_SCOPE}`,
+        user: ownerUser,
+      });
+      const basic = Buffer.from(
+        `${clientSecretBasicClient.clientId}:${clientSecretBasicClient.clientSecret}`
+      ).toString("base64");
+      const otherClientToken = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretBasicClient.redirectUri,
+        basicAuth: { Authorization: `Basic ${basic}` },
+      });
+      expect(otherClientToken.status).toBe(200);
+      expect(otherClientToken.data.scope).toContain(MANAGE_SCOPE);
+
+      const completeResponse = await postWithJson({
+        url: `${backendUrl}/${serverConfig.tenantId}/v1/me/linked-external-accounts/complete`,
+        headers: { Authorization: `Bearer ${otherClientToken.data.access_token}` },
+        body: { state: linkResponse.data.state },
+      });
+      expect(completeResponse.status).toBe(403);
+
+      // 始めたクライアントからは、まだ確定できる。
+      const ownComplete = await postWithJson({
+        url: `${backendUrl}/${serverConfig.tenantId}/v1/me/linked-external-accounts/complete`,
+        headers: { Authorization: `Bearer ${accessToken}` },
+        body: { state: linkResponse.data.state },
+      });
+      expect(ownComplete.status).toBe(201);
     });
   });
 
@@ -709,7 +799,7 @@ describe("account linking", () => {
 
       const accessToken = await login(
         { username: email, password: "successUserCode001" },
-        `openid profile email ${READ_TOKEN_SCOPE}`
+        `openid profile email ${MANAGE_SCOPE} ${READ_TOKEN_SCOPE}`
       );
       alias = await linkOnce(accessToken, "account-linking-oauth2");
 
