@@ -92,6 +92,16 @@ tags:
 
       📘 仕様: [RFC 8935 - Push-Based Event Delivery](https://www.rfc-editor.org/rfc/rfc8935.html)
 
+  - name: 外部アカウント連携
+    description: |
+      idp-server 独自の拡張。認証済みユーザーが外部IdPのアカウントを追加で紐付け、外部IdPが発行したトークンを idp-server に保管します。
+
+      ここにあるのは、ブラウザがトップレベルで開く 2 本（`/v1/linking/start`・`/v1/linking/callback/{provider}`）と、
+      クライアントが保管トークンを取り出すエンドポイントです。
+      連携の開始・確定・一覧・解除（`/v1/me/linked-external-accounts`）は
+      [リソースオーナー用API](/docs/content_07_reference/api-resource-owner-ja/) にあります。
+
+      📘 [外部IdPアカウント連携](/docs/content_04_protocols/protocol-09-account-linking)
 
 paths:
   /{tenant-id}/v1/authorizations/push:
@@ -1500,6 +1510,312 @@ paths:
         '504':
           $ref: '#/components/responses/GatewayTimeout'
 
+  /{tenant-id}/v1/linking/start:
+    get:
+      tags:
+        - 外部アカウント連携
+      summary: 外部アカウント連携のブラウザ遷移（開始）
+      description: |
+        連携開始（`POST /v1/me/linked-external-accounts/link/{provider}`）が返した `start_url` です。
+        RP はブラウザを**トップレベル遷移**でここへ送ります（iframe の中では成立しません）。
+
+        idp-server のブラウザセッションから操作者を解決し、連携を開始したユーザーと一致するかを照合します。
+        一致すれば、ブラウザ束縛の Cookie（`IDP_LINK_BINDING`、`SameSite=Lax`）を発行し、外部IdPの認可エンドポイントへ `302` で送ります。
+
+        Bearer は不要です。JSON は返さず、成功も失敗も `302` で答えます。
+
+        ## 送り先
+
+        | 状況 | `Location` |
+        |---|---|
+        | 操作者が一致した | 外部IdPの認可URL（`state`・`nonce`・`code_challenge`（`S256`）付き） |
+        | ブラウザセッションが無い（連携セッションは有効） | `{redirect_uri}?linking=failed&error=login_required`（`state` は付けない） |
+        | ブラウザセッションが無く、連携セッションが無い・期限切れ・開始済み | テナントのエラー画面（`error=invalid_request`） |
+        | 操作者が一致しない | テナントのエラー画面（`error=access_denied`） |
+        | 連携セッションが無い・期限切れ・開始済み | テナントのエラー画面（`error=invalid_request`） |
+        | その他のエラー | テナントのエラー画面（`error=server_error`） |
+
+        ブラウザセッションが無い場合、連携セッションは消さずに残すので、サインインしたブラウザから同じ `start_url` で続けられます。
+
+        テナントのエラー画面は `{ui_config.base_url}/error/?error=...&error_description=...&tenant_id=...` です
+        （`ui_config.base_url` が無い場合はテナントのドメイン）。`error_description` は失敗の種類ごとの固定文です。
+
+        ## セキュリティイベント
+        - `external_account_link_failed`（ブラウザセッションが無いだけの場合は記録しません）
+      parameters:
+        - $ref: '#/components/parameters/tenant-id'
+        - name: state
+          in: query
+          required: true
+          description: |
+            連携開始レスポンスの `state`。
+
+            クエリ自体が無い場合はリクエストパラメータの欠落として共通のエラーハンドラが処理し、
+            `302` ではなく `500` の JSON（`server_error`）が返ります。
+          schema:
+            type: string
+      responses:
+        '302':
+          description: 外部IdPの認可エンドポイント、RP の戻り先、またはテナントのエラー画面へリダイレクト
+          headers:
+            Location:
+              description: 送り先（上の表を参照）
+              schema:
+                type: string
+                format: uri
+              examples:
+                external_idp:
+                  value: "https://idp.example.com/authorize?client_id=...&redirect_uri=...&response_type=code&state=...&nonce=...&scope=...&code_challenge=...&code_challenge_method=S256"
+                login_required:
+                  value: "https://rp.example.com/linking/callback?linking=failed&error=login_required"
+                error_page:
+                  value: "https://auth.example.com/error/?error=access_denied&error_description=...&tenant_id=67e7eae6-62b0-4500-9eff-87459f63fc66"
+            Set-Cookie:
+              description: 外部IdPへ送るときだけ、ブラウザ束縛の `IDP_LINK_BINDING` を発行します
+              schema:
+                type: string
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /{tenant-id}/v1/linking/callback/{provider}:
+    get:
+      tags:
+        - 外部アカウント連携
+      summary: 外部アカウント連携のブラウザ遷移（コールバック）
+      description: |
+        外部IdPが認可応答を返す先です。連携先設定（`federation-configurations`）の `redirect_uri` にこの URL を登録します。
+
+        `state` から連携セッションを引き、`/v1/linking/start` を通ったブラウザか（`IDP_LINK_BINDING` Cookie）を**認可コードを交換する前に**照合します。
+        照合できたら認可コードを交換し（PKCE）、ID Token の検証・userinfo の取得を経て、トークンを暗号化して連携セッションに預けます。
+        **連携はまだ確定しません。** RP が戻り先で受け取った `state` で `POST /v1/me/linked-external-accounts/complete` を呼んで確定します。
+
+        Bearer は不要です。JSON は返さず、成功も失敗も `302` で答えます。GET のみで、外部IdPの `response_mode=form_post` には対応していません。
+        ブラウザ束縛の Cookie は結果に関わらず削除します。
+
+        ## 送り先
+
+        | 状況 | `Location` |
+        |---|---|
+        | トークンを預けた | `{redirect_uri}?linking=done&state=...` |
+        | 外部IdPが `error` を返した | `{redirect_uri}?linking=failed&error=...&state=...` |
+        | `code` も `error` も無い | `{redirect_uri}?linking=failed&error=server_error&state=...` |
+        | トークン交換・ID Token の検証・userinfo の失敗、その他の想定外のエラー | `{redirect_uri}?linking=failed&error=server_error&state=...` |
+        | `state` が無い・未知 | テナントのエラー画面（`error=invalid_request`） |
+        | 連携セッションが期限切れ・コールバックを待つ状態でない（再読み込み・戻るボタン・二重送信） | テナントのエラー画面（`error=invalid_request`） |
+        | ブラウザ束縛が無い・一致しない | テナントのエラー画面（`error=access_denied`） |
+
+        戻り先へ返す `error` は `access_denied` / `temporarily_unavailable` / `server_error` のどれかです。
+        外部IdPが付けてきた `error` は `access_denied` と `temporarily_unavailable` だけをそのまま使い、それ以外は `server_error` にします。
+        `error_description` と外部IdPの応答本文は返しません。
+
+        戻り先へ失敗を返したときは連携セッションを削除します。エラー画面へ送るときは、連携セッションに触れません。
+
+        戻り先（`redirect_uri`）は連携開始のときにクライアントの `linking_return_uris` と完全一致で照合済みです。
+        テナントのエラー画面の形は `/v1/linking/start` と同じです。
+
+        ## セキュリティイベント
+        - `external_account_link_failed`
+      parameters:
+        - $ref: '#/components/parameters/tenant-id'
+        - name: provider
+          in: path
+          required: true
+          description: |
+            連携先の設定名（`sso_provider`）。連携先設定の `redirect_uri` と合わせるためのもので、
+            処理には `state` から引いた連携セッションの連携先を使います。
+          schema:
+            type: string
+            example: example-idp
+        - name: code
+          in: query
+          required: false
+          description: 外部IdPが発行した認可コード
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: false
+          description: 外部IdPへ送った `state`（連携セッションの識別子）
+          schema:
+            type: string
+        - name: error
+          in: query
+          required: false
+          description: 外部IdPが返したエラーコード
+          schema:
+            type: string
+        - name: error_description
+          in: query
+          required: false
+          description: 外部IdPが返したエラーの説明。戻り先には渡しません
+          schema:
+            type: string
+      responses:
+        '302':
+          description: RP の戻り先、またはテナントのエラー画面へリダイレクト
+          headers:
+            Location:
+              description: 送り先（上の表を参照）
+              schema:
+                type: string
+                format: uri
+              examples:
+                done:
+                  value: "https://rp.example.com/linking/callback?linking=done&state=Xb3k...Qz"
+                failed:
+                  value: "https://rp.example.com/linking/callback?linking=failed&error=access_denied&state=Xb3k...Qz"
+                error_page:
+                  value: "https://auth.example.com/error/?error=invalid_request&error_description=...&tenant_id=67e7eae6-62b0-4500-9eff-87459f63fc66"
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /{tenant-id}/v1/linked-external-accounts/{alias}/token:
+    post:
+      tags:
+        - 外部アカウント連携
+      summary: 保管トークンの取得
+      description: |
+        連携したアカウントの外部IdPアクセストークンを、クライアントがユーザーに代わって取り出します。
+        ユーザーは `token`（そのユーザーのアクセストークン）で指定します。`Authorization` ヘッダーはクライアント認証が使うため、Bearer では送りません。
+
+        次の全てを満たす場合だけトークンを返します。
+
+        - クライアントが認証に成功している。public クライアント（`none`）は拒否します
+        - `token` が有効なユーザーのアクセストークン（client_credentials で発行されたものでない）で、**認証したクライアントと同じクライアント**に発行され、`linked_account:read_token` スコープを持つ
+        - `token` が sender-constrained（DPoP・mTLS 証明書・クライアントインスタンス束縛）でない
+        - ユーザーが有効である
+        - `alias` がそのユーザーの連携にある
+        - 連携先がクライアントの `extension.linking_token_providers` に含まれている
+
+        返すのはアクセストークンだけで、リフレッシュトークンは返しません。
+        アクセストークンの期限まで 30 秒を切っていれば、保管しているリフレッシュトークンで更新してから返します。
+        同じ連携への同時リクエストは行ロックで待ち合わせ、リフレッシュトークンを二重に使いません。
+
+        ## クライアント認証
+
+        トークンイントロスペクションと同じ方式でクライアントを認証します（`client_secret_basic` / `client_secret_post` /
+        `client_secret_jwt` / `private_key_jwt` / `tls_client_auth` / `self_signed_tls_client_auth` / `attest_jwt_client_auth`）。
+        クライアントは `Authorization` の Basic、`client_id`、Client Attestation の `sub` の順で特定します。
+
+        クライアント認証の失敗は、方式に関わらず `401` `invalid_client` にまとめて返します。
+        `attest_jwt_client_auth` 固有のエラーコードと `WWW-Authenticate` / `OAuth-Client-Attestation-Challenge` ヘッダーは返しません。
+
+        ## セキュリティイベント
+        - `external_account_token_retrieved` / `external_account_token_retrieval_failed`
+        - `external_account_token_refreshed`（リフレッシュしたとき）
+        - `external_account_relink_required`（`relink_required` のとき）
+      parameters:
+        - $ref: '#/components/parameters/tenant-id'
+        - name: alias
+          in: path
+          required: true
+          description: 連携の識別子（連携一覧の `alias`）
+          schema:
+            type: string
+            example: example-idp-1
+        - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/OAuthClientAttestation'
+        - $ref: '#/components/parameters/OAuthClientAttestationPop'
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LinkedExternalAccountTokenRequest'
+      responses:
+        '200':
+          description: 保管しているアクセストークン
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: no-store
+            Pragma:
+              schema:
+                type: string
+                example: no-cache
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LinkedExternalAccountTokenResponse'
+        '400':
+          description: |
+            - `invalid_request` — `token` が無い / `token` が sender-constrained
+            - `relink_required` — リフレッシュトークンが無い・期限切れ、外部IdPがリフレッシュを 4xx で拒否した、または連携先が削除・無効化された。ユーザーが連携し直す必要があります
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LinkedExternalAccountTokenErrorResponse'
+              examples:
+                invalid_request:
+                  value:
+                    error: invalid_request
+                    error_description: "token is required."
+                relink_required:
+                  value:
+                    error: relink_required
+                    error_description: "The stored token has expired and cannot be refreshed. Link the account again."
+        '401':
+          description: |
+            - `invalid_client` — クライアント認証に失敗した / 未登録のクライアント / public クライアント
+            - `invalid_token` — `token` が無効・期限切れ / ユーザーを指していない（client_credentials など） / ユーザーが有効でない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LinkedExternalAccountTokenErrorResponse'
+              examples:
+                invalid_client:
+                  value:
+                    error: invalid_client
+                    error_description: "Client authentication failed."
+                invalid_token:
+                  value:
+                    error: invalid_token
+                    error_description: "token is invalid or expired."
+        '403':
+          description: |
+            - `unauthorized_client` — `token` が別のクライアントに発行された / 連携先がクライアントの `linking_token_providers` に無い
+            - `insufficient_scope` — `token` に `linked_account:read_token` が無い
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LinkedExternalAccountTokenErrorResponse'
+              examples:
+                unauthorized_client:
+                  value:
+                    error: unauthorized_client
+                    error_description: "token was not issued to the authenticated client."
+                insufficient_scope:
+                  value:
+                    error: insufficient_scope
+                    error_description: "token does not carry linked_account:read_token."
+        '404':
+          description: "`not_found` — `alias` がユーザーの連携に無い"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LinkedExternalAccountTokenErrorResponse'
+              example:
+                error: not_found
+                error_description: "Linked external account not found."
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '502':
+          description: "`temporarily_unavailable` — 外部IdPがリフレッシュに 5xx を返した、または到達できない。時間をおいて再試行します"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LinkedExternalAccountTokenErrorResponse'
+              example:
+                error: temporarily_unavailable
+                error_description: "The external identity provider could not refresh the token. Try again later."
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
+
 components:
   responses:
     TooManyRequests:
@@ -2896,6 +3212,86 @@ components:
             JWT認証で使用する署名済みJWTアサーション。
             client_secret_jwt: client_secretで署名
             private_key_jwt: 登録済み秘密鍵で署名
+
+    LinkedExternalAccountTokenRequest:
+      type: object
+      description: |
+        保管トークンの取得リクエスト。クライアント認証のパラメータはトークンエンドポイントと同じです。
+      required:
+        - token
+      properties:
+        token:
+          type: string
+          description: |
+            トークンを取り出すユーザーのアクセストークン。`linked_account:read_token` スコープを持ち、
+            このリクエストで認証するクライアントに発行されたものに限ります。
+        client_id:
+          type: string
+          description: |
+            クライアント識別子。client_secret_post認証やmTLS認証で使用します。
+            client_secret_basic認証の場合はAuthorizationヘッダで送信されるため省略可能。
+        client_secret:
+          type: string
+          description: |
+            クライアントシークレット。client_secret_post認証でのみ使用します。
+            client_secret_basic認証の場合はAuthorizationヘッダで送信されます。
+        client_assertion_type:
+          type: string
+          enum: [ "urn:ietf:params:oauth:client-assertion-type:jwt-bearer" ]
+          description: |
+            JWT認証（client_secret_jwt / private_key_jwt）で使用するアサーションタイプ。
+            固定値: urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+        client_assertion:
+          type: string
+          description: |
+            JWT認証で使用する署名済みJWTアサーション。
+            client_secret_jwt: client_secretで署名
+            private_key_jwt: 登録済み秘密鍵で署名
+
+    LinkedExternalAccountTokenResponse:
+      type: object
+      required:
+        - access_token
+        - token_type
+        - issued_token_type
+      properties:
+        access_token:
+          type: string
+          description: 外部IdPが発行したアクセストークン（保管していたもの、またはリフレッシュで更新したもの）
+        token_type:
+          type: string
+          enum: [ Bearer ]
+        issued_token_type:
+          type: string
+          enum: [ "urn:ietf:params:oauth:token-type:access_token" ]
+        expires_in:
+          type: integer
+          minimum: 0
+          description: アクセストークンの残り有効期間（秒）。有効期限を保管していない場合は含みません
+          example: 3599
+        scope:
+          type: string
+          description: 外部IdPが許可したスコープ。保管していない場合は含みません
+          example: "openid email offline_access"
+      example:
+        access_token: "ya29.a0Af..."
+        token_type: Bearer
+        issued_token_type: "urn:ietf:params:oauth:token-type:access_token"
+        expires_in: 3599
+        scope: "openid email offline_access"
+
+    LinkedExternalAccountTokenErrorResponse:
+      type: object
+      required:
+        - error
+        - error_description
+      properties:
+        error:
+          type: string
+          enum: [ invalid_request, relink_required, invalid_client, invalid_token, unauthorized_client, insufficient_scope, not_found, temporarily_unavailable ]
+        error_description:
+          type: string
+          description: エラーの詳細な説明（ユーザー向けではない）
 
     UserInfoResponse:
       type: object
