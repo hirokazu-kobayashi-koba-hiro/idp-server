@@ -1218,7 +1218,10 @@ public class IdpServerApplication {
                 passwordEncodeDelegation,
                 userLifecycleEventPublisher,
                 auditLogPublisher,
-                securityEventPublisher),
+                securityEventPublisher,
+                linkedExternalAccountQueryRepository,
+                linkedExternalAccountCommandRepository,
+                linkedExternalAccountRevoker),
             UserManagementApi.class,
             databaseTypeProvider);
 
@@ -1447,7 +1450,10 @@ public class IdpServerApplication {
                 passwordEncodeDelegation,
                 userLifecycleEventPublisher,
                 auditLogPublisher,
-                securityEventPublisher),
+                securityEventPublisher,
+                linkedExternalAccountQueryRepository,
+                linkedExternalAccountCommandRepository,
+                linkedExternalAccountRevoker),
             OrgUserManagementApi.class,
             databaseTypeProvider);
 

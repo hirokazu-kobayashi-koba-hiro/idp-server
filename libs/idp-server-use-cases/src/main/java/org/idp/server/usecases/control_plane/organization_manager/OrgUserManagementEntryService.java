@@ -18,6 +18,10 @@ package org.idp.server.usecases.control_plane.organization_manager;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.account_linking.AccountAlias;
+import org.idp.server.account_linking.LinkedExternalAccountRevoker;
+import org.idp.server.account_linking.repository.LinkedExternalAccountCommandRepository;
+import org.idp.server.account_linking.repository.LinkedExternalAccountQueryRepository;
 import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.base.OrganizationAccessVerifier;
 import org.idp.server.control_plane.base.OrganizationAuthenticationContext;
@@ -101,7 +105,10 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
       PasswordEncodeDelegation passwordEncodeDelegation,
       UserLifecycleEventPublisher userLifecycleEventPublisher,
       AuditLogPublisher auditLogPublisher,
-      SecurityEventPublisher securityEventPublisher) {
+      SecurityEventPublisher securityEventPublisher,
+      LinkedExternalAccountQueryRepository linkedExternalAccountQueryRepository,
+      LinkedExternalAccountCommandRepository linkedExternalAccountCommandRepository,
+      LinkedExternalAccountRevoker linkedExternalAccountRevoker) {
     this.auditLogPublisher = auditLogPublisher;
 
     UserRegistrationRelatedDataVerifier relatedDataVerifier =
@@ -125,7 +132,10 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
             verifier,
             relatedDataVerifier,
             userLifecycleEventPublisher,
-            managementEventPublisher);
+            managementEventPublisher,
+            linkedExternalAccountQueryRepository,
+            linkedExternalAccountCommandRepository,
+            linkedExternalAccountRevoker);
   }
 
   private OrgUserManagementHandler createHandler(
@@ -138,7 +148,10 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
       UserRegistrationVerifier verifier,
       UserRegistrationRelatedDataVerifier relatedDataVerifier,
       UserLifecycleEventPublisher userLifecycleEventPublisher,
-      ManagementEventPublisher managementEventPublisher) {
+      ManagementEventPublisher managementEventPublisher,
+      LinkedExternalAccountQueryRepository linkedExternalAccountQueryRepository,
+      LinkedExternalAccountCommandRepository linkedExternalAccountCommandRepository,
+      LinkedExternalAccountRevoker linkedExternalAccountRevoker) {
 
     Map<String, UserManagementService<?>> services = new HashMap<>();
     services.put(
@@ -183,6 +196,22 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
     services.put("findSessions", new UserSessionsFindService(opSessionRepository));
     services.put("deleteSession", new UserSessionDeleteService(opSessionRepository));
     services.put("deleteSessions", new UserSessionsDeleteService(opSessionRepository));
+    services.put(
+        "findLinkedExternalAccounts",
+        new UserLinkedExternalAccountsFindService(
+            userQueryRepository, linkedExternalAccountQueryRepository));
+    services.put(
+        "getLinkedExternalAccount",
+        new UserLinkedExternalAccountFindService(
+            userQueryRepository, linkedExternalAccountQueryRepository));
+    services.put(
+        "deleteLinkedExternalAccount",
+        new UserLinkedExternalAccountDeleteService(
+            userQueryRepository,
+            linkedExternalAccountQueryRepository,
+            linkedExternalAccountCommandRepository,
+            linkedExternalAccountRevoker,
+            managementEventPublisher));
 
     return new OrgUserManagementHandler(
         services, this, tenantQueryRepository, new OrganizationAccessVerifier());
@@ -496,6 +525,77 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
             authenticationContext,
             tenantIdentifier,
             new UserSessionsDeleteRequest(userIdentifier),
+            requestAttributes,
+            dryRun);
+
+    AuditLog auditLog = AuditLogCreator.create(result.context());
+    auditLogPublisher.publish(auditLog);
+
+    return result.toResponse(dryRun);
+  }
+
+  @Override
+  @Transaction(readOnly = true)
+  public UserManagementResponse findLinkedExternalAccounts(
+      OrganizationAuthenticationContext authenticationContext,
+      TenantIdentifier tenantIdentifier,
+      UserIdentifier userIdentifier,
+      RequestAttributes requestAttributes) {
+
+    UserManagementResult result =
+        handler.handle(
+            "findLinkedExternalAccounts",
+            authenticationContext,
+            tenantIdentifier,
+            new UserLinkedExternalAccountsFindRequest(userIdentifier),
+            requestAttributes,
+            false);
+
+    AuditLog auditLog = AuditLogCreator.create(result.context());
+    auditLogPublisher.publish(auditLog);
+
+    return result.toResponse(false);
+  }
+
+  @Override
+  @Transaction(readOnly = true)
+  public UserManagementResponse getLinkedExternalAccount(
+      OrganizationAuthenticationContext authenticationContext,
+      TenantIdentifier tenantIdentifier,
+      UserIdentifier userIdentifier,
+      AccountAlias alias,
+      RequestAttributes requestAttributes) {
+
+    UserManagementResult result =
+        handler.handle(
+            "getLinkedExternalAccount",
+            authenticationContext,
+            tenantIdentifier,
+            new UserLinkedExternalAccountRequest(userIdentifier, alias),
+            requestAttributes,
+            false);
+
+    AuditLog auditLog = AuditLogCreator.create(result.context());
+    auditLogPublisher.publish(auditLog);
+
+    return result.toResponse(false);
+  }
+
+  @Override
+  public UserManagementResponse deleteLinkedExternalAccount(
+      OrganizationAuthenticationContext authenticationContext,
+      TenantIdentifier tenantIdentifier,
+      UserIdentifier userIdentifier,
+      AccountAlias alias,
+      RequestAttributes requestAttributes,
+      boolean dryRun) {
+
+    UserManagementResult result =
+        handler.handle(
+            "deleteLinkedExternalAccount",
+            authenticationContext,
+            tenantIdentifier,
+            new UserLinkedExternalAccountRequest(userIdentifier, alias),
             requestAttributes,
             dryRun);
 

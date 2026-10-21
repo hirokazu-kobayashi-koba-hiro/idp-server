@@ -155,6 +155,11 @@ public enum DefaultAdminPermission {
   SESSION_READ("idp:session:read", "Admin Read user session information"),
   SESSION_DELETE("idp:session:delete", "Admin Delete user session"),
 
+  LINKED_ACCOUNT_READ(
+      "idp:linked-account:read", "Admin Read a user's linked external accounts (never the tokens)"),
+  LINKED_ACCOUNT_DELETE(
+      "idp:linked-account:delete", "Admin Remove a user's linked external account"),
+
   GRANT_READ("idp:grant:read", "Admin Read authorization grant information"),
   GRANT_DELETE("idp:grant:delete", "Admin Delete/revoke authorization grant"),
 

@@ -19,6 +19,7 @@ package org.idp.server.control_plane.management.identity.user;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.idp.server.account_linking.AccountAlias;
 import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
@@ -63,6 +64,15 @@ public interface UserManagementApi {
       map.put("deleteSession", new AdminPermissions(Set.of(DefaultAdminPermission.SESSION_DELETE)));
       map.put(
           "deleteSessions", new AdminPermissions(Set.of(DefaultAdminPermission.SESSION_DELETE)));
+      map.put(
+          "findLinkedExternalAccounts",
+          new AdminPermissions(Set.of(DefaultAdminPermission.LINKED_ACCOUNT_READ)));
+      map.put(
+          "getLinkedExternalAccount",
+          new AdminPermissions(Set.of(DefaultAdminPermission.LINKED_ACCOUNT_READ)));
+      map.put(
+          "deleteLinkedExternalAccount",
+          new AdminPermissions(Set.of(DefaultAdminPermission.LINKED_ACCOUNT_DELETE)));
     } else {
       // PUBLIC tenants require USER_* permissions
       map.put("create", new AdminPermissions(Set.of(DefaultAdminPermission.USER_CREATE)));
@@ -85,6 +95,15 @@ public interface UserManagementApi {
       map.put("deleteSession", new AdminPermissions(Set.of(DefaultAdminPermission.SESSION_DELETE)));
       map.put(
           "deleteSessions", new AdminPermissions(Set.of(DefaultAdminPermission.SESSION_DELETE)));
+      map.put(
+          "findLinkedExternalAccounts",
+          new AdminPermissions(Set.of(DefaultAdminPermission.LINKED_ACCOUNT_READ)));
+      map.put(
+          "getLinkedExternalAccount",
+          new AdminPermissions(Set.of(DefaultAdminPermission.LINKED_ACCOUNT_READ)));
+      map.put(
+          "deleteLinkedExternalAccount",
+          new AdminPermissions(Set.of(DefaultAdminPermission.LINKED_ACCOUNT_DELETE)));
     }
 
     AdminPermissions adminPermissions = map.get(method);
@@ -186,6 +205,31 @@ public interface UserManagementApi {
       AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
       UserIdentifier userIdentifier,
+      RequestAttributes requestAttributes,
+      boolean dryRun);
+
+  UserManagementResponse findLinkedExternalAccounts(
+      AdminAuthenticationContext authenticationContext,
+      TenantIdentifier tenantIdentifier,
+      UserIdentifier userIdentifier,
+      RequestAttributes requestAttributes);
+
+  UserManagementResponse getLinkedExternalAccount(
+      AdminAuthenticationContext authenticationContext,
+      TenantIdentifier tenantIdentifier,
+      UserIdentifier userIdentifier,
+      AccountAlias alias,
+      RequestAttributes requestAttributes);
+
+  /**
+   * Removes a user's linked external account, revoking its stored tokens at the external IdP on a
+   * best-effort basis.
+   */
+  UserManagementResponse deleteLinkedExternalAccount(
+      AdminAuthenticationContext authenticationContext,
+      TenantIdentifier tenantIdentifier,
+      UserIdentifier userIdentifier,
+      AccountAlias alias,
       RequestAttributes requestAttributes,
       boolean dryRun);
 }

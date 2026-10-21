@@ -1,5 +1,6 @@
-import { describe, expect, it } from "@jest/globals";
+import { afterAll, beforeAll, describe, expect, it } from "@jest/globals";
 import {
+  adminServerConfig,
   backendUrl,
   clientSecretBasicClient,
   clientSecretPostClient,
@@ -13,6 +14,11 @@ import { requestAuthorizations } from "../../../oauth/request";
 import { convertNextAction } from "../../../lib/util";
 import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
+import {
+  createOperatorWithPermission,
+  deleteOperators,
+  fetchPermissionIds,
+} from "../../../lib/adminPermission";
 
 /**
  * 外部IdPアカウント連携 (#1531)
@@ -657,6 +663,193 @@ describe("account linking", () => {
       expect(deleteResponse.status).toBe(204);
 
       expect(await waitUntilInactiveAtExternalIdp(externalAccessToken)).toBe(false);
+    });
+  });
+
+  describe("management API", () => {
+
+    const orgUserBase = (sub) =>
+      `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/users/${sub}/linked-external-accounts`;
+
+    const isActiveAtExternalIdp = async (token) => {
+      const params = new URLSearchParams();
+      params.append("token", token);
+      params.append("client_id", clientSecretPostClient.clientId);
+      params.append("client_secret", clientSecretPostClient.clientSecret);
+      const response = await post({
+        url: `${backendUrl}/${federationServerConfig.tenantId}/v1/tokens/introspection`,
+        body: params.toString(),
+      });
+      return response.data.active;
+    };
+
+    let adminToken;
+    let sub;
+    let alias;
+    let externalAccessToken;
+    const operators = [];
+
+    beforeAll(async () => {
+      adminToken = await requestAdminAccessToken();
+
+      const email = `account-linking-admin-${Date.now()}@example.com`;
+      const createResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/users`,
+        headers: { Authorization: `Bearer ${adminToken}` },
+        body: {
+          sub: uuidv4(),
+          provider_id: "idp-server",
+          name: email,
+          email,
+          raw_password: "successUserCode001",
+        },
+      });
+      expect(createResponse.status).toBe(201);
+      sub = createResponse.data.result.sub;
+
+      const accessToken = await login(
+        { username: email, password: "successUserCode001" },
+        `openid profile email ${READ_TOKEN_SCOPE}`
+      );
+      alias = await linkOnce(accessToken, "account-linking-oauth2");
+
+      const tokenResponse = await retrieveToken({
+        alias,
+        token: accessToken,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      expect(tokenResponse.status).toBe(200);
+      externalAccessToken = tokenResponse.data.access_token;
+    });
+
+    afterAll(async () => {
+      await deleteOperators(
+        adminToken,
+        serverConfig.organizationId,
+        serverConfig.tenantId,
+        operators
+      );
+      await deletion({
+        url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/users/${sub}`,
+        headers: { Authorization: `Bearer ${adminToken}` },
+      });
+    });
+
+    it("lists the user's links with the external identifier, and never the tokens", async () => {
+      const response = await get({
+        url: orgUserBase(sub),
+        headers: { Authorization: `Bearer ${adminToken}` },
+      });
+      expect(response.status).toBe(200);
+      const account = response.data.list.find((it) => it.alias === alias);
+      expect(account).toBeDefined();
+      expect(account.provider).toBe("account-linking-oauth2");
+      expect(account).toHaveProperty("federated_user_id");
+      expect(JSON.stringify(response.data)).not.toContain(externalAccessToken);
+      expect(account.access_token).toBeUndefined();
+      expect(account.encrypted_access_token).toBeUndefined();
+    });
+
+    it("reads one link, and answers 404 for an unknown alias or user", async () => {
+      const response = await get({
+        url: `${orgUserBase(sub)}/${alias}`,
+        headers: { Authorization: `Bearer ${adminToken}` },
+      });
+      expect(response.status).toBe(200);
+      expect(response.data.alias).toBe(alias);
+
+      const unknownAlias = await get({
+        url: `${orgUserBase(sub)}/account-linking-oauth2-9999`,
+        headers: { Authorization: `Bearer ${adminToken}` },
+      });
+      expect(unknownAlias.status).toBe(404);
+
+      const unknownUser = await get({
+        url: orgUserBase(uuidv4()),
+        headers: { Authorization: `Bearer ${adminToken}` },
+      });
+      expect(unknownUser.status).toBe(404);
+    });
+
+    it("refuses an operator holding an unrelated permission", async () => {
+      const permissionIds = await fetchPermissionIds(
+        adminToken,
+        serverConfig.organizationId,
+        serverConfig.tenantId
+      );
+      const operator = await createOperatorWithPermission({
+        managementToken: adminToken,
+        organizationId: serverConfig.organizationId,
+        tenantId: serverConfig.tenantId,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+        permissionName: "idp:session:read",
+        permissionId: permissionIds.get("idp:session:read"),
+        label: "linked-account-decoy",
+      });
+      operators.push(operator);
+
+      const list = await get({
+        url: orgUserBase(sub),
+        headers: { Authorization: `Bearer ${operator.accessToken}` },
+      });
+      expect(list.status).toBe(403);
+
+      const removal = await deletion({
+        url: `${orgUserBase(sub)}/${alias}`,
+        headers: { Authorization: `Bearer ${operator.accessToken}` },
+      });
+      expect(removal.status).toBe(403);
+    });
+
+    it("is reachable at system level too", async () => {
+      const systemTokenResponse = await requestToken({
+        endpoint: adminServerConfig.tokenEndpoint,
+        grantType: "password",
+        username: adminServerConfig.oauth.username,
+        password: adminServerConfig.oauth.password,
+        scope: adminServerConfig.adminClient.scope,
+        clientId: adminServerConfig.adminClient.clientId,
+        clientSecret: adminServerConfig.adminClient.clientSecret,
+      });
+      expect(systemTokenResponse.status).toBe(200);
+
+      const response = await get({
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/users/${sub}/linked-external-accounts`,
+        headers: { Authorization: `Bearer ${systemTokenResponse.data.access_token}` },
+      });
+      expect(response.status).toBe(200);
+      expect(response.data.list.map((it) => it.alias)).toContain(alias);
+    });
+
+    it("removes a link on an administrator's behalf, revoking its tokens at the external IdP", async () => {
+      const dryRun = await deletion({
+        url: `${orgUserBase(sub)}/${alias}?dry_run=true`,
+        headers: { Authorization: `Bearer ${adminToken}` },
+      });
+      expect(dryRun.status).toBe(200);
+      expect(dryRun.data.dry_run).toBe(true);
+      expect(await isActiveAtExternalIdp(externalAccessToken)).toBe(true);
+
+      const removal = await deletion({
+        url: `${orgUserBase(sub)}/${alias}`,
+        headers: { Authorization: `Bearer ${adminToken}` },
+      });
+      expect(removal.status).toBe(204);
+
+      const list = await get({
+        url: orgUserBase(sub),
+        headers: { Authorization: `Bearer ${adminToken}` },
+      });
+      expect(list.data.list.map((it) => it.alias)).not.toContain(alias);
+      expect(await isActiveAtExternalIdp(externalAccessToken)).toBe(false);
+
+      const again = await deletion({
+        url: `${orgUserBase(sub)}/${alias}`,
+        headers: { Authorization: `Bearer ${adminToken}` },
+      });
+      expect(again.status).toBe(404);
     });
   });
 

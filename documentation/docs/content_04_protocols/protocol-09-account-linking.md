@@ -286,6 +286,27 @@ token={ユーザーのアクセストークン}&client_id=...&client_secret=...
 
 ---
 
+## 管理API
+
+管理者がユーザーの連携を確認・解除するための API です。システムレベルと組織レベルの両方にあります。保管しているトークンはどれも返しません。
+
+| メソッド | パス | 権限 |
+|---|---|---|
+| GET | `/v1/management/organizations/{organization-id}/tenants/{tenant-id}/users/{user-id}/linked-external-accounts` | `idp:linked-account:read` |
+| GET | `.../users/{user-id}/linked-external-accounts/{alias}` | `idp:linked-account:read` |
+| DELETE | `.../users/{user-id}/linked-external-accounts/{alias}` | `idp:linked-account:delete` |
+
+システムレベルは `/v1/management/tenants/{tenant-id}/users/{user-id}/linked-external-accounts` から始まる同じ形です。
+
+- 一覧と個別取得は `/me` の一覧と同じ項目に加えて、外部IdP側の識別子 `federated_user_id` を返します。問い合わせの対応で「どの外部アカウントの連携か」を照合するためです。
+- 解除は本人の解除と同じ手順です。行ロックを取り、保管トークンを外部IdPで失効させてから行を消します。失効はベストエフォートです。`dry_run=true` を付けると、解除せずに結果だけを返します。
+- 解除はセキュリティイベント `external_account_unlinked_by_admin` で記録します。本人の解除（`external_account_unlinked`）と分けているのは、監査で誰が外したかを区別するためです。
+- 操作は管理APIの監査ログにも残ります。
+
+権限は `idp:*` を持つロールには自動的に含まれます。権限を明示的に列挙しているロールで使うには、`idp:linked-account:read` / `idp:linked-account:delete` を追加してください。
+
+---
+
 ## エラー
 
 ### ブラウザ遷移の失敗
@@ -338,11 +359,11 @@ token={ユーザーのアクセストークン}&client_id=...&client_secret=...
 |---|---|
 | 確定されなかった連携（`parked`）の削除 | ユーザー削除時のみ。期限切れの掃除は未実装で、期限切れ後も暗号化トークンが残ります |
 | テナント削除時の失効 | 未実装。連携の行はテナントの削除に連動して消えますが、外部IdPのトークンは失効しません |
-| ID Token の検証 | **行いません。** ユーザーの識別は userinfo エンドポイントのレスポンスに依存します |
-| step-up 認証 | 未実装。`/linking/start` はブラウザセッションが無ければ 401 を返すだけです |
-| ネイティブアプリ | 上記のため未対応。アプリ内ブラウザに idp-server のセッションが無いと `/linking/start` で 401 になります |
+| step-up 認証 | 未実装。`/linking/start` はブラウザセッションが無ければ、戻り先へ `error=login_required` を返すだけです |
+| ネイティブアプリ | 上記のため未対応。アプリ内ブラウザに idp-server のセッションが無いと `login_required` で戻ります |
 | 外部IdPの `response_mode=form_post` | 未対応。コールバックは GET のみです |
-| MySQL | DDL はありますが、永続化実装は PostgreSQL のみです |
+| MySQL | DDL と永続化実装はありますが、MySQL での e2e は未実施です |
+| 管理APIでの保管トークンの取得 | 提供しません。管理者が他人の外部トークンを取れる強い権限になるため、使い道がはっきりするまで作りません |
 
 ---
 
