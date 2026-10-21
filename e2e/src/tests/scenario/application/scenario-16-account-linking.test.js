@@ -803,6 +803,72 @@ describe("account linking", () => {
       expect(removal.status).toBe(403);
     });
 
+    /**
+     * 新しい権限は、権限を列挙しているロールに付ける前に権限レコードが要る。
+     * テナントのオンボーディング後に足された権限なので、無ければ permissions API で作る。
+     */
+    const operatorHolding = async (permissionName) => {
+      let permissionIds = await fetchPermissionIds(
+        adminToken,
+        serverConfig.organizationId,
+        serverConfig.tenantId
+      );
+      if (!permissionIds.has(permissionName)) {
+        const created = await postWithJson({
+          url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/permissions`,
+          headers: { Authorization: `Bearer ${adminToken}` },
+          body: { name: permissionName, description: permissionName },
+        });
+        expect(created.status).toBe(201);
+        permissionIds = await fetchPermissionIds(
+          adminToken,
+          serverConfig.organizationId,
+          serverConfig.tenantId
+        );
+      }
+      const operator = await createOperatorWithPermission({
+        managementToken: adminToken,
+        organizationId: serverConfig.organizationId,
+        tenantId: serverConfig.tenantId,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+        permissionName,
+        permissionId: permissionIds.get(permissionName),
+        label: permissionName.replace(/[^a-z]/g, "-"),
+      });
+      operators.push(operator);
+      return operator.accessToken;
+    };
+
+    it("lets an operator holding only idp:linked-account:read read, and not remove", async () => {
+      const token = await operatorHolding("idp:linked-account:read");
+
+      const list = await get({ url: orgUserBase(sub), headers: { Authorization: `Bearer ${token}` } });
+      expect(list.status).toBe(200);
+      expect(list.data.list.map((it) => it.alias)).toContain(alias);
+
+      const removal = await deletion({
+        url: `${orgUserBase(sub)}/${alias}`,
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      expect(removal.status).toBe(403);
+    });
+
+    it("lets an operator holding only idp:linked-account:delete remove, and not read", async () => {
+      const token = await operatorHolding("idp:linked-account:delete");
+
+      const list = await get({ url: orgUserBase(sub), headers: { Authorization: `Bearer ${token}` } });
+      expect(list.status).toBe(403);
+
+      // dry run で権限だけを確かめる。本当に外すのは後のケース。
+      const removal = await deletion({
+        url: `${orgUserBase(sub)}/${alias}?dry_run=true`,
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      expect(removal.status).toBe(200);
+      expect(removal.data.dry_run).toBe(true);
+    });
+
     it("is reachable at system level too", async () => {
       const systemTokenResponse = await requestToken({
         endpoint: adminServerConfig.tokenEndpoint,
@@ -953,6 +1019,31 @@ describe("account linking", () => {
       const owner = await get({ url: callbackUrl({ error: "access_denied", state }) });
       expect(owner.status).toBe(302);
       expectReturnedFailure(owner.headers.location, "access_denied", state);
+    });
+
+    it("returns a callback carrying neither a code nor an error to the client", async () => {
+      const { state } = await startedLink();
+
+      const response = await get({ url: callbackUrl({ state }) });
+      expect(response.status).toBe(302);
+      expectReturnedFailure(response.headers.location, "server_error", state);
+    });
+
+    it("tells a browser reopening a finished callback that the link has moved on", async () => {
+      const accessToken = await login(ownerUser);
+      const linkResponse = await startLink(accessToken, "account-linking-oauth2", "account offline_access");
+      const startResponse = await get({ url: linkResponse.data.start_url });
+      const callbackUri = await consentAtExternalIdp(startResponse.headers.location);
+
+      const first = await get({ url: callbackUri });
+      expect(first.status).toBe(302);
+      expect(first.headers.location).toContain("linking=done");
+
+      // 再読み込みや戻るボタン。束縛 Cookie は使い終わって消えているが、
+      // 「別のブラウザで始めた連携」ではないので、そうは言わない。
+      const again = await get({ url: callbackUri });
+      expect(again.status).toBe(302);
+      expectErrorPage(again.headers.location, "invalid_request");
     });
 
     it("sends an unknown state to the error page", async () => {

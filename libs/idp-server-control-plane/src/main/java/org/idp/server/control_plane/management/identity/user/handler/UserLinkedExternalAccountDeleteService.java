@@ -30,6 +30,7 @@ import org.idp.server.control_plane.management.identity.user.io.UserManagementSt
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
@@ -50,6 +51,7 @@ public class UserLinkedExternalAccountDeleteService
   LinkedExternalAccountCommandRepository accountCommandRepository;
   LinkedExternalAccountRevoker revoker;
   ManagementEventPublisher managementEventPublisher;
+  LoggerWrapper log = LoggerWrapper.getLogger(UserLinkedExternalAccountDeleteService.class);
 
   public UserLinkedExternalAccountDeleteService(
       UserQueryRepository userQueryRepository,
@@ -77,8 +79,11 @@ public class UserLinkedExternalAccountDeleteService
     User user = userQueryRepository.get(tenant, request.userIdentifier());
     builder.withBefore(user);
 
+    // A dry run changes nothing, so it does not wait on a refresh holding the row.
     LinkedExternalAccount account =
-        accountQueryRepository.lock(tenant, user.userIdentifier(), request.alias());
+        dryRun
+            ? accountQueryRepository.find(tenant, user.userIdentifier(), request.alias())
+            : accountQueryRepository.lock(tenant, user.userIdentifier(), request.alias());
     if (!account.exists()) {
       throw new ResourceNotFoundException("Linked external account not found.");
     }
@@ -92,8 +97,13 @@ public class UserLinkedExternalAccountDeleteService
       return new UserManagementResponse(UserManagementStatus.OK, response);
     }
 
-    revoker.revoke(tenant, account);
+    boolean revoked = revoker.revoke(tenant, account);
     accountCommandRepository.delete(tenant, account);
+    log.info(
+        "Linked external account removed by administrator: alias={}, provider={}, revoked={}",
+        account.accountAlias().value(),
+        account.provider().value(),
+        revoked);
 
     managementEventPublisher.publish(
         tenant,

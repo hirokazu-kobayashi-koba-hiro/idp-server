@@ -105,6 +105,9 @@ public class AccountLinkingAuthorizeHandler {
    * <p>Nobody can be verified as the operator, so the link is left as it is for a browser that can
    * be, and the RP is told only that a sign-in is needed. The state is not sent: this browser has
    * not been shown to belong to the user who started the link.
+   *
+   * <p>Not recorded as a failed link. A session that simply ran out is everyday, and counting it
+   * would bury the mismatches that event exists to surface.
    */
   public AccountLinkingResult handleWithoutBrowserSession(
       Tenant tenant, AccountLinkingState state) {
@@ -120,8 +123,7 @@ public class AccountLinkingAuthorizeHandler {
     return AccountLinkingResult.redirect(
         AccountLinkingReturnUri.failedUnverified(
                 session.redirectUri(), AccountLinkingReturnError.LOGIN_REQUIRED)
-            .value(),
-        DefaultSecurityEventType.external_account_link_failed);
+            .value());
   }
 
   private AccountLinkingSession getSession(Tenant tenant, AccountLinkingState state) {
