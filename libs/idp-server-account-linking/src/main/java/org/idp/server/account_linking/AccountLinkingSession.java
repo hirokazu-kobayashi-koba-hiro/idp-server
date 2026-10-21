@@ -175,6 +175,22 @@ public class AccountLinkingSession {
   }
 
   /**
+   * Verifies that {@code clientId} is the client that started this link.
+   *
+   * <p>The link is started and completed by one application. Completing it from another would let a
+   * client the user never linked through take over a link it did not start.
+   *
+   * @throws AccountLinkingOperatorMismatchException if the clients differ
+   */
+  public void verifyClient(RequestedClientId clientId) {
+    if (requestedClientId == null || !requestedClientId.equals(clientId)) {
+      throw new AccountLinkingOperatorMismatchException(
+          "Account linking must be completed by the client that started it. state="
+              + state.value());
+    }
+  }
+
+  /**
    * Claims the parked tokens on behalf of {@code operator}.
    *
    * <p>Called from {@code complete}, where the operator comes from a Bearer token.

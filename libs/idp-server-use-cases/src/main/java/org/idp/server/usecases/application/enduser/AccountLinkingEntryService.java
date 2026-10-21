@@ -113,6 +113,10 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
+    if (!AccountLinkingScope.allowsManage(oAuthToken)) {
+      return AccountLinkingResult.insufficientScope(AccountLinkingScope.MANAGE);
+    }
+
     AccountLinkingResult result =
         startHandler.handle(
             new AccountLinkingStartRequest(tenant, user, oAuthToken, provider, body));
@@ -203,6 +207,10 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
+    if (!AccountLinkingScope.allowsManage(oAuthToken)) {
+      return AccountLinkingResult.insufficientScope(AccountLinkingScope.MANAGE);
+    }
+
     AccountLinkingResult result =
         completeHandler.handle(new AccountLinkingCompleteRequest(tenant, state, user, oAuthToken));
 
@@ -214,9 +222,16 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
   @Override
   @Transaction(readOnly = true)
   public AccountLinkingResult findList(
-      TenantIdentifier tenantIdentifier, User user, RequestAttributes requestAttributes) {
+      TenantIdentifier tenantIdentifier,
+      User user,
+      OAuthToken oAuthToken,
+      RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+
+    if (!AccountLinkingScope.allowsRead(oAuthToken)) {
+      return AccountLinkingResult.insufficientScope(AccountLinkingScope.READ);
+    }
 
     List<Map<String, Object>> list =
         linkedExternalAccountQueryRepository.findList(tenant, user.userIdentifier()).stream()
@@ -238,6 +253,10 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+
+    if (!AccountLinkingScope.allowsManage(oAuthToken)) {
+      return AccountLinkingResult.insufficientScope(AccountLinkingScope.MANAGE);
+    }
 
     AccountLinkingResult result = unlinkHandler.handle(tenant, user, alias);
 

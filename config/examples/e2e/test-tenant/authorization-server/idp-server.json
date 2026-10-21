@@ -38,6 +38,8 @@
   "scopes_supported": [
     "openid",
     "linked_account:read_token",
+    "linked_account:read",
+    "linked_account:manage",
     "profile",
     "email",
     "address",

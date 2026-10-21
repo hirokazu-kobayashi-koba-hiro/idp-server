@@ -108,6 +108,16 @@ public class AccountLinkingResult {
     return error(status, "invalid_request", errorDescription, eventType);
   }
 
+  /** The user's token does not carry a scope this operation needs (RFC 6750 §3.1). */
+  public static AccountLinkingResult insufficientScope(String scope) {
+    Map<String, Object> contents = new HashMap<>();
+    contents.put("error", "insufficient_scope");
+    contents.put("error_description", "The request requires the '" + scope + "' scope.");
+    contents.put("scope", scope);
+    return new AccountLinkingResult(
+        AccountLinkingStatus.FORBIDDEN, contents, null, null, null, noClient());
+  }
+
   /** Error carrying the code the external identity provider used, rather than this server's. */
   public static AccountLinkingResult error(
       AccountLinkingStatus status,

@@ -17,7 +17,7 @@
     "authorization_code",
     "refresh_token"
   ],
-  "scope": "openid profile email linked_account:read_token",
+  "scope": "openid profile email linked_account:read_token linked_account:read linked_account:manage",
   "client_name": "Local Development Public Web Application",
   "token_endpoint_auth_method": "client_secret_basic",
   "application_type": "web",

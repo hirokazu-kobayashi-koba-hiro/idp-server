@@ -69,6 +69,7 @@ public class AccountLinkingCompleteHandler {
     try {
       AccountLinkingSession session = getSession(tenant, state);
       session.verifyNotExpired(now);
+      session.verifyClient(request.oAuthToken().requestedClientId());
 
       AccountLinkingSession consumed = session.consume(user.userIdentifier());
 
