@@ -76,3 +76,4 @@ org.idp.server.core.adapters.datasource.account_linking.AccountLinkingSessionCom
 org.idp.server.core.adapters.datasource.account_linking.AccountLinkingSessionQueryDataSourceProvider
 org.idp.server.core.adapters.datasource.account_linking.LinkedExternalAccountCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.account_linking.LinkedExternalAccountQueryDataSourceProvider
+org.idp.server.core.adapters.datasource.account_linking.operation.AccountLinkingSessionOperationCommandDataSourceProvider
