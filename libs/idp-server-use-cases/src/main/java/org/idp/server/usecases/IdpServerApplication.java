@@ -22,6 +22,7 @@ import java.util.Map;
 import org.idp.server.account_linking.AccountLinkingApi;
 import org.idp.server.account_linking.AccountLinkingConfigurationResolver;
 import org.idp.server.account_linking.AccountLinkingCookieDelegate;
+import org.idp.server.account_linking.LinkedExternalAccountRevoker;
 import org.idp.server.account_linking.gateway.ExternalIdpIdTokenGateway;
 import org.idp.server.account_linking.gateway.ExternalIdpTokenGateway;
 import org.idp.server.account_linking.gateway.ExternalIdpUserinfoGateway;
@@ -29,6 +30,7 @@ import org.idp.server.account_linking.handler.AccountLinkingAuthorizeHandler;
 import org.idp.server.account_linking.handler.AccountLinkingCallbackHandler;
 import org.idp.server.account_linking.handler.AccountLinkingCompleteHandler;
 import org.idp.server.account_linking.handler.AccountLinkingStartHandler;
+import org.idp.server.account_linking.handler.AccountLinkingUnlinkHandler;
 import org.idp.server.account_linking.handler.LinkedExternalAccountTokenHandler;
 import org.idp.server.account_linking.repository.AccountLinkingSessionCommandRepository;
 import org.idp.server.account_linking.repository.AccountLinkingSessionQueryRepository;
@@ -615,6 +617,9 @@ public class IdpServerApplication {
     // Protocol providers assemble plugins of their own and need it there too, not only in the
     // datasource container: see DefaultClientInstanceRegistrationProtocolProvider.
     applicationComponentContainer.register(CacheStore.class, cacheStore);
+    // Lifecycle executors are built from this container, and the linked account cleanup decrypts
+    // stored external tokens to revoke them.
+    applicationComponentContainer.register(AesCipher.class, aesCipher);
 
     SmsSenders smsSenders = SmsSenderPluginLoader.load(dependencyContainer);
     applicationComponentContainer.register(SmsSenders.class, smsSenders);
@@ -873,6 +878,13 @@ public class IdpServerApplication {
         applicationComponentContainer.resolve(AccountLinkingSessionQueryRepository.class);
     AccountLinkingConfigurationResolver accountLinkingConfigurationResolver =
         new AccountLinkingConfigurationResolver(federationConfigurationQueryRepository);
+    LinkedExternalAccountCommandRepository linkedExternalAccountCommandRepository =
+        applicationComponentContainer.resolve(LinkedExternalAccountCommandRepository.class);
+    LinkedExternalAccountRevoker linkedExternalAccountRevoker =
+        new LinkedExternalAccountRevoker(
+            accountLinkingConfigurationResolver,
+            new ExternalIdpTokenGateway(httpRequestExecutor),
+            aesCipher);
     this.accountLinkingApi =
         TenantAwareEntryServiceProxy.createProxy(
             new AccountLinkingEntryService(
@@ -898,9 +910,12 @@ public class IdpServerApplication {
                     accountLinkingSessionQueryRepository,
                     accountLinkingSessionCommandRepository,
                     linkedExternalAccountQueryRepository,
-                    applicationComponentContainer.resolve(
-                        LinkedExternalAccountCommandRepository.class),
+                    linkedExternalAccountCommandRepository,
                     accountLinkingConfigurationResolver),
+                new AccountLinkingUnlinkHandler(
+                    linkedExternalAccountQueryRepository,
+                    linkedExternalAccountCommandRepository,
+                    linkedExternalAccountRevoker),
                 new LinkedExternalAccountTokenHandler(
                     oAuthTokenQueryRepository,
                     authorizationServerConfigurationQueryRepository,
@@ -908,8 +923,7 @@ public class IdpServerApplication {
                     clientAuthenticationHandler,
                     userQueryRepository,
                     linkedExternalAccountQueryRepository,
-                    applicationComponentContainer.resolve(
-                        LinkedExternalAccountCommandRepository.class),
+                    linkedExternalAccountCommandRepository,
                     accountLinkingConfigurationResolver,
                     new ExternalIdpTokenGateway(httpRequestExecutor),
                     aesCipher),

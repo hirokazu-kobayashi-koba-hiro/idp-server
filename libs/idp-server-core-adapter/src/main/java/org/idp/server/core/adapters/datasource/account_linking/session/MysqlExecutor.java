@@ -25,6 +25,7 @@ import org.idp.server.account_linking.AccountLinkingSessionStatus;
 import org.idp.server.account_linking.AccountLinkingState;
 import org.idp.server.account_linking.ParkedCredentials;
 import org.idp.server.core.adapters.datasource.account_linking.ModelConverter;
+import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -167,5 +168,37 @@ public class MysqlExecutor implements AccountLinkingSessionSqlExecutor {
         """;
 
     return sqlExecutor.selectOne(sqlTemplate, List.of(state.value(), tenant.identifierValue()));
+  }
+
+  @Override
+  public void deleteAll(Tenant tenant, UserIdentifier userIdentifier) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        """
+        DELETE FROM account_linking_sessions WHERE user_id = ? AND tenant_id = ?;
+        """;
+
+    sqlExecutor.execute(sqlTemplate, List.of(userIdentifier.value(), tenant.identifierValue()));
+  }
+
+  @Override
+  public List<Map<String, String>> selectListByUser(Tenant tenant, UserIdentifier userIdentifier) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        """
+        SELECT state, tenant_id, user_id, client_id, provider, account_alias,
+               redirect_uri, requested_scope, code_verifier, nonce, acr, amr,
+               authenticated_at, status, browser_binding_hash, federated_user_id,
+               federated_username, granted_scope, encrypted_access_token,
+               encrypted_refresh_token, encryption_key_id, access_token_expires_at,
+               refresh_token_expires_at, expires_at
+          FROM account_linking_sessions
+         WHERE tenant_id = ? AND user_id = ?;
+        """;
+
+    return sqlExecutor.selectList(
+        sqlTemplate, List.of(tenant.identifierValue(), userIdentifier.value()));
   }
 }

@@ -17,6 +17,7 @@
 package org.idp.server.core.adapters.datasource.account_linking.session;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import org.idp.server.account_linking.AccountLinkingSession;
 import org.idp.server.account_linking.AccountLinkingSessionStatus;
@@ -24,6 +25,7 @@ import org.idp.server.account_linking.AccountLinkingState;
 import org.idp.server.account_linking.repository.AccountLinkingSessionCommandRepository;
 import org.idp.server.account_linking.repository.AccountLinkingSessionQueryRepository;
 import org.idp.server.core.adapters.datasource.account_linking.ModelConverter;
+import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class AccountLinkingSessionDataSource
@@ -58,6 +60,20 @@ public class AccountLinkingSessionDataSource
   @Override
   public void delete(Tenant tenant, AccountLinkingState state) {
     executor.delete(tenant, state);
+  }
+
+  @Override
+  public void deleteAll(Tenant tenant, UserIdentifier userIdentifier) {
+    executor.deleteAll(tenant, userIdentifier);
+  }
+
+  @Override
+  public List<AccountLinkingSession> findList(Tenant tenant, UserIdentifier userIdentifier) {
+    List<Map<String, String>> results = executor.selectListByUser(tenant, userIdentifier);
+    if (results == null || results.isEmpty()) {
+      return List.of();
+    }
+    return results.stream().map(ModelConverter::convertSession).toList();
   }
 
   @Override

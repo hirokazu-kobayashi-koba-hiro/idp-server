@@ -25,6 +25,7 @@ import org.idp.server.account_linking.handler.AccountLinkingAuthorizeHandler;
 import org.idp.server.account_linking.handler.AccountLinkingCallbackHandler;
 import org.idp.server.account_linking.handler.AccountLinkingCompleteHandler;
 import org.idp.server.account_linking.handler.AccountLinkingStartHandler;
+import org.idp.server.account_linking.handler.AccountLinkingUnlinkHandler;
 import org.idp.server.account_linking.handler.LinkedExternalAccountTokenHandler;
 import org.idp.server.account_linking.io.AccountLinkingAuthorizeRequest;
 import org.idp.server.account_linking.io.AccountLinkingAuthorizeResult;
@@ -67,6 +68,7 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
   AccountLinkingAuthorizeHandler authorizeHandler;
   AccountLinkingCallbackHandler callbackHandler;
   AccountLinkingCompleteHandler completeHandler;
+  AccountLinkingUnlinkHandler unlinkHandler;
   LinkedExternalAccountTokenHandler tokenHandler;
   OIDCSessionHandler oidcSessionHandler;
   SessionCookieDelegate sessionCookieDelegate;
@@ -80,6 +82,7 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
       AccountLinkingAuthorizeHandler authorizeHandler,
       AccountLinkingCallbackHandler callbackHandler,
       AccountLinkingCompleteHandler completeHandler,
+      AccountLinkingUnlinkHandler unlinkHandler,
       LinkedExternalAccountTokenHandler tokenHandler,
       OIDCSessionHandler oidcSessionHandler,
       SessionCookieDelegate sessionCookieDelegate,
@@ -91,6 +94,7 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
     this.authorizeHandler = authorizeHandler;
     this.callbackHandler = callbackHandler;
     this.completeHandler = completeHandler;
+    this.unlinkHandler = unlinkHandler;
     this.tokenHandler = tokenHandler;
     this.oidcSessionHandler = oidcSessionHandler;
     this.sessionCookieDelegate = sessionCookieDelegate;
@@ -232,6 +236,23 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
     contents.put("list", list);
 
     return AccountLinkingResult.success(AccountLinkingStatus.OK, contents, user);
+  }
+
+  @Override
+  public AccountLinkingResult unlink(
+      TenantIdentifier tenantIdentifier,
+      User user,
+      OAuthToken oAuthToken,
+      AccountAlias alias,
+      RequestAttributes requestAttributes) {
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+
+    AccountLinkingResult result = unlinkHandler.handle(tenant, user, alias);
+
+    publish(tenant, oAuthToken, result, requestAttributes);
+
+    return result;
   }
 
   @Override

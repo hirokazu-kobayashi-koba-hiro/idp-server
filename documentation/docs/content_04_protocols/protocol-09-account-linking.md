@@ -61,10 +61,19 @@ RPアプリ                       idp-server                    外部IdP
 | `POST /{tenant-id}/v1/me/linked-external-accounts/link/{provider}` | 連携の開始。`{ redirect_uri, scope }` を受け取り `{ start_url, state, expires_in }` を返す |
 | `POST /{tenant-id}/v1/me/linked-external-accounts/complete` | 連携の確定。`{ state }` を受け取る |
 | `GET /{tenant-id}/v1/me/linked-external-accounts` | 連携一覧 |
+| `DELETE /{tenant-id}/v1/me/linked-external-accounts/{alias}` | 連携の解除。成功時は 204 |
 
 `{provider}` には連携先の設定名（`sso_provider`）を指定します。
 
 `redirect_uri` は連携完了後にブラウザを戻す先で、開始時にクライアント設定の allow-list と完全一致で照合されます。
+
+### クライアントが呼ぶもの（クライアント認証）
+
+| エンドポイント | 用途 |
+|---|---|
+| `POST /{tenant-id}/v1/linked-external-accounts/{alias}/token` | 保管している外部IdPのアクセストークンを取り出す |
+
+保管トークンの取得は、[下の節](#保管トークンの取得)で説明します。
 
 ### ブラウザ遷移（Bearer なし）
 
@@ -76,6 +85,19 @@ RPアプリ                       idp-server                    外部IdP
 この2本が `/me` の外にあるのは、どちらもブラウザのトップレベル遷移で Bearer を運べないためです。`/me` は `ProtectedResourceApiFilter` によって Bearer 前提で保護されている名前空間なので、そこに未認証エンドポイントを混ぜると、実装者が「フィルタが通っているはず」と誤認する余地が生まれます。
 
 一覧のレスポンスにトークンは含まれません。返るのは `alias` / `provider` / `federated_username` / `scope` / 各有効期限 / `created_at` / `updated_at` です。
+
+解除は呼び出したユーザー自身の連携だけが対象で、他人の `alias` を指定しても 404 になります。行を消す前に、保管しているトークンを外部IdPの失効エンドポイント（RFC 7009）で失効させます。行を消すだけでは、写し取られたトークンが外部IdP側で有効なまま残るためです。
+
+失効はベストエフォートです。次の場合でも連携は解除されます。外部側の都合で解除できないと、ユーザーが連携を取り消せなくなるためです。
+
+- `revocation_endpoint` が設定されていない
+- 外部IdPに届かない、または失効を拒否された
+
+連携先の設定を無効化（`enabled: false`）していても、失効は行います。無効化で止めるのは新しい連携であって、発行済みトークンの後始末ではないためです。
+
+解除は行ロックを取ってから失効させます。保管トークンの取得が同時にリフレッシュしていると、外部IdPがトークンをローテーションした直後に古いトークンだけを失効させてしまうためです。
+
+ユーザーが削除されたときも、同じ手順で全ての連携を失効・削除します。あわせて、そのユーザーが始めた連携セッションも削除し、コールバックまで進んで確定されていないセッション（`parked`）が預かっているトークンは失効させます。本人がいなくなると、Bearer を要する `complete` は二度と通らないためです。`linked_external_accounts` は `user_id` に外部キーを張っていないため、ユーザー削除のライフサイクル処理（`LinkedExternalAccountDeletionExecutor`）が後始末を担います。
 
 ---
 
@@ -155,6 +177,7 @@ iframe に埋め込むと third-party 文脈になり、Safari の ITP と Chrom
     "issuer_name": "example-idp",
     "authorization_endpoint": "https://idp.example.com/authorize",
     "token_endpoint": "https://idp.example.com/token",
+    "revocation_endpoint": "https://idp.example.com/revoke",
     "userinfo_endpoint": "https://idp.example.com/userinfo",
     "client_id": "...",
     "client_secret": "...",
@@ -173,6 +196,8 @@ iframe に埋め込むと third-party 文脈になり、Safari の ITP と Chrom
 `external_user_id` へのマッピングは必須です。この値が外部アカウントの識別子として `UNIQUE (tenant_id, provider, federated_user_id)` に使われます。
 
 `scopes_supported` は `link` のリクエストで `scope` を省略したときの既定値です。
+
+`revocation_endpoint` は解除とユーザー削除のときに保管トークンを失効させる先です。省略すると、外部IdP側のトークンは失効させずに連携だけを削除します。クライアント認証はトークンエンドポイントと同じ方式で行います。`client_authentication_type` が `client_secret_basic` なら Basic 認証、それ以外はリクエストボディの `client_secret` です。`private_key_jwt` などには対応していません。
 
 `duplicate_link_policy` は、同じ外部アカウントが既にテナント内の別ユーザーに紐付いている場合の挙動です。
 
@@ -201,9 +226,63 @@ iframe に埋め込むと third-party 文脈になり、Safari の ITP と Chrom
 
 認可の `redirect_uris` とは分けています。連携後の戻り先は通常アプリの設定画面であり、認可コードを受け取るURLではありません。流用すると、本来コールバックでないURLに認可コードを飛ばせるようになります。
 
+`extension.linking_token_providers` には、保管トークンの取得を許す連携先（`sso_provider`）を列挙します。列挙していない連携先のトークンは取り出せません。
+
+```json
+{
+  "extension": {
+    "linking_token_providers": ["example-idp"]
+  }
+}
+```
+
 ### 暗号化
 
 トークンは `ENCRYPTION_KEY` から導出した鍵で AES-GCM 暗号化して保管します（`oauth_token` と同じ方式）。`encryption_key_id` 列は将来の鍵ローテーションに備えたもので、現在は常に `default` です。
+
+---
+
+## 保管トークンの取得
+
+連携したアカウントの外部IdPアクセストークンを、クライアントがユーザーに代わって取り出します。
+
+```
+POST /{tenant-id}/v1/linked-external-accounts/{alias}/token
+Content-Type: application/x-www-form-urlencoded
+
+token={ユーザーのアクセストークン}&client_id=...&client_secret=...
+```
+
+次の全てを満たす場合だけトークンを返します。
+
+- クライアントが認証に成功している。public クライアント（`none`）は拒否します
+- `token` が有効なユーザーのアクセストークンで、**同じクライアント**に発行され、`linked_account:read_token` スコープを持つ
+- `token` が sender-constrained（DPoP・mTLS 証明書・クライアントインスタンス束縛）でない。証明の検証に対応するまで拒否します
+- 連携先がクライアントの `linking_token_providers` に含まれている
+
+```json
+{
+  "access_token": "...",
+  "token_type": "Bearer",
+  "issued_token_type": "urn:ietf:params:oauth:token-type:access_token",
+  "expires_in": 3599
+}
+```
+
+レスポンスには `Cache-Control: no-store` が付きます。返すのはアクセストークンだけで、リフレッシュトークンは返しません。リフレッシュトークンはこのサーバーが保管して使います。アプリが使うと、ローテーションで保管側のトークンが無効になるためです。
+
+アクセストークンの期限まで 30 秒を切っていれば、保管しているリフレッシュトークンで更新してから返します。同じ連携への同時リクエストは行ロックで待ち合わせ、リフレッシュトークンを二重に使いません。
+
+| ステータス | `error` | 発生条件 |
+|---|---|---|
+| 400 | `invalid_request` | `token` が無い / sender-constrained なトークン |
+| 400 | `relink_required` | リフレッシュトークンが無い・期限切れ・外部IdPに拒否された。連携し直す必要があります |
+| 401 | `invalid_client` | クライアント認証に失敗した / public クライアント |
+| 401 | `invalid_token` | `token` が無効・期限切れ・ユーザーを指していない / ユーザーが有効でない |
+| 403 | `unauthorized_client` | `token` が別のクライアントに発行された / 連携先が許可されていない |
+| 403 | `insufficient_scope` | `token` に `linked_account:read_token` が無い |
+| 404 | `not_found` | `alias` がユーザーの連携に無い |
+| 502 | `temporarily_unavailable` | 外部IdPがリフレッシュに 5xx を返した、または到達できない |
 
 ---
 
@@ -216,7 +295,7 @@ iframe に埋め込むと third-party 文脈になり、Safari の ITP と Chrom
 | 400 | `redirect_uri` が未指定、または allow-list に無い / 外部IdP側でトークン交換・userinfo に失敗 |
 | 401 | `/linking/start` にブラウザセッションが無い |
 | 403 | 操作者が連携セッションのユーザーと一致しない / コールバックがブラウザ束縛を提示できない |
-| 404 | `state` に対応する連携セッションが無い |
+| 404 | `state` に対応する連携セッションが無い / 解除する `alias` が呼び出したユーザーの連携に無い（`error` は `not_found`） |
 | 409 | 連携セッションが期限切れ、または期待する状態でない / 同じ外部アカウントが既に他のユーザーに紐付いている（`duplicate_link_policy: reject` のとき） |
 
 409 のうち重複連携は、誰に紐付いているかを返しません。返すと外部アカウントの所有者を列挙する手がかりになるためです。
@@ -229,10 +308,8 @@ iframe に埋め込むと third-party 文脈になり、Safari の ITP と Chrom
 
 | 項目 | 状態 |
 |---|---|
-| 連携の解除 | 未実装 |
-| 保管トークンの取得API | 未実装 |
-| リフレッシュ | 未実装 |
-| 確定されなかった連携（`parked`）の削除 | 未実装。期限切れ後も暗号化トークンが残ります |
+| 確定されなかった連携（`parked`）の削除 | ユーザー削除時のみ。期限切れの掃除は未実装で、期限切れ後も暗号化トークンが残ります |
+| テナント削除時の失効 | 未実装。連携の行はテナントの削除に連動して消えますが、外部IdPのトークンは失効しません |
 | ID Token の検証 | **行いません。** ユーザーの識別は userinfo エンドポイントのレスポンスに依存します |
 | step-up 認証 | 未実装。`/linking/start` はブラウザセッションが無ければ 401 を返すだけです |
 | ネイティブアプリ | 上記のため未対応。アプリ内ブラウザに idp-server のセッションが無いと `/linking/start` で 401 になります |
