@@ -29,7 +29,7 @@ class AccountLinkingReturnUriTest {
   @DisplayName("クエリが無ければ ? で繋ぐ")
   void appendsWithQuestionMark() {
     String value =
-        new AccountLinkingReturnUri("https://rp.example.com/linking/callback", STATE).value();
+        AccountLinkingReturnUri.done("https://rp.example.com/linking/callback", STATE).value();
 
     assertTrue(value.startsWith("https://rp.example.com/linking/callback?"));
     assertTrue(value.contains("linking=done"));
@@ -40,10 +40,57 @@ class AccountLinkingReturnUriTest {
   @DisplayName("既にクエリがあれば & で繋ぐ")
   void appendsWithAmpersand() {
     String value =
-        new AccountLinkingReturnUri("https://rp.example.com/linking/callback?from=settings", STATE)
+        AccountLinkingReturnUri.done("https://rp.example.com/linking/callback?from=settings", STATE)
             .value();
 
     assertTrue(value.startsWith("https://rp.example.com/linking/callback?from=settings&"));
     assertFalse(value.replaceFirst("\\?", "").contains("?"));
+  }
+
+  @Test
+  @DisplayName("失敗はエラーコードと state だけを返す")
+  void failedCarriesOnlyTheCodeAndState() {
+    String value =
+        AccountLinkingReturnUri.failed(
+                "https://rp.example.com/linking/callback",
+                AccountLinkingReturnError.ACCESS_DENIED,
+                STATE)
+            .value();
+
+    assertTrue(value.contains("linking=failed"));
+    assertTrue(value.contains("error=access_denied"));
+    assertTrue(value.contains("state=abc-123"));
+    assertFalse(value.contains("error_description"));
+  }
+
+  @Test
+  @DisplayName("ブラウザを確かめられていない失敗では state を返さない")
+  void failedUnverifiedOmitsState() {
+    String value =
+        AccountLinkingReturnUri.failedUnverified(
+                "https://rp.example.com/linking/callback", AccountLinkingReturnError.LOGIN_REQUIRED)
+            .value();
+
+    assertTrue(value.contains("linking=failed"));
+    assertTrue(value.contains("error=login_required"));
+    assertFalse(value.contains("state="));
+  }
+
+  @Test
+  @DisplayName("外部IdPの error はそのまま流さず、決まった値に置き換える")
+  void mapsExternalErrorsOntoAFixedSet() {
+    assertEquals(
+        AccountLinkingReturnError.ACCESS_DENIED,
+        AccountLinkingReturnError.fromExternal("access_denied"));
+    assertEquals(
+        AccountLinkingReturnError.TEMPORARILY_UNAVAILABLE,
+        AccountLinkingReturnError.fromExternal("temporarily_unavailable"));
+    assertEquals(
+        AccountLinkingReturnError.SERVER_ERROR,
+        AccountLinkingReturnError.fromExternal("invalid_scope"));
+    assertEquals(
+        AccountLinkingReturnError.SERVER_ERROR, AccountLinkingReturnError.fromExternal("<script>"));
+    assertEquals(
+        AccountLinkingReturnError.SERVER_ERROR, AccountLinkingReturnError.fromExternal(null));
   }
 }

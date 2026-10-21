@@ -79,6 +79,30 @@ public class AccountLinkingResult {
         AccountLinkingStatus.REDIRECT, Map.of(), redirectUri, null, null, noClient());
   }
 
+  /** A failure that continues as a browser redirect, to the RP or to the error page. */
+  public static AccountLinkingResult redirect(
+      String redirectUri, DefaultSecurityEventType eventType) {
+    return new AccountLinkingResult(
+        AccountLinkingStatus.REDIRECT,
+        Map.of(),
+        redirectUri,
+        eventType.toEventType(),
+        null,
+        noClient());
+  }
+
+  /**
+   * Returns a copy that answers with a redirect to {@code redirectUri}, keeping the event this
+   * result is recorded as.
+   *
+   * <p>The browser legs are top level navigations: a JSON body would leave the user on a page of
+   * raw output with no way back.
+   */
+  public AccountLinkingResult redirectingTo(String redirectUri) {
+    return new AccountLinkingResult(
+        AccountLinkingStatus.REDIRECT, Map.of(), redirectUri, eventType, user, requestedClientId);
+  }
+
   public static AccountLinkingResult error(
       AccountLinkingStatus status, String errorDescription, DefaultSecurityEventType eventType) {
     return error(status, "invalid_request", errorDescription, eventType);

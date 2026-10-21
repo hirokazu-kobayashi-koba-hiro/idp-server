@@ -23,6 +23,7 @@ import org.idp.server.account_linking.exception.AccountLinkingSessionStateExcept
 import org.idp.server.account_linking.io.AccountLinkingAuthorizeRequest;
 import org.idp.server.account_linking.io.AccountLinkingAuthorizeResult;
 import org.idp.server.account_linking.io.AccountLinkingResult;
+import org.idp.server.account_linking.io.AccountLinkingStatus;
 import org.idp.server.account_linking.repository.AccountLinkingSessionCommandRepository;
 import org.idp.server.account_linking.repository.AccountLinkingSessionQueryRepository;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
@@ -30,6 +31,7 @@ import org.idp.server.federation.sso.oidc.OidcSsoConfiguration;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.http.HttpQueryParams;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.security.event.DefaultSecurityEventType;
 
 /**
  * Verifies the operator and hands back the external authorization URL.
@@ -86,11 +88,40 @@ public class AccountLinkingAuthorizeHandler {
           browserBinding.secret());
 
     } catch (Exception exception) {
+      // The operator has not been shown to own this link, or the link is gone: the error page,
+      // not the RP. Sending a victim lured through someone else's link back to the RP would hand
+      // that link to the victim's session there.
+      AccountLinkingResult failure = errorHandler.handle(exception);
       return AccountLinkingAuthorizeResult.error(
-          errorHandler
-              .handle(exception)
+          failure
+              .redirectingTo(new AccountLinkingErrorPage(tenant, failure.status()).value())
               .withContext(new RequestedClientId(""), request.operator()));
     }
+  }
+
+  /**
+   * {@code /linking/start} reached without a browser session at this server.
+   *
+   * <p>Nobody can be verified as the operator, so the link is left as it is for a browser that can
+   * be, and the RP is told only that a sign-in is needed. The state is not sent: this browser has
+   * not been shown to belong to the user who started the link.
+   */
+  public AccountLinkingResult handleWithoutBrowserSession(
+      Tenant tenant, AccountLinkingState state) {
+    AccountLinkingSession session = sessionQueryRepository.find(tenant, state);
+    LocalDateTime now = SystemDateTime.now();
+
+    if (!session.exists() || session.isExpired(now) || !session.status().isPending()) {
+      return AccountLinkingResult.redirect(
+          new AccountLinkingErrorPage(tenant, AccountLinkingStatus.NOT_FOUND).value(),
+          DefaultSecurityEventType.external_account_link_failed);
+    }
+
+    return AccountLinkingResult.redirect(
+        AccountLinkingReturnUri.failedUnverified(
+                session.redirectUri(), AccountLinkingReturnError.LOGIN_REQUIRED)
+            .value(),
+        DefaultSecurityEventType.external_account_link_failed);
   }
 
   private AccountLinkingSession getSession(Tenant tenant, AccountLinkingState state) {

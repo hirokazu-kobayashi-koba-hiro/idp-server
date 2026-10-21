@@ -26,7 +26,6 @@ import org.idp.server.account_linking.gateway.ExternalIdpTokenGateway;
 import org.idp.server.account_linking.gateway.ExternalIdpUserinfoGateway;
 import org.idp.server.account_linking.io.AccountLinkingCallbackRequest;
 import org.idp.server.account_linking.io.AccountLinkingResult;
-import org.idp.server.account_linking.io.AccountLinkingStatus;
 import org.idp.server.account_linking.repository.AccountLinkingSessionCommandRepository;
 import org.idp.server.account_linking.repository.AccountLinkingSessionQueryRepository;
 import org.idp.server.core.openid.identity.User;
@@ -82,28 +81,23 @@ public class AccountLinkingCallbackHandler {
 
     Tenant tenant = request.tenant();
     AccountLinkingState state = request.state();
-
-    if (request.hasError()) {
-      log.warn(
-          "Account linking denied at the external identity provider. error={}", request.error());
-      return AccountLinkingResult.error(
-          AccountLinkingStatus.BAD_REQUEST,
-          request.error(),
-          request.errorDescription(),
-          DefaultSecurityEventType.external_account_link_failed);
-    }
-
     LocalDateTime now = SystemDateTime.now();
+    AccountLinkingSession session = null;
 
     try {
-      AccountLinkingSession session = getSession(tenant, state);
+      session = getSession(tenant, state);
       session.verifyNotExpired(now);
 
       // Before anything else, and before the session is claimed: a browser that cannot present the
       // secret issued at /linking/start is not the one that started this link, and its
       // authorization code must not be redeemed. Rejecting here leaves the session usable by the
-      // browser that can.
+      // browser that can. A denial is checked the same way, so that a request carrying someone
+      // else's state cannot end their link.
       session.verifyBrowserBinding(request.browserBindingSecret());
+
+      if (request.hasError()) {
+        return denied(tenant, session, request);
+      }
 
       // Claimed before the exchange: a request that loses here must not redeem the code, because
       // redeeming a code twice is what makes a provider revoke the grant.
@@ -120,16 +114,46 @@ public class AccountLinkingCallbackHandler {
       ParkedCredentials credentials = exchange(tenant, session, request.code(), now);
       sessionCommandRepository.update(tenant, session.park(credentials));
 
-      return AccountLinkingResult.redirect(session.redirectUri());
+      return AccountLinkingResult.redirect(
+          AccountLinkingReturnUri.done(session.redirectUri(), state).value());
 
     } catch (ExternalIdpRequestFailedException exception) {
       // The code is spent and the session cannot be retried, so it is dropped rather than left
-      // parked with nothing in it.
+      // parked with nothing in it. The browser has been confirmed as the one that started the
+      // link, so it goes back to the RP with the state.
       sessionCommandRepository.delete(tenant, state);
-      return errorHandler.handle(exception);
+      return errorHandler
+          .handle(exception)
+          .redirectingTo(
+              AccountLinkingReturnUri.failed(
+                      session.redirectUri(), AccountLinkingReturnError.SERVER_ERROR, state)
+                  .value());
     } catch (Exception exception) {
-      return errorHandler.handle(exception);
+      // The link is unknown or the browser is not the one that started it: there is no return URI
+      // this browser may be sent to.
+      AccountLinkingResult failure = errorHandler.handle(exception);
+      return failure.redirectingTo(new AccountLinkingErrorPage(tenant, failure.status()).value());
     }
+  }
+
+  /**
+   * The user declined, or the provider failed, at the external IdP.
+   *
+   * <p>The session is dropped: the provider has answered this authorization request and will not
+   * answer it again.
+   */
+  private AccountLinkingResult denied(
+      Tenant tenant, AccountLinkingSession session, AccountLinkingCallbackRequest request) {
+    log.warn("Account linking denied at the external identity provider. error={}", request.error());
+    sessionCommandRepository.delete(tenant, session.state());
+
+    return AccountLinkingResult.redirect(
+        AccountLinkingReturnUri.failed(
+                session.redirectUri(),
+                AccountLinkingReturnError.fromExternal(request.error()),
+                session.state())
+            .value(),
+        DefaultSecurityEventType.external_account_link_failed);
   }
 
   private ParkedCredentials exchange(
