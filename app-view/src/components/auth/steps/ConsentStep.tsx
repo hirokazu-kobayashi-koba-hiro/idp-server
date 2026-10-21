@@ -22,6 +22,7 @@ const SCOPE_LABELS: Record<string, string> = {
   phone: "Your phone number",
   address: "Your address",
   offline_access: "Keep you signed in",
+  "linked_account:read_token": "Use your linked external accounts",
 };
 
 /** Scope prefix that releases a user custom property as a claim of the same name (backend). */
