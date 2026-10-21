@@ -33,6 +33,7 @@ import org.idp.server.account_linking.handler.AccountLinkingStartHandler;
 import org.idp.server.account_linking.handler.AccountLinkingUnlinkHandler;
 import org.idp.server.account_linking.handler.LinkedExternalAccountTokenHandler;
 import org.idp.server.account_linking.repository.AccountLinkingSessionCommandRepository;
+import org.idp.server.account_linking.repository.AccountLinkingSessionOperationCommandRepository;
 import org.idp.server.account_linking.repository.AccountLinkingSessionQueryRepository;
 import org.idp.server.account_linking.repository.LinkedExternalAccountCommandRepository;
 import org.idp.server.account_linking.repository.LinkedExternalAccountQueryRepository;
@@ -741,7 +742,9 @@ public class IdpServerApplication {
                 cibaGrantOperationCommandRepository,
                 ssoSessionOperationCommandRepository,
                 contactVerificationChallengeOperationCommandRepository,
-                clientInstanceRegistrationChallengeOperationCommandRepository),
+                clientInstanceRegistrationChallengeOperationCommandRepository,
+                applicationComponentContainer.resolve(
+                    AccountLinkingSessionOperationCommandRepository.class)),
             IdpServerOperationApi.class,
             databaseTypeProvider);
 

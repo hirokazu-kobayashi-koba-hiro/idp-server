@@ -18,6 +18,7 @@ package org.idp.server.usecases.control_plane.system_administrator;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.idp.server.account_linking.repository.AccountLinkingSessionOperationCommandRepository;
 import org.idp.server.control_plane.admin.operation.IdpServerOperationApi;
 import org.idp.server.control_plane.admin.operation.io.IdpServerOperationRequest;
 import org.idp.server.control_plane.admin.operation.io.IdpServerOperationResponse;
@@ -58,6 +59,7 @@ public class IdpServerOperationEntryService implements IdpServerOperationApi {
       contactVerificationChallengeOperationCommandRepository;
   ClientInstanceRegistrationChallengeOperationCommandRepository
       clientInstanceRegistrationChallengeOperationCommandRepository;
+  AccountLinkingSessionOperationCommandRepository accountLinkingSessionOperationCommandRepository;
 
   public IdpServerOperationEntryService(
       TenantQueryRepository tenantQueryRepository,
@@ -74,7 +76,9 @@ public class IdpServerOperationEntryService implements IdpServerOperationApi {
       ContactVerificationChallengeOperationCommandRepository
           contactVerificationChallengeOperationCommandRepository,
       ClientInstanceRegistrationChallengeOperationCommandRepository
-          clientInstanceRegistrationChallengeOperationCommandRepository) {
+          clientInstanceRegistrationChallengeOperationCommandRepository,
+      AccountLinkingSessionOperationCommandRepository
+          accountLinkingSessionOperationCommandRepository) {
     this.tenantQueryRepository = tenantQueryRepository;
     this.oAuthTokenOperationCommandRepository = oAuthTokenOperationCommandRepository;
     this.authenticationTransactionOperationCommandRepository =
@@ -91,6 +95,8 @@ public class IdpServerOperationEntryService implements IdpServerOperationApi {
         contactVerificationChallengeOperationCommandRepository;
     this.clientInstanceRegistrationChallengeOperationCommandRepository =
         clientInstanceRegistrationChallengeOperationCommandRepository;
+    this.accountLinkingSessionOperationCommandRepository =
+        accountLinkingSessionOperationCommandRepository;
   }
 
   @Override
@@ -136,6 +142,10 @@ public class IdpServerOperationEntryService implements IdpServerOperationApi {
     deleted.put(
         "client_instance_registration_challenge",
         clientInstanceRegistrationChallengeOperationCommandRepository.deleteExpired(
+            adminTenant, maxDeletionNumber));
+    deleted.put(
+        "account_linking_session",
+        accountLinkingSessionOperationCommandRepository.deleteExpired(
             adminTenant, maxDeletionNumber));
 
     int total = deleted.values().stream().mapToInt(Integer::intValue).sum();
