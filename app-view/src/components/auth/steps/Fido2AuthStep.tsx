@@ -41,7 +41,7 @@ type ChallengeResponse = {
  * a new passkey.
  */
 export const Fido2AuthStep = ({ tenantId, id, onCompleted }: StepProps) => {
-  const [identifier] = useAtom(authIdentifierAtom);
+  const [identifier] = useAtom(authIdentifierAtom(id));
   const [username, setUsername] = useState(identifier);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");

@@ -35,8 +35,8 @@ export const EmailVerifyStep = ({
   step,
   onCompleted,
 }: StepProps) => {
-  const [identifier, setIdentifier] = useAtom(authIdentifierAtom);
-  const [userStatus, setUserStatus] = useAtom(authUserStatusAtom);
+  const [identifier, setIdentifier] = useAtom(authIdentifierAtom(id));
+  const [userStatus, setUserStatus] = useAtom(authUserStatusAtom(id));
   const [email, setEmail] = useState(identifier);
   const [code, setCode] = useState("");
   const [phase, setPhase] = useState<"identify" | "verify">(
