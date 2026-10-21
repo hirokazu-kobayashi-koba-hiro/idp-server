@@ -1,0 +1,341 @@
+# 外部IdPアカウント連携の設定
+
+## このドキュメントの目的
+
+ログイン済みのユーザーが自分のアカウントに**外部IdPのアカウントを紐付け**、RP がその外部IdPのアクセストークンで外部APIを呼べるようにすることが目標です。
+
+仕組み（確定を分ける理由、防御の考え方、エラーの一覧）は [外部IdPアカウント連携（プロトコル）](../../content_04_protocols/protocol-09-account-linking.md) を参照してください。このドキュメントは手順だけを扱います。
+
+### 所要時間
+⏱️ **約30分**
+
+### 前提条件
+- 管理者トークンを取得済み
+- 組織ID・テナントIDを取得済み
+- ログイン用のテナント・クライアントが動作している（[Phase 1](../phase-1-foundation/03-tenant-setup.md)）
+- 連携先の外部IdPでクライアントを登録できる
+
+### 設定するもの
+
+| # | 対象 | 設定 |
+|---|------|------|
+| 1 | 外部IdP | idp-server の連携用コールバックURLを登録 |
+| 2 | フェデレーション設定 | 連携先を `federation-configurations` に登録 |
+| 3 | テナント | `linked_account:*` スコープを追加 |
+| 4 | クライアント（RP） | スコープ・戻り先・トークン取得を許す連携先 |
+| 5 | RP の実装 | 開始 → 外部IdPへ遷移 → 確定 → 一覧・解除・トークン取得 |
+
+---
+
+## Step 1: 外部IdPにコールバックURLを登録
+
+外部IdPのクライアント設定で、次のURLをリダイレクトURIに登録します。
+
+```
+https://{idp-server}/{tenant-id}/v1/linking/callback/{sso_provider}
+```
+
+- `{sso_provider}` は Step 2 で付ける連携先の名前です
+- ログイン用 Federation のコールバック（`/v1/authorizations/federations/oidc/callback`）とは別のURLです
+- idp-server は外部IdPへの認可リクエストに PKCE（`code_challenge_method=S256`）を必ず付けます
+- 外部IdPは `response_mode=form_post` ではなく、クエリ（GET）で返す設定にしてください
+
+e2e の例では、外部IdP役テナントのクライアント（`config/examples/e2e/tenant-1e68932e-ed4a-43e7-b412-460665e42df3/clients/clientSecretPost.json`）の `redirect_uris` に連携用コールバックを追加しています。
+
+---
+
+## Step 2: 連携先を登録
+
+連携先は `federation-configurations` に `type: oidc` で登録します。**ログイン用の設定とは別の `sso_provider` で登録してください**（ログイン用を共用すると、ログインの同意画面にAPI用のスコープが出ます）。
+
+```bash
+curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/federation-configurations" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${ADMIN_TOKEN}" \
+  -d '{
+    "type": "oidc",
+    "sso_provider": "example-idp",
+    "enabled": true,
+    "payload": {
+      "type": "standard",
+      "provider": "standard",
+      "issuer": "https://idp.example.com",
+      "issuer_name": "example-idp",
+      "authorization_endpoint": "https://idp.example.com/authorize",
+      "token_endpoint": "https://idp.example.com/token",
+      "userinfo_endpoint": "https://idp.example.com/userinfo",
+      "jwks_uri": "https://idp.example.com/jwks",
+      "revocation_endpoint": "https://idp.example.com/revoke",
+      "client_id": "your-client-id",
+      "client_secret": "your-client-secret",
+      "client_authentication_type": "client_secret_post",
+      "redirect_uri": "https://api.example.com/'"${TENANT_ID}"'/v1/linking/callback/example-idp",
+      "scopes_supported": ["openid", "email", "offline_access"],
+      "userinfo_mapping_rules": [
+        { "from": "$.http_request.response_body.sub", "to": "external_user_id" },
+        { "from": "$.http_request.response_body.email", "to": "email" }
+      ],
+      "refresh_token_expires_in": 86400,
+      "duplicate_link_policy": "reject"
+    }
+  }'
+```
+
+| フィールド | 説明 |
+|-----------|------|
+| `sso_provider` | 連携先の名前。RP が `/link/{provider}` に指定し、クライアントの `linking_token_providers` にも書く |
+| `payload.provider` | `standard` |
+| `payload.issuer` / `jwks_uri` | 外部IdPが ID Token を返すときの検証に使う（`iss` の一致と署名）。`openid` を要求するなら必須 |
+| `payload.authorization_endpoint` / `token_endpoint` | 必須 |
+| `payload.userinfo_endpoint` | 任意。設定すると `email` のマッピングが一覧の `federated_username` になり、ID Token が無いときは `external_user_id` が外部アカウントの識別子になる |
+| `payload.client_authentication_type` | `client_secret_basic` なら Basic 認証、それ以外はボディに `client_secret` を入れる。`private_key_jwt` などには対応していない。トークン交換・リフレッシュ・失効で共通 |
+| `payload.redirect_uri` | Step 1 で登録したコールバックURLと同じ値 |
+| `payload.scopes_supported` | RP が `link` で `scope` を省略したときに外部IdPへ要求するスコープ |
+| `payload.revocation_endpoint` | 任意。解除とユーザー削除のときに保管トークンを失効させる先。無ければ失効させずに連携だけを消す |
+| `payload.refresh_token_expires_in` | 保管するリフレッシュトークンの有効期間（秒）。外部IdPの実際の期限に合わせる。未設定なら期限は不明として扱い、アクセストークンが切れるたびにリフレッシュを試す |
+| `payload.duplicate_link_policy` | 同じ外部アカウントが別ユーザーに連携済みのとき。`reject`（既定、409）/ `allow` |
+
+ログイン用の設定例にある `store_credentials` と `access_token_expires_in` は、連携では読みません。アクセストークンの期限は外部IdPのトークン応答の `expires_in` で決まります。
+
+**実例**:
+- `config/examples/standard-oidc-web-app/federation-account-linking.json` - サンプルアプリ用
+- `config/examples/e2e/test-tenant/federation/oidc/account-linking.json` - OIDC の連携先
+- `config/examples/e2e/test-tenant/federation/oidc/account-linking-oauth2.json` - OAuth 2.0 だけの連携先（`openid` も userinfo も無い）。外部アカウントを識別できないので、連携するたびに新しい連携として増えます
+
+---
+
+## Step 3: テナントにスコープを追加
+
+認可サーバー設定の `scopes_supported` に3つのスコープを追加します。
+
+```json
+{
+  "scopes_supported": [
+    "openid", "profile", "email",
+    "linked_account:read",
+    "linked_account:manage",
+    "linked_account:read_token"
+  ]
+}
+```
+
+| スコープ | 許すこと |
+|---------|---------|
+| `linked_account:read` | 連携の一覧 |
+| `linked_account:manage` | 連携の開始・確定・解除と一覧 |
+| `linked_account:read_token` | 保管トークンの取得（上の2つとは独立） |
+
+既存の設定にこの3つを足して `PUT /v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authorization-server` で更新します。例は `config/examples/standard-oidc-web-app/public-tenant.json` です。
+
+確認すること:
+- **`issuer` が `https://{host}/{tenant-id}` の形であること**。RP に返す `start_url` は `{issuer}/v1/linking/start` で組み立てます
+- テナントの `session_config.cookie_same_site` を `Strict` にしないこと。`/linking/start` は idp-server のログインセッションの Cookie で操作者を確認します。サンプルの `strict` 構成（`config/examples/standard-oidc-web-app/switch-auth-view.sh strict`）は連携が通らない構成の再現です
+
+---
+
+## Step 4: クライアントを設定
+
+RP のクライアント設定に次を追加します。クライアントの更新（`PUT .../clients/{client-id}`）は設定全体の置き換えなので、既存の設定に足した全体を送ってください。
+
+```json
+{
+  "scope": "openid profile email linked_account:read linked_account:manage linked_account:read_token",
+  "token_endpoint_auth_method": "client_secret_basic",
+  "extension": {
+    "linking_return_uris": ["https://rp.example.com/linking/callback"],
+    "linking_token_providers": ["example-idp"]
+  }
+}
+```
+
+| フィールド | 説明 |
+|-----------|------|
+| `scope` | Step 3 のスコープ。テナントとクライアントの両方に無いと付与されず、`/me` の連携APIは `403 insufficient_scope` になる |
+| `extension.linking_return_uris` | 連携が終わったあとにブラウザを戻す先。`link` の `redirect_uri` と**完全一致**で照合する。認可の `redirect_uris` とは別 |
+| `extension.linking_token_providers` | 保管トークンの取得を許す連携先（`sso_provider`）。書いていない連携先のトークンは取り出せない（`403 unauthorized_client`） |
+| `token_endpoint_auth_method` | 保管トークンを取得するなら confidential クライアントにする。`none` は拒否される |
+
+RP は認可リクエストの `scope` にもこれらを含め、ユーザーのアクセストークンに付与させます。
+
+**実例**: `config/examples/standard-oidc-web-app/public-client.json`、`config/examples/e2e/test-tenant/clients/clientSecretPost.json`
+
+---
+
+## Step 5: RP を実装する
+
+API の入出力は [リソースオーナー向けAPI（OpenAPI）](../../../openapi/swagger-resource-owner-ja.yaml) を参照してください。動く実装は `sample-web/src/app/api/linked-accounts/` と `sample-web/src/app/(authenticated)/linked-accounts/` にあります。
+
+### 5.1 連携を開始する
+
+ユーザーのアクセストークン（`linked_account:manage`）で呼びます。
+
+```bash
+curl -X POST "${IDP_SERVER_URL}/${TENANT_ID}/v1/me/linked-external-accounts/link/example-idp" \
+  -H "Authorization: Bearer ${USER_ACCESS_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "redirect_uri": "https://rp.example.com/linking/callback",
+    "scope": "openid email offline_access"
+  }'
+```
+
+```json
+{
+  "start_url": "https://api.example.com/{tenant-id}/v1/linking/start?state=...",
+  "state": "...",
+  "expires_in": 900
+}
+```
+
+- `redirect_uri` は必須で、Step 4 の `linking_return_uris` のどれかと一致させる
+- `scope` は省略すると連携先の `scopes_supported` になる
+- 連携は `expires_in`（900秒）以内に終える
+
+### 5.2 `start_url` へトップレベル遷移する
+
+ブラウザを `start_url` へ**トップレベル遷移**させます（`location.href` か、サーバーからの 302）。iframe や `fetch` では Cookie が保存・送信されず成立しません。ポップアップは問題ありません。
+
+idp-server はログインセッションで操作者を確認してから外部IdPへ送り、外部IdPから戻るとトークンを交換して預かり、Step 4 の戻り先へ 302 します。
+
+### 5.3 戻り先で結果を処理する
+
+| 戻り先のクエリ | RP がすること |
+|---------------|--------------|
+| `linking=done&state=...` | 連携を確定する（下記） |
+| `linking=failed&error=...&state=...` | エラーを表示する。この連携セッションは削除済みなので、やり直すときは 5.1 から |
+| `linking=failed&error=login_required`（`state` なし） | idp-server へサインインし直してもらい、5.1 からやり直す |
+
+`error` は `access_denied` / `login_required` / `temporarily_unavailable` / `server_error` のどれかです。
+
+`linking=done` のときは、**連携を始めたのと同じクライアント**のユーザーのアクセストークンで確定します。
+
+```bash
+curl -X POST "${IDP_SERVER_URL}/${TENANT_ID}/v1/me/linked-external-accounts/complete" \
+  -H "Authorization: Bearer ${USER_ACCESS_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{ "state": "..." }'
+```
+
+`201` で連携（`alias`、`provider`、`federated_username`、`scope`、各有効期限など）が返ります。`alias` が以降の操作のキーです。
+
+### 5.4 一覧と解除
+
+```bash
+# 一覧（linked_account:read か linked_account:manage）
+curl "${IDP_SERVER_URL}/${TENANT_ID}/v1/me/linked-external-accounts" \
+  -H "Authorization: Bearer ${USER_ACCESS_TOKEN}"
+
+# 解除（linked_account:manage）。成功は 204
+curl -X DELETE "${IDP_SERVER_URL}/${TENANT_ID}/v1/me/linked-external-accounts/${ALIAS}" \
+  -H "Authorization: Bearer ${USER_ACCESS_TOKEN}"
+```
+
+一覧は `{ "list": [...] }` で、トークンは含みません。解除すると、`revocation_endpoint` があれば外部IdPで保管トークンを失効させてから連携を消します。
+
+### 5.5 保管トークンを取得する
+
+**RP のサーバー側から**、クライアント認証を付けて呼びます。ユーザーのアクセストークン（`linked_account:read_token` 付き、同じクライアントに発行されたもの）を `token` で渡します。
+
+```bash
+curl -X POST "${IDP_SERVER_URL}/${TENANT_ID}/v1/linked-external-accounts/${ALIAS}/token" \
+  -u "${CLIENT_ID}:${CLIENT_SECRET}" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "token=${USER_ACCESS_TOKEN}"
+```
+
+```json
+{
+  "access_token": "...",
+  "token_type": "Bearer",
+  "issued_token_type": "urn:ietf:params:oauth:token-type:access_token",
+  "expires_in": 3599
+}
+```
+
+返るのは外部IdPのアクセストークンだけです。期限が近ければ idp-server が保管しているリフレッシュトークンで更新してから返します。取得したトークンはブラウザに渡さず、サーバー側で外部APIの呼び出しに使ってください。
+
+| 応答 | RP がすること |
+|------|--------------|
+| `400 relink_required` | リフレッシュできない。5.1 から連携し直してもらう |
+| `502 temporarily_unavailable` | 外部IdPが一時的に応答しない。時間をおいて再試行 |
+
+DPoP・mTLS などで sender-constrained になっているユーザートークンは、まだ受け付けません（`400 invalid_request`）。
+
+---
+
+## Step 6: 運用
+
+### 管理APIでの確認・解除
+
+| メソッド | パス | 権限 |
+|---------|------|------|
+| GET | `/v1/management/organizations/{organization-id}/tenants/{tenant-id}/users/{user-id}/linked-external-accounts` | `idp:linked-account:read` |
+| GET | `.../users/{user-id}/linked-external-accounts/{alias}` | `idp:linked-account:read` |
+| DELETE | `.../users/{user-id}/linked-external-accounts/{alias}` | `idp:linked-account:delete` |
+
+システムレベルは `/v1/management/tenants/{tenant-id}/users/{user-id}/linked-external-accounts` です。解除は `dry_run=true` で事前確認できます。
+
+`idp:*` を持つロールには権限が含まれます。権限を列挙しているロールで使うときは、既存のテナントには権限のレコードが無いので、先に作ってからロールに足します。
+
+```bash
+# 1. 権限を作る（read / delete それぞれ）
+curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/permissions" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${ADMIN_TOKEN}" \
+  -d '{ "name": "idp:linked-account:read", "description": "Read linked external accounts" }'
+```
+
+2. 応答の `result.id` を、ロールの更新（`PUT .../roles/{role-id}`）の `permissions` に足す。`permissions` は権限の `id` の一覧で、送った内容で置き換わるので、既存の権限の `id` も含めて送る
+
+### 期限切れの連携セッションを消す
+
+確定されずに期限を過ぎた連携セッションは、期限切れデータの一括削除 `POST /v1/admin/operations/delete-expired-data` で消えます。応答の内訳は `deleted.account_linking_session` です。定期実行（Cron 等）に組み込んでください（[運用の概念](../../content_03_concepts/07-operations/concept-04-operations.md)）。
+
+### ユーザー削除と連携先の無効化
+
+- ユーザーを削除すると、そのユーザーの連携と連携セッションも削除され、保管トークンは外部IdPで失効されます（ベストエフォート）
+- 連携先の設定を `enabled: false` にすると新しい連携は始められなくなりますが、解除やユーザー削除のときの失効はそのまま行われます
+
+---
+
+## 動作確認
+
+e2e のシナリオ `e2e/src/tests/scenario/application/scenario-16-account-linking.test.js` が、連携・トークン取得・解除・ユーザー削除・管理API・失敗時の戻りを通しで確認します。
+
+```bash
+# テストデータの登録（リポジトリのルートで）
+./config/scripts/e2e-test-data.sh
+./config/scripts/e2e-test-tenant-data.sh -t 1e68932e-ed4a-43e7-b412-460665e42df3
+
+# 実行（npx jest は使わない）
+cd e2e && npm test -- --testPathPattern=scenario-16
+```
+
+---
+
+## よくあるエラー
+
+| 症状 | 原因 | 対処 |
+|------|------|------|
+| `link` が `400`（`redirect_uri is not registered for this client.`） | `redirect_uri` が `linking_return_uris` と一致しない | 末尾のスラッシュまで含めて一致させる |
+| `/me` の連携APIが `403 insufficient_scope` | スコープがテナントかクライアントに無い、または認可リクエストで要求していない | Step 3・4 を確認し、トークンを取り直す |
+| 戻り先に `error=login_required` | `/linking/start` の時点で idp-server のログインセッションが無い | サインインし直してから 5.1 からやり直す。`cookie_same_site` が `Strict` でないか確認 |
+| `start_url` を開くとエラー画面 | `{provider}` の名前が `sso_provider` と違う、または連携先が `enabled: false`（`link` は名前を検査しない） | `sso_provider` を確認 |
+| 戻り先に `error=server_error` | 外部IdPでのトークン交換・ID Token 検証・userinfo の失敗 | `client_authentication_type`・`redirect_uri`・`issuer`・`jwks_uri` を確認 |
+| `complete` が `403` | 連携を始めたクライアントと別のクライアントのトークンで確定した | 開始と同じクライアントのトークンを使う |
+| `complete` が `409` | 連携セッションが期限切れ、または同じ外部アカウントが別ユーザーに連携済み（`reject`） | 5.1 からやり直す / `duplicate_link_policy` を見直す |
+| トークン取得が `400 relink_required` | リフレッシュトークンが無い・期限切れ・拒否された、または連携先が削除・無効化された | `refresh_token_expires_in` と、外部IdPがリフレッシュトークンを返すスコープ（例: `offline_access`）を確認 |
+| トークン取得が `403 unauthorized_client` | 連携先が `linking_token_providers` に無い、またはユーザートークンが別クライアントに発行された | Step 4 を確認 |
+
+---
+
+## 関連ドキュメント
+
+- [外部IdPアカウント連携（プロトコル）](../../content_04_protocols/protocol-09-account-linking.md) - 設計・エンドポイント・エラーの詳細
+- [外部IdP連携（Federation）の設定](./01-federation-setup.md) - ログイン用の外部IdP連携
+- [Federation設定ガイド](../../content_06_developer-guide/05-configuration/federation.md) - `federation-configurations` の項目
+
+---
+
+**難易度**: ⭐⭐⭐☆☆（中級）
+**対象**: 外部IdPのトークンを使う機能をRPに組み込む管理者・開発者

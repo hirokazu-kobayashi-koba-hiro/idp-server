@@ -42,6 +42,16 @@ tags:
       身元確認結果を確認するためのAPI
       アクセストークンを用いて、ユーザー本人による安全な自己操作を実現します。
       
+  - name: 外部アカウント連携
+    description: |
+      認証済みユーザーが、自分のアカウントに外部IdPのアカウントを追加で紐付けるためのAPI群。
+      紐付けの過程で外部IdPが発行したトークンを暗号化して保管します。
+
+      ここにあるのはアクセストークンで呼ぶ部分（開始・確定・一覧・解除）です。
+      ブラウザ遷移（`/v1/linking/start`・`/v1/linking/callback/{provider}`）と保管トークンの取得は
+      [RP向けAPI](/docs/content_07_reference/api-rp-ja/) にあります。
+
+      📘 [外部IdPアカウント連携](/docs/content_04_protocols/protocol-09-account-linking)
 
 paths:
   /{tenant-id}/v1/me:
@@ -1410,6 +1420,280 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /{tenant-id}/v1/me/linked-external-accounts/link/{provider}:
+    post:
+      tags:
+        - 外部アカウント連携
+      summary: 外部アカウント連携の開始
+      description: |
+        認証済みユーザーの外部IdPアカウント連携を開始します。アクセストークンのユーザーとクライアントを連携セッションに結び付け、
+        ブラウザで開く `start_url` を返します。
+
+        RP は `start_url` をブラウザの**トップレベル遷移**（`location.href` など）で開きます。iframe の中では連携は成立しません。
+        以降のブラウザ遷移（`/v1/linking/start`・`/v1/linking/callback/{provider}`）は
+        [RP向けAPI](/docs/content_07_reference/api-rp-ja/) を参照してください。
+
+        - `redirect_uri` は連携の終わりにブラウザを戻す先です。クライアント設定の `extension.linking_return_uris` と完全一致で照合します。
+        - 連携セッションの有効期間は 900 秒です（`expires_in`）。
+
+        ## 必要なスコープ
+        `linked_account:manage`
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/LinkingProvider'
+      security:
+        - OAuth2:
+            - linked_account:manage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountLinkingStartRequest'
+      responses:
+        '201':
+          description: 連携セッションを作成した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountLinkingStartResponse'
+        '400':
+          description: |
+            `redirect_uri` が未指定、またはクライアントの `linking_return_uris` に登録されていない。
+            または `{provider}` の連携先が設定されていない・無効。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountLinkingErrorResponse'
+              examples:
+                missing:
+                  value:
+                    error: invalid_request
+                    error_description: "redirect_uri is required."
+                not_registered:
+                  value:
+                    error: invalid_request
+                    error_description: "redirect_uri is not registered for this client."
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: スコープ不足（`linked_account:manage` が必要）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InsufficientScopeError'
+              example:
+                error: insufficient_scope
+                error_description: "The request requires the 'linked_account:manage' scope."
+                scope: linked_account:manage
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /{tenant-id}/v1/me/linked-external-accounts/complete:
+    post:
+      tags:
+        - 外部アカウント連携
+      summary: 外部アカウント連携の確定
+      description: |
+        コールバックで預けた外部IdPのトークンを、アクセストークンのユーザーの連携として確定します。
+        ブラウザが `redirect_uri?linking=done&state=...` に戻ってきたら、その `state` を送ります。
+
+        次の全てを満たすときだけ確定します。
+
+        - `state` に対応する連携セッションがあり、期限内である
+        - アクセストークンのクライアントが、連携を**開始したクライアント**と同じである（同じユーザーでも別のクライアントのトークンは `403`）
+        - アクセストークンのユーザーが、連携を開始したユーザーと同じである
+        - 連携セッションがコールバックまで進んでおり、まだ確定されていない
+
+        同じユーザーが同じ外部アカウントをもう一度連携した場合はエラーにならず、既存の連携を更新します（`alias` は保たれます）。
+
+        ## 必要なスコープ
+        `linked_account:manage`
+
+        ## セキュリティイベント
+        - `external_account_linked` / `external_account_link_failed`
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      security:
+        - OAuth2:
+            - linked_account:manage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - state
+              properties:
+                state:
+                  type: string
+                  description: 開始レスポンスの `state`（戻り先の `state` クエリと同じ値）
+            example:
+              state: "Xb3k...Qz"
+      responses:
+        '201':
+          description: 連携を確定した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LinkedExternalAccount'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: |
+            次のいずれか。
+
+            - スコープ不足（`linked_account:manage` が必要）。`insufficient_scope` 形式
+            - 連携を開始したクライアントと違うクライアントのトークン
+            - 連携を開始したユーザーと違うユーザーのトークン
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/InsufficientScopeError'
+                  - $ref: '#/components/schemas/AccountLinkingErrorResponse'
+              examples:
+                insufficient_scope:
+                  value:
+                    error: insufficient_scope
+                    error_description: "The request requires the 'linked_account:manage' scope."
+                    scope: linked_account:manage
+                client_mismatch:
+                  value:
+                    error: invalid_request
+                    error_description: "Account linking must be completed by the client that started it. state=..."
+                user_mismatch:
+                  value:
+                    error: invalid_request
+                    error_description: "Account linking session is bound to a different user. state=..., provider=..."
+        '404':
+          description: |
+            `state` に対応する連携セッションが無い。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountLinkingErrorResponse'
+              example:
+                error: invalid_request
+                error_description: "Account linking session not found."
+        '409':
+          description: |
+            次のいずれか。
+
+            - 連携セッションが期限切れ
+            - 連携セッションが確定できる状態にない（コールバック前、または確定済み）
+            - 同じ外部アカウントが既に他のユーザーに紐付いている（連携先の `duplicate_link_policy` が `reject` のとき）。誰に紐付いているかは返しません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountLinkingErrorResponse'
+              examples:
+                expired:
+                  value:
+                    error: invalid_request
+                    error_description: "Account linking session is expired. state=..."
+                duplicate:
+                  value:
+                    error: invalid_request
+                    error_description: "This external account cannot be linked."
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /{tenant-id}/v1/me/linked-external-accounts:
+    get:
+      tags:
+        - 外部アカウント連携
+      summary: 外部アカウント連携の一覧
+      description: |
+        アクセストークンのユーザーの外部アカウント連携を一覧で返します。保管しているトークンは含みません。
+
+        ## 必要なスコープ
+        `linked_account:read` または `linked_account:manage`
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      security:
+        - OAuth2:
+            - linked_account:read
+        - OAuth2:
+            - linked_account:manage
+      responses:
+        '200':
+          description: 連携の一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - list
+                properties:
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LinkedExternalAccount'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: スコープ不足（`linked_account:read` または `linked_account:manage` が必要）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InsufficientScopeError'
+              example:
+                error: insufficient_scope
+                error_description: "The request requires the 'linked_account:read' scope."
+                scope: linked_account:read
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /{tenant-id}/v1/me/linked-external-accounts/{alias}:
+    delete:
+      tags:
+        - 外部アカウント連携
+      summary: 外部アカウント連携の解除
+      description: |
+        アクセストークンのユーザーの連携を 1 件解除します。対象は呼び出したユーザー自身の連携だけで、他人の `alias` は `404` になります。
+
+        行を消す前に、保管しているトークンを外部IdPの失効エンドポイント（RFC 7009）で失効させます。
+        失効はベストエフォートで、`revocation_endpoint` が未設定・外部IdPに届かない・失効を拒否された場合も連携は解除されます。
+
+        ## 必要なスコープ
+        `linked_account:manage`
+
+        ## セキュリティイベント
+        - `external_account_unlinked`
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/LinkedAccountAlias'
+      security:
+        - OAuth2:
+            - linked_account:manage
+      responses:
+        '204':
+          description: 解除成功
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: スコープ不足（`linked_account:manage` が必要）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InsufficientScopeError'
+              example:
+                error: insufficient_scope
+                error_description: "The request requires the 'linked_account:manage' scope."
+                scope: linked_account:manage
+        '404':
+          description: 指定した `alias` が呼び出したユーザーの連携に無い
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountLinkingErrorResponse'
+              example:
+                error: not_found
+                error_description: "Linked external account not found."
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
 components:
   responses:
@@ -2434,6 +2718,8 @@ components:
             identity_verification_application: 身元確認の申込みのAPIに必要なスコープ
             identity_verification_application_delete: 身元確認の申込みの削除スコープ
             identity_verification_result: 身元確認結果のAPIに必要なスコープ
+            linked_account:read: 外部アカウント連携の一覧に必要なスコープ
+            linked_account:manage: 外部アカウント連携の開始・確定・解除に必要なスコープ。一覧も含む
 
   requestBodies:
     ContactVerificationCode:
@@ -2501,6 +2787,22 @@ components:
         type: string
         format: uuid
 
+    LinkingProvider:
+      name: provider
+      in: path
+      required: true
+      description: "連携先の設定名（`federation-configurations` の `sso_provider`、`type: oidc`）"
+      schema:
+        type: string
+        example: example-idp
+    LinkedAccountAlias:
+      name: alias
+      in: path
+      required: true
+      description: 連携の識別子（一覧の `alias`）
+      schema:
+        type: string
+        example: example-idp-1
   schemas:
     InsufficientScopeError:
       type: object
@@ -2513,6 +2815,104 @@ components:
         scope:
           type: string
           description: 要求されるスコープ
+
+    AccountLinkingStartRequest:
+      type: object
+      required:
+        - redirect_uri
+      properties:
+        redirect_uri:
+          type: string
+          format: uri
+          description: |
+            連携の終わりにブラウザを戻す先。クライアント設定の `extension.linking_return_uris` と完全一致で照合します。
+            認可の `redirect_uris` とは別の設定です。
+          example: "https://rp.example.com/linking/callback"
+        scope:
+          type: string
+          description: |
+            外部IdPに要求するスコープ（スペース区切り）。省略すると連携先設定の `scopes_supported` を使います。
+          example: "openid email offline_access"
+
+    AccountLinkingStartResponse:
+      type: object
+      required:
+        - start_url
+        - state
+        - expires_in
+      properties:
+        start_url:
+          type: string
+          format: uri
+          description: |
+            ブラウザをトップレベル遷移で開かせる URL。外部IdPではなく idp-server の `/v1/linking/start` です
+            （認可サーバーの issuer から組み立てます）。
+          example: "https://api.local.test/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/linking/start?state=Xb3k...Qz"
+        state:
+          type: string
+          description: 連携セッションの識別子。確定（`complete`）で送ります
+        expires_in:
+          type: integer
+          description: 連携セッションの有効期間（秒）。固定で 900
+          example: 900
+
+    LinkedExternalAccount:
+      type: object
+      description: 外部アカウントの連携。保管しているトークンは含みません。
+      properties:
+        alias:
+          type: string
+          description: |
+            連携の識別子。`{provider}-{連番}` の形で、ユーザーの中で一意です。同じ外部アカウントを連携し直しても変わりません。
+          example: example-idp-1
+        provider:
+          type: string
+          description: 連携先の設定名（`sso_provider`）
+          example: example-idp
+        federated_username:
+          type: string
+          nullable: true
+          description: 外部IdPの userinfo の `email`。連携先に userinfo が無い場合は `null`
+          example: user@example.com
+        scope:
+          type: string
+          nullable: true
+          description: |
+            外部IdPが許可したスコープ。トークン応答に `scope` が無い場合は連携先設定の `scopes_supported`
+          example: "openid email offline_access"
+        access_token_expires_at:
+          type: string
+          nullable: true
+          description: 保管しているアクセストークンの有効期限（タイムゾーンなしの ISO 8601 ローカル日時）
+          example: "2026-10-21T11:15:30.123456"
+        refresh_token_expires_at:
+          type: string
+          nullable: true
+          description: |
+            保管しているリフレッシュトークンの有効期限（同上）。リフレッシュトークンが無い場合は `null`
+          example: "2026-10-22T10:15:30.123456"
+        created_at:
+          type: string
+          description: 作成日時（同上）
+          example: "2026-10-21T10:15:30.123456"
+        updated_at:
+          type: string
+          description: 更新日時（同上）
+          example: "2026-10-21T10:15:30.123456"
+
+    AccountLinkingErrorResponse:
+      type: object
+      required:
+        - error
+        - error_description
+      properties:
+        error:
+          type: string
+          description: |
+            エラーコード。解除の `404` は `not_found`、想定外のエラーは `server_error`、それ以外は `invalid_request`
+          example: invalid_request
+        error_description:
+          type: string
 
     FidoUafRegistrationRequest:
       description: FIDO-UAF登録用のリクエスト
