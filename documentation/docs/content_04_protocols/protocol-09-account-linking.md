@@ -80,7 +80,7 @@ RPアプリ                       idp-server                    外部IdP
 | エンドポイント | 認証 | 用途 |
 |---|---|---|
 | `GET /{tenant-id}/v1/linking/start?state=` | ブラウザセッション | 操作者を検証し、外部IdPの認可URLへ 302 |
-| `GET /{tenant-id}/v1/linking/callback/{provider}?code&state` | `state` | 認可コードを交換し、`redirect_uri` へ 302 |
+| `GET /{tenant-id}/v1/linking/callback/{provider}?code&state` | `state` + ブラウザ束縛 | 認可コードを交換し、`redirect_uri` へ 302 |
 
 この2本が `/me` の外にあるのは、どちらもブラウザのトップレベル遷移で Bearer を運べないためです。`/me` は `ProtectedResourceApiFilter` によって Bearer 前提で保護されている名前空間なので、そこに未認証エンドポイントを混ぜると、実装者が「フィルタが通っているはず」と誤認する余地が生まれます。
 
@@ -288,13 +288,41 @@ token={ユーザーのアクセストークン}&client_id=...&client_secret=...
 
 ## エラー
 
-レスポンスは `{ "error": "invalid_request", "error_description": "..." }` の形です。
+### ブラウザ遷移の失敗
+
+`/linking/start` とコールバックはブラウザがトップレベルで開くページなので、失敗しても JSON は返さず、ブラウザを 302 で送ります。送り先は「どの連携の失敗か」と「このブラウザが連携を始めた本人のものか」で決まります。
+
+| 失敗 | 送り先 | `state` |
+|---|---|---|
+| 外部IdPで拒否された・外部IdPがエラーを返した | 戻り先（`redirect_uri`） | 付ける |
+| 外部IdPでのトークン交換・ID Token の検証・userinfo に失敗した | 戻り先 | 付ける |
+| `/linking/start` にブラウザセッションが無い | 戻り先 | 付けない |
+| ブラウザ束縛が一致しない・操作者が一致しない | エラー画面 | — |
+| `state` が無い・未知・期限切れ・既に進んだ | エラー画面 | — |
+
+戻り先へは次の形で返します。成功時の `linking=done` と揃えています。
+
+```
+{redirect_uri}?linking=failed&error=access_denied&state=...
+```
+
+- `error` は `access_denied` / `login_required` / `temporarily_unavailable` / `server_error` のどれかです。外部IdPがコールバックに付けてきた `error` は誰でも付けられる値なので、そのまま流さずにこの中から選びます。
+- `error_description` と外部IdPの応答本文は返しません。
+- `state` は、このブラウザが連携を始めたブラウザだと確かめられたときだけ付けます。`/linking/start` にブラウザセッションが無い場合は確かめられないため、付けません。連携セッションもそのまま残すので、サインインしたブラウザからは続けられます。
+- 戻り先は `link` のときにクライアントの `linking_return_uris` と完全一致で照合済みなので、失敗を返してもオープンリダイレクトにはなりません。
+
+外部IdPでの拒否と交換の失敗では、連携セッションを削除します。外部IdPはその認可リクエストに二度と答えないためです。拒否もブラウザ束縛を照合してから受け付けるので、束縛を持たないブラウザから他人の連携を終わらせることはできません。
+
+エラー画面はテナントの認証画面（`ui_config.base_url`）の `/error/` です。認可エンドポイントが戻せないエラーを送る先と同じです。
+
+### API の失敗
+
+`link` / `complete` / 一覧 / 解除のレスポンスは `{ "error": "invalid_request", "error_description": "..." }` の形です。
 
 | ステータス | 発生条件 |
 |---|---|
-| 400 | `redirect_uri` が未指定、または allow-list に無い / 外部IdP側でトークン交換・userinfo に失敗 |
-| 401 | `/linking/start` にブラウザセッションが無い |
-| 403 | 操作者が連携セッションのユーザーと一致しない / コールバックがブラウザ束縛を提示できない |
+| 400 | `redirect_uri` が未指定、または allow-list に無い |
+| 403 | 操作者が連携セッションのユーザーと一致しない |
 | 404 | `state` に対応する連携セッションが無い / 解除する `alias` が呼び出したユーザーの連携に無い（`error` は `not_found`） |
 | 409 | 連携セッションが期限切れ、または期待する状態でない / 同じ外部アカウントが既に他のユーザーに紐付いている（`duplicate_link_policy: reject` のとき） |
 

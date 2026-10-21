@@ -35,6 +35,14 @@ const PROVIDER = "account-linking";
  */
 const DISPLAY_TIME_ZONE = process.env.NEXT_PUBLIC_DISPLAY_TIME_ZONE || "Asia/Tokyo";
 
+/** idp-server が戻り先へ返すエラーコード（linking=failed）と、sample-web 自身のエラー。 */
+const ERROR_MESSAGES: Record<string, string> = {
+  access_denied: "連携先で許可されませんでした。",
+  login_required: "サインインの状態を確認できませんでした。もう一度サインインしてから連携してください。",
+  temporarily_unavailable: "連携先が一時的に利用できません。時間をおいて試してください。",
+  server_error: "連携先とのやり取りに失敗しました。",
+};
+
 const formatDateTime = (value: string | null): string => {
   if (!value) return "-";
   const date = new Date(/([zZ]|[+-]\d{2}:\d{2})$/.test(value) ? value : `${value}Z`);
@@ -106,7 +114,11 @@ const LinkedAccounts = async ({
             連携を解除しました（{unlinked}）。
           </Alert>
         )}
-        {error && <Alert severity="error">連携に失敗しました：{error}</Alert>}
+        {error && (
+          <Alert severity="error">
+            連携に失敗しました：{ERROR_MESSAGES[error] ?? error}
+          </Alert>
+        )}
 
         <Button
           href={`/api/linked-accounts/link?provider=${PROVIDER}`}

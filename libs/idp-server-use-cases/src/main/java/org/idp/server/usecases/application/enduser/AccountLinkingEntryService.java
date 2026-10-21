@@ -136,11 +136,7 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
     Optional<OPSession> opSession =
         oidcSessionHandler.getOPSessionFromCookie(tenant, sessionCookieDelegate);
     if (opSession.isEmpty()) {
-      AccountLinkingResult result =
-          AccountLinkingResult.error(
-              AccountLinkingStatus.UNAUTHORIZED,
-              "Account linking requires an authenticated browser session at this endpoint.",
-              DefaultSecurityEventType.external_account_link_failed);
+      AccountLinkingResult result = authorizeHandler.handleWithoutBrowserSession(tenant, state);
       publish(tenant, result, requestAttributes);
       return result;
     }
@@ -193,11 +189,6 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
     accountLinkingCookieDelegate.clearBrowserBindingCookie(tenant);
 
     publish(tenant, result, requestAttributes);
-
-    if (result.isRedirect()) {
-      return AccountLinkingResult.redirect(
-          new AccountLinkingReturnUri(result.redirectUri(), state).value());
-    }
 
     return result;
   }

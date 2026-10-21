@@ -12,6 +12,7 @@ import { deletion, get, post, postWithJson } from "../../../lib/http";
 import { requestAuthorizations } from "../../../oauth/request";
 import { convertNextAction } from "../../../lib/util";
 import { v4 as uuidv4 } from "uuid";
+import axios from "axios";
 
 /**
  * 外部IdPアカウント連携 (#1531)
@@ -165,6 +166,14 @@ describe("account linking", () => {
   };
 
   const READ_TOKEN_SCOPE = "linked_account:read_token";
+
+  /** 戻り先へ返せない失敗は、テナントのエラー画面へ送る。 */
+  const expectErrorPage = (location, error) => {
+    expect(location).toContain("/error/?");
+    const params = new URL(location).searchParams;
+    expect(params.get("error")).toBe(error);
+    expect(params.get("tenant_id")).toBe(serverConfig.tenantId);
+  };
 
   /** 保管された外部トークンを、クライアント認証 + ユーザーのアクセストークンで取り出す。 */
   const retrieveToken = async ({ alias, token, clientId, clientSecret, headers = {} }) => {
@@ -664,8 +673,116 @@ describe("account linking", () => {
       await login(otherUser);
 
       const startResponse = await get({ url: linkResponse.data.start_url });
-      console.log(startResponse.status, startResponse.data);
-      expect(startResponse.status).toBe(403);
+      // 被害者を RP へ戻すと、攻撃者の連携を被害者側のセッションに渡すことになる。エラー画面へ送る。
+      expect(startResponse.status).toBe(302);
+      expectErrorPage(startResponse.headers.location, "access_denied");
+    });
+  });
+
+  describe("failure returns", () => {
+
+    /** Cookie を持たないブラウザ。OP セッションも束縛 Cookie も無い。 */
+    const getWithoutCookies = async (url) =>
+      await axios.get(url, { maxRedirects: 0, validateStatus: () => true });
+
+    const callbackUrl = (params) =>
+      `${backendUrl}/${serverConfig.tenantId}/v1/linking/callback/${PROVIDER}?${new URLSearchParams(params).toString()}`;
+
+    /** 連携を開始して /linking/start を通し、束縛 Cookie を cookie jar に載せる。 */
+    const startedLink = async () => {
+      const accessToken = await login(ownerUser);
+      const linkResponse = await startLink(accessToken);
+      expect(linkResponse.status).toBe(201);
+      const startResponse = await get({ url: linkResponse.data.start_url });
+      expect(startResponse.status).toBe(302);
+      return { accessToken, state: linkResponse.data.state };
+    };
+
+    const expectReturnedFailure = (location, error, state) => {
+      expect(location.startsWith(`${RETURN_TO}?`)).toBe(true);
+      const params = new URL(location).searchParams;
+      expect(params.get("linking")).toBe("failed");
+      expect(params.get("error")).toBe(error);
+      expect(params.get("error_description")).toBeNull();
+      if (state) {
+        expect(params.get("state")).toBe(state);
+      } else {
+        expect(params.get("state")).toBeNull();
+      }
+    };
+
+    it("returns a denial at the external IdP to the client, with the state", async () => {
+      const { accessToken, state } = await startedLink();
+
+      const response = await get({
+        url: callbackUrl({ error: "access_denied", error_description: "user declined", state }),
+      });
+      expect(response.status).toBe(302);
+      expectReturnedFailure(response.headers.location, "access_denied", state);
+
+      // 外部IdPはこの認可リクエストに二度と答えないので、連携セッションは消える。
+      const completeResponse = await postWithJson({
+        url: `${backendUrl}/${serverConfig.tenantId}/v1/me/linked-external-accounts/complete`,
+        headers: { Authorization: `Bearer ${accessToken}` },
+        body: { state },
+      });
+      expect(completeResponse.status).toBe(404);
+    });
+
+    it("does not pass the external IdP's error code through", async () => {
+      const { state } = await startedLink();
+
+      const response = await get({
+        url: callbackUrl({ error: "invalid_scope<script>", state }),
+      });
+      expect(response.status).toBe(302);
+      expectReturnedFailure(response.headers.location, "server_error", state);
+    });
+
+    it("returns a failed token exchange to the client, with the state", async () => {
+      const { state } = await startedLink();
+
+      const response = await get({ url: callbackUrl({ code: "not-a-code", state }) });
+      expect(response.status).toBe(302);
+      expectReturnedFailure(response.headers.location, "server_error", state);
+    });
+
+    it("sends a browser without the binding to the error page, and leaves the link to its owner", async () => {
+      const { state } = await startedLink();
+
+      // 束縛 Cookie を持たないブラウザ。他人の state で拒否を送っても、その人の連携は終わらない。
+      const foreign = await getWithoutCookies(callbackUrl({ error: "access_denied", state }));
+      expect(foreign.status).toBe(302);
+      expectErrorPage(foreign.headers.location, "access_denied");
+      expect(foreign.headers.location.startsWith(RETURN_TO)).toBe(false);
+
+      // 連携を始めたブラウザからは、まだ続きが通る。
+      const owner = await get({ url: callbackUrl({ error: "access_denied", state }) });
+      expect(owner.status).toBe(302);
+      expectReturnedFailure(owner.headers.location, "access_denied", state);
+    });
+
+    it("sends an unknown state to the error page", async () => {
+      const response = await get({
+        url: callbackUrl({ error: "access_denied", state: "unknown-state" }),
+      });
+      expect(response.status).toBe(302);
+      expectErrorPage(response.headers.location, "invalid_request");
+    });
+
+    it("returns login_required to the client when /linking/start has no browser session, without the state", async () => {
+      const accessToken = await login(ownerUser);
+      const linkResponse = await startLink(accessToken);
+      expect(linkResponse.status).toBe(201);
+
+      const response = await getWithoutCookies(linkResponse.data.start_url);
+      expect(response.status).toBe(302);
+      expectReturnedFailure(response.headers.location, "login_required", null);
+
+      // 操作者を確かめられないので連携は触らない。サインイン済みのブラウザからは続けられる。
+      const startResponse = await get({ url: linkResponse.data.start_url });
+      expect(startResponse.status).toBe(302);
+      expect(startResponse.headers.location).toContain(federationServerConfig.tenantId);
     });
   });
 });
