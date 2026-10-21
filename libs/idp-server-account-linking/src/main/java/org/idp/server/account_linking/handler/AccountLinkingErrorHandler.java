@@ -24,6 +24,7 @@ import org.idp.server.account_linking.exception.AccountLinkingSessionStateExcept
 import org.idp.server.account_linking.exception.ExternalIdpRequestFailedException;
 import org.idp.server.account_linking.io.AccountLinkingResult;
 import org.idp.server.account_linking.io.AccountLinkingStatus;
+import org.idp.server.core.openid.federation.FederationConfigurationNotFoundException;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 
@@ -67,6 +68,14 @@ public class AccountLinkingErrorHandler {
     if (exception instanceof AccountLinkingInvalidRequestException) {
       log.warn("Account linking request rejected: {}", exception.getMessage());
       return linkFailed(AccountLinkingStatus.BAD_REQUEST, exception.getMessage());
+    }
+
+    if (exception instanceof FederationConfigurationNotFoundException) {
+      // The provider was removed or disabled after the link was started. The link cannot go on,
+      // and the caller can do nothing about it but start again once the provider is back.
+      log.warn("Account linking provider no longer configured: {}", exception.getMessage());
+      return linkFailed(
+          AccountLinkingStatus.BAD_REQUEST, "The linking provider is no longer available.");
     }
 
     if (exception instanceof ExternalIdpRequestFailedException) {

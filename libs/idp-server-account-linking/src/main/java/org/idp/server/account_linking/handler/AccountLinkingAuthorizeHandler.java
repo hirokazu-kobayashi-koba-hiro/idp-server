@@ -73,15 +73,17 @@ public class AccountLinkingAuthorizeHandler {
           session.authorize(
               request.operator().userIdentifier(), browserBinding, request.authentication());
 
+      // Resolved before the session is claimed, so a provider removed since link leaves the
+      // session as it was instead of started with nowhere to go.
+      OidcSsoConfiguration configuration =
+          configurationResolver.resolve(tenant, authorized.provider()).oidc();
+
       if (!sessionCommandRepository.claim(
           tenant, state, AccountLinkingSessionStatus.PENDING, authorized.status(), now)) {
         throw new AccountLinkingSessionStateException(
             "Account linking session was already started.");
       }
       sessionCommandRepository.update(tenant, authorized);
-
-      OidcSsoConfiguration configuration =
-          configurationResolver.resolve(tenant, authorized.provider()).oidc();
 
       return AccountLinkingAuthorizeResult.of(
           AccountLinkingResult.redirect(externalAuthorizationUri(configuration, authorized)),

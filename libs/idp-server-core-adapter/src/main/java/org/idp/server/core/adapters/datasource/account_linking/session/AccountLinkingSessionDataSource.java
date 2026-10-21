@@ -78,6 +78,11 @@ public class AccountLinkingSessionDataSource
 
   @Override
   public AccountLinkingSession find(Tenant tenant, AccountLinkingState state) {
+    // The state arrives on URLs anyone can open, and may be missing. Without one there is no
+    // session to find, and querying with a null would fail rather than come back empty.
+    if (state == null || !state.exists()) {
+      return new AccountLinkingSession();
+    }
     Map<String, String> result = executor.selectOne(tenant, state);
 
     if (result == null || result.isEmpty()) {

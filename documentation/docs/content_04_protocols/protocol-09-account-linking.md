@@ -86,7 +86,7 @@ scope は「連携を見る」（`read`）と「連携を管理する」（`mana
 | エンドポイント | 認証 | 用途 |
 |---|---|---|
 | `GET /{tenant-id}/v1/linking/start?state=` | ブラウザセッション | 操作者を検証し、外部IdPの認可URLへ 302 |
-| `GET /{tenant-id}/v1/linking/callback/{provider}?code&state` | `state` + ブラウザ束縛 | 認可コードを交換し、`redirect_uri` へ 302 |
+| `GET /{tenant-id}/v1/linking/callback/{provider}?code&state` | `state` + ブラウザ束縛 | 認可コードを交換し、`redirect_uri` へ 302。パスの `{provider}` は使わず、`state` が指す連携セッションの連携先で処理する |
 
 この2本が `/me` の外にあるのは、どちらもブラウザのトップレベル遷移で Bearer を運べないためです。`/me` は `ProtectedResourceApiFilter` によって Bearer 前提で保護されている名前空間なので、そこに未認証エンドポイントを混ぜると、実装者が「フィルタが通っているはず」と誤認する余地が生まれます。
 
@@ -181,6 +181,8 @@ iframe に埋め込むと third-party 文脈になり、Safari の ITP と Chrom
   "payload": {
     "provider": "standard",
     "issuer_name": "example-idp",
+    "issuer": "https://idp.example.com",
+    "jwks_uri": "https://idp.example.com/jwks",
     "authorization_endpoint": "https://idp.example.com/authorize",
     "token_endpoint": "https://idp.example.com/token",
     "revocation_endpoint": "https://idp.example.com/revoke",
@@ -203,7 +205,11 @@ iframe に埋め込むと third-party 文脈になり、Safari の ITP と Chrom
 
 `scopes_supported` は `link` のリクエストで `scope` を省略したときの既定値です。
 
-外部IdPのトークン応答に `expires_in` が無い場合、アクセストークンの有効期間は 1 時間とみなします。
+`openid` を要求する場合は `issuer` と `jwks_uri` が要ります。返ってきた ID Token の `iss` と署名を、この 2 つで検証するためです。足りないと検証に失敗し、戻り先へ `server_error` を返します。
+
+外部IdPのトークン応答に `expires_in` が無い場合、アクセストークンの有効期間は 1 時間とみなします。連携したときもリフレッシュしたときも同じです。
+
+`refresh_token_expires_in` はリフレッシュトークンの有効期間です。トークン応答はリフレッシュトークンの期限を返さないため、この値で期限を決めます。未設定なら期限は「不明」として扱い、アクセストークンが切れたらリフレッシュを試して、外部IdPの応答に従います。
 
 `revocation_endpoint` は解除とユーザー削除のときに保管トークンを失効させる先です。省略すると、外部IdP側のトークンは失効させずに連携だけを削除します。クライアント認証はトークンエンドポイントと同じ方式で行います。`client_authentication_type` が `client_secret_basic` なら Basic 認証、それ以外はリクエストボディの `client_secret` です。`private_key_jwt` などには対応していません。
 
@@ -279,6 +285,8 @@ token={ユーザーのアクセストークン}&client_id=...&client_secret=...
 }
 ```
 
+連携時に付与された scope を保管していれば `scope` も返します。
+
 レスポンスには `Cache-Control: no-store` が付きます。返すのはアクセストークンだけで、リフレッシュトークンは返しません。リフレッシュトークンはこのサーバーが保管して使います。アプリが使うと、ローテーションで保管側のトークンが無効になるためです。
 
 アクセストークンの期限まで 30 秒を切っていれば、保管しているリフレッシュトークンで更新してから返します。同じ連携への同時リクエストは行ロックで待ち合わせ、リフレッシュトークンを二重に使いません。
@@ -286,7 +294,7 @@ token={ユーザーのアクセストークン}&client_id=...&client_secret=...
 | ステータス | `error` | 発生条件 |
 |---|---|---|
 | 400 | `invalid_request` | `token` が無い / sender-constrained なトークン |
-| 400 | `relink_required` | リフレッシュトークンが無い・期限切れ・外部IdPに拒否された。連携し直す必要があります |
+| 400 | `relink_required` | リフレッシュトークンが無い・期限切れ・外部IdPに拒否された / 連携先が削除・無効化された。連携し直す必要があります |
 | 401 | `invalid_client` | クライアント認証に失敗した / public クライアント |
 | 401 | `invalid_token` | `token` が無効・期限切れ・ユーザーを指していない / ユーザーが有効でない |
 | 403 | `unauthorized_client` | `token` が別のクライアントに発行された / 連携先が許可されていない |
@@ -353,7 +361,7 @@ token={ユーザーのアクセストークン}&client_id=...&client_secret=...
 
 失敗はセキュリティイベント `external_account_link_failed` で記録し、連携セッションが分かる場合はそのユーザーとクライアントを付けます。`/linking/start` にブラウザセッションが無いだけの場合は記録しません。セッションが切れただけの日常的なケースで、記録すると束縛や操作者の不一致が埋もれるためです。
 
-エラー画面はテナントの認証画面（`ui_config.base_url`）の `/error/` です。認可エンドポイントが戻せないエラーを送る先と同じです。
+エラー画面はテナントの認証画面（`ui_config.base_url`。未設定ならテナントのドメイン）の `/error/` です。認可エンドポイントが戻せないエラーを送る先と同じです。
 
 ### API の失敗
 
@@ -361,7 +369,7 @@ token={ユーザーのアクセストークン}&client_id=...&client_secret=...
 
 | ステータス | 発生条件 |
 |---|---|
-| 400 | `redirect_uri` が未指定、または allow-list に無い |
+| 400 | `redirect_uri` が未指定、または allow-list に無い / 連携先が設定されていない・無効 / 連携の途中で連携先が削除・無効化された |
 | 403 | 操作者が連携セッションのユーザーと一致しない / 確定したクライアントが連携を始めたクライアントと違う / `insufficient_scope`（`linked_account:read` / `linked_account:manage` が無い） |
 | 404 | `state` に対応する連携セッションが無い / 解除する `alias` が呼び出したユーザーの連携に無い（`error` は `not_found`） |
 | 409 | 連携セッションが期限切れ、または期待する状態でない / 同じ外部アカウントが既に他のユーザーに紐付いている（`duplicate_link_policy: reject` のとき） |

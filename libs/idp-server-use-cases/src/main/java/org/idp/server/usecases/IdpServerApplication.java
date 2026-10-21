@@ -896,7 +896,8 @@ public class IdpServerApplication {
                 new AccountLinkingStartHandler(
                     accountLinkingSessionCommandRepository,
                     clientConfigurationQueryRepository,
-                    authorizationServerConfigurationQueryRepository),
+                    authorizationServerConfigurationQueryRepository,
+                    accountLinkingConfigurationResolver),
                 new AccountLinkingAuthorizeHandler(
                     accountLinkingSessionQueryRepository,
                     accountLinkingSessionCommandRepository,
