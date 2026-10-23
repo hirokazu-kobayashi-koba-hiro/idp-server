@@ -17,14 +17,14 @@
 package org.idp.server.account_linking;
 
 import java.time.LocalDateTime;
-import org.idp.server.platform.crypto.EncryptedData;
+import org.idp.server.platform.crypto.SealedData;
 
 /**
  * Tokens obtained at the callback, encrypted and held against a linking session until claimed.
  *
  * <p>Held here rather than written straight into {@code linked_external_accounts} so that the
- * unauthenticated callback cannot finalize a link. Encryption matches {@code oauth_token}: AES-GCM
- * via {@code AesCipher}, serialized as {@code {cipherText, iv}}.
+ * unauthenticated callback cannot finalize a link. Encrypted under the tenant's data key through
+ * {@code TenantDataCipher}, serialized as {@code {version, salt, iv, cipherText}}.
  *
  * <p>The identity fields are optional. A plain OAuth 2.0 delegation grants access to a resource
  * without saying who the resource owner is.
@@ -34,8 +34,8 @@ public class ParkedCredentials {
   String federatedUserId;
   String federatedUsername;
   String grantedScope;
-  EncryptedData encryptedAccessToken;
-  EncryptedData encryptedRefreshToken;
+  SealedData encryptedAccessToken;
+  SealedData encryptedRefreshToken;
   String encryptionKeyId;
   LocalDateTime accessTokenExpiresAt;
   LocalDateTime refreshTokenExpiresAt;
@@ -69,11 +69,11 @@ public class ParkedCredentials {
     return grantedScope;
   }
 
-  public EncryptedData encryptedAccessToken() {
+  public SealedData encryptedAccessToken() {
     return encryptedAccessToken;
   }
 
-  public EncryptedData encryptedRefreshToken() {
+  public SealedData encryptedRefreshToken() {
     return encryptedRefreshToken;
   }
 
@@ -102,8 +102,8 @@ public class ParkedCredentials {
     String federatedUserId;
     String federatedUsername;
     String grantedScope;
-    EncryptedData encryptedAccessToken;
-    EncryptedData encryptedRefreshToken;
+    SealedData encryptedAccessToken;
+    SealedData encryptedRefreshToken;
     String encryptionKeyId;
     LocalDateTime accessTokenExpiresAt;
     LocalDateTime refreshTokenExpiresAt;
@@ -123,12 +123,12 @@ public class ParkedCredentials {
       return this;
     }
 
-    public Builder encryptedAccessToken(EncryptedData encryptedAccessToken) {
+    public Builder encryptedAccessToken(SealedData encryptedAccessToken) {
       this.encryptedAccessToken = encryptedAccessToken;
       return this;
     }
 
-    public Builder encryptedRefreshToken(EncryptedData encryptedRefreshToken) {
+    public Builder encryptedRefreshToken(SealedData encryptedRefreshToken) {
       this.encryptedRefreshToken = encryptedRefreshToken;
       return this;
     }

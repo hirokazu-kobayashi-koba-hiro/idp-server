@@ -21,7 +21,7 @@ import java.util.Map;
 import org.idp.server.account_linking.*;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
-import org.idp.server.platform.crypto.EncryptedData;
+import org.idp.server.platform.crypto.SealedData;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
@@ -58,8 +58,8 @@ public class ModelConverter {
               .federatedUserId(result.get("federated_user_id"))
               .federatedUsername(result.get("federated_username"))
               .grantedScope(result.get("granted_scope"))
-              .encryptedAccessToken(toEncryptedData(result.get("encrypted_access_token")))
-              .encryptedRefreshToken(toEncryptedData(result.get("encrypted_refresh_token")))
+              .encryptedAccessToken(toSealedData(result.get("encrypted_access_token")))
+              .encryptedRefreshToken(toSealedData(result.get("encrypted_refresh_token")))
               .encryptionKeyId(result.get("encryption_key_id"))
               .accessTokenExpiresAt(toDateTime(result.get("access_token_expires_at")))
               .refreshTokenExpiresAt(toDateTime(result.get("refresh_token_expires_at")))
@@ -79,8 +79,8 @@ public class ModelConverter {
         .federatedUserId(result.get("federated_user_id"))
         .federatedUsername(result.get("federated_username"))
         .scope(result.get("scope"))
-        .encryptedAccessToken(toEncryptedData(result.get("encrypted_access_token")))
-        .encryptedRefreshToken(toEncryptedData(result.get("encrypted_refresh_token")))
+        .encryptedAccessToken(toSealedData(result.get("encrypted_access_token")))
+        .encryptedRefreshToken(toSealedData(result.get("encrypted_refresh_token")))
         .encryptionKeyId(result.get("encryption_key_id"))
         .accessTokenExpiresAt(toDateTime(result.get("access_token_expires_at")))
         .refreshTokenExpiresAt(toDateTime(result.get("refresh_token_expires_at")))
@@ -89,15 +89,15 @@ public class ModelConverter {
         .build();
   }
 
-  public static String toJsonOrNull(EncryptedData data) {
+  public static String toJsonOrNull(SealedData data) {
     return data == null ? null : jsonConverter.write(data);
   }
 
-  public static EncryptedData toEncryptedData(String json) {
+  public static SealedData toSealedData(String json) {
     if (json == null || json.isEmpty()) {
       return null;
     }
-    return jsonConverter.read(json, EncryptedData.class);
+    return jsonConverter.read(json, SealedData.class);
   }
 
   public static LocalDateTime toDateTime(String value) {

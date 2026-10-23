@@ -31,8 +31,8 @@ import org.idp.server.account_linking.repository.AccountLinkingSessionQueryRepos
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.federation.sso.oidc.OidcSsoConfiguration;
 import org.idp.server.federation.sso.oidc.OidcTokenResult;
-import org.idp.server.platform.crypto.AesCipher;
-import org.idp.server.platform.crypto.EncryptedData;
+import org.idp.server.platform.crypto.SealedData;
+import org.idp.server.platform.crypto.datakey.TenantDataCipher;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -47,15 +47,13 @@ import org.idp.server.platform.security.event.DefaultSecurityEventType;
  */
 public class AccountLinkingCallbackHandler {
 
-  static final String DEFAULT_ENCRYPTION_KEY_ID = "default";
-
   AccountLinkingSessionQueryRepository sessionQueryRepository;
   AccountLinkingSessionCommandRepository sessionCommandRepository;
   AccountLinkingConfigurationResolver configurationResolver;
   ExternalIdpTokenGateway tokenGateway;
   ExternalIdpIdTokenGateway idTokenGateway;
   ExternalIdpUserinfoGateway userinfoGateway;
-  AesCipher aesCipher;
+  TenantDataCipher tokenCipher;
   AccountLinkingErrorHandler errorHandler;
   LoggerWrapper log = LoggerWrapper.getLogger(AccountLinkingCallbackHandler.class);
 
@@ -66,14 +64,14 @@ public class AccountLinkingCallbackHandler {
       ExternalIdpTokenGateway tokenGateway,
       ExternalIdpIdTokenGateway idTokenGateway,
       ExternalIdpUserinfoGateway userinfoGateway,
-      AesCipher aesCipher) {
+      TenantDataCipher tokenCipher) {
     this.sessionQueryRepository = sessionQueryRepository;
     this.sessionCommandRepository = sessionCommandRepository;
     this.configurationResolver = configurationResolver;
     this.tokenGateway = tokenGateway;
     this.idTokenGateway = idTokenGateway;
     this.userinfoGateway = userinfoGateway;
-    this.aesCipher = aesCipher;
+    this.tokenCipher = tokenCipher;
     this.errorHandler = new AccountLinkingErrorHandler();
   }
 
@@ -234,9 +232,10 @@ public class AccountLinkingCallbackHandler {
       }
     }
 
-    EncryptedData accessToken = aesCipher.encrypt(tokenResult.accessToken());
-    EncryptedData refreshToken =
-        tokenResult.hasRefreshToken() ? aesCipher.encrypt(tokenResult.refreshToken()) : null;
+    TenantDataCipher.Sealer sealer = tokenCipher.sealer(tenant);
+    SealedData accessToken = sealer.seal(tokenResult.accessToken());
+    SealedData refreshToken =
+        tokenResult.hasRefreshToken() ? sealer.seal(tokenResult.refreshToken()) : null;
 
     return new ParkedCredentials.Builder()
         .federatedUserId(federatedUserId)
@@ -244,7 +243,7 @@ public class AccountLinkingCallbackHandler {
         .grantedScope(tokenResult.hasScope() ? tokenResult.scope() : configuration.scopeAsString())
         .encryptedAccessToken(accessToken)
         .encryptedRefreshToken(refreshToken)
-        .encryptionKeyId(DEFAULT_ENCRYPTION_KEY_ID)
+        .encryptionKeyId(sealer.keyId())
         .accessTokenExpiresAt(ExternalTokenLifetime.accessTokenExpiresAt(tokenResult, now))
         .refreshTokenExpiresAt(
             refreshToken == null
