@@ -21,6 +21,8 @@ import java.util.Map;
 import org.idp.server.account_linking.AccountAlias;
 import org.idp.server.account_linking.ExternalIdpProvider;
 import org.idp.server.account_linking.LinkedExternalAccount;
+import org.idp.server.account_linking.LinkedExternalAccountIdentifier;
+import org.idp.server.account_linking.LinkedExternalAccountQueries;
 import org.idp.server.account_linking.repository.LinkedExternalAccountCommandRepository;
 import org.idp.server.account_linking.repository.LinkedExternalAccountQueryRepository;
 import org.idp.server.core.adapters.datasource.account_linking.ModelConverter;
@@ -92,6 +94,32 @@ public class LinkedExternalAccountDataSource
   public LinkedExternalAccount lock(
       Tenant tenant, UserIdentifier userIdentifier, AccountAlias alias) {
     return convert(executor.selectByAliasForUpdate(tenant, userIdentifier, alias));
+  }
+
+  @Override
+  public List<LinkedExternalAccount> findList(Tenant tenant, LinkedExternalAccountQueries queries) {
+    return executor.selectList(tenant, queries).stream()
+        .map(ModelConverter::convertAccount)
+        .toList();
+  }
+
+  @Override
+  public long findTotalCount(Tenant tenant, LinkedExternalAccountQueries queries) {
+    Map<String, String> result = executor.selectCount(tenant, queries);
+    if (result == null || result.get("count") == null) {
+      return 0;
+    }
+    return Long.parseLong(result.get("count"));
+  }
+
+  @Override
+  public LinkedExternalAccount find(Tenant tenant, LinkedExternalAccountIdentifier identifier) {
+    return convert(executor.selectById(tenant, identifier));
+  }
+
+  @Override
+  public LinkedExternalAccount lock(Tenant tenant, LinkedExternalAccountIdentifier identifier) {
+    return convert(executor.selectByIdForUpdate(tenant, identifier));
   }
 
   private LinkedExternalAccount convert(Map<String, String> result) {

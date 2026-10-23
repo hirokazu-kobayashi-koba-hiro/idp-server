@@ -125,6 +125,27 @@ class AccountLinkingCompleteHandlerTest {
     }
 
     @Override
+    public List<LinkedExternalAccount> findList(
+        Tenant tenant, LinkedExternalAccountQueries queries) {
+      return rows;
+    }
+
+    @Override
+    public long findTotalCount(Tenant tenant, LinkedExternalAccountQueries queries) {
+      return rows.size();
+    }
+
+    @Override
+    public LinkedExternalAccount find(Tenant tenant, LinkedExternalAccountIdentifier identifier) {
+      return new LinkedExternalAccount();
+    }
+
+    @Override
+    public LinkedExternalAccount lock(Tenant tenant, LinkedExternalAccountIdentifier identifier) {
+      return new LinkedExternalAccount();
+    }
+
+    @Override
     public LinkedExternalAccount findByUserAndFederatedUser(
         Tenant tenant,
         UserIdentifier userIdentifier,

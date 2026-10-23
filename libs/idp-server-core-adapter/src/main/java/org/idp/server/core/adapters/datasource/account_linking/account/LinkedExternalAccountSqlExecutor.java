@@ -21,6 +21,8 @@ import java.util.Map;
 import org.idp.server.account_linking.AccountAlias;
 import org.idp.server.account_linking.ExternalIdpProvider;
 import org.idp.server.account_linking.LinkedExternalAccount;
+import org.idp.server.account_linking.LinkedExternalAccountIdentifier;
+import org.idp.server.account_linking.LinkedExternalAccountQueries;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -35,6 +37,15 @@ public interface LinkedExternalAccountSqlExecutor {
   void deleteAll(Tenant tenant, UserIdentifier userIdentifier);
 
   List<Map<String, String>> selectListByUser(Tenant tenant, UserIdentifier userIdentifier);
+
+  List<Map<String, String>> selectList(Tenant tenant, LinkedExternalAccountQueries queries);
+
+  Map<String, String> selectCount(Tenant tenant, LinkedExternalAccountQueries queries);
+
+  Map<String, String> selectById(Tenant tenant, LinkedExternalAccountIdentifier identifier);
+
+  Map<String, String> selectByIdForUpdate(
+      Tenant tenant, LinkedExternalAccountIdentifier identifier);
 
   Map<String, String> selectByAlias(
       Tenant tenant, UserIdentifier userIdentifier, AccountAlias alias);

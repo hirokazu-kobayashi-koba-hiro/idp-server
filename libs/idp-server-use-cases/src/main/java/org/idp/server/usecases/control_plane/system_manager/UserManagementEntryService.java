@@ -19,6 +19,8 @@ package org.idp.server.usecases.control_plane.system_manager;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.account_linking.AccountAlias;
+import org.idp.server.account_linking.LinkedExternalAccountIdentifier;
+import org.idp.server.account_linking.LinkedExternalAccountQueries;
 import org.idp.server.account_linking.LinkedExternalAccountRevoker;
 import org.idp.server.account_linking.repository.LinkedExternalAccountCommandRepository;
 import org.idp.server.account_linking.repository.LinkedExternalAccountQueryRepository;
@@ -28,6 +30,9 @@ import org.idp.server.control_plane.base.verifier.UserVerifier;
 import org.idp.server.control_plane.management.identity.user.*;
 import org.idp.server.control_plane.management.identity.user.ManagementEventPublisher;
 import org.idp.server.control_plane.management.identity.user.handler.*;
+import org.idp.server.control_plane.management.identity.user.handler.LinkedExternalAccountDeleteByIdService;
+import org.idp.server.control_plane.management.identity.user.handler.LinkedExternalAccountFindByIdService;
+import org.idp.server.control_plane.management.identity.user.handler.LinkedExternalAccountsFindAllService;
 import org.idp.server.control_plane.management.identity.user.handler.UserCreationService;
 import org.idp.server.control_plane.management.identity.user.handler.UserDeletionService;
 import org.idp.server.control_plane.management.identity.user.handler.UserFindListService;
@@ -41,6 +46,8 @@ import org.idp.server.control_plane.management.identity.user.handler.UserSession
 import org.idp.server.control_plane.management.identity.user.handler.UserSessionsFindService;
 import org.idp.server.control_plane.management.identity.user.handler.UserUpdateService;
 import org.idp.server.control_plane.management.identity.user.io.*;
+import org.idp.server.control_plane.management.identity.user.io.LinkedExternalAccountByIdRequest;
+import org.idp.server.control_plane.management.identity.user.io.LinkedExternalAccountsFindAllRequest;
 import org.idp.server.control_plane.management.identity.user.verifier.UserRegistrationRelatedDataVerifier;
 import org.idp.server.control_plane.management.identity.user.verifier.UserRegistrationVerifier;
 import org.idp.server.core.openid.identity.UserIdentifier;
@@ -188,6 +195,20 @@ public class UserManagementEntryService implements UserManagementApi {
     services.put(
         "deleteLinkedExternalAccount",
         new UserLinkedExternalAccountDeleteService(
+            userQueryRepository,
+            linkedExternalAccountQueryRepository,
+            linkedExternalAccountCommandRepository,
+            linkedExternalAccountRevoker,
+            managementEventPublisher));
+    services.put(
+        "findAllLinkedExternalAccounts",
+        new LinkedExternalAccountsFindAllService(linkedExternalAccountQueryRepository));
+    services.put(
+        "getLinkedExternalAccountById",
+        new LinkedExternalAccountFindByIdService(linkedExternalAccountQueryRepository));
+    services.put(
+        "deleteLinkedExternalAccountById",
+        new LinkedExternalAccountDeleteByIdService(
             userQueryRepository,
             linkedExternalAccountQueryRepository,
             linkedExternalAccountCommandRepository,
@@ -572,6 +593,75 @@ public class UserManagementEntryService implements UserManagementApi {
             authenticationContext,
             tenantIdentifier,
             new UserLinkedExternalAccountRequest(userIdentifier, alias),
+            requestAttributes,
+            dryRun);
+
+    AuditLog auditLog = AuditLogCreator.create(result.context());
+    auditLogPublisher.publish(auditLog);
+
+    return result.toResponse(dryRun);
+  }
+
+  @Override
+  @Transaction(readOnly = true)
+  public UserManagementResponse findAllLinkedExternalAccounts(
+      AdminAuthenticationContext authenticationContext,
+      TenantIdentifier tenantIdentifier,
+      LinkedExternalAccountQueries queries,
+      RequestAttributes requestAttributes) {
+
+    UserManagementResult result =
+        handler.handle(
+            "findAllLinkedExternalAccounts",
+            authenticationContext,
+            tenantIdentifier,
+            new LinkedExternalAccountsFindAllRequest(queries),
+            requestAttributes,
+            false);
+
+    AuditLog auditLog = AuditLogCreator.create(result.context());
+    auditLogPublisher.publish(auditLog);
+
+    return result.toResponse(false);
+  }
+
+  @Override
+  @Transaction(readOnly = true)
+  public UserManagementResponse getLinkedExternalAccountById(
+      AdminAuthenticationContext authenticationContext,
+      TenantIdentifier tenantIdentifier,
+      LinkedExternalAccountIdentifier identifier,
+      RequestAttributes requestAttributes) {
+
+    UserManagementResult result =
+        handler.handle(
+            "getLinkedExternalAccountById",
+            authenticationContext,
+            tenantIdentifier,
+            new LinkedExternalAccountByIdRequest(identifier),
+            requestAttributes,
+            false);
+
+    AuditLog auditLog = AuditLogCreator.create(result.context());
+    auditLogPublisher.publish(auditLog);
+
+    return result.toResponse(false);
+  }
+
+  @Override
+  public UserManagementResponse deleteLinkedExternalAccountById(
+      AdminAuthenticationContext authenticationContext,
+      TenantIdentifier tenantIdentifier,
+      LinkedExternalAccountIdentifier identifier,
+      RequestAttributes requestAttributes,
+      boolean dryRun) {
+
+    UserManagementResult result =
+        handler.handle(
+            "deleteLinkedExternalAccountById",
+            authenticationContext,
+            tenantIdentifier,
+            new LinkedExternalAccountByIdRequest(identifier),
             requestAttributes,
             dryRun);
 

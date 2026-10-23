@@ -20,6 +20,8 @@ import java.util.List;
 import org.idp.server.account_linking.AccountAlias;
 import org.idp.server.account_linking.ExternalIdpProvider;
 import org.idp.server.account_linking.LinkedExternalAccount;
+import org.idp.server.account_linking.LinkedExternalAccountIdentifier;
+import org.idp.server.account_linking.LinkedExternalAccountQueries;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -28,6 +30,18 @@ public interface LinkedExternalAccountQueryRepository {
   List<LinkedExternalAccount> findList(Tenant tenant, UserIdentifier userIdentifier);
 
   LinkedExternalAccount find(Tenant tenant, UserIdentifier userIdentifier, AccountAlias alias);
+
+  /** The tenant's links matching the filters, newest first, for the management API. */
+  List<LinkedExternalAccount> findList(Tenant tenant, LinkedExternalAccountQueries queries);
+
+  /** How many of the tenant's links match the filters, regardless of limit and offset. */
+  long findTotalCount(Tenant tenant, LinkedExternalAccountQueries queries);
+
+  /** One link by its identifier, whoever's it is. */
+  LinkedExternalAccount find(Tenant tenant, LinkedExternalAccountIdentifier identifier);
+
+  /** As {@link #find(Tenant, LinkedExternalAccountIdentifier)}, with the row locked. */
+  LinkedExternalAccount lock(Tenant tenant, LinkedExternalAccountIdentifier identifier);
 
   /**
    * Finds this user's own link to the given external account, if any.
