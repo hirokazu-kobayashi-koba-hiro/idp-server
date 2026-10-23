@@ -6,11 +6,9 @@
 
 ## 鍵の構成
 
-```
-鍵暗号化鍵 KEK（ENCRYPTION_KEYS）  ── 包む ──▶  データ鍵 DEK（tenant_data_keys）  ── 暗号化 ──▶  保管トークン
-  デプロイ全体で数本                          テナント × 用途ごと、世代つき               linked_external_accounts
-  DB には置かない                             KEK で包んだ形でだけ DB に置く            account_linking_sessions
-```
+![保管トークンを守る 2 段の鍵](data-key-structure.svg)
+
+KEK を替えて書き換わるのは、真ん中の `tenant_data_keys` だけです。DEK そのものは変わらないので、右の保管トークンの行には触れません。
 
 | 鍵 | 置き場所 | 替えたときに書き換わるもの |
 |---|---|---|
@@ -84,6 +82,10 @@ curl -u "$IDP_SERVER_API_KEY:$IDP_SERVER_API_SECRET" \
 
 KEK を替えるときは、必ず次の 2 段階で行います。いきなり active にすると、ローリングデプロイの途中で、新しい KEK を持たない台が新しい DEK を開けません。
 
+![新しい KEK をいきなり active にしたとき](kek-rolling-hazard.svg)
+
+![KEK の交換の手順](kek-rotation-steps.svg)
+
 1. **新しい KEK を passive で全台に配る**：`ENCRYPTION_KEYS` に足し、`ENCRYPTION_ACTIVE_KEY_ID` は今のままでデプロイする。
 2. **新しい KEK を active にする**：全台に配り終えてから、`ENCRYPTION_ACTIVE_KEY_ID` を新しい key id にしてデプロイする。
 3. **DEK を包み直す**：`pending_rewrap` が 0 になるまで繰り返す。
@@ -122,6 +124,8 @@ curl -u "$IDP_SERVER_API_KEY:$IDP_SERVER_API_SECRET" \
 ```json
 { "tenant_id": "<tenant id>", "purpose": "account-linking-token", "data_key_id": "<新しい DEK の id>" }
 ```
+
+![DEK の新しい世代](dek-generation.svg)
 
 - 新しい保管トークンは新しい世代で暗号化します。前の世代は開くためだけに残り、一括で暗号化し直すことはしません。
 - 前の世代の行は、トークンが取り出されたときに新しい世代へ移ります。
