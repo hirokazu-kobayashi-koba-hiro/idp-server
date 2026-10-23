@@ -22,8 +22,9 @@ public class IdpServerOperationRequest {
 
   Map<String, Object> values;
 
+  /** A request without a body is read as an empty one, so every option takes its default. */
   public IdpServerOperationRequest(Map<String, Object> values) {
-    this.values = values;
+    this.values = values == null ? Map.of() : values;
   }
 
   public Map<String, Object> toMap() {

@@ -1166,4 +1166,94 @@ describe("account linking", () => {
       expect(startResponse.headers.location).toContain(federationServerConfig.tenantId);
     });
   });
+
+  /**
+   * 外部トークンはテナントごとのデータ鍵（DEK）で暗号化し、DEK は KEK で包んで保存する。
+   * KEK の交換はサーバーの再起動を伴うのでここでは扱わず、運用 API の振る舞いと、
+   * DEK の新しい世代を作っても既存の連携が読めることを確かめる。
+   */
+  describe("data keys", () => {
+
+    const adminHeaders = {
+      Authorization: `Basic ${Buffer.from(
+        `${process.env.IDP_SERVER_API_KEY}:${process.env.IDP_SERVER_API_SECRET}`
+      ).toString("base64")}`,
+    };
+
+    it("reports which key encryption keys wrap the data keys", async () => {
+      const response = await get({
+        url: `${backendUrl}/v1/admin/operations/data-keys`,
+        headers: adminHeaders,
+      });
+      expect(response.status).toBe(200);
+      expect(response.data.active_key_id).toBeTruthy();
+      expect(response.data.configured_key_ids).toContain(response.data.active_key_id);
+      expect(response.data.unopenable).toBe(0);
+      expect(JSON.stringify(response.data)).not.toContain("wrapped_key");
+    });
+
+    it("refuses the operations without the administrator credentials", async () => {
+      const response = await get({ url: `${backendUrl}/v1/admin/operations/data-keys` });
+      expect(response.status).toBe(401);
+    });
+
+    it("keeps an existing link readable across a new data key generation", async () => {
+      const accessToken = await login(ownerUser, `openid profile email ${MANAGE_SCOPE} ${READ_TOKEN_SCOPE}`);
+      const alias = await linkOnce(accessToken, "account-linking-oauth2");
+      const retrieve = () =>
+        retrieveToken({
+          alias,
+          token: accessToken,
+          clientId: clientSecretPostClient.clientId,
+          clientSecret: clientSecretPostClient.clientSecret,
+        });
+
+      const before = await retrieve();
+      expect(before.status).toBe(200);
+
+      const rotateResponse = await postWithJson({
+        url: `${backendUrl}/v1/admin/operations/data-keys/rotate`,
+        headers: adminHeaders,
+        body: { tenant_id: serverConfig.tenantId },
+      });
+      expect(rotateResponse.status).toBe(200);
+      expect(rotateResponse.data.purpose).toBe("account-linking-token");
+      expect(rotateResponse.data.data_key_id).toBeTruthy();
+
+      // 古い世代の DEK は開くためだけに残る。取り出しは同じトークンを返し、行は新しい世代へ移る。
+      const after = await retrieve();
+      expect(after.status).toBe(200);
+      expect(after.data.access_token).toBe(before.data.access_token);
+      const again = await retrieve();
+      expect(again.status).toBe(200);
+      expect(again.data.access_token).toBe(before.data.access_token);
+    });
+
+    it("refuses a rotation without a tenant or for an unknown purpose", async () => {
+      const withoutTenant = await postWithJson({
+        url: `${backendUrl}/v1/admin/operations/data-keys/rotate`,
+        headers: adminHeaders,
+        body: {},
+      });
+      expect(withoutTenant.status).toBe(400);
+
+      const unknownPurpose = await postWithJson({
+        url: `${backendUrl}/v1/admin/operations/data-keys/rotate`,
+        headers: adminHeaders,
+        body: { tenant_id: serverConfig.tenantId, purpose: "oauth-token" },
+      });
+      expect(unknownPurpose.status).toBe(400);
+    });
+
+    it("has nothing to re-wrap while every data key is under the active KEK", async () => {
+      const response = await postWithJson({
+        url: `${backendUrl}/v1/admin/operations/data-keys/rewrap`,
+        headers: adminHeaders,
+        body: { max_number: 100 },
+      });
+      expect(response.status).toBe(200);
+      expect(response.data.rewrapped).toBe(0);
+      expect(response.data.pending_rewrap).toBe(0);
+    });
+  });
 });

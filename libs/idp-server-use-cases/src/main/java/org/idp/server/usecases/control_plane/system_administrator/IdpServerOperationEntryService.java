@@ -18,6 +18,8 @@ package org.idp.server.usecases.control_plane.system_administrator;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
+import org.idp.server.account_linking.AccountLinkingTokenCipher;
 import org.idp.server.account_linking.repository.AccountLinkingSessionOperationCommandRepository;
 import org.idp.server.control_plane.admin.operation.IdpServerOperationApi;
 import org.idp.server.control_plane.admin.operation.io.IdpServerOperationRequest;
@@ -32,6 +34,8 @@ import org.idp.server.core.openid.identity.contact.ContactVerificationChallengeO
 import org.idp.server.core.openid.oauth.repository.AuthorizationCodeGrantOperationCommandRepository;
 import org.idp.server.core.openid.oauth.repository.AuthorizationRequestOperationCommandRepository;
 import org.idp.server.core.openid.token.repository.OAuthTokenOperationCommandRepository;
+import org.idp.server.platform.crypto.datakey.DataKeyService;
+import org.idp.server.platform.crypto.datakey.DataKeyStatusReport;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -60,6 +64,10 @@ public class IdpServerOperationEntryService implements IdpServerOperationApi {
   ClientInstanceRegistrationChallengeOperationCommandRepository
       clientInstanceRegistrationChallengeOperationCommandRepository;
   AccountLinkingSessionOperationCommandRepository accountLinkingSessionOperationCommandRepository;
+  DataKeyService dataKeyService;
+
+  /** Purposes a data key may be rotated for through this API. */
+  static final Set<String> DATA_KEY_PURPOSES = Set.of(AccountLinkingTokenCipher.PURPOSE);
 
   public IdpServerOperationEntryService(
       TenantQueryRepository tenantQueryRepository,
@@ -78,7 +86,8 @@ public class IdpServerOperationEntryService implements IdpServerOperationApi {
       ClientInstanceRegistrationChallengeOperationCommandRepository
           clientInstanceRegistrationChallengeOperationCommandRepository,
       AccountLinkingSessionOperationCommandRepository
-          accountLinkingSessionOperationCommandRepository) {
+          accountLinkingSessionOperationCommandRepository,
+      DataKeyService dataKeyService) {
     this.tenantQueryRepository = tenantQueryRepository;
     this.oAuthTokenOperationCommandRepository = oAuthTokenOperationCommandRepository;
     this.authenticationTransactionOperationCommandRepository =
@@ -97,6 +106,7 @@ public class IdpServerOperationEntryService implements IdpServerOperationApi {
         clientInstanceRegistrationChallengeOperationCommandRepository;
     this.accountLinkingSessionOperationCommandRepository =
         accountLinkingSessionOperationCommandRepository;
+    this.dataKeyService = dataKeyService;
   }
 
   @Override
@@ -157,5 +167,71 @@ public class IdpServerOperationEntryService implements IdpServerOperationApi {
 
     return new IdpServerOperationResponse(
         IdpServerOperationStatus.OK, Map.of("deleted", deleted, "total_deleted", total));
+  }
+
+  @Override
+  public IdpServerOperationResponse dataKeyStatus(
+      TenantIdentifier adminTenantIdentifier, RequestAttributes requestAttributes) {
+
+    Tenant adminTenant = tenantQueryRepository.get(adminTenantIdentifier);
+    DataKeyStatusReport report = dataKeyService.report(adminTenant);
+    return new IdpServerOperationResponse(IdpServerOperationStatus.OK, report.toMap());
+  }
+
+  @Override
+  public IdpServerOperationResponse rewrapDataKeys(
+      TenantIdentifier adminTenantIdentifier,
+      IdpServerOperationRequest request,
+      RequestAttributes requestAttributes) {
+
+    Tenant adminTenant = tenantQueryRepository.get(adminTenantIdentifier);
+    int maxNumber = request.optValueAsInt("max_number", 1000);
+
+    int rewrapped = dataKeyService.rewrap(adminTenant, maxNumber);
+    DataKeyStatusReport report = dataKeyService.report(adminTenant);
+    log.info(
+        "rewrapDataKeys completed. max_number={}, rewrapped={}, pending_rewrap={}",
+        maxNumber,
+        rewrapped,
+        report.pendingRewrap());
+
+    Map<String, Object> contents = new LinkedHashMap<>();
+    contents.put("rewrapped", rewrapped);
+    contents.put("pending_rewrap", report.pendingRewrap());
+    contents.put("status", report.toMap());
+    return new IdpServerOperationResponse(IdpServerOperationStatus.OK, contents);
+  }
+
+  @Override
+  public IdpServerOperationResponse rotateDataKey(
+      TenantIdentifier adminTenantIdentifier,
+      IdpServerOperationRequest request,
+      RequestAttributes requestAttributes) {
+
+    Object tenantId = request.get("tenant_id");
+    Object purposeValue = request.get("purpose");
+    String purpose =
+        purposeValue == null ? AccountLinkingTokenCipher.PURPOSE : purposeValue.toString();
+    if (!(tenantId instanceof String) || ((String) tenantId).isBlank()) {
+      return invalidRequest("tenant_id is required.");
+    }
+    if (!DATA_KEY_PURPOSES.contains(purpose)) {
+      return invalidRequest("purpose must be one of " + DATA_KEY_PURPOSES + ".");
+    }
+
+    Tenant tenant = tenantQueryRepository.get(new TenantIdentifier((String) tenantId));
+    String dataKeyId = dataKeyService.rotate(tenant, purpose);
+
+    Map<String, Object> contents = new LinkedHashMap<>();
+    contents.put("tenant_id", tenant.identifierValue());
+    contents.put("purpose", purpose);
+    contents.put("data_key_id", dataKeyId);
+    return new IdpServerOperationResponse(IdpServerOperationStatus.OK, contents);
+  }
+
+  private IdpServerOperationResponse invalidRequest(String description) {
+    return new IdpServerOperationResponse(
+        IdpServerOperationStatus.INVALID_REQUEST,
+        Map.of("error", "invalid_request", "error_description", description));
   }
 }
