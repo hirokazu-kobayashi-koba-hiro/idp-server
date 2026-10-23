@@ -254,7 +254,13 @@ iframe に埋め込むと third-party 文脈になり、Safari の ITP と Chrom
 
 ### 暗号化
 
-トークンは `ENCRYPTION_KEY` から導出した鍵で AES-GCM 暗号化して保管します（`oauth_token` と同じ方式）。`encryption_key_id` 列は将来の鍵ローテーションに備えたもので、現在は常に `default` です。
+トークンはテナントごとのデータ鍵（DEK）で AES-GCM 暗号化して保管します。DEK は鍵暗号化鍵（KEK、環境変数 `ENCRYPTION_KEYS`）で包んで `tenant_data_keys` に置き、行の `encryption_key_id` は DEK の id を指します。
+
+- 暗号化ごとに乱数の salt から鍵を派生させ、暗号文と一緒に `{version, salt, iv, cipher_text}` として保存します。
+- テナント・用途・DEK の id を AAD に入れるため、別のテナントの行へ書き写した暗号文は開きません。
+- KEK を替えても DEK を包み直すだけで、保管トークンは書き換えません。手順は [データ鍵と鍵暗号化鍵のローテーション](../content_08_ops/commercial-deployment/07-data-key-rotation.md) を参照してください。
+
+`ENCRYPTION_KEYS` が無ければ `ENCRYPTION_KEY` を KEK として使うため、追加の設定なしで動きます。
 
 ---
 
