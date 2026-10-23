@@ -22,6 +22,7 @@ import java.util.Map;
 import org.idp.server.account_linking.AccountLinkingApi;
 import org.idp.server.account_linking.AccountLinkingConfigurationResolver;
 import org.idp.server.account_linking.AccountLinkingCookieDelegate;
+import org.idp.server.account_linking.AccountLinkingTokenCipher;
 import org.idp.server.account_linking.LinkedExternalAccountRevoker;
 import org.idp.server.account_linking.gateway.ExternalIdpIdTokenGateway;
 import org.idp.server.account_linking.gateway.ExternalIdpTokenGateway;
@@ -208,8 +209,13 @@ import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.audit.AuditLogQueryRepository;
 import org.idp.server.platform.audit.AuditLogWriters;
 import org.idp.server.platform.crypto.AesCipher;
+import org.idp.server.platform.crypto.EncryptionKeyring;
 import org.idp.server.platform.crypto.HmacHasher;
 import org.idp.server.platform.crypto.ServerNonceCodec;
+import org.idp.server.platform.crypto.datakey.DataKeyService;
+import org.idp.server.platform.crypto.datakey.TenantDataCipher;
+import org.idp.server.platform.crypto.datakey.TenantDataKeyOperationRepository;
+import org.idp.server.platform.crypto.datakey.TenantDataKeyRepository;
 import org.idp.server.platform.datasource.*;
 import org.idp.server.platform.datasource.DatabaseTypeConfiguration;
 import org.idp.server.platform.datasource.cache.CacheStore;
@@ -408,6 +414,7 @@ public class IdpServerApplication {
       ApplicationDatabaseTypeProvider databaseTypeProvider,
       DbConnectionProvider dbConnectionProvider,
       String encryptionKey,
+      EncryptionKeyring encryptionKeyring,
       String databaseType,
       CacheStore cacheStore,
       SessionStore sessionStore,
@@ -621,6 +628,14 @@ public class IdpServerApplication {
     // Lifecycle executors are built from this container, and the linked account cleanup decrypts
     // stored external tokens to revoke them.
     applicationComponentContainer.register(AesCipher.class, aesCipher);
+    // Lifecycle executors are built from this container too; the linked account cleanup opens
+    // stored external tokens under the tenant's data key to revoke them.
+    DataKeyService dataKeyService =
+        new DataKeyService(
+            applicationComponentContainer.resolve(TenantDataKeyRepository.class),
+            applicationComponentContainer.resolve(TenantDataKeyOperationRepository.class),
+            encryptionKeyring);
+    applicationComponentContainer.register(DataKeyService.class, dataKeyService);
 
     SmsSenders smsSenders = SmsSenderPluginLoader.load(dependencyContainer);
     applicationComponentContainer.register(SmsSenders.class, smsSenders);
@@ -883,11 +898,12 @@ public class IdpServerApplication {
         new AccountLinkingConfigurationResolver(federationConfigurationQueryRepository);
     LinkedExternalAccountCommandRepository linkedExternalAccountCommandRepository =
         applicationComponentContainer.resolve(LinkedExternalAccountCommandRepository.class);
+    TenantDataCipher accountLinkingTokenCipher = AccountLinkingTokenCipher.from(dataKeyService);
     LinkedExternalAccountRevoker linkedExternalAccountRevoker =
         new LinkedExternalAccountRevoker(
             accountLinkingConfigurationResolver,
             new ExternalIdpTokenGateway(httpRequestExecutor),
-            aesCipher);
+            accountLinkingTokenCipher);
     this.accountLinkingApi =
         TenantAwareEntryServiceProxy.createProxy(
             new AccountLinkingEntryService(
@@ -909,7 +925,7 @@ public class IdpServerApplication {
                     new ExternalIdpTokenGateway(httpRequestExecutor),
                     new ExternalIdpIdTokenGateway(oidcSsoExecutors),
                     new ExternalIdpUserinfoGateway(oidcSsoExecutors),
-                    aesCipher),
+                    accountLinkingTokenCipher),
                 new AccountLinkingCompleteHandler(
                     accountLinkingSessionQueryRepository,
                     accountLinkingSessionCommandRepository,
@@ -930,7 +946,7 @@ public class IdpServerApplication {
                     linkedExternalAccountCommandRepository,
                     accountLinkingConfigurationResolver,
                     new ExternalIdpTokenGateway(httpRequestExecutor),
-                    aesCipher),
+                    accountLinkingTokenCipher),
                 oidcSessionHandler,
                 sessionCookieDelegate,
                 accountLinkingCookieDelegate,

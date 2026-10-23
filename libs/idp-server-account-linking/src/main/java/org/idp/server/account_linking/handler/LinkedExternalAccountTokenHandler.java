@@ -48,8 +48,8 @@ import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.core.openid.token.repository.OAuthTokenQueryRepository;
 import org.idp.server.federation.sso.oidc.OidcSsoConfiguration;
 import org.idp.server.federation.sso.oidc.OidcTokenResult;
-import org.idp.server.platform.crypto.AesCipher;
-import org.idp.server.platform.crypto.EncryptedData;
+import org.idp.server.platform.crypto.SealedData;
+import org.idp.server.platform.crypto.datakey.TenantDataCipher;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -88,7 +88,7 @@ public class LinkedExternalAccountTokenHandler {
   LinkedExternalAccountCommandRepository accountCommandRepository;
   AccountLinkingConfigurationResolver configurationResolver;
   ExternalIdpTokenGateway tokenGateway;
-  AesCipher aesCipher;
+  TenantDataCipher tokenCipher;
   LoggerWrapper log = LoggerWrapper.getLogger(LinkedExternalAccountTokenHandler.class);
 
   public LinkedExternalAccountTokenHandler(
@@ -102,7 +102,7 @@ public class LinkedExternalAccountTokenHandler {
       LinkedExternalAccountCommandRepository accountCommandRepository,
       AccountLinkingConfigurationResolver configurationResolver,
       ExternalIdpTokenGateway tokenGateway,
-      AesCipher aesCipher) {
+      TenantDataCipher tokenCipher) {
     this.oAuthTokenQueryRepository = oAuthTokenQueryRepository;
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
@@ -113,7 +113,7 @@ public class LinkedExternalAccountTokenHandler {
     this.accountCommandRepository = accountCommandRepository;
     this.configurationResolver = configurationResolver;
     this.tokenGateway = tokenGateway;
-    this.aesCipher = aesCipher;
+    this.tokenCipher = tokenCipher;
   }
 
   public LinkedExternalAccountTokenResult handle(LinkedExternalAccountTokenRequest request) {
@@ -136,11 +136,15 @@ public class LinkedExternalAccountTokenHandler {
 
       LocalDateTime now = SystemDateTime.now();
       if (isUsable(account, now)) {
-        return retrieved(account, false, requestedClientId, user);
+        LinkedExternalAccount current =
+            tokenCipher.isCurrent(tenant, account.encryptionKeyId())
+                ? account
+                : reencryptUnderLock(tenant, user.userIdentifier(), request);
+        return retrieved(tenant, current, false, requestedClientId, user);
       }
 
       LinkedExternalAccount refreshed = refreshUnderLock(tenant, user.userIdentifier(), request);
-      return retrieved(refreshed, true, requestedClientId, user);
+      return retrieved(tenant, refreshed, true, requestedClientId, user);
 
     } catch (LinkedExternalAccountTokenException exception) {
       return refused(exception, requestedClientId, user);
@@ -256,16 +260,56 @@ public class LinkedExternalAccountTokenHandler {
     }
 
     OidcSsoConfiguration configuration = providerConfiguration(tenant, locked);
-    OidcTokenResult tokenResult =
-        tokenGateway.refresh(configuration, aesCipher.decrypt(locked.encryptedRefreshToken()));
+    String storedRefreshToken =
+        tokenCipher.open(tenant, locked.encryptionKeyId(), locked.encryptedRefreshToken());
+    OidcTokenResult tokenResult = tokenGateway.refresh(configuration, storedRefreshToken);
 
     if (tokenResult.isError() || !tokenResult.hasAccessToken()) {
       throw refreshFailure(locked, tokenResult);
     }
 
-    LinkedExternalAccount refreshed = withRefreshedTokens(locked, configuration, tokenResult, now);
+    LinkedExternalAccount refreshed =
+        withRefreshedTokens(tenant, locked, configuration, tokenResult, storedRefreshToken, now);
     accountCommandRepository.update(tenant, refreshed);
     return refreshed;
+  }
+
+  /**
+   * Moves the stored tokens to the active key, with the row locked.
+   *
+   * <p>Done the first time a token stored under an older key is read after a rotation, so that an
+   * account in use stops depending on the old key without a batch job. The lock keeps this from
+   * writing back a refresh token that a concurrent refresh has just replaced.
+   */
+  private LinkedExternalAccount reencryptUnderLock(
+      Tenant tenant, UserIdentifier userIdentifier, LinkedExternalAccountTokenRequest request) {
+
+    LinkedExternalAccount locked =
+        accountQueryRepository.lock(tenant, userIdentifier, request.alias());
+    if (tokenCipher.isCurrent(tenant, locked.encryptionKeyId())) {
+      return locked;
+    }
+
+    String keyId = locked.encryptionKeyId();
+    TenantDataCipher.Sealer sealer = tokenCipher.sealer(tenant);
+    SealedData accessToken =
+        sealer.seal(tokenCipher.open(tenant, keyId, locked.encryptedAccessToken()));
+    SealedData refreshToken =
+        locked.hasRefreshToken()
+            ? sealer.seal(tokenCipher.open(tenant, keyId, locked.encryptedRefreshToken()))
+            : null;
+
+    LinkedExternalAccount reencrypted =
+        locked.withReencryptedTokens(
+            accessToken, refreshToken, sealer.keyId(), SystemDateTime.now());
+    accountCommandRepository.update(tenant, reencrypted);
+    log.info(
+        "Stored external tokens moved to the current data key. provider={}, alias={}, from={}, to={}",
+        locked.provider().value(),
+        locked.accountAlias().value(),
+        keyId,
+        sealer.keyId());
+    return reencrypted;
   }
 
   /**
@@ -307,20 +351,25 @@ public class LinkedExternalAccountTokenHandler {
   }
 
   private LinkedExternalAccount withRefreshedTokens(
+      Tenant tenant,
       LinkedExternalAccount account,
       OidcSsoConfiguration configuration,
       OidcTokenResult tokenResult,
+      String storedRefreshToken,
       LocalDateTime now) {
 
-    EncryptedData accessToken = aesCipher.encrypt(tokenResult.accessToken());
+    TenantDataCipher.Sealer sealer = tokenCipher.sealer(tenant);
+    SealedData accessToken = sealer.seal(tokenResult.accessToken());
     LocalDateTime accessTokenExpiresAt =
         ExternalTokenLifetime.accessTokenExpiresAt(tokenResult, now);
 
     // A provider that does not rotate answers without a refresh token; the stored one stays valid.
+    // It is encrypted again all the same, so that the row's one key id opens both tokens.
     if (!tokenResult.hasRefreshToken()) {
       return account.withRefreshedTokens(
           accessToken,
-          account.encryptedRefreshToken(),
+          sealer.seal(storedRefreshToken),
+          sealer.keyId(),
           accessTokenExpiresAt,
           account.refreshTokenExpiresAt(),
           now);
@@ -328,20 +377,24 @@ public class LinkedExternalAccountTokenHandler {
 
     return account.withRefreshedTokens(
         accessToken,
-        aesCipher.encrypt(tokenResult.refreshToken()),
+        sealer.seal(tokenResult.refreshToken()),
+        sealer.keyId(),
         accessTokenExpiresAt,
         ExternalTokenLifetime.refreshTokenExpiresAt(configuration, now),
         now);
   }
 
   private LinkedExternalAccountTokenResult retrieved(
+      Tenant tenant,
       LinkedExternalAccount account,
       boolean refreshed,
       RequestedClientId requestedClientId,
       User user) {
 
     Map<String, Object> contents = new HashMap<>();
-    contents.put("access_token", aesCipher.decrypt(account.encryptedAccessToken()));
+    contents.put(
+        "access_token",
+        tokenCipher.open(tenant, account.encryptionKeyId(), account.encryptedAccessToken()));
     contents.put("token_type", "Bearer");
     contents.put("issued_token_type", ISSUED_TOKEN_TYPE);
     if (account.accessTokenExpiresAt() != null) {

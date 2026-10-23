@@ -16,6 +16,7 @@
 package org.idp.server.account_linking.event;
 
 import org.idp.server.account_linking.AccountLinkingConfigurationResolver;
+import org.idp.server.account_linking.AccountLinkingTokenCipher;
 import org.idp.server.account_linking.LinkedExternalAccountRevoker;
 import org.idp.server.account_linking.gateway.ExternalIdpTokenGateway;
 import org.idp.server.account_linking.repository.AccountLinkingSessionCommandRepository;
@@ -26,7 +27,7 @@ import org.idp.server.core.openid.authentication.plugin.AuthenticationDependency
 import org.idp.server.core.openid.federation.repository.FederationConfigurationQueryRepository;
 import org.idp.server.core.openid.identity.event.UserLifecycleEventExecutor;
 import org.idp.server.core.openid.identity.event.UserLifecycleEventExecutorFactory;
-import org.idp.server.platform.crypto.AesCipher;
+import org.idp.server.platform.crypto.datakey.DataKeyService;
 import org.idp.server.platform.dependency.ApplicationComponentContainer;
 import org.idp.server.platform.http.HttpRequestExecutor;
 
@@ -45,7 +46,8 @@ public class LinkedExternalAccountDeletionExecutorFactory
                     FederationConfigurationQueryRepository.class)),
             new ExternalIdpTokenGateway(
                 applicationComponentContainer.resolve(HttpRequestExecutor.class)),
-            applicationComponentContainer.resolve(AesCipher.class));
+            AccountLinkingTokenCipher.from(
+                applicationComponentContainer.resolve(DataKeyService.class)));
 
     return new LinkedExternalAccountDeletionExecutor(
         applicationComponentContainer.resolve(LinkedExternalAccountQueryRepository.class),

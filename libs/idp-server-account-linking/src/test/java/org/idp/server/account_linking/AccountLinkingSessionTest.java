@@ -24,7 +24,7 @@ import org.idp.server.account_linking.exception.AccountLinkingSessionStateExcept
 import org.idp.server.core.openid.authentication.Authentication;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
-import org.idp.server.platform.crypto.EncryptedData;
+import org.idp.server.platform.crypto.SealedData;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -63,8 +63,8 @@ class AccountLinkingSessionTest {
         .federatedUserId(federatedUserId)
         .federatedUsername(federatedUserId + "@example.com")
         .grantedScope("openid email")
-        .encryptedAccessToken(new EncryptedData())
-        .encryptedRefreshToken(new EncryptedData())
+        .encryptedAccessToken(new SealedData())
+        .encryptedRefreshToken(new SealedData())
         .encryptionKeyId("default")
         .accessTokenExpiresAt(NOW.plusHours(1))
         .refreshTokenExpiresAt(NOW.plusDays(30))

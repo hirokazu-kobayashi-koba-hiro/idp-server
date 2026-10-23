@@ -21,7 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.idp.server.core.openid.identity.UserIdentifier;
-import org.idp.server.platform.crypto.EncryptedData;
+import org.idp.server.platform.crypto.SealedData;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 /**
@@ -40,8 +40,8 @@ public class LinkedExternalAccount {
   String federatedUserId;
   String federatedUsername;
   String scope;
-  EncryptedData encryptedAccessToken;
-  EncryptedData encryptedRefreshToken;
+  SealedData encryptedAccessToken;
+  SealedData encryptedRefreshToken;
   String encryptionKeyId;
   LocalDateTime accessTokenExpiresAt;
   LocalDateTime refreshTokenExpiresAt;
@@ -121,16 +121,36 @@ public class LinkedExternalAccount {
 
   /** Returns a copy carrying tokens obtained from a refresh. */
   public LinkedExternalAccount withRefreshedTokens(
-      EncryptedData encryptedAccessToken,
-      EncryptedData encryptedRefreshToken,
+      SealedData encryptedAccessToken,
+      SealedData encryptedRefreshToken,
+      String encryptionKeyId,
       LocalDateTime accessTokenExpiresAt,
       LocalDateTime refreshTokenExpiresAt,
       LocalDateTime now) {
     return toBuilder()
         .encryptedAccessToken(encryptedAccessToken)
         .encryptedRefreshToken(encryptedRefreshToken)
+        .encryptionKeyId(encryptionKeyId)
         .accessTokenExpiresAt(accessTokenExpiresAt)
         .refreshTokenExpiresAt(refreshTokenExpiresAt)
+        .updatedAt(now)
+        .build();
+  }
+
+  /**
+   * Returns a copy holding the same tokens encrypted again, under another key.
+   *
+   * <p>Both tokens move together: the row has one key id, and it must open both.
+   */
+  public LinkedExternalAccount withReencryptedTokens(
+      SealedData encryptedAccessToken,
+      SealedData encryptedRefreshToken,
+      String encryptionKeyId,
+      LocalDateTime now) {
+    return toBuilder()
+        .encryptedAccessToken(encryptedAccessToken)
+        .encryptedRefreshToken(encryptedRefreshToken)
+        .encryptionKeyId(encryptionKeyId)
         .updatedAt(now)
         .build();
   }
@@ -184,11 +204,11 @@ public class LinkedExternalAccount {
     return scope;
   }
 
-  public EncryptedData encryptedAccessToken() {
+  public SealedData encryptedAccessToken() {
     return encryptedAccessToken;
   }
 
-  public EncryptedData encryptedRefreshToken() {
+  public SealedData encryptedRefreshToken() {
     return encryptedRefreshToken;
   }
 
@@ -268,8 +288,8 @@ public class LinkedExternalAccount {
     String federatedUserId;
     String federatedUsername;
     String scope;
-    EncryptedData encryptedAccessToken;
-    EncryptedData encryptedRefreshToken;
+    SealedData encryptedAccessToken;
+    SealedData encryptedRefreshToken;
     String encryptionKeyId;
     LocalDateTime accessTokenExpiresAt;
     LocalDateTime refreshTokenExpiresAt;
@@ -317,12 +337,12 @@ public class LinkedExternalAccount {
       return this;
     }
 
-    public Builder encryptedAccessToken(EncryptedData encryptedAccessToken) {
+    public Builder encryptedAccessToken(SealedData encryptedAccessToken) {
       this.encryptedAccessToken = encryptedAccessToken;
       return this;
     }
 
-    public Builder encryptedRefreshToken(EncryptedData encryptedRefreshToken) {
+    public Builder encryptedRefreshToken(SealedData encryptedRefreshToken) {
       this.encryptedRefreshToken = encryptedRefreshToken;
       return this;
     }

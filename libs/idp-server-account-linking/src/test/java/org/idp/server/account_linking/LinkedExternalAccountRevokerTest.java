@@ -18,13 +18,12 @@ package org.idp.server.account_linking;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 import org.idp.server.account_linking.gateway.ExternalIdpTokenGateway;
 import org.idp.server.core.openid.federation.FederationConfigurationNotFoundException;
 import org.idp.server.federation.sso.oidc.OidcSsoConfiguration;
-import org.idp.server.platform.crypto.AesCipher;
-import org.idp.server.platform.crypto.EncryptedData;
+import org.idp.server.platform.crypto.SealedData;
+import org.idp.server.platform.crypto.datakey.TenantDataCipher;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.junit.jupiter.api.Test;
 
@@ -33,7 +32,9 @@ class LinkedExternalAccountRevokerTest {
   static final String REVOCATION_ENDPOINT = "https://idp.example.com/revoke";
   static final ExternalIdpProvider PROVIDER = new ExternalIdpProvider("example-idp");
 
-  AesCipher aesCipher = new AesCipher(Base64.getEncoder().encodeToString(new byte[32]));
+  static final Tenant TENANT = InMemoryDataKeys.TENANT;
+
+  TenantDataCipher aesCipher = AccountLinkingTokenCipher.from(InMemoryDataKeys.service());
 
   /** Records each revocation instead of calling the external IdP. */
   static class RecordingGateway extends ExternalIdpTokenGateway {
@@ -85,11 +86,16 @@ class LinkedExternalAccountRevokerTest {
     return new AccountLinkingProviderConfiguration(new OidcSsoConfiguration(), linking);
   }
 
+  TenantDataCipher.Sealer sealer() {
+    return aesCipher.sealer(TENANT);
+  }
+
   LinkedExternalAccount account(String accessToken, String refreshToken) {
     return new LinkedExternalAccount.Builder()
         .provider(PROVIDER)
-        .encryptedAccessToken(aesCipher.encrypt(accessToken))
-        .encryptedRefreshToken(refreshToken == null ? null : aesCipher.encrypt(refreshToken))
+        .encryptedAccessToken(sealer().seal(accessToken))
+        .encryptedRefreshToken(refreshToken == null ? null : sealer().seal(refreshToken))
+        .encryptionKeyId(sealer().keyId())
         .build();
   }
 
@@ -99,8 +105,9 @@ class LinkedExternalAccountRevokerTest {
         .status(status)
         .parkedCredentials(
             new ParkedCredentials.Builder()
-                .encryptedAccessToken(aesCipher.encrypt("parked-at"))
-                .encryptedRefreshToken(aesCipher.encrypt("parked-rt"))
+                .encryptedAccessToken(sealer().seal("parked-at"))
+                .encryptedRefreshToken(sealer().seal("parked-rt"))
+                .encryptionKeyId(sealer().keyId())
                 .build())
         .build();
   }
@@ -112,7 +119,7 @@ class LinkedExternalAccountRevokerTest {
     LinkedExternalAccountRevoker revoker =
         new LinkedExternalAccountRevoker(resolver, gateway, aesCipher);
 
-    assertTrue(revoker.revoke(null, account("at", "rt")));
+    assertTrue(revoker.revoke(TENANT, account("at", "rt")));
     assertEquals(List.of("refresh_token:rt", "access_token:at"), gateway.revoked);
   }
 
@@ -120,7 +127,7 @@ class LinkedExternalAccountRevokerTest {
   void reachesAProviderAnOperatorHasDisabled() {
     FixedResolver resolver = new FixedResolver(configuration(REVOCATION_ENDPOINT));
     new LinkedExternalAccountRevoker(resolver, new RecordingGateway(), aesCipher)
-        .revoke(null, account("at", "rt"));
+        .revoke(TENANT, account("at", "rt"));
 
     assertTrue(resolver.resolvedIncludingDisabled);
   }
@@ -132,7 +139,7 @@ class LinkedExternalAccountRevokerTest {
         new LinkedExternalAccountRevoker(
             new FixedResolver(configuration(REVOCATION_ENDPOINT)), gateway, aesCipher);
 
-    assertTrue(revoker.revoke(null, account("at", null)));
+    assertTrue(revoker.revoke(TENANT, account("at", null)));
     assertEquals(List.of("access_token:at"), gateway.revoked);
   }
 
@@ -143,7 +150,7 @@ class LinkedExternalAccountRevokerTest {
         new LinkedExternalAccountRevoker(
             new FixedResolver(configuration(null)), gateway, aesCipher);
 
-    assertFalse(revoker.revoke(null, account("at", "rt")));
+    assertFalse(revoker.revoke(TENANT, account("at", "rt")));
     assertTrue(gateway.revoked.isEmpty());
   }
 
@@ -153,7 +160,7 @@ class LinkedExternalAccountRevokerTest {
     LinkedExternalAccountRevoker revoker =
         new LinkedExternalAccountRevoker(new FixedResolver(null), gateway, aesCipher);
 
-    assertFalse(revoker.revoke(null, account("at", "rt")));
+    assertFalse(revoker.revoke(TENANT, account("at", "rt")));
     assertTrue(gateway.revoked.isEmpty());
   }
 
@@ -165,7 +172,7 @@ class LinkedExternalAccountRevokerTest {
         new LinkedExternalAccountRevoker(
             new FixedResolver(configuration(REVOCATION_ENDPOINT)), gateway, aesCipher);
 
-    assertFalse(revoker.revoke(null, account("at", "rt")));
+    assertFalse(revoker.revoke(TENANT, account("at", "rt")));
     assertEquals(2, gateway.revoked.size());
   }
 
@@ -177,7 +184,7 @@ class LinkedExternalAccountRevokerTest {
         new LinkedExternalAccountRevoker(
             new FixedResolver(configuration(REVOCATION_ENDPOINT)), gateway, aesCipher);
 
-    assertFalse(revoker.revoke(null, account("at", "rt")));
+    assertFalse(revoker.revoke(TENANT, account("at", "rt")));
   }
 
   @Test
@@ -189,10 +196,15 @@ class LinkedExternalAccountRevokerTest {
     LinkedExternalAccount broken =
         new LinkedExternalAccount.Builder()
             .provider(PROVIDER)
-            .encryptedAccessToken(new EncryptedData("bm90LWNpcGhlcg==", "AAAAAAAAAAAAAAAA"))
+            .encryptedAccessToken(
+                new SealedData(
+                    SealedData.VERSION_1,
+                    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+                    "AAAAAAAAAAAAAAAA",
+                    "bm90LWNpcGhlcg=="))
             .build();
 
-    assertFalse(revoker.revoke(null, broken));
+    assertFalse(revoker.revoke(TENANT, broken));
     assertTrue(gateway.revoked.isEmpty());
   }
 
@@ -203,7 +215,7 @@ class LinkedExternalAccountRevokerTest {
         new LinkedExternalAccountRevoker(
             new FixedResolver(configuration(REVOCATION_ENDPOINT)), gateway, aesCipher);
 
-    assertTrue(revoker.revoke(null, session(AccountLinkingSessionStatus.PARKED)));
+    assertTrue(revoker.revoke(TENANT, session(AccountLinkingSessionStatus.PARKED)));
     assertEquals(List.of("refresh_token:parked-rt", "access_token:parked-at"), gateway.revoked);
   }
 
@@ -214,7 +226,7 @@ class LinkedExternalAccountRevokerTest {
         new LinkedExternalAccountRevoker(
             new FixedResolver(configuration(REVOCATION_ENDPOINT)), gateway, aesCipher);
 
-    assertTrue(revoker.revoke(null, session(AccountLinkingSessionStatus.CONSUMED)));
+    assertTrue(revoker.revoke(TENANT, session(AccountLinkingSessionStatus.CONSUMED)));
     assertTrue(gateway.revoked.isEmpty());
   }
 
@@ -230,7 +242,7 @@ class LinkedExternalAccountRevokerTest {
             .status(AccountLinkingSessionStatus.PENDING)
             .build();
 
-    assertTrue(revoker.revoke(null, pending));
+    assertTrue(revoker.revoke(TENANT, pending));
     assertTrue(gateway.revoked.isEmpty());
   }
 }
