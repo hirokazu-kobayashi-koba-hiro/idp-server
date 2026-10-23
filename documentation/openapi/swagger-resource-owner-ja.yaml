@@ -2802,7 +2802,7 @@ components:
       description: 連携の識別子（一覧の `alias`）
       schema:
         type: string
-        example: example-idp-1
+        example: example-idp-k3f9x2qa
   schemas:
     InsufficientScopeError:
       type: object
@@ -2863,8 +2863,8 @@ components:
         alias:
           type: string
           description: |
-            連携の識別子。`{provider}-{連番}` の形で、ユーザーの中で一意です。同じ外部アカウントを連携し直しても変わりません。
-          example: example-idp-1
+            連携の識別子。`{provider}-{8 文字の乱数}` の形で、ユーザーの中で一意です。同じ外部アカウントを連携し直しても変わりません。解除した連携の識別子が別の連携に使い回されることはありません。
+          example: example-idp-k3f9x2qa
         provider:
           type: string
           description: 連携先の設定名（`sso_provider`）

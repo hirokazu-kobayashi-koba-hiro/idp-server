@@ -51,8 +51,6 @@ public interface LinkedExternalAccountSqlExecutor {
       ExternalIdpProvider provider,
       String federatedUserId);
 
-  int countByProvider(Tenant tenant, UserIdentifier userIdentifier, ExternalIdpProvider provider);
-
   /** Reads the row with a row lock held for the current transaction (SELECT ... FOR UPDATE). */
   Map<String, String> selectByAliasForUpdate(
       Tenant tenant, UserIdentifier userIdentifier, AccountAlias alias);

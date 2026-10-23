@@ -11,8 +11,8 @@ import { auth, internalIssuer } from "@/app/auth";
  * `token` パラメータで示す。public client からは取れないので、このルートはサーバー側でしか成立しない。
  */
 
-/** alias は URL パスにそのまま入るので、採番形式（{provider}-{seq}）以外は通さない。 */
-const ALIAS_PATTERN = /^[a-z0-9-]+-[0-9]+$/;
+/** alias は URL パスにそのまま入るので、採番形式（{provider}-{8 文字の英小文字と数字}）以外は通さない。 */
+const ALIAS_PATTERN = /^[a-z0-9-]+-[a-z0-9]{8}$/;
 
 /**
  * デモで呼ぶ外部API。外部IdP役テナントの userinfo。

@@ -545,6 +545,19 @@ describe("account linking", () => {
       expect(againResponse.data.error).toBe("not_found");
     });
 
+    it("never hands a removed link's alias to a new link", async () => {
+      const accessToken = await login(ownerUser);
+      const removed = await linkOnce(accessToken, "account-linking-oauth2");
+      expect(removed).toMatch(/^account-linking-oauth2-[a-z0-9]{8}$/);
+      expect((await unlink(accessToken, removed)).status).toBe(204);
+
+      // A sequence would hand the freed number to the next link, and an RP that kept the old
+      // alias would then read another account's tokens under it.
+      const next = await linkOnce(accessToken, "account-linking-oauth2");
+      expect(next).not.toBe(removed);
+      expect((await listAliases(accessToken))).not.toContain(removed);
+    });
+
     it("answers 404 for another user's alias and leaves it in place", async () => {
       const ownerAccessToken = await login(ownerUser);
       const alias = await linkOnce(ownerAccessToken, PROVIDER, "openid profile email offline_access");

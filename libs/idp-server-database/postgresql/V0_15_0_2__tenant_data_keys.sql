@@ -68,5 +68,10 @@ COMMENT ON COLUMN tenant_data_keys.kek_id IS
 'Key id of the KEK that wrapped this DEK. Rewritten when the KEK is rotated; the DEK itself,
 and every token it encrypted, stays as it is.';
 
+COMMENT ON COLUMN linked_external_accounts.account_alias IS
+'Server-assigned identifier, {provider}-{8 random characters} (google-k3f9x2qa). Appears in URLs.
+Random rather than a sequence so that an alias is never reused after its link is removed.
+Never derived from federated_username, which the external IdP can change.';
+
 COMMENT ON COLUMN linked_external_accounts.encryption_key_id IS
 'Id of the tenant data key (tenant_data_keys.id) the token columns are encrypted under.';

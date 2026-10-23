@@ -16,10 +16,17 @@
 
 package org.idp.server.account_linking;
 
+import java.security.SecureRandom;
 import java.util.Objects;
 
 /**
- * Server-assigned identifier for one linked external account, in the form {@code {provider}-{seq}}.
+ * Server-assigned identifier for one linked external account, in the form {@code
+ * {provider}-{random}} (e.g. {@code google-k3f9x2qa}).
+ *
+ * <p>The suffix is random rather than a sequence. A sequence is reused once the links that held its
+ * numbers are removed, and an RP that kept an alias would then be handed the tokens of another
+ * external account under the name it stored. Random suffixes are never reused, and two links
+ * completed at the same time do not race for the same number.
  *
  * <p>Assigned at completion rather than at link start, because the external account the user will
  * consent with is not known when the flow begins. Never derived from the display name, which the
@@ -35,9 +42,17 @@ public class AccountAlias {
     this.value = value;
   }
 
-  /** Builds the alias for the {@code sequence}-th account linked to {@code provider}. */
-  public static AccountAlias of(ExternalIdpProvider provider, int sequence) {
-    return new AccountAlias(provider.value() + "-" + sequence);
+  static final String ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789";
+  static final int SUFFIX_LENGTH = 8;
+  static final SecureRandom RANDOM = new SecureRandom();
+
+  /** A new alias for an account linked to {@code provider}. */
+  public static AccountAlias generate(ExternalIdpProvider provider) {
+    StringBuilder suffix = new StringBuilder(SUFFIX_LENGTH);
+    for (int i = 0; i < SUFFIX_LENGTH; i++) {
+      suffix.append(ALPHABET.charAt(RANDOM.nextInt(ALPHABET.length())));
+    }
+    return new AccountAlias(provider.value() + "-" + suffix);
   }
 
   public String value() {

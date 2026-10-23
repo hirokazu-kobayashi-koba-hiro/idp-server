@@ -73,6 +73,10 @@ public class AccountLinkingCompleteHandler {
 
       AccountLinkingSession consumed = session.consume(user.userIdentifier());
 
+      // Everything that can reject the link is decided before the session is spent, so a rejected
+      // completion leaves the parked tokens where they were.
+      PreparedLink link = prepare(tenant, consumed, now);
+
       if (!sessionCommandRepository.claim(
           tenant,
           state,
@@ -83,25 +87,34 @@ public class AccountLinkingCompleteHandler {
             "Account linking session is not awaiting completion.");
       }
 
-      LinkedExternalAccount account = store(tenant, consumed, now);
+      if (link.relink()) {
+        accountCommandRepository.update(tenant, link.account());
+      } else {
+        accountCommandRepository.register(tenant, link.account());
+      }
       sessionCommandRepository.delete(tenant, state);
 
       return AccountLinkingResult.success(
           AccountLinkingStatus.CREATED,
-          account.toMap(),
+          link.account().toMap(),
           DefaultSecurityEventType.external_account_linked,
           user);
 
-    } catch (Exception exception) {
+    } catch (RuntimeException exception) {
+      // A failure after the session was claimed must not be answered as a normal result: the
+      // transaction would commit the spent session without the link. It is rethrown so the
+      // transaction rolls back and the caller can complete again.
+      if (!errorHandler.isRejection(exception)) {
+        throw exception;
+      }
       return errorHandler
           .handle(exception)
           .withContext(request.oAuthToken().requestedClientId(), user);
     }
   }
 
-  /** Writes the link, either as a new row or as a re-link of one this user already holds. */
-  private LinkedExternalAccount store(
-      Tenant tenant, AccountLinkingSession session, LocalDateTime now) {
+  /** The link to write: a re-link of one this user already holds, or a new one. */
+  private PreparedLink prepare(Tenant tenant, AccountLinkingSession session, LocalDateTime now) {
     ParkedCredentials credentials = session.parkedCredentials();
 
     // Without an identifier from the provider there is nothing to compare, so neither recognising
@@ -113,9 +126,7 @@ public class AccountLinkingCompleteHandler {
               tenant, session.userIdentifier(), session.provider(), credentials.federatedUserId());
 
       if (own.exists()) {
-        LinkedExternalAccount relinked = own.relinkedWith(credentials, now);
-        accountCommandRepository.update(tenant, relinked);
-        return relinked;
+        return new PreparedLink(own.relinkedWith(credentials, now), true);
       }
 
       duplicateLinkVerifier.verify(
@@ -125,21 +136,14 @@ public class AccountLinkingCompleteHandler {
           configurationResolver.resolve(tenant, session.provider()).duplicateLinkPolicy());
     }
 
-    LinkedExternalAccount account =
-        LinkedExternalAccount.fromConsumedSession(session, nextAlias(tenant, session), now);
-    accountCommandRepository.register(tenant, account);
-    return account;
+    AccountAlias alias =
+        session.hasAccountAlias()
+            ? session.accountAlias()
+            : AccountAlias.generate(session.provider());
+    return new PreparedLink(LinkedExternalAccount.fromConsumedSession(session, alias, now), false);
   }
 
-  private AccountAlias nextAlias(Tenant tenant, AccountLinkingSession session) {
-    if (session.hasAccountAlias()) {
-      return session.accountAlias();
-    }
-    int linked =
-        accountQueryRepository.countByProvider(
-            tenant, session.userIdentifier(), session.provider());
-    return AccountAlias.of(session.provider(), linked + 1);
-  }
+  record PreparedLink(LinkedExternalAccount account, boolean relink) {}
 
   private AccountLinkingSession getSession(Tenant tenant, AccountLinkingState state) {
     AccountLinkingSession session = sessionQueryRepository.find(tenant, state);
