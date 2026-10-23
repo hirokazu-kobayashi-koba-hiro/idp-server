@@ -83,10 +83,28 @@ public class AccountLinkingErrorHandler {
       return linkFailed(AccountLinkingStatus.BAD_REQUEST, exception.getMessage());
     }
 
-    String message = exception.getMessage() != null ? exception.getMessage() : "unexpected error";
-    log.error("Account linking server error: {}", message, exception);
+    // The cause is for the log only. An exception's message can carry SQL, identifiers or the
+    // state of another component, none of which the caller should see.
+    log.error("Account linking server error: {}", exception.getMessage(), exception);
     return AccountLinkingResult.error(
-        AccountLinkingStatus.SERVER_ERROR, "server_error", message, null);
+        AccountLinkingStatus.SERVER_ERROR, "server_error", "unexpected error", null);
+  }
+
+  /**
+   * Whether the exception is a rejection this handler answers, as opposed to a failure.
+   *
+   * <p>A phase that has already written must not answer a failure as a normal result: the
+   * transaction would be committed with half of the phase in it. It rethrows instead and lets the
+   * transaction roll back.
+   */
+  public boolean isRejection(Exception exception) {
+    return exception instanceof AccountLinkingOperatorMismatchException
+        || exception instanceof AccountLinkingSessionStateException
+        || exception instanceof AccountLinkingDuplicateException
+        || exception instanceof AccountLinkingNotFoundException
+        || exception instanceof AccountLinkingInvalidRequestException
+        || exception instanceof FederationConfigurationNotFoundException
+        || exception instanceof ExternalIdpRequestFailedException;
   }
 
   private AccountLinkingResult linkFailed(AccountLinkingStatus status, String description) {

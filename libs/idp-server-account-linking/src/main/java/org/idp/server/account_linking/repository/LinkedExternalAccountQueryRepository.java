@@ -48,9 +48,6 @@ public interface LinkedExternalAccountQueryRepository {
       ExternalIdpProvider provider,
       String federatedUserId);
 
-  /** Row count for the alias sequence. */
-  int countByProvider(Tenant tenant, UserIdentifier userIdentifier, ExternalIdpProvider provider);
-
   /**
    * Reads the row with a row lock held for the current transaction (SELECT ... FOR UPDATE).
    *

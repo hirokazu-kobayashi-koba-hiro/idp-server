@@ -220,26 +220,6 @@ public class PostgresqlExecutor implements LinkedExternalAccountSqlExecutor {
   }
 
   @Override
-  public int countByProvider(
-      Tenant tenant, UserIdentifier userIdentifier, ExternalIdpProvider provider) {
-    SqlExecutor sqlExecutor = new SqlExecutor();
-
-    String sqlTemplate =
-        """
-        SELECT count(*) AS count
-          FROM linked_external_accounts
-         WHERE tenant_id = ?::uuid AND user_id = ?::uuid AND provider = ?;
-        """;
-
-    Map<String, String> result =
-        sqlExecutor.selectOne(
-            sqlTemplate,
-            List.of(tenant.identifierUUID(), userIdentifier.valueAsUuid(), provider.value()));
-
-    return toCount(result);
-  }
-
-  @Override
   public Map<String, String> selectByAliasForUpdate(
       Tenant tenant, UserIdentifier userIdentifier, AccountAlias alias) {
     SqlExecutor sqlExecutor = new SqlExecutor();

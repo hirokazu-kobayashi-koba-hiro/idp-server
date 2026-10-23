@@ -89,12 +89,6 @@ public class LinkedExternalAccountDataSource
   }
 
   @Override
-  public int countByProvider(
-      Tenant tenant, UserIdentifier userIdentifier, ExternalIdpProvider provider) {
-    return executor.countByProvider(tenant, userIdentifier, provider);
-  }
-
-  @Override
   public LinkedExternalAccount lock(
       Tenant tenant, UserIdentifier userIdentifier, AccountAlias alias) {
     return convert(executor.selectByAliasForUpdate(tenant, userIdentifier, alias));
