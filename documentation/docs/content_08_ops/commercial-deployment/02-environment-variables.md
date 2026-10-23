@@ -56,6 +56,8 @@ idp-server の設定は `application.yaml` で定義され、環境変数で上�
 | `apiKey` | `IDP_SERVER_API_KEY` | 管理API認証キー | なし (必須) | Secrets Manager |
 | `apiSecret` | `IDP_SERVER_API_SECRET` | 管理API認証シークレット | なし (必須) | Secrets Manager |
 | `encryptionKey` | `ENCRYPTION_KEY` | データ暗号化キー (AES-256) | なし (必須) | Secrets Manager |
+| `encryptionKeys` | `ENCRYPTION_KEYS` | アカウント連携の保管トークン用の鍵暗号化鍵の束。`<key id>:<base64>` をカンマ区切り | なし（`ENCRYPTION_KEY` を key id `default` として使う） | Secrets Manager。交換時だけ複数 |
+| `encryptionActiveKeyId` | `ENCRYPTION_ACTIVE_KEY_ID` | 新しく包むのに使う鍵暗号化鍵の key id | `ENCRYPTION_KEYS` が無ければ `default`（あるときは必須） | 交換の手順に従う |
 | `databaseType` | `DATABASE_TYPE` | データベース種類 | `POSTGRESQL` | `POSTGRESQL` |
 
 ### server (サーバーポート設定)

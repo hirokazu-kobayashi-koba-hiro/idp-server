@@ -291,6 +291,10 @@ curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/t
 
 確定されずに期限を過ぎた連携セッションは、期限切れデータの一括削除 `POST /v1/admin/operations/delete-expired-data` で消えます。応答の内訳は `deleted.account_linking_session` です。定期実行（Cron 等）に組み込んでください（[運用の概念](../../content_03_concepts/07-operations/concept-04-operations.md)）。
 
+### 暗号化の鍵
+
+保管トークンは、テナントごとのデータ鍵を鍵暗号化鍵（`ENCRYPTION_KEYS`、無ければ `ENCRYPTION_KEY`）で包む 2 段の鍵で暗号化します。追加の設定なしで動きます。鍵の交換と確認は [データ鍵と鍵暗号化鍵のローテーション](../../content_08_ops/commercial-deployment/07-data-key-rotation.md) を参照してください。
+
 ### ユーザー削除と連携先の無効化
 
 - ユーザーを削除すると、そのユーザーの連携と連携セッションも削除され、保管トークンは外部IdPで失効されます（ベストエフォート）
