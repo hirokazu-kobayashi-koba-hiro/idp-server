@@ -27,7 +27,7 @@ CREATE TABLE tenant_data_keys
     UNIQUE KEY uk_tenant_data_keys_version (tenant_id, purpose, version),
     UNIQUE KEY uk_tenant_data_keys_active (tenant_id, active_purpose),
     INDEX idx_tenant_data_keys_kek_id (kek_id)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE INDEX idx_linked_external_accounts_encryption_key_id
     ON linked_external_accounts (encryption_key_id);
