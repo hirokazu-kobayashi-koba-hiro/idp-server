@@ -120,14 +120,17 @@ const LinkedAccounts = async ({
           </Alert>
         )}
 
-        <Button
-          href={`/api/linked-accounts/link?provider=${PROVIDER}`}
-          variant="contained"
-          startIcon={<LinkIcon />}
-          sx={{ alignSelf: "flex-start" }}
-        >
-          外部アカウントを連携する
-        </Button>
+        <form method="post" action="/api/linked-accounts/link">
+          <input type="hidden" name="provider" value={PROVIDER} />
+          <Button
+            type="submit"
+            variant="contained"
+            startIcon={<LinkIcon />}
+            sx={{ alignSelf: "flex-start" }}
+          >
+            外部アカウントを連携する
+          </Button>
+        </form>
 
         <Divider />
 
