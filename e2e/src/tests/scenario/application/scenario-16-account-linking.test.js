@@ -1258,15 +1258,64 @@ describe("account linking", () => {
       expect(unknownPurpose.status).toBe(400);
     });
 
-    it("has nothing to re-wrap while every data key is under the active KEK", async () => {
-      const response = await postWithJson({
+    const activeKeyId = async () =>
+      (await get({ url: `${backendUrl}/v1/admin/operations/data-keys`, headers: adminHeaders })).data
+        .active_key_id;
+    const rewrap = (body) =>
+      postWithJson({
         url: `${backendUrl}/v1/admin/operations/data-keys/rewrap`,
         headers: adminHeaders,
-        body: { max_number: 100 },
+        body,
       });
+
+    it("has nothing to re-wrap while every data key is under the active KEK", async () => {
+      const response = await rewrap({ max_number: 100, expected_active_key_id: await activeKeyId() });
       expect(response.status).toBe(200);
       expect(response.data.rewrapped).toBe(0);
       expect(response.data.pending_rewrap).toBe(0);
+    });
+
+    it("refuses to re-wrap unless the caller names the KEK this server encrypts with", async () => {
+      const withoutExpectation = await rewrap({ max_number: 100 });
+      expect(withoutExpectation.status).toBe(400);
+
+      // A server still on another configuration during a rolling update must not re-wrap.
+      const mismatch = await rewrap({ expected_active_key_id: "some-other-kek" });
+      expect(mismatch.status).toBe(409);
+      expect(mismatch.data.active_key_id).toBe(await activeKeyId());
+      expect(mismatch.data.expected_active_key_id).toBe("some-other-kek");
+    });
+
+    it("answers 400, not 500, for an out-of-range or non-numeric batch size", async () => {
+      const expected_active_key_id = await activeKeyId();
+      for (const max_number of [0, -1, 10001, "abc", 1.5]) {
+        const response = await rewrap({ max_number, expected_active_key_id });
+        expect(response.status).toBe(400);
+      }
+      for (const max_deletion_number of [0, -1, 100001, "abc"]) {
+        const response = await postWithJson({
+          url: `${backendUrl}/v1/admin/operations/delete-expired-data`,
+          headers: adminHeaders,
+          body: { max_deletion_number },
+        });
+        expect(response.status).toBe(400);
+      }
+    });
+
+    it("answers 404 for a tenant that does not exist and 400 for one that is not a UUID", async () => {
+      const unknown = await postWithJson({
+        url: `${backendUrl}/v1/admin/operations/data-keys/rotate`,
+        headers: adminHeaders,
+        body: { tenant_id: uuidv4() },
+      });
+      expect(unknown.status).toBe(404);
+
+      const malformed = await postWithJson({
+        url: `${backendUrl}/v1/admin/operations/data-keys/rotate`,
+        headers: adminHeaders,
+        body: { tenant_id: "not-a-uuid" },
+      });
+      expect(malformed.status).toBe(400);
     });
   });
 });

@@ -41,11 +41,11 @@ const status = async () => {
   return response.data;
 };
 
-const rewrap = async (maxNumber) => {
+const rewrap = async (maxNumber, expectedActiveKeyId) => {
   const response = await postWithJson({
     url: `${backendUrl}/v1/admin/operations/data-keys/rewrap`,
     headers: adminHeaders(),
-    body: { max_number: maxNumber },
+    body: { max_number: maxNumber, expected_active_key_id: expectedActiveKeyId },
   });
   expect(response.status).toBe(200);
   return response.data;
@@ -107,13 +107,13 @@ describe("KEK rotation (run through e2e/scripts/kek-rotation.sh)", () => {
     await expectStoredTokensUnchanged();
 
     // Re-wrapping is bounded per call and continues where it left off.
-    const first = await rewrap(1);
+    const first = await rewrap(1, "rotation-new");
     expect(first.rewrapped).toBe(1);
     expect(first.pending_rewrap).toBe(before.pending_rewrap - 1);
 
     let pending = first.pending_rewrap;
     while (pending > 0) {
-      const next = await rewrap(100);
+      const next = await rewrap(100, "rotation-new");
       expect(next.rewrapped).toBeGreaterThan(0);
       pending = next.pending_rewrap;
     }
@@ -141,7 +141,7 @@ describe("KEK rotation (run through e2e/scripts/kek-rotation.sh)", () => {
   phase("restored")("back to the original KEK: re-wrapped again and every token opens", async () => {
     let pending = (await status()).pending_rewrap;
     while (pending > 0) {
-      pending = (await rewrap(100)).pending_rewrap;
+      pending = (await rewrap(100, "default")).pending_rewrap;
     }
     expect((await status()).unopenable).toBe(0);
     await expectStoredTokensUnchanged();
