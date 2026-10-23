@@ -20,6 +20,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import org.idp.server.account_linking.AccountAlias;
+import org.idp.server.account_linking.LinkedExternalAccountIdentifier;
+import org.idp.server.account_linking.LinkedExternalAccountQueries;
 import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.definition.AdminPermissions;
 import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
@@ -73,6 +75,15 @@ public interface UserManagementApi {
       map.put(
           "deleteLinkedExternalAccount",
           new AdminPermissions(Set.of(DefaultAdminPermission.LINKED_ACCOUNT_DELETE)));
+      map.put(
+          "findAllLinkedExternalAccounts",
+          new AdminPermissions(Set.of(DefaultAdminPermission.LINKED_ACCOUNT_READ)));
+      map.put(
+          "getLinkedExternalAccountById",
+          new AdminPermissions(Set.of(DefaultAdminPermission.LINKED_ACCOUNT_READ)));
+      map.put(
+          "deleteLinkedExternalAccountById",
+          new AdminPermissions(Set.of(DefaultAdminPermission.LINKED_ACCOUNT_DELETE)));
     } else {
       // PUBLIC tenants require USER_* permissions
       map.put("create", new AdminPermissions(Set.of(DefaultAdminPermission.USER_CREATE)));
@@ -103,6 +114,15 @@ public interface UserManagementApi {
           new AdminPermissions(Set.of(DefaultAdminPermission.LINKED_ACCOUNT_READ)));
       map.put(
           "deleteLinkedExternalAccount",
+          new AdminPermissions(Set.of(DefaultAdminPermission.LINKED_ACCOUNT_DELETE)));
+      map.put(
+          "findAllLinkedExternalAccounts",
+          new AdminPermissions(Set.of(DefaultAdminPermission.LINKED_ACCOUNT_READ)));
+      map.put(
+          "getLinkedExternalAccountById",
+          new AdminPermissions(Set.of(DefaultAdminPermission.LINKED_ACCOUNT_READ)));
+      map.put(
+          "deleteLinkedExternalAccountById",
           new AdminPermissions(Set.of(DefaultAdminPermission.LINKED_ACCOUNT_DELETE)));
     }
 
@@ -230,6 +250,31 @@ public interface UserManagementApi {
       TenantIdentifier tenantIdentifier,
       UserIdentifier userIdentifier,
       AccountAlias alias,
+      RequestAttributes requestAttributes,
+      boolean dryRun);
+
+  /**
+   * Lists the tenant's linked external accounts across users, filtered by provider, user and
+   * creation time. The count with {@code provider} and {@code limit=1} tells how many links a
+   * provider still holds.
+   */
+  UserManagementResponse findAllLinkedExternalAccounts(
+      AdminAuthenticationContext authenticationContext,
+      TenantIdentifier tenantIdentifier,
+      LinkedExternalAccountQueries queries,
+      RequestAttributes requestAttributes);
+
+  UserManagementResponse getLinkedExternalAccountById(
+      AdminAuthenticationContext authenticationContext,
+      TenantIdentifier tenantIdentifier,
+      LinkedExternalAccountIdentifier identifier,
+      RequestAttributes requestAttributes);
+
+  /** As {@link #deleteLinkedExternalAccount}, naming the link by its identifier. */
+  UserManagementResponse deleteLinkedExternalAccountById(
+      AdminAuthenticationContext authenticationContext,
+      TenantIdentifier tenantIdentifier,
+      LinkedExternalAccountIdentifier identifier,
       RequestAttributes requestAttributes,
       boolean dryRun);
 }

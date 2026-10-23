@@ -22,6 +22,8 @@ import java.util.Map;
 import org.idp.server.account_linking.AccountAlias;
 import org.idp.server.account_linking.ExternalIdpProvider;
 import org.idp.server.account_linking.LinkedExternalAccount;
+import org.idp.server.account_linking.LinkedExternalAccountIdentifier;
+import org.idp.server.account_linking.LinkedExternalAccountQueries;
 import org.idp.server.core.adapters.datasource.account_linking.ModelConverter;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.platform.datasource.SqlExecutor;
@@ -145,6 +147,64 @@ public class MysqlExecutor implements LinkedExternalAccountSqlExecutor {
 
     return sqlExecutor.selectList(
         sqlTemplate, List.of(tenant.identifierValue(), userIdentifier.value()));
+  }
+
+  @Override
+  public List<Map<String, String>> selectList(Tenant tenant, LinkedExternalAccountQueries queries) {
+    List<Object> params = new ArrayList<>();
+    String where = where(tenant, queries, params);
+    params.add(queries.limit());
+    params.add(queries.offset());
+    return new SqlExecutor()
+        .selectList(
+            SELECT_COLUMNS + where + " ORDER BY created_at DESC, id LIMIT ? OFFSET ?;", params);
+  }
+
+  @Override
+  public Map<String, String> selectCount(Tenant tenant, LinkedExternalAccountQueries queries) {
+    List<Object> params = new ArrayList<>();
+    String where = where(tenant, queries, params);
+    return new SqlExecutor()
+        .selectOne("SELECT count(*) AS count FROM linked_external_accounts" + where + ";", params);
+  }
+
+  private String where(Tenant tenant, LinkedExternalAccountQueries queries, List<Object> params) {
+    StringBuilder where = new StringBuilder(" WHERE tenant_id = ?");
+    params.add(tenant.identifierValue());
+    if (queries.hasProvider()) {
+      where.append(" AND provider = ?");
+      params.add(queries.provider());
+    }
+    if (queries.hasUserId()) {
+      where.append(" AND user_id = ?");
+      params.add(queries.userId());
+    }
+    if (queries.hasFrom()) {
+      where.append(" AND created_at >= ?");
+      params.add(queries.from());
+    }
+    if (queries.hasTo()) {
+      where.append(" AND created_at <= ?");
+      params.add(queries.to());
+    }
+    return where.toString();
+  }
+
+  @Override
+  public Map<String, String> selectById(Tenant tenant, LinkedExternalAccountIdentifier identifier) {
+    return new SqlExecutor()
+        .selectOne(
+            SELECT_COLUMNS + " WHERE tenant_id = ? AND id = ?;",
+            List.of(tenant.identifierValue(), identifier.value()));
+  }
+
+  @Override
+  public Map<String, String> selectByIdForUpdate(
+      Tenant tenant, LinkedExternalAccountIdentifier identifier) {
+    return new SqlExecutor()
+        .selectOne(
+            SELECT_COLUMNS + " WHERE tenant_id = ? AND id = ? FOR UPDATE;",
+            List.of(tenant.identifierValue(), identifier.value()));
   }
 
   @Override

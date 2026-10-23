@@ -1041,6 +1041,183 @@ describe("account linking", () => {
     });
   });
 
+  /**
+   * テナント全体の連携の管理 API。ユーザーを指定せずに連携先や期間で絞り込み、件数（total_count）
+   * を返す。連携先を消す前や障害時に、その連携先の連携がいくつ残っているかを確かめるためのもの。
+   */
+  describe("tenant-wide management API", () => {
+
+    const PROVIDER_FILTER = "account-linking-oauth2";
+    const orgBase = `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/linked-external-accounts`;
+
+    const isActiveAtExternalIdp = async (token) => {
+      const params = new URLSearchParams();
+      params.append("token", token);
+      params.append("client_id", clientSecretPostClient.clientId);
+      params.append("client_secret", clientSecretPostClient.clientSecret);
+      const response = await post({
+        url: `${backendUrl}/${federationServerConfig.tenantId}/v1/tokens/introspection`,
+        body: params.toString(),
+      });
+      return response.data.active;
+    };
+
+    let adminToken;
+    let sub;
+    let aliases;
+    let externalAccessToken;
+    const operators = [];
+
+    beforeAll(async () => {
+      adminToken = await requestAdminAccessToken();
+
+      const email = `account-linking-tenant-admin-${Date.now()}@example.com`;
+      const createResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/users`,
+        headers: { Authorization: `Bearer ${adminToken}` },
+        body: {
+          sub: uuidv4(),
+          provider_id: "idp-server",
+          name: email,
+          email,
+          raw_password: "successUserCode001",
+        },
+      });
+      expect(createResponse.status).toBe(201);
+      sub = createResponse.data.result.sub;
+
+      const accessToken = await login(
+        { username: email, password: "successUserCode001" },
+        `openid profile email ${MANAGE_SCOPE} ${READ_TOKEN_SCOPE}`
+      );
+      aliases = [
+        await linkOnce(accessToken, PROVIDER_FILTER),
+        await linkOnce(accessToken, PROVIDER_FILTER),
+      ];
+      const tokenResponse = await retrieveToken({
+        alias: aliases[0],
+        token: accessToken,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      expect(tokenResponse.status).toBe(200);
+      externalAccessToken = tokenResponse.data.access_token;
+    });
+
+    afterAll(async () => {
+      await deleteOperators(adminToken, serverConfig.organizationId, serverConfig.tenantId, operators);
+      await deletion({
+        url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/users/${sub}`,
+        headers: { Authorization: `Bearer ${adminToken}` },
+      });
+    });
+
+    const listFor = (query, token = adminToken) =>
+      get({ url: `${orgBase}?${new URLSearchParams(query)}`, headers: { Authorization: `Bearer ${token}` } });
+
+    it("lists links across the tenant by provider and user, with whose they are, and never the tokens", async () => {
+      const response = await listFor({ provider: PROVIDER_FILTER, user_id: sub });
+      expect(response.status).toBe(200);
+      expect(response.data.total_count).toBe(2);
+      expect(response.data.list.map((it) => it.alias).sort()).toEqual([...aliases].sort());
+      for (const account of response.data.list) {
+        expect(account.id).toBeTruthy();
+        expect(account.user_id).toBe(sub);
+        expect(account.provider).toBe(PROVIDER_FILTER);
+      }
+      expect(JSON.stringify(response.data)).not.toContain(externalAccessToken);
+    });
+
+    it("counts a provider's links without returning them all", async () => {
+      const response = await listFor({ provider: PROVIDER_FILTER, limit: "1" });
+      expect(response.status).toBe(200);
+      expect(response.data.list).toHaveLength(1);
+      expect(response.data.total_count).toBeGreaterThanOrEqual(2);
+
+      const none = await listFor({ provider: "no-such-provider" });
+      expect(none.data.total_count).toBe(0);
+      expect(none.data.list).toEqual([]);
+    });
+
+    it("answers 400 for a user_id that is not a UUID, and 404 for a link that does not exist", async () => {
+      expect((await listFor({ user_id: "not-a-uuid" })).status).toBe(400);
+      for (const id of [uuidv4(), "not-a-uuid"]) {
+        const response = await get({ url: `${orgBase}/${id}`, headers: { Authorization: `Bearer ${adminToken}` } });
+        expect(response.status).toBe(404);
+      }
+    });
+
+    it("reads one link by its identifier", async () => {
+      const id = (await listFor({ user_id: sub })).data.list.find((it) => it.alias === aliases[0]).id;
+      const response = await get({ url: `${orgBase}/${id}`, headers: { Authorization: `Bearer ${adminToken}` } });
+      expect(response.status).toBe(200);
+      expect(response.data.alias).toBe(aliases[0]);
+      expect(response.data.user_id).toBe(sub);
+    });
+
+    it("keeps reading and removing to idp:linked-account:read and idp:linked-account:delete", async () => {
+      const permissionIds = await fetchPermissionIds(adminToken, serverConfig.organizationId, serverConfig.tenantId);
+      const holding = async (permissionName) => {
+        const operator = await createOperatorWithPermission({
+          managementToken: adminToken,
+          organizationId: serverConfig.organizationId,
+          tenantId: serverConfig.tenantId,
+          clientId: clientSecretPostClient.clientId,
+          clientSecret: clientSecretPostClient.clientSecret,
+          permissionName,
+          permissionId: permissionIds.get(permissionName),
+          label: `tenant-${permissionName.replace(/[^a-z]/g, "-")}`,
+        });
+        operators.push(operator);
+        return operator.accessToken;
+      };
+      const id = (await listFor({ user_id: sub })).data.list[0].id;
+
+      const reader = await holding("idp:linked-account:read");
+      expect((await listFor({ user_id: sub }, reader)).status).toBe(200);
+      expect((await deletion({ url: `${orgBase}/${id}`, headers: { Authorization: `Bearer ${reader}` } })).status).toBe(403);
+
+      const remover = await holding("idp:linked-account:delete");
+      expect((await listFor({ user_id: sub }, remover)).status).toBe(403);
+      const dryRun = await deletion({ url: `${orgBase}/${id}?dry_run=true`, headers: { Authorization: `Bearer ${remover}` } });
+      expect(dryRun.status).toBe(200);
+      expect(dryRun.data.dry_run).toBe(true);
+    });
+
+    it("is reachable at system level too", async () => {
+      const systemTokenResponse = await requestToken({
+        endpoint: adminServerConfig.tokenEndpoint,
+        grantType: "password",
+        username: adminServerConfig.oauth.username,
+        password: adminServerConfig.oauth.password,
+        scope: adminServerConfig.adminClient.scope,
+        clientId: adminServerConfig.adminClient.clientId,
+        clientSecret: adminServerConfig.adminClient.clientSecret,
+      });
+      expect(systemTokenResponse.status).toBe(200);
+
+      const response = await get({
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/linked-external-accounts?${new URLSearchParams({ user_id: sub })}`,
+        headers: { Authorization: `Bearer ${systemTokenResponse.data.access_token}` },
+      });
+      expect(response.status).toBe(200);
+      expect(response.data.total_count).toBe(2);
+    });
+
+    it("removes a link by its identifier, revoking its tokens at the external IdP", async () => {
+      const id = (await listFor({ user_id: sub })).data.list.find((it) => it.alias === aliases[0]).id;
+      expect(await isActiveAtExternalIdp(externalAccessToken)).toBe(true);
+
+      const removal = await deletion({ url: `${orgBase}/${id}`, headers: { Authorization: `Bearer ${adminToken}` } });
+      expect(removal.status).toBe(204);
+      expect(await isActiveAtExternalIdp(externalAccessToken)).toBe(false);
+
+      const after = await listFor({ user_id: sub });
+      expect(after.data.total_count).toBe(1);
+      expect((await deletion({ url: `${orgBase}/${id}`, headers: { Authorization: `Bearer ${adminToken}` } })).status).toBe(404);
+    });
+  });
+
   describe("linking CSRF", () => {
 
     it("/linking/start rejects an operator other than the user bound at link", async () => {
