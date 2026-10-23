@@ -27,6 +27,8 @@ services:
       IDP_SERVER_API_KEY: ${IDP_SERVER_API_KEY?IDP server API key is required. Set IDP_SERVER_API_KEY environment variable.}
       IDP_SERVER_API_SECRET: ${IDP_SERVER_API_SECRET?IDP server API secret is required. Set IDP_SERVER_API_SECRET environment variable.}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY?Encryption key is required. Set ENCRYPTION_KEY environment variable.}
+      ENCRYPTION_KEYS: ${ENCRYPTION_KEYS:-}
+      ENCRYPTION_ACTIVE_KEY_ID: ${ENCRYPTION_ACTIVE_KEY_ID:-}
       ADMIN_TENANT_ID: ${ADMIN_TENANT_ID:-67e7eae6-62b0-4500-9eff-87459f63fc66}
       DATABASE_TYPE: MYSQL
       DB_WRITER_URL: jdbc:mariadb://mysql:3306/idpserver
@@ -134,6 +136,8 @@ services:
       IDP_SERVER_API_KEY: ${IDP_SERVER_API_KEY:-30113151-4ee1-4f6a-a1ac-cc1be9eaf695}
       IDP_SERVER_API_SECRET: ${IDP_SERVER_API_SECRET:-MTY5YjM3NmYtOTY0ZC00Nzg0LWIyOTMtOWQyNDhjMTkyNmIwCg==}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:-JjN9c6N4STeA+g9d+TtBGp5MC3sbqOWs+S9qzJG42iY=}
+      ENCRYPTION_KEYS: ${ENCRYPTION_KEYS:-}
+      ENCRYPTION_ACTIVE_KEY_ID: ${ENCRYPTION_ACTIVE_KEY_ID:-}
       ADMIN_TENANT_ID: ${ADMIN_TENANT_ID:-67e7eae6-62b0-4500-9eff-87459f63fc66}
       DATABASE_TYPE: MYSQL
       DB_WRITER_URL: jdbc:mariadb://mysql:3306/idpserver
@@ -232,7 +236,6 @@ services:
     ports:
       - "80:80"       # HTTP (redirects to HTTPS)
       - "443:443"     # HTTPS
-      - "8443:8443"   # HTTPS + mTLS
 
   mysql:
     image: mysql:8.0
