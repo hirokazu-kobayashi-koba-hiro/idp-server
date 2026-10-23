@@ -69,7 +69,8 @@ public class AccountLinkingStartHandler {
       ClientConfiguration clientConfiguration =
           clientConfigurationQueryRepository.get(tenant, request.oAuthToken().requestedClientId());
       validator.validate(request, clientConfiguration.linkingReturnUris());
-      providerVerifier.verify(tenant, request.provider());
+      providerVerifier.verify(
+          tenant, request.provider(), clientConfiguration.linkingProviders(), request.scope());
 
       LocalDateTime now = SystemDateTime.now();
       AccountLinkingPkce pkce = AccountLinkingPkce.generate();

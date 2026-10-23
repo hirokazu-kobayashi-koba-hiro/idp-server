@@ -497,6 +497,11 @@ public class ClientConfiguration implements JsonReadable, Configurable {
     return extension.linkingReturnUris();
   }
 
+  /** Providers this client may start an account link to. */
+  public java.util.List<String> linkingProviders() {
+    return extension.linkingProviders();
+  }
+
   /** Linked external account providers whose stored access token this client may retrieve. */
   public java.util.List<String> linkingTokenProviders() {
     return extension.linkingTokenProviders();

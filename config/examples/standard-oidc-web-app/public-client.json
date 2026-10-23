@@ -25,6 +25,9 @@
     "linking_return_uris": [
       "https://sample.local.test/api/linked-accounts/complete"
     ],
+    "linking_providers": [
+      "account-linking"
+    ],
     "linking_token_providers": [
       "account-linking"
     ]

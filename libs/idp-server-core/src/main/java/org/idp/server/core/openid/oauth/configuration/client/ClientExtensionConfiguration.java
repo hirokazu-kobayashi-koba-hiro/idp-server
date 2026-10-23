@@ -47,6 +47,7 @@ public class ClientExtensionConfiguration implements JsonReadable {
   Map<String, Object> clientInstancePlatformConfig = new HashMap<>();
   Boolean crossSiteAuthorizationView;
   List<String> linkingReturnUris;
+  List<String> linkingProviders;
   List<String> linkingTokenProviders;
   Map<String, Object> customProperties = new HashMap<>();
 
@@ -283,11 +284,26 @@ public class ClientExtensionConfiguration implements JsonReadable {
   }
 
   /**
+   * Providers this client may start an account link to.
+   *
+   * <p>A client able to start links could otherwise send its users to any provider the tenant
+   * configures, and have tokens issued to this server's external client on its own initiative.
+   * Empty means the client may start none.
+   */
+  public List<String> linkingProviders() {
+    return linkingProviders == null ? List.of() : linkingProviders;
+  }
+
+  public boolean hasLinkingProviders() {
+    return linkingProviders != null && !linkingProviders.isEmpty();
+  }
+
+  /**
    * Linked external account providers whose stored access token this client may retrieve.
    *
    * <p>Named by provider ({@code sso_provider}), not by account alias: an alias is assigned per
-   * user ({@code google-1}, {@code google-2}) and cannot be written into a client configuration.
-   * Empty means the client may retrieve none, so a client is never given stored tokens by default.
+   * user and cannot be written into a client configuration. Empty means the client may retrieve
+   * none, so a client is never given stored tokens by default.
    */
   public List<String> linkingTokenProviders() {
     return linkingTokenProviders == null ? List.of() : linkingTokenProviders;
@@ -333,6 +349,7 @@ public class ClientExtensionConfiguration implements JsonReadable {
     if (hasCrossSiteAuthorizationView())
       map.put("cross_site_authorization_view", crossSiteAuthorizationView);
     if (hasLinkingReturnUris()) map.put("linking_return_uris", linkingReturnUris);
+    if (hasLinkingProviders()) map.put("linking_providers", linkingProviders);
     if (hasLinkingTokenProviders()) map.put("linking_token_providers", linkingTokenProviders);
     if (hasCustomProperties()) map.put("custom_properties", customProperties);
     return map;

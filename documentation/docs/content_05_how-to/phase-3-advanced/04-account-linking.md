@@ -83,7 +83,7 @@ curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/t
 
 | フィールド | 説明 |
 |-----------|------|
-| `sso_provider` | 連携先の名前。RP が `/link/{provider}` に指定し、クライアントの `linking_token_providers` にも書く |
+| `sso_provider` | 連携先の名前。RP が `/link/{provider}` に指定し、クライアントの `linking_providers` / `linking_token_providers` にも書く |
 | `payload.provider` | `standard` |
 | `payload.issuer` / `jwks_uri` | 外部IdPが ID Token を返すときの検証に使う（`iss` の一致と署名）。`openid` を要求するなら必須 |
 | `payload.authorization_endpoint` / `token_endpoint` | 必須 |
@@ -143,6 +143,7 @@ RP のクライアント設定に次を追加します。クライアントの�
   "token_endpoint_auth_method": "client_secret_basic",
   "extension": {
     "linking_return_uris": ["https://rp.example.com/linking/callback"],
+    "linking_providers": ["example-idp"],
     "linking_token_providers": ["example-idp"]
   }
 }
@@ -152,6 +153,7 @@ RP のクライアント設定に次を追加します。クライアントの�
 |-----------|------|
 | `scope` | Step 3 のスコープ。テナントとクライアントの両方に無いと付与されず、`/me` の連携APIは `403 insufficient_scope` になる |
 | `extension.linking_return_uris` | 連携が終わったあとにブラウザを戻す先。`link` の `redirect_uri` と**完全一致**で照合する。認可の `redirect_uris` とは別 |
+| `extension.linking_providers` | 連携の開始を許す連携先（`sso_provider`）。書いていない連携先への `link` は `403` |
 | `extension.linking_token_providers` | 保管トークンの取得を許す連携先（`sso_provider`）。書いていない連携先のトークンは取り出せない（`403 unauthorized_client`） |
 | `token_endpoint_auth_method` | 保管トークンを取得するなら confidential クライアントにする。`none` は拒否される |
 
@@ -329,6 +331,8 @@ cd e2e && npm test -- --testPathPattern=scenario-16
 | `complete` が `403` | 連携を始めたクライアントと別のクライアントのトークンで確定した | 開始と同じクライアントのトークンを使う |
 | `complete` が `409` | 連携セッションが期限切れ、または同じ外部アカウントが別ユーザーに連携済み（`reject`） | 5.1 からやり直す / `duplicate_link_policy` を見直す |
 | トークン取得が `400 relink_required` | リフレッシュトークンが無い・期限切れ・拒否された、または連携先が削除・無効化された | `refresh_token_expires_in` と、外部IdPがリフレッシュトークンを返すスコープ（例: `offline_access`）を確認 |
+| `link` が `403` | 連携先がクライアントの `linking_providers` に無い | Step 4 を確認 |
+| `link` が `400`（scope） | 要求した `scope` が連携先の `scopes_supported` に無い | 要求を連携先の設定の範囲にする |
 | トークン取得が `403 unauthorized_client` | 連携先が `linking_token_providers` に無い、またはユーザートークンが別クライアントに発行された | Step 4 を確認 |
 
 ---

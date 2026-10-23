@@ -20,6 +20,7 @@ import org.idp.server.account_linking.exception.AccountLinkingDuplicateException
 import org.idp.server.account_linking.exception.AccountLinkingInvalidRequestException;
 import org.idp.server.account_linking.exception.AccountLinkingNotFoundException;
 import org.idp.server.account_linking.exception.AccountLinkingOperatorMismatchException;
+import org.idp.server.account_linking.exception.AccountLinkingProviderNotAllowedException;
 import org.idp.server.account_linking.exception.AccountLinkingSessionStateException;
 import org.idp.server.account_linking.exception.ExternalIdpRequestFailedException;
 import org.idp.server.account_linking.io.AccountLinkingResult;
@@ -47,6 +48,11 @@ public class AccountLinkingErrorHandler {
 
     if (exception instanceof AccountLinkingOperatorMismatchException) {
       log.warn("Account linking rejected: {}", exception.getMessage());
+      return linkFailed(AccountLinkingStatus.FORBIDDEN, exception.getMessage());
+    }
+
+    if (exception instanceof AccountLinkingProviderNotAllowedException) {
+      log.warn("Account linking provider not allowed for the client: {}", exception.getMessage());
       return linkFailed(AccountLinkingStatus.FORBIDDEN, exception.getMessage());
     }
 
@@ -99,6 +105,7 @@ public class AccountLinkingErrorHandler {
    */
   public boolean isRejection(Exception exception) {
     return exception instanceof AccountLinkingOperatorMismatchException
+        || exception instanceof AccountLinkingProviderNotAllowedException
         || exception instanceof AccountLinkingSessionStateException
         || exception instanceof AccountLinkingDuplicateException
         || exception instanceof AccountLinkingNotFoundException
