@@ -17,6 +17,7 @@
 package org.idp.server.control_plane.management.federation.handler;
 
 import java.util.Map;
+import org.idp.server.account_linking.LinkedAccountProviderUsage;
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
 import org.idp.server.control_plane.management.federation.FederationConfigManagementContextBuilder;
 import org.idp.server.control_plane.management.federation.io.FederationConfigDeleteRequest;
@@ -41,12 +42,15 @@ public class FederationConfigDeletionService
 
   private final FederationConfigurationQueryRepository queryRepository;
   private final FederationConfigurationCommandRepository commandRepository;
+  private final LinkedAccountProviderUsage linkedAccountProviderUsage;
 
   public FederationConfigDeletionService(
       FederationConfigurationQueryRepository queryRepository,
-      FederationConfigurationCommandRepository commandRepository) {
+      FederationConfigurationCommandRepository commandRepository,
+      LinkedAccountProviderUsage linkedAccountProviderUsage) {
     this.queryRepository = queryRepository;
     this.commandRepository = commandRepository;
+    this.linkedAccountProviderUsage = linkedAccountProviderUsage;
   }
 
   @Override
@@ -69,6 +73,13 @@ public class FederationConfigDeletionService
 
     // Populate builder with configuration to be deleted
     builder.withBefore(configuration);
+
+    // Revoking a link's stored tokens needs this configuration. Removed while links remain, those
+    // tokens would stay valid at the external IdP with nothing left to revoke them.
+    long links = linkedAccountProviderUsage.linksOf(tenant, configuration);
+    if (links > 0) {
+      return LinkedAccountConflict.response(links);
+    }
 
     if (dryRun) {
       Map<String, Object> response =

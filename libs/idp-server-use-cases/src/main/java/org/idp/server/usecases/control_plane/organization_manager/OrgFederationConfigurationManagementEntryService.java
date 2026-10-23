@@ -18,6 +18,8 @@ package org.idp.server.usecases.control_plane.organization_manager;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.account_linking.LinkedAccountProviderUsage;
+import org.idp.server.account_linking.repository.LinkedExternalAccountQueryRepository;
 import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.base.OrganizationAccessVerifier;
 import org.idp.server.control_plane.base.OrganizationAuthenticationContext;
@@ -81,6 +83,7 @@ public class OrgFederationConfigurationManagementEntryService
       OrganizationRepository organizationRepository,
       FederationConfigurationQueryRepository federationConfigurationQueryRepository,
       FederationConfigurationCommandRepository federationConfigurationCommandRepository,
+      LinkedExternalAccountQueryRepository linkedExternalAccountQueryRepository,
       AuditLogPublisher auditLogPublisher) {
 
     Map<String, FederationConfigManagementService<?>> services = new HashMap<>();
@@ -92,11 +95,15 @@ public class OrgFederationConfigurationManagementEntryService
     services.put(
         "update",
         new FederationConfigUpdateService(
-            federationConfigurationQueryRepository, federationConfigurationCommandRepository));
+            federationConfigurationQueryRepository,
+            federationConfigurationCommandRepository,
+            new LinkedAccountProviderUsage(linkedExternalAccountQueryRepository)));
     services.put(
         "delete",
         new FederationConfigDeletionService(
-            federationConfigurationQueryRepository, federationConfigurationCommandRepository));
+            federationConfigurationQueryRepository,
+            federationConfigurationCommandRepository,
+            new LinkedAccountProviderUsage(linkedExternalAccountQueryRepository)));
 
     this.handler =
         new OrgFederationConfigManagementHandler(

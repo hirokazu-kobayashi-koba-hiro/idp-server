@@ -25,7 +25,8 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 /** Reads the linking provider's settings from the federation configuration. */
 public class AccountLinkingConfigurationResolver {
 
-  static final FederationType FEDERATION_TYPE = new FederationType("oidc");
+  /** The federation type links resolve their provider under. */
+  public static final FederationType FEDERATION_TYPE = new FederationType("oidc");
 
   FederationConfigurationQueryRepository configurationQueryRepository;
 

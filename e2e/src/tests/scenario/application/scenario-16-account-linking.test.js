@@ -9,7 +9,7 @@ import {
   serverConfig
 } from "../../testConfig";
 import { authorize, postAuthentication, requestToken } from "../../../api/oauthClient";
-import { deletion, get, post, postWithJson } from "../../../lib/http";
+import { deletion, get, post, postWithJson, putWithJson } from "../../../lib/http";
 import { requestAuthorizations } from "../../../oauth/request";
 import { convertNextAction } from "../../../lib/util";
 import { v4 as uuidv4 } from "uuid";
@@ -1202,6 +1202,33 @@ describe("account linking", () => {
       });
       expect(response.status).toBe(200);
       expect(response.data.total_count).toBe(2);
+    });
+
+    it("refuses to remove or rename a provider that links still use", async () => {
+      const configUrl = `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/federation-configurations/9e3b7d52-1c48-4a06-b7f9-2d5e8c0a4f13`;
+      const current = await get({ url: configUrl, headers: { Authorization: `Bearer ${adminToken}` } });
+      expect(current.status).toBe(200);
+      expect(current.data.sso_provider).toBe(PROVIDER_FILTER);
+
+      // dry_run でも同じ判定をする。実際に消すと他のテストが連携先を失う。
+      const removal = await deletion({ url: `${configUrl}?dry_run=true`, headers: { Authorization: `Bearer ${adminToken}` } });
+      expect(removal.status).toBe(409);
+      expect(removal.data.linked_external_accounts).toBeGreaterThanOrEqual(2);
+
+      const rename = await putWithJson({
+        url: `${configUrl}?dry_run=true`,
+        headers: { Authorization: `Bearer ${adminToken}` },
+        body: { ...current.data, sso_provider: `${PROVIDER_FILTER}-renamed` },
+      });
+      expect(rename.status).toBe(409);
+
+      // 名前と種類を変えない更新は通る。
+      const unchanged = await putWithJson({
+        url: `${configUrl}?dry_run=true`,
+        headers: { Authorization: `Bearer ${adminToken}` },
+        body: current.data,
+      });
+      expect(unchanged.status).toBe(200);
     });
 
     it("removes a link by its identifier, revoking its tokens at the external IdP", async () => {
