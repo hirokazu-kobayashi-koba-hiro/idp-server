@@ -91,7 +91,7 @@ KEK を替えるときは、必ず次の 2 段階で行います。いきなり 
    ```bash
    curl -u "$IDP_SERVER_API_KEY:$IDP_SERVER_API_SECRET" \
      -H 'Content-Type: application/json' \
-     -d '{"max_number": 1000}' \
+     -d '{"max_number": 1000, "expected_active_key_id": "k2026"}' \
      https://<host>/v1/admin/operations/data-keys/rewrap
    ```
 
@@ -99,8 +99,12 @@ KEK を替えるときは、必ず次の 2 段階で行います。いきなり 
    { "rewrapped": 1000, "pending_rewrap": 180, "status": { "...": "状況の確認と同じ" } }
    ```
 
-   `max_number`（既定 1000）で 1 回の件数を区切れます。前回の続きから進むので、途中で止めても再開できます。
-4. **古い KEK を外す**：`pending_rewrap` が 0 になったら、`ENCRYPTION_KEYS` から古い KEK を消してデプロイする。外した後に `unopenable` が 0 であることを確かめる。
+   `max_number`（1〜10000、既定 1000）で 1 回の件数を区切れます。前回の続きから進むので、途中で止めても再開できます。
+
+   `expected_active_key_id` は必須です。応答した台の active な KEK と違えば `409` を返し、何も包み直しません。ローリングデプロイの途中で古い設定の台が受けて、DEK を古い KEK へ包み戻すのを防ぐためです。`409` のときは応答の `active_key_id` を見て、全台の設定がそろってからやり直してください。
+4. **古い KEK を外す**：全台が新しい設定になったあとで `pending_rewrap` をもう一度確かめ、0 なら `ENCRYPTION_KEYS` から古い KEK を消してデプロイする。外した後に `unopenable` が 0 であることを確かめる。
+
+   古い設定の台が残っている間は、その台が DEK を古い KEK で作ることがあります。包み直しが 0 になった後でも、全台の入れ替えが終わるまでは古い KEK を外さないでください。
 
 `unopenable` が 0 でなくなったら、外した KEK を `ENCRYPTION_KEYS` に戻してください。戻せば、包み直しから続けられます。
 
@@ -122,7 +126,7 @@ curl -u "$IDP_SERVER_API_KEY:$IDP_SERVER_API_SECRET" \
 - 新しい保管トークンは新しい世代で暗号化します。前の世代は開くためだけに残り、一括で暗号化し直すことはしません。
 - 前の世代の行は、トークンが取り出されたときに新しい世代へ移ります。
 - 他の台は、active な DEK を最大 60 秒キャッシュします。その間は前の世代で書くことがありますが、前の世代も開けるので壊れません。
-- `purpose` を省くと `account-linking-token` です。`tenant_id` が無い場合と、`purpose` が他の値の場合は `400 invalid_request` を返します。
+- `purpose` を省くと `account-linking-token` です。`tenant_id` が無いか UUID でない場合と、`purpose` が他の値の場合は `400 invalid_request`、テナントが存在しない場合は `404` を返します。
 
 ---
 

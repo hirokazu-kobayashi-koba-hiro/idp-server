@@ -38,6 +38,11 @@ public class DataKeyStatusReport {
     this.dataKeysByKekId = dataKeysByKekId;
   }
 
+  /** The key encryption key the answering server wraps new data keys with. */
+  public String activeKekId() {
+    return activeKekId;
+  }
+
   /** Data keys wrapped by a key encryption key other than the active one. */
   public long pendingRewrap() {
     return dataKeysByKekId.entrySet().stream()

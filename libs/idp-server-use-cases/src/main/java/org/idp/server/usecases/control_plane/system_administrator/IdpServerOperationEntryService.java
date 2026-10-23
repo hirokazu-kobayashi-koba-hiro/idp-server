@@ -66,6 +66,9 @@ public class IdpServerOperationEntryService implements IdpServerOperationApi {
   AccountLinkingSessionOperationCommandRepository accountLinkingSessionOperationCommandRepository;
   DataKeyService dataKeyService;
 
+  static final int MAX_DELETION_NUMBER = 100000;
+  static final int MAX_REWRAP_NUMBER = 10000;
+
   /** Purposes a data key may be rotated for through this API. */
   static final Set<String> DATA_KEY_PURPOSES = Set.of(AccountLinkingTokenCipher.PURPOSE);
 
@@ -116,7 +119,12 @@ public class IdpServerOperationEntryService implements IdpServerOperationApi {
       RequestAttributes requestAttributes) {
 
     Tenant adminTenant = tenantQueryRepository.get(adminTenantIdentifier);
-    int maxDeletionNumber = request.optValueAsInt("max_deletion_number", 10000);
+    Integer maxDeletionNumber =
+        request.optBoundedInt("max_deletion_number", 10000, 1, MAX_DELETION_NUMBER);
+    if (maxDeletionNumber == null) {
+      return invalidRequest(
+          "max_deletion_number must be an integer from 1 to " + MAX_DELETION_NUMBER + ".");
+    }
 
     // LinkedHashMap で API レスポンス上の順序を保つ。
     Map<String, Integer> deleted = new LinkedHashMap<>();
@@ -185,7 +193,30 @@ public class IdpServerOperationEntryService implements IdpServerOperationApi {
       RequestAttributes requestAttributes) {
 
     Tenant adminTenant = tenantQueryRepository.get(adminTenantIdentifier);
-    int maxNumber = request.optValueAsInt("max_number", 1000);
+    Integer maxNumber = request.optBoundedInt("max_number", 1000, 1, MAX_REWRAP_NUMBER);
+    if (maxNumber == null) {
+      return invalidRequest("max_number must be an integer from 1 to " + MAX_REWRAP_NUMBER + ".");
+    }
+
+    // The re-wrap uses the KEK the answering server holds as active. During a rolling update the
+    // servers disagree, and an old one would wrap the data keys back under the old KEK. The caller
+    // names the KEK it means, and a server that holds another one refuses.
+    String expectedActiveKeyId = request.optString("expected_active_key_id");
+    if (expectedActiveKeyId == null) {
+      return invalidRequest("expected_active_key_id is required.");
+    }
+    DataKeyStatusReport before = dataKeyService.report(adminTenant);
+    if (!before.activeKekId().equals(expectedActiveKeyId)) {
+      Map<String, Object> conflict = new LinkedHashMap<>();
+      conflict.put("error", "conflict");
+      conflict.put(
+          "error_description",
+          "This server encrypts with another key encryption key. Finish rolling out the"
+              + " configuration first.");
+      conflict.put("active_key_id", before.activeKekId());
+      conflict.put("expected_active_key_id", expectedActiveKeyId);
+      return new IdpServerOperationResponse(IdpServerOperationStatus.CONFLICT, conflict);
+    }
 
     int rewrapped = dataKeyService.rewrap(adminTenant, maxNumber);
     DataKeyStatusReport report = dataKeyService.report(adminTenant);
@@ -208,18 +239,23 @@ public class IdpServerOperationEntryService implements IdpServerOperationApi {
       IdpServerOperationRequest request,
       RequestAttributes requestAttributes) {
 
-    Object tenantId = request.get("tenant_id");
+    String tenantId = request.optString("tenant_id");
     Object purposeValue = request.get("purpose");
     String purpose =
         purposeValue == null ? AccountLinkingTokenCipher.PURPOSE : purposeValue.toString();
-    if (!(tenantId instanceof String) || ((String) tenantId).isBlank()) {
-      return invalidRequest("tenant_id is required.");
+    if (tenantId == null || !isUuid(tenantId)) {
+      return invalidRequest("tenant_id is required and must be a UUID.");
     }
     if (!DATA_KEY_PURPOSES.contains(purpose)) {
       return invalidRequest("purpose must be one of " + DATA_KEY_PURPOSES + ".");
     }
 
-    Tenant tenant = tenantQueryRepository.get(new TenantIdentifier((String) tenantId));
+    Tenant tenant = tenantQueryRepository.find(new TenantIdentifier(tenantId));
+    if (!tenant.exists()) {
+      return new IdpServerOperationResponse(
+          IdpServerOperationStatus.NOT_FOUND,
+          Map.of("error", "not_found", "error_description", "The tenant does not exist."));
+    }
     String dataKeyId = dataKeyService.rotate(tenant, purpose);
 
     Map<String, Object> contents = new LinkedHashMap<>();
@@ -227,6 +263,15 @@ public class IdpServerOperationEntryService implements IdpServerOperationApi {
     contents.put("purpose", purpose);
     contents.put("data_key_id", dataKeyId);
     return new IdpServerOperationResponse(IdpServerOperationStatus.OK, contents);
+  }
+
+  private static boolean isUuid(String value) {
+    try {
+      java.util.UUID.fromString(value);
+      return true;
+    } catch (IllegalArgumentException exception) {
+      return false;
+    }
   }
 
   private IdpServerOperationResponse invalidRequest(String description) {
