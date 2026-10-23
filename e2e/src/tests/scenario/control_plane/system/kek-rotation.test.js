@@ -1,7 +1,7 @@
 import { describe, expect, it } from "@jest/globals";
 import fs from "fs";
 import path from "path";
-import { backendUrl } from "../../../testConfig";
+import { backendUrl, federationServerConfig } from "../../../testConfig";
 import { get, postWithJson } from "../../../../lib/http";
 import {
   login,
@@ -81,6 +81,18 @@ describe("KEK rotation (run through e2e/scripts/kek-rotation.sh)", () => {
       expect(response.status).toBe(200);
       tokens[alias] = response.data.access_token;
     }
+    // A data key in a tenant other than the administrator's. The re-wrap runs under the
+    // administrator's tenant; it must still reach every other tenant's keys.
+    const otherTenant = await postWithJson({
+      url: `${backendUrl}/v1/admin/operations/data-keys/rotate`,
+      headers: adminHeaders(),
+      body: { tenant_id: federationServerConfig.tenantId },
+    });
+    expect(otherTenant.status).toBe(200);
+    const after = await status();
+    const total = (report) => report.key_encryption_keys.reduce((sum, it) => sum + it.data_keys, 0);
+    expect(total(after)).toBe(total(before) + 1);
+
     fs.mkdirSync(path.dirname(STATE), { recursive: true });
     fs.writeFileSync(STATE, JSON.stringify({ aliases, tokens }, null, 2));
   });
