@@ -52,6 +52,42 @@ public class IdpServerOperationV1Api implements ParameterTransformable {
         idpServerOperationApi.deleteExpiredData(
             adminTenantIdentifier, new IdpServerOperationRequest(body), requestAttributes);
 
+    return toResponse(response);
+  }
+
+  @GetMapping("/data-keys")
+  public ResponseEntity<?> getDataKeys(HttpServletRequest httpServletRequest) {
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+    return toResponse(
+        idpServerOperationApi.dataKeyStatus(
+            AdminTenantContext.getTenantIdentifier(), requestAttributes));
+  }
+
+  @PostMapping("/data-keys/rewrap")
+  public ResponseEntity<?> rewrapDataKeys(
+      @RequestBody(required = false) Map<String, Object> body,
+      HttpServletRequest httpServletRequest) {
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+    return toResponse(
+        idpServerOperationApi.rewrapDataKeys(
+            AdminTenantContext.getTenantIdentifier(),
+            new IdpServerOperationRequest(body),
+            requestAttributes));
+  }
+
+  @PostMapping("/data-keys/rotate")
+  public ResponseEntity<?> rotateDataKey(
+      @RequestBody(required = false) Map<String, Object> body,
+      HttpServletRequest httpServletRequest) {
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+    return toResponse(
+        idpServerOperationApi.rotateDataKey(
+            AdminTenantContext.getTenantIdentifier(),
+            new IdpServerOperationRequest(body),
+            requestAttributes));
+  }
+
+  private ResponseEntity<?> toResponse(IdpServerOperationResponse response) {
     HttpHeaders headers = new HttpHeaders();
     headers.add("Content-Type", "application/json");
     return new ResponseEntity<>(

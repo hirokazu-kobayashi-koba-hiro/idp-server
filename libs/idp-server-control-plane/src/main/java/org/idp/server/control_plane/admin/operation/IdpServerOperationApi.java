@@ -27,4 +27,23 @@ public interface IdpServerOperationApi {
       TenantIdentifier adminTenantIdentifier,
       IdpServerOperationRequest request,
       RequestAttributes requestAttributes);
+
+  /** Which key encryption keys still wrap tenant data keys, and whether this server holds them. */
+  IdpServerOperationResponse dataKeyStatus(
+      TenantIdentifier adminTenantIdentifier, RequestAttributes requestAttributes);
+
+  /** Re-wraps tenant data keys with the active key encryption key, up to {@code max_number}. */
+  IdpServerOperationResponse rewrapDataKeys(
+      TenantIdentifier adminTenantIdentifier,
+      IdpServerOperationRequest request,
+      RequestAttributes requestAttributes);
+
+  /**
+   * Starts a new data key generation for one tenant and purpose. Data under the previous key stays
+   * readable; nothing is re-encrypted.
+   */
+  IdpServerOperationResponse rotateDataKey(
+      TenantIdentifier adminTenantIdentifier,
+      IdpServerOperationRequest request,
+      RequestAttributes requestAttributes);
 }

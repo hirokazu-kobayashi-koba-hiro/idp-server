@@ -759,7 +759,8 @@ public class IdpServerApplication {
                 contactVerificationChallengeOperationCommandRepository,
                 clientInstanceRegistrationChallengeOperationCommandRepository,
                 applicationComponentContainer.resolve(
-                    AccountLinkingSessionOperationCommandRepository.class)),
+                    AccountLinkingSessionOperationCommandRepository.class),
+                dataKeyService),
             IdpServerOperationApi.class,
             databaseTypeProvider);
 
