@@ -35,6 +35,11 @@ public class TenantDataKeyDataSource implements TenantDataKeyRepository {
   }
 
   @Override
+  public TenantDataKey findActiveCommitted(Tenant tenant, String purpose) {
+    return ModelConverter.convert(executor.selectActiveCommitted(tenant, purpose));
+  }
+
+  @Override
   public TenantDataKey find(Tenant tenant, String id) {
     return ModelConverter.convert(executor.selectOne(tenant, id));
   }

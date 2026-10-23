@@ -233,9 +233,17 @@ public class AccountLinkingCallbackHandler {
     }
 
     TenantDataCipher.Sealer sealer = tokenCipher.sealer(tenant);
-    SealedData accessToken = sealer.seal(tokenResult.accessToken());
+    SealedData accessToken =
+        sealer.seal(
+            tokenResult.accessToken(),
+            AccountLinkingTokenCipher.accessToken(session.userIdentifier(), session.provider()));
     SealedData refreshToken =
-        tokenResult.hasRefreshToken() ? sealer.seal(tokenResult.refreshToken()) : null;
+        tokenResult.hasRefreshToken()
+            ? sealer.seal(
+                tokenResult.refreshToken(),
+                AccountLinkingTokenCipher.refreshToken(
+                    session.userIdentifier(), session.provider()))
+            : null;
 
     return new ParkedCredentials.Builder()
         .federatedUserId(federatedUserId)

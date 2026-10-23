@@ -38,6 +38,17 @@ public class MysqlExecutor implements TenantDataKeySqlExecutor {
     return new SqlExecutor().selectOne(sql, List.of(tenant.identifierValue(), purpose));
   }
 
+  /**
+   * A locking read. Under REPEATABLE READ a plain SELECT returns the snapshot taken at the
+   * transaction's first read, which predates the row the winner committed.
+   */
+  @Override
+  public Map<String, String> selectActiveCommitted(Tenant tenant, String purpose) {
+    String sql =
+        SELECT_COLUMNS + " WHERE tenant_id = ? AND purpose = ? AND status = 'active' FOR SHARE;";
+    return new SqlExecutor().selectOne(sql, List.of(tenant.identifierValue(), purpose));
+  }
+
   @Override
   public Map<String, String> selectOne(Tenant tenant, String id) {
     String sql = SELECT_COLUMNS + " WHERE tenant_id = ? AND id = ?;";

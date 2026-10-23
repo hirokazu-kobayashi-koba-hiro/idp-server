@@ -17,7 +17,9 @@ package org.idp.server.account_linking;
 
 import org.idp.server.account_linking.gateway.ExternalIdpTokenGateway;
 import org.idp.server.core.openid.federation.FederationConfigurationNotFoundException;
+import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.platform.crypto.SealedData;
+import org.idp.server.platform.crypto.datakey.SealingContext;
 import org.idp.server.platform.crypto.datakey.TenantDataCipher;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -60,6 +62,7 @@ public class LinkedExternalAccountRevoker {
   public boolean revoke(Tenant tenant, LinkedExternalAccount account) {
     return revoke(
         tenant,
+        account.userIdentifier(),
         account.provider(),
         account.encryptionKeyId(),
         account.encryptedAccessToken(),
@@ -84,6 +87,7 @@ public class LinkedExternalAccountRevoker {
     ParkedCredentials credentials = session.parkedCredentials();
     return revoke(
         tenant,
+        session.userIdentifier(),
         session.provider(),
         credentials.encryptionKeyId(),
         credentials.encryptedAccessToken(),
@@ -96,6 +100,7 @@ public class LinkedExternalAccountRevoker {
    */
   private boolean revoke(
       Tenant tenant,
+      UserIdentifier user,
       ExternalIdpProvider provider,
       String encryptionKeyId,
       SealedData encryptedAccessToken,
@@ -117,9 +122,21 @@ public class LinkedExternalAccountRevoker {
     }
 
     boolean refreshRevoked =
-        revoke(tenant, configuration, encryptionKeyId, encryptedRefreshToken, "refresh_token");
+        revoke(
+            tenant,
+            configuration,
+            encryptionKeyId,
+            encryptedRefreshToken,
+            AccountLinkingTokenCipher.refreshToken(user, provider),
+            "refresh_token");
     boolean accessRevoked =
-        revoke(tenant, configuration, encryptionKeyId, encryptedAccessToken, "access_token");
+        revoke(
+            tenant,
+            configuration,
+            encryptionKeyId,
+            encryptedAccessToken,
+            AccountLinkingTokenCipher.accessToken(user, provider),
+            "access_token");
     return refreshRevoked && accessRevoked;
   }
 
@@ -128,12 +145,13 @@ public class LinkedExternalAccountRevoker {
       AccountLinkingProviderConfiguration configuration,
       String encryptionKeyId,
       SealedData encryptedToken,
+      SealingContext sealingContext,
       String tokenTypeHint) {
     if (encryptedToken == null) {
       return true;
     }
     try {
-      String token = tokenCipher.open(tenant, encryptionKeyId, encryptedToken);
+      String token = tokenCipher.open(tenant, encryptionKeyId, encryptedToken, sealingContext);
       return tokenGateway.revoke(
           configuration.oidc(), configuration.revocationEndpoint(), token, tokenTypeHint);
     } catch (RuntimeException exception) {

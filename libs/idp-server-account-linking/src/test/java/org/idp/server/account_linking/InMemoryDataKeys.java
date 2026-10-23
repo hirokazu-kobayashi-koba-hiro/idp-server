@@ -65,6 +65,11 @@ class InMemoryDataKeys implements TenantDataKeyRepository, TenantDataKeyOperatio
   }
 
   @Override
+  public TenantDataKey findActiveCommitted(Tenant tenant, String purpose) {
+    return findActive(tenant, purpose);
+  }
+
+  @Override
   public TenantDataKey find(Tenant tenant, String id) {
     return rows.getOrDefault(id, new TenantDataKey());
   }

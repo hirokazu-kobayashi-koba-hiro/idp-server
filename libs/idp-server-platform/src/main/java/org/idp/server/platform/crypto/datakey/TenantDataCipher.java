@@ -33,8 +33,9 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
  * per key however much one data key encrypts, and means an IV that repeats by chance does not
  * repeat under the same key.
  *
- * <p>The tenant, the purpose and the data key id are authenticated with every message, so a
- * ciphertext copied to another tenant's row, or to a field of another purpose, does not open.
+ * <p>The tenant, the purpose, the data key id and the caller's {@link SealingContext} are
+ * authenticated with every message. A ciphertext copied to another tenant's row, to a field of
+ * another purpose, or to another owner within the tenant does not open.
  */
 public class TenantDataCipher {
 
@@ -59,13 +60,20 @@ public class TenantDataCipher {
   }
 
   public String open(Tenant tenant, String dataKeyId, SealedData data) {
+    return open(tenant, dataKeyId, data, SealingContext.empty());
+  }
+
+  public String open(
+      Tenant tenant, String dataKeyId, SealedData data, SealingContext sealingContext) {
     if (data.version() != SealedData.VERSION_1) {
       throw new AesCryptoRuntimeException("Unknown sealed data version: " + data.version());
     }
     DataKey dataKey = dataKeyService.key(tenant, purpose, dataKeyId);
     byte[] salt = Base64.getDecoder().decode(data.salt());
     return messageCipher(dataKey, salt)
-        .decrypt(new EncryptedData(data.cipherText(), data.iv()), context(tenant, dataKeyId));
+        .decrypt(
+            new EncryptedData(data.cipherText(), data.iv()),
+            context(tenant, dataKeyId, sealingContext));
   }
 
   /** Whether data under this key id is under the tenant's current key. */
@@ -78,9 +86,15 @@ public class TenantDataCipher {
     return new AesCipher(HkdfSha256.derive(dataKey.key(), salt, info, KEY_LENGTH));
   }
 
-  private byte[] context(Tenant tenant, String dataKeyId) {
-    return String.join("|", tenant.identifierValue(), purpose, dataKeyId)
-        .getBytes(StandardCharsets.UTF_8);
+  private byte[] context(Tenant tenant, String dataKeyId, SealingContext sealingContext) {
+    byte[] head =
+        String.join("|", tenant.identifierValue(), purpose, dataKeyId, "")
+            .getBytes(StandardCharsets.UTF_8);
+    byte[] tail = sealingContext.bytes();
+    byte[] context = new byte[head.length + tail.length];
+    System.arraycopy(head, 0, context, 0, head.length);
+    System.arraycopy(tail, 0, context, head.length, tail.length);
+    return context;
   }
 
   public class Sealer {
@@ -98,10 +112,16 @@ public class TenantDataCipher {
     }
 
     public SealedData seal(String plainText) {
+      return seal(plainText, SealingContext.empty());
+    }
+
+    /** Seals for one owner; opening must present the same context. */
+    public SealedData seal(String plainText, SealingContext sealingContext) {
       byte[] salt = new byte[SALT_LENGTH];
       random.nextBytes(salt);
       EncryptedData encrypted =
-          messageCipher(dataKey, salt).encrypt(plainText, context(tenant, dataKey.id()));
+          messageCipher(dataKey, salt)
+              .encrypt(plainText, context(tenant, dataKey.id(), sealingContext));
       return new SealedData(
           SealedData.VERSION_1,
           Base64.getEncoder().encodeToString(salt),
