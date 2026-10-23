@@ -714,11 +714,23 @@ describe("account linking", () => {
       expect((await unlink(accessToken, `${PROVIDER}-1`)).status).toBe(403);
     });
 
-    it("refuses to start a link to a provider that is not configured", async () => {
+    it("refuses to start a link to a provider the client is not configured to link", async () => {
       const accessToken = await login(ownerUser);
+      // Not in the client's linking_providers. Refused before the provider is looked up, so the
+      // answer is the same whether or not the tenant configures it.
       const response = await startLink(accessToken, "no-such-provider");
+      expect(response.status).toBe(403);
+    });
+
+    it("refuses a requested scope beyond what the provider is configured for", async () => {
+      const accessToken = await login(ownerUser);
+      // account-linking-oauth2 is configured for "account offline_access" only.
+      const response = await startLink(accessToken, "account-linking-oauth2", "account offline_access admin");
       expect(response.status).toBe(400);
-      expect(response.data.error).toBe("invalid_request");
+      expect(response.data.error_description).toContain("admin");
+
+      const narrower = await startLink(accessToken, "account-linking-oauth2", "account");
+      expect(narrower.status).toBe(201);
     });
 
     it("lets linked_account:manage list too, since managing needs the list", async () => {

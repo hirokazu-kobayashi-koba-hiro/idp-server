@@ -242,15 +242,18 @@ iframe に埋め込むと third-party 文脈になり、Safari の ITP と Chrom
 
 認可の `redirect_uris` とは分けています。連携後の戻り先は通常アプリの設定画面であり、認可コードを受け取るURLではありません。流用すると、本来コールバックでないURLに認可コードを飛ばせるようになります。
 
-`extension.linking_token_providers` には、保管トークンの取得を許す連携先（`sso_provider`）を列挙します。列挙していない連携先のトークンは取り出せません。
+`extension.linking_providers` には連携の開始を許す連携先、`extension.linking_token_providers` には保管トークンの取得を許す連携先（どちらも `sso_provider`）を列挙します。列挙していない連携先への `link` は `403`、そのトークンの取得は `403 unauthorized_client` です。
 
 ```json
 {
   "extension": {
+    "linking_providers": ["example-idp"],
     "linking_token_providers": ["example-idp"]
   }
 }
 ```
+
+`link` の `scope` は、連携先の設定の `scopes_supported` の範囲に限ります。外部IdPには idp-server の外部クライアントの名義で要求するため、範囲を決めるのは運用者で、RP はそれを狭めることしかできません。範囲外の値は `400` です。
 
 ### 暗号化
 
