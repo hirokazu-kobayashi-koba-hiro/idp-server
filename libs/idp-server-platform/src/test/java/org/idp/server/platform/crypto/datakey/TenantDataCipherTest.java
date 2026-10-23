@@ -73,6 +73,11 @@ class TenantDataCipherTest {
     }
 
     @Override
+    public TenantDataKey findActiveCommitted(Tenant tenant, String purpose) {
+      return findActive(tenant, purpose);
+    }
+
+    @Override
     public TenantDataKey find(Tenant tenant, String id) {
       TenantDataKey key = rows.get(id);
       if (key == null || !key.tenantIdentifier().value().equals(tenant.identifierValue())) {
@@ -160,6 +165,79 @@ class TenantDataCipherTest {
     SealedData again = cipher.sealer(A).seal("token");
     assertNotEquals(sealed.cipherText(), again.cipherText());
     assertNotEquals(sealed.salt(), again.salt());
+  }
+
+  @Test
+  void losingAConcurrentCreationReadsTheWinnersKey() {
+    Store committed = new Store();
+    String winnersKey = server(committed, "k1:" + K1, "k1").sealer(A).keyId();
+
+    // This transaction's snapshot predates the winner: a plain read finds no active key, and the
+    // insert loses on the one-active-key constraint.
+    Store snapshot =
+        new Store() {
+          @Override
+          public TenantDataKey findActive(Tenant tenant, String purpose) {
+            return new TenantDataKey();
+          }
+
+          @Override
+          public int latestVersion(Tenant tenant, String purpose) {
+            return 0;
+          }
+
+          @Override
+          public boolean registerIfAbsent(Tenant tenant, TenantDataKey key) {
+            return false;
+          }
+
+          @Override
+          public TenantDataKey findActiveCommitted(Tenant tenant, String purpose) {
+            return committed.findActive(tenant, purpose);
+          }
+        };
+
+    TenantDataCipher loser = server(snapshot, "k1:" + K1, "k1");
+    assertEquals(winnersKey, loser.sealer(A).keyId());
+  }
+
+  @Test
+  void aValueSealedForOneOwnerDoesNotOpenForAnother() {
+    Store store = new Store();
+    TenantDataCipher cipher = server(store, "k1:" + K1, "k1");
+    TenantDataCipher.Sealer sealer = cipher.sealer(A);
+    SealingContext victimAccess =
+        SealingContext.empty().with("user", "victim").with("field", "access_token");
+    SealedData sealed = sealer.seal("token", victimAccess);
+
+    assertEquals("token", cipher.open(A, sealer.keyId(), sealed, victimAccess));
+    // Copied to the attacker's row: same tenant, same data key, other owner.
+    assertThrows(
+        AesCryptoRuntimeException.class,
+        () ->
+            cipher.open(
+                A,
+                sealer.keyId(),
+                sealed,
+                SealingContext.empty().with("user", "attacker").with("field", "access_token")));
+    // Moved to the other field of the same row.
+    assertThrows(
+        AesCryptoRuntimeException.class,
+        () ->
+            cipher.open(
+                A,
+                sealer.keyId(),
+                sealed,
+                SealingContext.empty().with("user", "victim").with("field", "refresh_token")));
+    // Values cannot be shifted between entries to produce the same bytes.
+    assertThrows(
+        AesCryptoRuntimeException.class,
+        () ->
+            cipher.open(
+                A,
+                sealer.keyId(),
+                sealed,
+                SealingContext.empty().with("user", "victim|field=access_token")));
   }
 
   @Test

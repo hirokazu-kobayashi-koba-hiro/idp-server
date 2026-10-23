@@ -38,6 +38,12 @@ public class PostgresqlExecutor implements TenantDataKeySqlExecutor {
     return new SqlExecutor().selectOne(sql, List.of(tenant.identifierUUID(), purpose));
   }
 
+  /** READ COMMITTED already sees the row the winner committed. */
+  @Override
+  public Map<String, String> selectActiveCommitted(Tenant tenant, String purpose) {
+    return selectActive(tenant, purpose);
+  }
+
   @Override
   public Map<String, String> selectOne(Tenant tenant, String id) {
     String sql = SELECT_COLUMNS + " WHERE tenant_id = ?::uuid AND id = ?::uuid;";

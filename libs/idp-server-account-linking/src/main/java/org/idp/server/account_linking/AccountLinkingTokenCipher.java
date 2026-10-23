@@ -15,7 +15,9 @@
  */
 package org.idp.server.account_linking;
 
+import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.platform.crypto.datakey.DataKeyService;
+import org.idp.server.platform.crypto.datakey.SealingContext;
 import org.idp.server.platform.crypto.datakey.TenantDataCipher;
 
 /**
@@ -31,5 +33,24 @@ public class AccountLinkingTokenCipher {
 
   public static TenantDataCipher from(DataKeyService dataKeyService) {
     return new TenantDataCipher(dataKeyService, PURPOSE);
+  }
+
+  /**
+   * Binds a stored access token to its user and provider.
+   *
+   * <p>Both are fixed from the start of the link, so the same context holds for the parked tokens
+   * in the session and for the linked account they move to.
+   */
+  public static SealingContext accessToken(UserIdentifier user, ExternalIdpProvider provider) {
+    return owner(user, provider).with("field", "access_token");
+  }
+
+  /** As {@link #accessToken}, for the refresh token. The two cannot be swapped within a row. */
+  public static SealingContext refreshToken(UserIdentifier user, ExternalIdpProvider provider) {
+    return owner(user, provider).with("field", "refresh_token");
+  }
+
+  private static SealingContext owner(UserIdentifier user, ExternalIdpProvider provider) {
+    return SealingContext.empty().with("user", user.value()).with("provider", provider.value());
   }
 }

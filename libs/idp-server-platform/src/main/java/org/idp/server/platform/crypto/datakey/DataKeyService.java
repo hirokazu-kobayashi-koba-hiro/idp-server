@@ -90,7 +90,7 @@ public class DataKeyService {
             created.stored.kekId());
         return new DataKey(created.stored.id(), created.material);
       }
-      stored = repository.findActive(tenant, purpose);
+      stored = repository.findActiveCommitted(tenant, purpose);
       if (!stored.exists()) {
         throw new AesCryptoRuntimeException(
             "No active data key after a concurrent creation: " + purpose);

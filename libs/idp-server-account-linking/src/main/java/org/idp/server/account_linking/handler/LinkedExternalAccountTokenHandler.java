@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.account_linking.AccountLinkingConfigurationResolver;
 import org.idp.server.account_linking.AccountLinkingScope;
+import org.idp.server.account_linking.AccountLinkingTokenCipher;
 import org.idp.server.account_linking.ExternalTokenLifetime;
 import org.idp.server.account_linking.LinkedExternalAccount;
 import org.idp.server.account_linking.exception.LinkedExternalAccountTokenException;
@@ -49,6 +50,7 @@ import org.idp.server.core.openid.token.repository.OAuthTokenQueryRepository;
 import org.idp.server.federation.sso.oidc.OidcSsoConfiguration;
 import org.idp.server.federation.sso.oidc.OidcTokenResult;
 import org.idp.server.platform.crypto.SealedData;
+import org.idp.server.platform.crypto.datakey.SealingContext;
 import org.idp.server.platform.crypto.datakey.TenantDataCipher;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.log.LoggerWrapper;
@@ -261,7 +263,11 @@ public class LinkedExternalAccountTokenHandler {
 
     OidcSsoConfiguration configuration = providerConfiguration(tenant, locked);
     String storedRefreshToken =
-        tokenCipher.open(tenant, locked.encryptionKeyId(), locked.encryptedRefreshToken());
+        tokenCipher.open(
+            tenant,
+            locked.encryptionKeyId(),
+            locked.encryptedRefreshToken(),
+            refreshContext(locked));
     OidcTokenResult tokenResult = tokenGateway.refresh(configuration, storedRefreshToken);
 
     if (tokenResult.isError() || !tokenResult.hasAccessToken()) {
@@ -293,10 +299,15 @@ public class LinkedExternalAccountTokenHandler {
     String keyId = locked.encryptionKeyId();
     TenantDataCipher.Sealer sealer = tokenCipher.sealer(tenant);
     SealedData accessToken =
-        sealer.seal(tokenCipher.open(tenant, keyId, locked.encryptedAccessToken()));
+        sealer.seal(
+            tokenCipher.open(tenant, keyId, locked.encryptedAccessToken(), accessContext(locked)),
+            accessContext(locked));
     SealedData refreshToken =
         locked.hasRefreshToken()
-            ? sealer.seal(tokenCipher.open(tenant, keyId, locked.encryptedRefreshToken()))
+            ? sealer.seal(
+                tokenCipher.open(
+                    tenant, keyId, locked.encryptedRefreshToken(), refreshContext(locked)),
+                refreshContext(locked))
             : null;
 
     LinkedExternalAccount reencrypted =
@@ -359,7 +370,7 @@ public class LinkedExternalAccountTokenHandler {
       LocalDateTime now) {
 
     TenantDataCipher.Sealer sealer = tokenCipher.sealer(tenant);
-    SealedData accessToken = sealer.seal(tokenResult.accessToken());
+    SealedData accessToken = sealer.seal(tokenResult.accessToken(), accessContext(account));
     LocalDateTime accessTokenExpiresAt =
         ExternalTokenLifetime.accessTokenExpiresAt(tokenResult, now);
 
@@ -368,7 +379,7 @@ public class LinkedExternalAccountTokenHandler {
     if (!tokenResult.hasRefreshToken()) {
       return account.withRefreshedTokens(
           accessToken,
-          sealer.seal(storedRefreshToken),
+          sealer.seal(storedRefreshToken, refreshContext(account)),
           sealer.keyId(),
           accessTokenExpiresAt,
           account.refreshTokenExpiresAt(),
@@ -377,7 +388,7 @@ public class LinkedExternalAccountTokenHandler {
 
     return account.withRefreshedTokens(
         accessToken,
-        sealer.seal(tokenResult.refreshToken()),
+        sealer.seal(tokenResult.refreshToken(), refreshContext(account)),
         sealer.keyId(),
         accessTokenExpiresAt,
         ExternalTokenLifetime.refreshTokenExpiresAt(configuration, now),
@@ -394,7 +405,11 @@ public class LinkedExternalAccountTokenHandler {
     Map<String, Object> contents = new HashMap<>();
     contents.put(
         "access_token",
-        tokenCipher.open(tenant, account.encryptionKeyId(), account.encryptedAccessToken()));
+        tokenCipher.open(
+            tenant,
+            account.encryptionKeyId(),
+            account.encryptedAccessToken(),
+            accessContext(account)));
     contents.put("token_type", "Bearer");
     contents.put("issued_token_type", ISSUED_TOKEN_TYPE);
     if (account.accessTokenExpiresAt() != null) {
@@ -415,6 +430,14 @@ public class LinkedExternalAccountTokenHandler {
                 user)
             .withContext(requestedClientId, user);
     return new LinkedExternalAccountTokenResult(result, refreshed, false);
+  }
+
+  private static SealingContext accessContext(LinkedExternalAccount account) {
+    return AccountLinkingTokenCipher.accessToken(account.userIdentifier(), account.provider());
+  }
+
+  private static SealingContext refreshContext(LinkedExternalAccount account) {
+    return AccountLinkingTokenCipher.refreshToken(account.userIdentifier(), account.provider());
   }
 
   private LinkedExternalAccountTokenResult refused(

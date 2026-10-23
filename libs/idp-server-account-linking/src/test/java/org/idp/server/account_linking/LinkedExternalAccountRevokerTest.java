@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.account_linking.gateway.ExternalIdpTokenGateway;
 import org.idp.server.core.openid.federation.FederationConfigurationNotFoundException;
+import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.federation.sso.oidc.OidcSsoConfiguration;
 import org.idp.server.platform.crypto.SealedData;
 import org.idp.server.platform.crypto.datakey.TenantDataCipher;
@@ -33,6 +34,7 @@ class LinkedExternalAccountRevokerTest {
   static final ExternalIdpProvider PROVIDER = new ExternalIdpProvider("example-idp");
 
   static final Tenant TENANT = InMemoryDataKeys.TENANT;
+  static final UserIdentifier USER = new UserIdentifier("11111111-1111-1111-1111-111111111111");
 
   TenantDataCipher aesCipher = AccountLinkingTokenCipher.from(InMemoryDataKeys.service());
 
@@ -92,21 +94,32 @@ class LinkedExternalAccountRevokerTest {
 
   LinkedExternalAccount account(String accessToken, String refreshToken) {
     return new LinkedExternalAccount.Builder()
+        .userIdentifier(USER)
         .provider(PROVIDER)
-        .encryptedAccessToken(sealer().seal(accessToken))
-        .encryptedRefreshToken(refreshToken == null ? null : sealer().seal(refreshToken))
+        .encryptedAccessToken(
+            sealer().seal(accessToken, AccountLinkingTokenCipher.accessToken(USER, PROVIDER)))
+        .encryptedRefreshToken(
+            refreshToken == null
+                ? null
+                : sealer()
+                    .seal(refreshToken, AccountLinkingTokenCipher.refreshToken(USER, PROVIDER)))
         .encryptionKeyId(sealer().keyId())
         .build();
   }
 
   AccountLinkingSession session(AccountLinkingSessionStatus status) {
     return new AccountLinkingSession.Builder()
+        .userIdentifier(USER)
         .provider(PROVIDER)
         .status(status)
         .parkedCredentials(
             new ParkedCredentials.Builder()
-                .encryptedAccessToken(sealer().seal("parked-at"))
-                .encryptedRefreshToken(sealer().seal("parked-rt"))
+                .encryptedAccessToken(
+                    sealer()
+                        .seal("parked-at", AccountLinkingTokenCipher.accessToken(USER, PROVIDER)))
+                .encryptedRefreshToken(
+                    sealer()
+                        .seal("parked-rt", AccountLinkingTokenCipher.refreshToken(USER, PROVIDER)))
                 .encryptionKeyId(sealer().keyId())
                 .build())
         .build();
@@ -195,6 +208,7 @@ class LinkedExternalAccountRevokerTest {
             new FixedResolver(configuration(REVOCATION_ENDPOINT)), gateway, aesCipher);
     LinkedExternalAccount broken =
         new LinkedExternalAccount.Builder()
+            .userIdentifier(USER)
             .provider(PROVIDER)
             .encryptedAccessToken(
                 new SealedData(

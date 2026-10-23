@@ -25,6 +25,9 @@ public interface TenantDataKeySqlExecutor {
 
   Map<String, String> selectActive(Tenant tenant, String purpose);
 
+  /** The active key with a read that sees what other transactions have committed. */
+  Map<String, String> selectActiveCommitted(Tenant tenant, String purpose);
+
   Map<String, String> selectOne(Tenant tenant, String id);
 
   Map<String, String> selectLatestVersion(Tenant tenant, String purpose);

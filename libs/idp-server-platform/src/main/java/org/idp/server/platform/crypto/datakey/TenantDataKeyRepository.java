@@ -23,6 +23,14 @@ public interface TenantDataKeyRepository {
   /** The active key for the purpose, or an empty one when the tenant has none yet. */
   TenantDataKey findActive(Tenant tenant, String purpose);
 
+  /**
+   * The active key as last committed, for reading back after losing a concurrent creation.
+   *
+   * <p>A plain read can miss it: on MySQL the transaction's snapshot was taken before the winner
+   * committed. This read sees the committed row.
+   */
+  TenantDataKey findActiveCommitted(Tenant tenant, String purpose);
+
   /** The key with this id, or an empty one. */
   TenantDataKey find(Tenant tenant, String id);
 
