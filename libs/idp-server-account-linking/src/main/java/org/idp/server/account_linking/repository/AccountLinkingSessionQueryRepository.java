@@ -28,4 +28,9 @@ public interface AccountLinkingSessionQueryRepository {
 
   /** Every linking session the user started, in any status. */
   List<AccountLinkingSession> findList(Tenant tenant, UserIdentifier userIdentifier);
+
+  /**
+   * Up to {@code limit} of the tenant's parked sessions, the only ones holding tokens of their own.
+   */
+  List<AccountLinkingSession> findParkedList(Tenant tenant, int limit);
 }

@@ -11,6 +11,7 @@ import {
 import { authorize, postAuthentication, requestToken } from "../../../api/oauthClient";
 import { deletion, get, post, postWithJson, putWithJson } from "../../../lib/http";
 import { requestAuthorizations } from "../../../oauth/request";
+import { generateECP256JWKS } from "../../../lib/jose";
 import { convertNextAction } from "../../../lib/util";
 import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
@@ -194,6 +195,20 @@ describe("account linking", () => {
       headers,
       body: params.toString(),
     });
+  };
+
+  /** 外部IdP 側でトークンがまだ有効か。外部IdP役テナントにも同じ client が居る。 */
+  const isActiveAtExternalIdp = async (token) => {
+    const params = new URLSearchParams();
+    params.append("token", token);
+    params.append("client_id", clientSecretPostClient.clientId);
+    params.append("client_secret", clientSecretPostClient.clientSecret);
+    const response = await post({
+      url: `${backendUrl}/${federationServerConfig.tenantId}/v1/tokens/introspection`,
+      body: params.toString(),
+    });
+    expect(response.status).toBe(200);
+    return response.data.active;
   };
 
   const listAliases = async (accessToken) => {
@@ -589,20 +604,6 @@ describe("account linking", () => {
       });
       expect(response.status).toBe(201);
       return { username: email, password };
-    };
-
-    /** 外部IdP 側でトークンがまだ有効か。外部IdP役テナントにも同じ client が居る。 */
-    const isActiveAtExternalIdp = async (token) => {
-      const params = new URLSearchParams();
-      params.append("token", token);
-      params.append("client_id", clientSecretPostClient.clientId);
-      params.append("client_secret", clientSecretPostClient.clientSecret);
-      const response = await post({
-        url: `${backendUrl}/${federationServerConfig.tenantId}/v1/tokens/introspection`,
-        body: params.toString(),
-      });
-      expect(response.status).toBe(200);
-      return response.data.active;
     };
 
     /** 後始末は非同期のライフサイクル処理なので、外部IdP で失効するまで少し待つ。 */
@@ -1532,6 +1533,311 @@ describe("account linking", () => {
         body: { tenant_id: "not-a-uuid" },
       });
       expect(malformed.status).toBe(400);
+    });
+  });
+
+  /**
+   * テナントの削除。連携の行は tenant への FK の CASCADE で消えるので、その前に外部IdP で失効させる。
+   * 消してよいテナントを onboarding で作り、そこで連携してから消す。
+   */
+  describe("tenant deletion", () => {
+    const LINKING_PROVIDER = "account-linking-oauth2";
+    // 外部IdP役テナントの clientSecretPost。連携の callback をこの client の redirect_uris に足す。
+    const EXTERNAL_CLIENT_ID = "5b5fa267-9b15-4efd-8762-60f42398ab8b";
+
+    let systemAccessToken;
+    let organizationId;
+    let tenantId;
+    let externalClientUrl;
+    let externalClientBefore;
+
+    const requestSystemAccessToken = async () => {
+      const response = await requestToken({
+        endpoint: adminServerConfig.tokenEndpoint,
+        grantType: "password",
+        username: adminServerConfig.oauth.username,
+        password: adminServerConfig.oauth.password,
+        scope: adminServerConfig.adminClient.scope,
+        clientId: adminServerConfig.adminClient.clientId,
+        clientSecret: adminServerConfig.adminClient.clientSecret,
+      });
+      expect(response.status).toBe(200);
+      return response.data.access_token;
+    };
+
+    /** 連携できる最小のテナントを作る。管理者ユーザーが、そのまま連携するユーザーも兼ねる。 */
+    const createLinkingTenant = async () => {
+      const timestamp = Date.now();
+      organizationId = uuidv4();
+      tenantId = uuidv4();
+      const clientId = uuidv4();
+      const clientSecret = `client-secret-${uuidv4()}`;
+      const user = { username: `linking-${timestamp}@example.com`, password: `LinkingPass_${timestamp}!` };
+      const callbackUri = `${backendUrl}/${tenantId}/v1/linking/callback/${LINKING_PROVIDER}`;
+      const scope = `openid profile email management org-management ${MANAGE_SCOPE} ${READ_TOKEN_SCOPE}`;
+
+      const onboardingResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/onboarding`,
+        headers: { Authorization: `Bearer ${systemAccessToken}` },
+        body: {
+          organization: { id: organizationId, name: `Linking tenant deletion ${timestamp}`, description: "E2E for #1531" },
+          tenant: {
+            id: tenantId,
+            name: `Linking tenant deletion ${timestamp}`,
+            domain: backendUrl,
+            authorization_provider: "idp-server",
+          },
+          authorization_server: {
+            issuer: `${backendUrl}/${tenantId}`,
+            authorization_endpoint: `${backendUrl}/${tenantId}/v1/authorizations`,
+            token_endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+            userinfo_endpoint: `${backendUrl}/${tenantId}/v1/userinfo`,
+            jwks_uri: `${backendUrl}/${tenantId}/v1/jwks`,
+            jwks: await generateECP256JWKS(),
+            scopes_supported: scope.split(" "),
+            response_types_supported: ["code"],
+            response_modes_supported: ["query"],
+            subject_types_supported: ["public"],
+            grant_types_supported: ["authorization_code", "password"],
+            id_token_signing_alg_values_supported: ["ES256"],
+            token_endpoint_auth_methods_supported: ["client_secret_post"],
+            claims_supported: ["sub", "name", "email", "email_verified"],
+          },
+          user: {
+            sub: uuidv4(),
+            provider_id: "idp-server",
+            name: user.username,
+            email: user.username,
+            email_verified: true,
+            raw_password: user.password,
+          },
+          client: {
+            client_id: clientId,
+            client_secret: clientSecret,
+            redirect_uris: [clientSecretPostClient.redirectUri],
+            response_types: ["code"],
+            grant_types: ["authorization_code", "password"],
+            scope,
+            client_name: "Linking tenant deletion client",
+            token_endpoint_auth_method: "client_secret_post",
+            application_type: "web",
+            extension: {
+              linking_return_uris: [RETURN_TO],
+              linking_providers: [LINKING_PROVIDER],
+              linking_token_providers: [LINKING_PROVIDER],
+            },
+          },
+        },
+      });
+      expect(onboardingResponse.status).toBe(201);
+
+      const mgmtTokenResponse = await requestToken({
+        endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+        grantType: "password",
+        username: user.username,
+        password: user.password,
+        scope: "management org-management",
+        clientId,
+        clientSecret,
+      });
+      expect(mgmtTokenResponse.status).toBe(200);
+      const mgmtAccessToken = mgmtTokenResponse.data.access_token;
+      const tenantApi = `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}`;
+      const headers = { Authorization: `Bearer ${mgmtAccessToken}` };
+
+      const authConfigResponse = await postWithJson({
+        url: `${tenantApi}/authentication-configurations`,
+        headers,
+        body: {
+          id: uuidv4(),
+          type: "password",
+          attributes: {},
+          metadata: { type: "password", description: "Password authentication" },
+          interactions: {
+            "password-authentication": {
+              request: {
+                schema: {
+                  type: "object",
+                  properties: { username: { type: "string" }, password: { type: "string" } },
+                  required: ["username", "password"],
+                },
+              },
+              pre_hook: {},
+              execution: { function: "password_verification" },
+              post_hook: {},
+              response: {
+                body_mapping_rules: [
+                  { from: "$.user_id", to: "user_id" },
+                  { from: "$.error", to: "error" },
+                  { from: "$.error_description", to: "error_description" },
+                ],
+              },
+            },
+          },
+        },
+      });
+      expect(authConfigResponse.status).toBe(201);
+
+      const policyResponse = await postWithJson({
+        url: `${tenantApi}/authentication-policies`,
+        headers,
+        body: {
+          flow: "oauth",
+          enabled: true,
+          policies: [
+            {
+              description: "password",
+              priority: 1,
+              conditions: {},
+              available_methods: ["password"],
+              success_conditions: {
+                any_of: [
+                  [{ path: "$.password-authentication.success_count", type: "integer", operation: "gte", value: 1 }],
+                ],
+              },
+            },
+          ],
+        },
+      });
+      expect(policyResponse.status).toBe(201);
+
+      // test-tenant の account-linking-oauth2 と同じ連携先を、このテナントの callback で登録する。
+      const federationResponse = await postWithJson({
+        url: `${tenantApi}/federation-configurations`,
+        headers,
+        body: {
+          id: uuidv4(),
+          type: "oidc",
+          sso_provider: LINKING_PROVIDER,
+          enabled: true,
+          payload: {
+            type: "standard",
+            provider: "standard",
+            issuer: federationServerConfig.issuer,
+            issuer_name: LINKING_PROVIDER,
+            authorization_endpoint: `${federationServerConfig.issuer}/v1/authorizations`,
+            token_endpoint: `${federationServerConfig.issuer}/v1/tokens`,
+            revocation_endpoint: `${federationServerConfig.issuer}/v1/tokens/revocation`,
+            client_id: clientSecretPostClient.clientId,
+            client_secret: clientSecretPostClient.clientSecret,
+            client_authentication_type: "client_secret_post",
+            redirect_uri: callbackUri,
+            scopes_supported: ["account", "offline_access"],
+            response_types_supported: ["code"],
+            code_challenge_methods_supported: ["S256"],
+            grant_types_supported: ["authorization_code", "refresh_token"],
+            duplicate_link_policy: "reject",
+            refresh_token_expires_in: 86400,
+          },
+        },
+      });
+      expect(federationResponse.status).toBe(201);
+
+      return { user, clientId, clientSecret, scope, callbackUri, tenantApi, headers };
+    };
+
+    beforeAll(async () => {
+      systemAccessToken = await requestSystemAccessToken();
+    });
+
+    afterAll(async () => {
+      if (externalClientBefore) {
+        await putWithJson({
+          url: externalClientUrl,
+          headers: { Authorization: `Bearer ${await requestAdminAccessToken()}` },
+          body: externalClientBefore,
+        });
+      }
+      if (organizationId) {
+        await deletion({
+          url: `${backendUrl}/v1/management/orgs/${organizationId}`,
+          headers: { Authorization: `Bearer ${await requestSystemAccessToken()}` },
+        }).catch(() => {});
+      }
+    });
+
+    it("revokes the linked accounts' tokens at the external IdP before the tenant goes", async () => {
+      const tenant = await createLinkingTenant();
+
+      // 外部IdP役の client に、このテナントの callback を一時的に足す。afterAll で元に戻す。
+      externalClientUrl = `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${federationServerConfig.tenantId}/clients/${EXTERNAL_CLIENT_ID}`;
+      const externalHeaders = { Authorization: `Bearer ${await requestAdminAccessToken()}` };
+      const externalClient = await get({ url: externalClientUrl, headers: externalHeaders });
+      expect(externalClient.status).toBe(200);
+      const { created_at, updated_at, ...externalClientBody } = externalClient.data;
+      externalClientBefore = externalClientBody;
+      const addCallback = await putWithJson({
+        url: externalClientUrl,
+        headers: externalHeaders,
+        body: { ...externalClientBody, redirect_uris: [...externalClientBody.redirect_uris, tenant.callbackUri] },
+      });
+      expect(addCallback.status).toBe(200);
+
+      const { status, authorizationResponse } = await requestAuthorizations({
+        endpoint: `${backendUrl}/${tenantId}/v1/authorizations`,
+        authorizeEndpoint: `${backendUrl}/${tenantId}/v1/authorizations/{id}/authorize`,
+        clientId: tenant.clientId,
+        redirectUri: clientSecretPostClient.redirectUri,
+        responseType: "code",
+        state: "tenant-deletion",
+        scope: `openid profile email ${MANAGE_SCOPE} ${READ_TOKEN_SCOPE}`,
+        user: tenant.user,
+        interaction: async (id, user) => {
+          const response = await postAuthentication({
+            endpoint: `${backendUrl}/${tenantId}/v1/authorizations/{id}/password-authentication`,
+            id,
+            body: user,
+          });
+          expect(response.status).toBe(200);
+        },
+      });
+      expect(status).toBe(200);
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: tenant.clientId,
+        clientSecret: tenant.clientSecret,
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+      const bearer = { Authorization: `Bearer ${accessToken}` };
+
+      const linkResponse = await postWithJson({
+        url: `${backendUrl}/${tenantId}/v1/me/linked-external-accounts/link/${LINKING_PROVIDER}`,
+        headers: bearer,
+        body: { redirect_uri: RETURN_TO, scope: "account offline_access" },
+      });
+      expect(linkResponse.status).toBe(201);
+      const startResponse = await get({ url: linkResponse.data.start_url });
+      expect(startResponse.status).toBe(302);
+      const callbackResponse = await get({ url: await consentAtExternalIdp(startResponse.headers.location) });
+      expect(callbackResponse.status).toBe(302);
+      const completeResponse = await postWithJson({
+        url: `${backendUrl}/${tenantId}/v1/me/linked-external-accounts/complete`,
+        headers: bearer,
+        body: { state: linkResponse.data.state },
+      });
+      expect(completeResponse.status).toBe(201);
+
+      const params = new URLSearchParams();
+      params.append("token", accessToken);
+      params.append("client_id", tenant.clientId);
+      params.append("client_secret", tenant.clientSecret);
+      const storedToken = await post({
+        url: `${backendUrl}/${tenantId}/v1/linked-external-accounts/${completeResponse.data.alias}/token`,
+        body: params.toString(),
+      });
+      expect(storedToken.status).toBe(200);
+      const externalAccessToken = storedToken.data.access_token;
+      expect(await isActiveAtExternalIdp(externalAccessToken)).toBe(true);
+
+      const deleteResponse = await deletion({ url: tenant.tenantApi, headers: tenant.headers });
+      expect(deleteResponse.status).toBe(204);
+
+      // ユーザー削除と違い、失効はテナントの削除の中で同期的に終わっている。
+      expect(await isActiveAtExternalIdp(externalAccessToken)).toBe(false);
     });
   });
 });

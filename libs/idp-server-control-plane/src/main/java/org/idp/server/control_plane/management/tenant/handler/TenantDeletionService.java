@@ -18,6 +18,7 @@ package org.idp.server.control_plane.management.tenant.handler;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.account_linking.TenantLinkedAccountCleanup;
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
 import org.idp.server.control_plane.management.tenant.TenantManagementContextBuilder;
 import org.idp.server.control_plane.management.tenant.io.TenantDeleteRequest;
@@ -40,19 +41,26 @@ import org.idp.server.platform.type.RequestAttributes;
  *
  * <ul>
  *   <li>Tenant existence verification
+ *   <li>Revocation of the external tokens the tenant's linked accounts hold
  *   <li>Tenant deletion from repository
  * </ul>
+ *
+ * <p>The tenant's rows go with it through foreign key cascades, which revoke nothing at external
+ * IdPs. Linked accounts are revoked and removed first so their tokens do not outlive the tenant.
  */
 public class TenantDeletionService implements TenantManagementService<TenantDeleteRequest> {
 
   private final TenantQueryRepository tenantQueryRepository;
   private final TenantCommandRepository tenantCommandRepository;
+  private final TenantLinkedAccountCleanup linkedAccountCleanup;
 
   public TenantDeletionService(
       TenantQueryRepository tenantQueryRepository,
-      TenantCommandRepository tenantCommandRepository) {
+      TenantCommandRepository tenantCommandRepository,
+      TenantLinkedAccountCleanup linkedAccountCleanup) {
     this.tenantQueryRepository = tenantQueryRepository;
     this.tenantCommandRepository = tenantCommandRepository;
+    this.linkedAccountCleanup = linkedAccountCleanup;
   }
 
   @Override
@@ -82,6 +90,9 @@ public class TenantDeletionService implements TenantManagementService<TenantDele
       response.put("dry_run", true);
       return new TenantManagementResponse(TenantManagementStatus.OK, response);
     }
+
+    // 3. Revoke external tokens the cascade below would drop unrevoked
+    linkedAccountCleanup.cleanup(before);
 
     // 4. Repository operation
     tenantCommandRepository.delete(tenantIdentifier);

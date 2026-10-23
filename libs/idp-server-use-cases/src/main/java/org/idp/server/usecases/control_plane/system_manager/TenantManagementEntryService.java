@@ -18,6 +18,7 @@ package org.idp.server.usecases.control_plane.system_manager;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.account_linking.TenantLinkedAccountCleanup;
 import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.base.verifier.TenantVerifier;
@@ -49,6 +50,7 @@ public class TenantManagementEntryService implements TenantManagementApi {
       AuthorizationServerConfigurationCommandRepository
           authorizationServerConfigurationCommandRepository,
       UserCommandRepository userCommandRepository,
+      TenantLinkedAccountCleanup linkedAccountCleanup,
       AuditLogPublisher auditLogPublisher) {
     this.auditLogPublisher = auditLogPublisher;
 
@@ -65,7 +67,8 @@ public class TenantManagementEntryService implements TenantManagementApi {
             organizationRepository,
             authorizationServerConfigurationCommandRepository,
             userCommandRepository,
-            tenantManagementVerifier);
+            tenantManagementVerifier,
+            linkedAccountCleanup);
   }
 
   private TenantManagementHandler createHandler(
@@ -75,7 +78,8 @@ public class TenantManagementEntryService implements TenantManagementApi {
       AuthorizationServerConfigurationCommandRepository
           authorizationServerConfigurationCommandRepository,
       UserCommandRepository userCommandRepository,
-      TenantManagementVerifier tenantManagementVerifier) {
+      TenantManagementVerifier tenantManagementVerifier,
+      TenantLinkedAccountCleanup linkedAccountCleanup) {
 
     Map<String, TenantManagementService<?>> services = new HashMap<>();
 
@@ -95,7 +99,9 @@ public class TenantManagementEntryService implements TenantManagementApi {
     services.put("update", new TenantUpdateService(tenantQueryRepository, tenantCommandRepository));
 
     services.put(
-        "delete", new TenantDeletionService(tenantQueryRepository, tenantCommandRepository));
+        "delete",
+        new TenantDeletionService(
+            tenantQueryRepository, tenantCommandRepository, linkedAccountCleanup));
 
     return new TenantManagementHandler(services, this, tenantQueryRepository);
   }

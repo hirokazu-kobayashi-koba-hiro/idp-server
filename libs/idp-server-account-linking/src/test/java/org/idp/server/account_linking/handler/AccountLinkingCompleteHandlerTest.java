@@ -77,6 +77,11 @@ class AccountLinkingCompleteHandlerTest {
     }
 
     @Override
+    public List<AccountLinkingSession> findParkedList(Tenant tenant, int limit) {
+      return rows.values().stream().filter(s -> s.status().isParked()).limit(limit).toList();
+    }
+
+    @Override
     public void register(Tenant tenant, AccountLinkingSession session) {
       rows.put(session.state().value(), session);
     }
