@@ -77,3 +77,5 @@ org.idp.server.core.adapters.datasource.account_linking.AccountLinkingSessionQue
 org.idp.server.core.adapters.datasource.account_linking.LinkedExternalAccountCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.account_linking.LinkedExternalAccountQueryDataSourceProvider
 org.idp.server.core.adapters.datasource.account_linking.operation.AccountLinkingSessionOperationCommandDataSourceProvider
+org.idp.server.core.adapters.datasource.crypto.datakey.TenantDataKeyDataSourceProvider
+org.idp.server.core.adapters.datasource.crypto.datakey.TenantDataKeyOperationDataSourceProvider
