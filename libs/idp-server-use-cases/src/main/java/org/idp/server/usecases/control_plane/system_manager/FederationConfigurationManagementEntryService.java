@@ -18,6 +18,8 @@ package org.idp.server.usecases.control_plane.system_manager;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.account_linking.LinkedAccountProviderUsage;
+import org.idp.server.account_linking.repository.LinkedExternalAccountQueryRepository;
 import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.management.federation.FederationConfigurationManagementApi;
@@ -68,6 +70,7 @@ public class FederationConfigurationManagementEntryService
       TenantQueryRepository tenantQueryRepository,
       FederationConfigurationQueryRepository federationConfigurationQueryRepository,
       FederationConfigurationCommandRepository federationConfigurationCommandRepository,
+      LinkedExternalAccountQueryRepository linkedExternalAccountQueryRepository,
       AuditLogPublisher auditLogPublisher) {
 
     Map<String, FederationConfigManagementService<?>> services = new HashMap<>();
@@ -79,11 +82,15 @@ public class FederationConfigurationManagementEntryService
     services.put(
         "update",
         new FederationConfigUpdateService(
-            federationConfigurationQueryRepository, federationConfigurationCommandRepository));
+            federationConfigurationQueryRepository,
+            federationConfigurationCommandRepository,
+            new LinkedAccountProviderUsage(linkedExternalAccountQueryRepository)));
     services.put(
         "delete",
         new FederationConfigDeletionService(
-            federationConfigurationQueryRepository, federationConfigurationCommandRepository));
+            federationConfigurationQueryRepository,
+            federationConfigurationCommandRepository,
+            new LinkedAccountProviderUsage(linkedExternalAccountQueryRepository)));
 
     this.handler = new FederationConfigManagementHandler(services, this, tenantQueryRepository);
     this.auditLogPublisher = auditLogPublisher;

@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 
 import java.util.Map;
+import org.idp.server.account_linking.LinkedAccountProviderUsage;
 import org.idp.server.control_plane.management.federation.io.FederationConfigRequest;
 import org.idp.server.core.openid.federation.FederationConfiguration;
 import org.idp.server.core.openid.federation.repository.FederationConfigurationCommandRepository;
@@ -38,7 +39,8 @@ class FederationConfigUpdateServiceTest {
   private final FederationConfigUpdateService service =
       new FederationConfigUpdateService(
           mock(FederationConfigurationQueryRepository.class),
-          mock(FederationConfigurationCommandRepository.class));
+          mock(FederationConfigurationCommandRepository.class),
+          mock(LinkedAccountProviderUsage.class));
 
   private final FederationConfiguration before =
       new FederationConfiguration("id-1", "oidc", "google", Map.of("provider", "standard"));

@@ -18,6 +18,7 @@ package org.idp.server.control_plane.management.federation.handler;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.account_linking.LinkedAccountProviderUsage;
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
 import org.idp.server.control_plane.management.federation.FederationConfigManagementContextBuilder;
 import org.idp.server.control_plane.management.federation.io.FederationConfigManagementResponse;
@@ -46,12 +47,15 @@ public class FederationConfigUpdateService
 
   private final FederationConfigurationQueryRepository queryRepository;
   private final FederationConfigurationCommandRepository commandRepository;
+  private final LinkedAccountProviderUsage linkedAccountProviderUsage;
 
   public FederationConfigUpdateService(
       FederationConfigurationQueryRepository queryRepository,
-      FederationConfigurationCommandRepository commandRepository) {
+      FederationConfigurationCommandRepository commandRepository,
+      LinkedAccountProviderUsage linkedAccountProviderUsage) {
     this.queryRepository = queryRepository;
     this.commandRepository = commandRepository;
+    this.linkedAccountProviderUsage = linkedAccountProviderUsage;
   }
 
   @Override
@@ -79,6 +83,15 @@ public class FederationConfigUpdateService
     // 3. Populate builder with before/after
     builder.withBefore(before);
     builder.withAfter(after);
+
+    // Links find this configuration by its type and sso_provider. Changed while links remain, they
+    // could no longer refresh or revoke their stored tokens.
+    if (LinkedAccountProviderUsage.changesLinkingKey(before, after)) {
+      long links = linkedAccountProviderUsage.linksOf(tenant, before);
+      if (links > 0) {
+        return LinkedAccountConflict.response(links);
+      }
+    }
 
     // 4. Build response with diff
     JsonNodeWrapper beforeJson = JsonNodeWrapper.fromMap(before.toMap());

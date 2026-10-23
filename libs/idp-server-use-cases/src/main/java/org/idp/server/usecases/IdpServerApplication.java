@@ -1272,6 +1272,7 @@ public class IdpServerApplication {
                 tenantQueryRepository,
                 federationConfigurationQueryRepository,
                 federationConfigurationCommandRepository,
+                linkedExternalAccountQueryRepository,
                 auditLogPublisher),
             FederationConfigurationManagementApi.class,
             databaseTypeProvider);
@@ -1505,6 +1506,7 @@ public class IdpServerApplication {
                 organizationRepository,
                 federationConfigurationQueryRepository,
                 federationConfigurationCommandRepository,
+                linkedExternalAccountQueryRepository,
                 auditLogPublisher),
             OrgFederationConfigManagementApi.class,
             databaseTypeProvider);

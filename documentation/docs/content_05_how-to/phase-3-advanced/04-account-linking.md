@@ -97,6 +97,8 @@ curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/t
 
 ログイン用の設定例にある `store_credentials` と `access_token_expires_in` は、連携では読みません。アクセストークンの期限は外部IdPのトークン応答の `expires_in` で決まります。
 
+連携が 1 件でも残っている間は、この設定の削除と、`type` / `sso_provider` の変更は `409` になります（`dry_run=true` でも同じ）。応答の `linked_external_accounts` が残っている連携の数です。先に [管理APIでの確認・解除](#管理apiでの確認解除) で連携を解除してください。
+
 **実例**:
 - `config/examples/standard-oidc-web-app/federation-account-linking.json` - サンプルアプリ用
 - `config/examples/e2e/test-tenant/federation/oidc/account-linking.json` - OIDC の連携先
