@@ -105,6 +105,8 @@ scope は「連携を見る」（`read`）と「連携を管理する」（`mana
 
 ユーザーが削除されたときも、同じ手順で全ての連携を失効・削除します。あわせて、そのユーザーが始めた連携セッションも削除し、コールバックまで進んで確定されていないセッション（`parked`）が預かっているトークンは失効させます。本人がいなくなると、Bearer を要する `complete` は二度と通らないためです。`linked_external_accounts` は `user_id` に外部キーを張っていないため、ユーザー削除のライフサイクル処理（`LinkedExternalAccountDeletionExecutor`）が後始末を担います。
 
+テナントを削除するときも、削除の前にテナントの全ての連携と `parked` の連携セッションを失効・削除します（`TenantLinkedAccountCleanup`）。行はテナントへの外部キーの `ON DELETE CASCADE` でも消えますが、それでは失効されないためです。失効は連携 1 件ごとに外部IdPを呼ぶので、削除にかかる時間は連携の数に比例します。
+
 ---
 
 ## 確定を分ける理由
@@ -211,7 +213,7 @@ iframe に埋め込むと third-party 文脈になり、Safari の ITP と Chrom
 
 `refresh_token_expires_in` はリフレッシュトークンの有効期間です。トークン応答はリフレッシュトークンの期限を返さないため、この値で期限を決めます。未設定なら期限は「不明」として扱い、アクセストークンが切れたらリフレッシュを試して、外部IdPの応答に従います。
 
-`revocation_endpoint` は解除とユーザー削除のときに保管トークンを失効させる先です。省略すると、外部IdP側のトークンは失効させずに連携だけを削除します。クライアント認証はトークンエンドポイントと同じ方式で行います。`client_authentication_type` が `client_secret_basic` なら Basic 認証、それ以外はリクエストボディの `client_secret` です。`private_key_jwt` などには対応していません。
+`revocation_endpoint` は解除、ユーザーの削除、テナントの削除のときに保管トークンを失効させる先です。省略すると、外部IdP側のトークンは失効させずに連携だけを削除します。クライアント認証はトークンエンドポイントと同じ方式で行います。`client_authentication_type` が `client_secret_basic` なら Basic 認証、それ以外はリクエストボディの `client_secret` です。`private_key_jwt` などには対応していません。
 
 `duplicate_link_policy` は、同じ外部アカウントが既にテナント内の別ユーザーに紐付いている場合の挙動です。
 
@@ -404,7 +406,6 @@ token={ユーザーのアクセストークン}&client_id=...&client_secret=...
 | 項目 | 状態 |
 |---|---|
 | 期限切れの連携セッションの外部IdPでの失効 | 行わない。削除だけです（下記） |
-| テナント削除時の失効 | 未実装。連携の行はテナントの削除に連動して消えますが、外部IdPのトークンは失効しません |
 | step-up 認証 | 未実装。`/linking/start` はブラウザセッションが無ければ、戻り先へ `error=login_required` を返すだけです |
 | ネイティブアプリ | 上記のため未対応。アプリ内ブラウザに idp-server のセッションが無いと `login_required` で戻ります |
 | 外部IdPの `response_mode=form_post` | 未対応。コールバックは GET のみです |

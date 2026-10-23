@@ -24,6 +24,7 @@ import org.idp.server.account_linking.AccountLinkingConfigurationResolver;
 import org.idp.server.account_linking.AccountLinkingCookieDelegate;
 import org.idp.server.account_linking.AccountLinkingTokenCipher;
 import org.idp.server.account_linking.LinkedExternalAccountRevoker;
+import org.idp.server.account_linking.TenantLinkedAccountCleanup;
 import org.idp.server.account_linking.gateway.ExternalIdpIdTokenGateway;
 import org.idp.server.account_linking.gateway.ExternalIdpTokenGateway;
 import org.idp.server.account_linking.gateway.ExternalIdpUserinfoGateway;
@@ -905,6 +906,13 @@ public class IdpServerApplication {
             accountLinkingConfigurationResolver,
             new ExternalIdpTokenGateway(httpRequestExecutor),
             accountLinkingTokenCipher);
+    TenantLinkedAccountCleanup tenantLinkedAccountCleanup =
+        new TenantLinkedAccountCleanup(
+            linkedExternalAccountQueryRepository,
+            linkedExternalAccountCommandRepository,
+            accountLinkingSessionQueryRepository,
+            accountLinkingSessionCommandRepository,
+            linkedExternalAccountRevoker);
     this.accountLinkingApi =
         TenantAwareEntryServiceProxy.createProxy(
             new AccountLinkingEntryService(
@@ -1145,6 +1153,7 @@ public class IdpServerApplication {
                 organizationRepository,
                 authorizationServerConfigurationCommandRepository,
                 userCommandRepository,
+                tenantLinkedAccountCleanup,
                 auditLogPublisher),
             TenantManagementApi.class,
             databaseTypeProvider);
@@ -1410,6 +1419,7 @@ public class IdpServerApplication {
                 organizationRepository,
                 authorizationServerConfigurationCommandRepository,
                 userCommandRepository,
+                tenantLinkedAccountCleanup,
                 auditLogPublisher),
             OrgTenantManagementApi.class,
             databaseTypeProvider);

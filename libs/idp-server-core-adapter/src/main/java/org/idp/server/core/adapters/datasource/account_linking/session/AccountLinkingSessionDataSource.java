@@ -77,6 +77,15 @@ public class AccountLinkingSessionDataSource
   }
 
   @Override
+  public List<AccountLinkingSession> findParkedList(Tenant tenant, int limit) {
+    List<Map<String, String>> results = executor.selectParkedList(tenant, limit);
+    if (results == null || results.isEmpty()) {
+      return List.of();
+    }
+    return results.stream().map(ModelConverter::convertSession).toList();
+  }
+
+  @Override
   public AccountLinkingSession find(Tenant tenant, AccountLinkingState state) {
     // The state arrives on URLs anyone can open, and may be missing. Without one there is no
     // session to find, and querying with a null would fail rather than come back empty.

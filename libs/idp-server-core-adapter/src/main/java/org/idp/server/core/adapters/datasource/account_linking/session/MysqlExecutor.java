@@ -201,4 +201,29 @@ public class MysqlExecutor implements AccountLinkingSessionSqlExecutor {
     return sqlExecutor.selectList(
         sqlTemplate, List.of(tenant.identifierValue(), userIdentifier.value()));
   }
+
+  @Override
+  public List<Map<String, String>> selectParkedList(Tenant tenant, int limit) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        """
+        SELECT state, tenant_id, user_id, client_id, provider, account_alias,
+               redirect_uri, requested_scope, code_verifier, nonce, acr, amr,
+               authenticated_at, status, browser_binding_hash, federated_user_id,
+               federated_username, granted_scope, encrypted_access_token,
+               encrypted_refresh_token, encryption_key_id, access_token_expires_at,
+               refresh_token_expires_at, expires_at
+          FROM account_linking_sessions
+         WHERE tenant_id = ? AND status = ?
+         LIMIT ?;
+        """;
+
+    return sqlExecutor.selectList(
+        sqlTemplate,
+        List.of(
+            tenant.identifierValue(),
+            AccountLinkingSessionStatus.PARKED.name().toLowerCase(),
+            limit));
+  }
 }

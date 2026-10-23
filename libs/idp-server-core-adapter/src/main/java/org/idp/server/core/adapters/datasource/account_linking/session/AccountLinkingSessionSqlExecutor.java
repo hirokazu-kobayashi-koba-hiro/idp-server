@@ -50,4 +50,6 @@ public interface AccountLinkingSessionSqlExecutor {
   void deleteAll(Tenant tenant, UserIdentifier userIdentifier);
 
   List<Map<String, String>> selectListByUser(Tenant tenant, UserIdentifier userIdentifier);
+
+  List<Map<String, String>> selectParkedList(Tenant tenant, int limit);
 }
