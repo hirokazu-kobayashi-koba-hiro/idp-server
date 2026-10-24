@@ -22,6 +22,7 @@ import java.util.Map;
 import org.idp.server.account_linking.AccountLinkingConfigurationResolver;
 import org.idp.server.account_linking.AccountLinkingScope;
 import org.idp.server.account_linking.AccountLinkingTokenCipher;
+import org.idp.server.account_linking.ExternalIdpProvider;
 import org.idp.server.account_linking.ExternalTokenLifetime;
 import org.idp.server.account_linking.LinkedExternalAccount;
 import org.idp.server.account_linking.exception.LinkedExternalAccountTokenException;
@@ -123,6 +124,7 @@ public class LinkedExternalAccountTokenHandler {
     Tenant tenant = request.tenant();
     RequestedClientId requestedClientId = request.clientId();
     User user = new User();
+    ExternalIdpProvider provider = null;
 
     try {
       ClientConfiguration client = authenticateClient(request, requestedClientId);
@@ -134,6 +136,7 @@ public class LinkedExternalAccountTokenHandler {
       if (!account.exists()) {
         throw LinkedExternalAccountTokenException.notFound("Linked external account not found.");
       }
+      provider = account.provider();
       verifyProviderAllowed(client, account);
 
       LocalDateTime now = SystemDateTime.now();
@@ -149,7 +152,7 @@ public class LinkedExternalAccountTokenHandler {
       return retrieved(tenant, refreshed, true, requestedClientId, user);
 
     } catch (LinkedExternalAccountTokenException exception) {
-      return refused(exception, requestedClientId, user);
+      return refused(exception, requestedClientId, user, provider);
     }
   }
 
@@ -257,6 +260,10 @@ public class LinkedExternalAccountTokenHandler {
     }
 
     if (!locked.hasRefreshToken() || locked.isRefreshTokenExpired(now)) {
+      log.warn(
+          "Stored external token expired and cannot be refreshed. provider={}, alias={}",
+          locked.provider().value(),
+          locked.accountAlias().value());
       throw LinkedExternalAccountTokenException.relinkRequired(
           "The stored token has expired and cannot be refreshed. Link the account again.");
     }
@@ -429,7 +436,7 @@ public class LinkedExternalAccountTokenHandler {
                 DefaultSecurityEventType.external_account_token_retrieved,
                 user)
             .withContext(requestedClientId, user);
-    return new LinkedExternalAccountTokenResult(result, refreshed, false);
+    return new LinkedExternalAccountTokenResult(result, refreshed, false, account.provider(), null);
   }
 
   private static SealingContext accessContext(LinkedExternalAccount account) {
@@ -443,7 +450,8 @@ public class LinkedExternalAccountTokenHandler {
   private LinkedExternalAccountTokenResult refused(
       LinkedExternalAccountTokenException exception,
       RequestedClientId requestedClientId,
-      User user) {
+      User user,
+      ExternalIdpProvider provider) {
     log.warn("Stored external token retrieval refused: {}", exception.getMessage());
 
     AccountLinkingResult result =
@@ -453,6 +461,7 @@ public class LinkedExternalAccountTokenHandler {
                 exception.getMessage(),
                 DefaultSecurityEventType.external_account_token_retrieval_failed)
             .withContext(requestedClientId, user);
-    return new LinkedExternalAccountTokenResult(result, false, exception.isRelinkRequired());
+    return new LinkedExternalAccountTokenResult(
+        result, false, exception.isRelinkRequired(), provider, exception.error());
   }
 }
