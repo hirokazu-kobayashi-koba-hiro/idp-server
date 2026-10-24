@@ -16,6 +16,8 @@
 package org.idp.server.platform.crypto.datakey;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.platform.crypto.EncryptedData;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
@@ -89,6 +91,19 @@ public class TenantDataKey {
 
   public boolean exists() {
     return id != null && !id.isEmpty();
+  }
+
+  /** What an administrator may see of the key. The wrapped key itself is left out. */
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("id", id);
+    map.put("tenant_id", tenantIdentifier.value());
+    map.put("purpose", purpose);
+    map.put("version", version);
+    map.put("status", status.value());
+    map.put("kek_id", kekId);
+    map.put("created_at", createdAt == null ? null : createdAt.toString());
+    return map;
   }
 
   public TenantDataKey rewrapped(EncryptedData wrappedKey, String kekId) {

@@ -224,4 +224,52 @@ public class OrganizationTenantManagementV1Api implements ParameterTransformable
     return new ResponseEntity<>(
         response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
+
+  @GetMapping("/{tenantId}/data-keys")
+  public ResponseEntity<?> getDataKeys(
+      @AuthenticationPrincipal OrganizationOperatorPrincipal organizationOperatorPrincipal,
+      @PathVariable String organizationId,
+      @PathVariable String tenantId,
+      @RequestParam Map<String, String> queries,
+      HttpServletRequest httpServletRequest) {
+
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    TenantManagementResponse response =
+        orgTenantManagementApi.findDataKeys(
+            organizationOperatorPrincipal.authenticationContext(),
+            new TenantIdentifier(tenantId),
+            queries,
+            requestAttributes);
+
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.add("content-type", "application/json");
+    return new ResponseEntity<>(
+        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+  }
+
+  @PostMapping("/{tenantId}/data-keys/rotate")
+  public ResponseEntity<?> rotateDataKey(
+      @AuthenticationPrincipal OrganizationOperatorPrincipal organizationOperatorPrincipal,
+      @PathVariable String organizationId,
+      @PathVariable String tenantId,
+      @RequestBody(required = false) Map<String, Object> body,
+      @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
+      HttpServletRequest httpServletRequest) {
+
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    TenantManagementResponse response =
+        orgTenantManagementApi.rotateDataKey(
+            organizationOperatorPrincipal.authenticationContext(),
+            new TenantIdentifier(tenantId),
+            body,
+            requestAttributes,
+            dryRun);
+
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.add("content-type", "application/json");
+    return new ResponseEntity<>(
+        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+  }
 }

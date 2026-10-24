@@ -104,6 +104,15 @@ public class LinkedExternalAccountDataSource
   }
 
   @Override
+  public long countByDataKey(Tenant tenant, String dataKeyId) {
+    Map<String, String> result = executor.selectCountByDataKey(tenant, dataKeyId);
+    if (result == null || result.get("count") == null) {
+      return 0;
+    }
+    return Long.parseLong(result.get("count"));
+  }
+
+  @Override
   public long findTotalCount(Tenant tenant, LinkedExternalAccountQueries queries) {
     Map<String, String> result = executor.selectCount(tenant, queries);
     if (result == null || result.get("count") == null) {

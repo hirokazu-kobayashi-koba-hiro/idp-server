@@ -307,7 +307,7 @@ curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/t
 
 ### 暗号化の鍵
 
-保管トークンは、テナントごとのデータ鍵を鍵暗号化鍵（`ENCRYPTION_KEYS`、無ければ `ENCRYPTION_KEY`）で包む 2 段の鍵で暗号化します。追加の設定なしで動きます。鍵の交換と確認は [データ鍵と鍵暗号化鍵のローテーション](../../content_08_ops/commercial-deployment/07-data-key-rotation.md) を参照してください。
+保管トークンは、テナントごとのデータ鍵を鍵暗号化鍵（`ENCRYPTION_KEYS`、無ければ `ENCRYPTION_KEY`）で包む 2 段の鍵で暗号化します。追加の設定なしで動きます。テナントのデータ鍵は、管理API の `GET .../tenants/{tenant-id}/data-keys`（`idp:data-key:read`）で一覧でき、`POST .../data-keys/rotate`（`idp:data-key:rotate`）で新しい世代を作れます。鍵の交換と確認は [データ鍵と鍵暗号化鍵のローテーション](../../content_08_ops/commercial-deployment/07-data-key-rotation.md) を参照してください。
 
 ### ユーザー・テナントの削除と連携先の無効化
 

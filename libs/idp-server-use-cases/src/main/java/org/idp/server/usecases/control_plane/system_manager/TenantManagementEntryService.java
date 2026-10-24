@@ -19,6 +19,7 @@ package org.idp.server.usecases.control_plane.system_manager;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.account_linking.TenantLinkedAccountCleanup;
+import org.idp.server.account_linking.repository.LinkedExternalAccountQueryRepository;
 import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.base.verifier.TenantVerifier;
@@ -30,6 +31,7 @@ import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationCommandRepository;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogPublisher;
+import org.idp.server.platform.crypto.datakey.DataKeyService;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.platform.multi_tenancy.tenant.TenantCommandRepository;
@@ -51,6 +53,8 @@ public class TenantManagementEntryService implements TenantManagementApi {
           authorizationServerConfigurationCommandRepository,
       UserCommandRepository userCommandRepository,
       TenantLinkedAccountCleanup linkedAccountCleanup,
+      DataKeyService dataKeyService,
+      LinkedExternalAccountQueryRepository linkedExternalAccountQueryRepository,
       AuditLogPublisher auditLogPublisher) {
     this.auditLogPublisher = auditLogPublisher;
 
@@ -68,7 +72,9 @@ public class TenantManagementEntryService implements TenantManagementApi {
             authorizationServerConfigurationCommandRepository,
             userCommandRepository,
             tenantManagementVerifier,
-            linkedAccountCleanup);
+            linkedAccountCleanup,
+            dataKeyService,
+            linkedExternalAccountQueryRepository);
   }
 
   private TenantManagementHandler createHandler(
@@ -79,7 +85,9 @@ public class TenantManagementEntryService implements TenantManagementApi {
           authorizationServerConfigurationCommandRepository,
       UserCommandRepository userCommandRepository,
       TenantManagementVerifier tenantManagementVerifier,
-      TenantLinkedAccountCleanup linkedAccountCleanup) {
+      TenantLinkedAccountCleanup linkedAccountCleanup,
+      DataKeyService dataKeyService,
+      LinkedExternalAccountQueryRepository linkedExternalAccountQueryRepository) {
 
     Map<String, TenantManagementService<?>> services = new HashMap<>();
 
@@ -102,6 +110,12 @@ public class TenantManagementEntryService implements TenantManagementApi {
         "delete",
         new TenantDeletionService(
             tenantQueryRepository, tenantCommandRepository, linkedAccountCleanup));
+    services.put(
+        "findDataKeys",
+        new TenantDataKeyFindListService(
+            tenantQueryRepository, dataKeyService, linkedExternalAccountQueryRepository));
+    services.put(
+        "rotateDataKey", new TenantDataKeyRotateService(tenantQueryRepository, dataKeyService));
 
     return new TenantManagementHandler(services, this, tenantQueryRepository);
   }
@@ -196,6 +210,50 @@ public class TenantManagementEntryService implements TenantManagementApi {
             "delete",
             authenticationContext,
             new TenantDeleteRequest(tenantIdentifier),
+            requestAttributes,
+            dryRun);
+
+    AuditLog auditLog = AuditLogCreator.create(result.context());
+    auditLogPublisher.publish(auditLog);
+
+    return result.toResponse(dryRun);
+  }
+
+  @Override
+  @Transaction(readOnly = true)
+  public TenantManagementResponse findDataKeys(
+      AdminAuthenticationContext authenticationContext,
+      TenantIdentifier tenantIdentifier,
+      Map<String, String> queries,
+      RequestAttributes requestAttributes) {
+
+    TenantManagementResult result =
+        handler.handle(
+            "findDataKeys",
+            authenticationContext,
+            new TenantDataKeyFindListRequest(tenantIdentifier, queries),
+            requestAttributes,
+            false);
+
+    AuditLog auditLog = AuditLogCreator.create(result.context());
+    auditLogPublisher.publish(auditLog);
+
+    return result.toResponse(false);
+  }
+
+  @Override
+  public TenantManagementResponse rotateDataKey(
+      AdminAuthenticationContext authenticationContext,
+      TenantIdentifier tenantIdentifier,
+      Map<String, Object> body,
+      RequestAttributes requestAttributes,
+      boolean dryRun) {
+
+    TenantManagementResult result =
+        handler.handle(
+            "rotateDataKey",
+            authenticationContext,
+            new TenantDataKeyRotateRequest(tenantIdentifier, body),
             requestAttributes,
             dryRun);
 

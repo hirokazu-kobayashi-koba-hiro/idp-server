@@ -159,6 +159,8 @@ public enum DefaultAdminPermission {
       "idp:linked-account:read", "Admin Read a user's linked external accounts (never the tokens)"),
   LINKED_ACCOUNT_DELETE(
       "idp:linked-account:delete", "Admin Remove a user's linked external account"),
+  DATA_KEY_READ("idp:data-key:read", "Admin Read a tenant's data keys (never the key material)"),
+  DATA_KEY_ROTATE("idp:data-key:rotate", "Admin Start a new generation of a tenant's data key"),
 
   GRANT_READ("idp:grant:read", "Admin Read authorization grant information"),
   GRANT_DELETE("idp:grant:delete", "Admin Delete/revoke authorization grant"),

@@ -78,6 +78,21 @@ class TenantDataCipherTest {
     }
 
     @Override
+    public List<TenantDataKey> findList(Tenant tenant) {
+      return List.copyOf(rows.values());
+    }
+
+    @Override
+    public List<TenantDataKey> findList(Tenant tenant, TenantDataKeyQueries queries) {
+      return List.copyOf(rows.values());
+    }
+
+    @Override
+    public long findTotalCount(Tenant tenant, TenantDataKeyQueries queries) {
+      return rows.size();
+    }
+
+    @Override
     public TenantDataKey find(Tenant tenant, String id) {
       TenantDataKey key = rows.get(id);
       if (key == null || !key.tenantIdentifier().value().equals(tenant.identifierValue())) {

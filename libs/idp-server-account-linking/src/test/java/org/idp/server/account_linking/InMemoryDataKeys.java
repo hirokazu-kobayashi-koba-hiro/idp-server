@@ -26,6 +26,7 @@ import org.idp.server.platform.crypto.datakey.DataKeyService;
 import org.idp.server.platform.crypto.datakey.DataKeyStatus;
 import org.idp.server.platform.crypto.datakey.TenantDataKey;
 import org.idp.server.platform.crypto.datakey.TenantDataKeyOperationRepository;
+import org.idp.server.platform.crypto.datakey.TenantDataKeyQueries;
 import org.idp.server.platform.crypto.datakey.TenantDataKeyRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
@@ -67,6 +68,21 @@ class InMemoryDataKeys implements TenantDataKeyRepository, TenantDataKeyOperatio
   @Override
   public TenantDataKey findActiveCommitted(Tenant tenant, String purpose) {
     return findActive(tenant, purpose);
+  }
+
+  @Override
+  public List<TenantDataKey> findList(Tenant tenant, TenantDataKeyQueries queries) {
+    return List.copyOf(rows.values());
+  }
+
+  @Override
+  public long findTotalCount(Tenant tenant, TenantDataKeyQueries queries) {
+    return rows.size();
+  }
+
+  @Override
+  public List<TenantDataKey> findList(Tenant tenant) {
+    return List.copyOf(rows.values());
   }
 
   @Override

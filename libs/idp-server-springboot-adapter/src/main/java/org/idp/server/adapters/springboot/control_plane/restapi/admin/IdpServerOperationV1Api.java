@@ -63,6 +63,15 @@ public class IdpServerOperationV1Api implements ParameterTransformable {
             AdminTenantContext.getTenantIdentifier(), requestAttributes));
   }
 
+  @GetMapping("/data-keys/list")
+  public ResponseEntity<?> getDataKeyList(
+      @RequestParam Map<String, String> queries, HttpServletRequest httpServletRequest) {
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+    return toResponse(
+        idpServerOperationApi.dataKeyList(
+            AdminTenantContext.getTenantIdentifier(), queries, requestAttributes));
+  }
+
   @PostMapping("/data-keys/rewrap")
   public ResponseEntity<?> rewrapDataKeys(
       @RequestBody(required = false) Map<String, Object> body,

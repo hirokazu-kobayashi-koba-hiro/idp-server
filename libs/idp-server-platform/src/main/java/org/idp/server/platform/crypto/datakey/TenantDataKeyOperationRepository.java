@@ -37,6 +37,12 @@ public interface TenantDataKeyOperationRepository {
   /** Stores a new wrapping of the same data key. */
   void updateWrapping(Tenant tenant, TenantDataKey key);
 
+  /** Data keys of any tenant matching the filters, by tenant, purpose and newest first. */
+  List<TenantDataKey> findList(Tenant tenant, TenantDataKeyQueries queries);
+
+  /** How many data keys match the filters, regardless of limit and offset. */
+  long findTotalCount(Tenant tenant, TenantDataKeyQueries queries);
+
   /** How many data keys, destroyed ones aside, each key encryption key wraps. */
   Map<String, Long> countByKekId(Tenant tenant);
 }

@@ -15,6 +15,7 @@
  */
 package org.idp.server.platform.crypto.datakey;
 
+import java.util.List;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /** A tenant's data keys. */
@@ -30,6 +31,9 @@ public interface TenantDataKeyRepository {
    * committed. This read sees the committed row.
    */
   TenantDataKey findActiveCommitted(Tenant tenant, String purpose);
+
+  /** Every generation of the tenant's keys, by purpose and newest first. */
+  List<TenantDataKey> findList(Tenant tenant);
 
   /** The key with this id, or an empty one. */
   TenantDataKey find(Tenant tenant, String id);

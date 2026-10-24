@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.crypto.datakey.DataKeyStatus;
 import org.idp.server.platform.crypto.datakey.TenantDataKey;
+import org.idp.server.platform.crypto.datakey.TenantDataKeyQueries;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -48,6 +49,52 @@ public class PostgresqlExecutor implements TenantDataKeySqlExecutor {
   public Map<String, String> selectOne(Tenant tenant, String id) {
     String sql = SELECT_COLUMNS + " WHERE tenant_id = ?::uuid AND id = ?::uuid;";
     return new SqlExecutor().selectOne(sql, List.of(tenant.identifierUUID(), id));
+  }
+
+  @Override
+  public List<Map<String, String>> selectList(Tenant tenant) {
+    String sql = SELECT_COLUMNS + " WHERE tenant_id = ?::uuid ORDER BY purpose, version DESC;";
+    return new SqlExecutor().selectList(sql, List.of(tenant.identifierUUID()));
+  }
+
+  @Override
+  public List<Map<String, String>> selectList(TenantDataKeyQueries queries) {
+    List<Object> params = new ArrayList<>();
+    String sql =
+        SELECT_COLUMNS
+            + where(queries, params)
+            + " ORDER BY tenant_id, purpose, version DESC LIMIT ? OFFSET ?;";
+    params.add(queries.limit());
+    params.add(queries.offset());
+    return new SqlExecutor().selectList(sql, params);
+  }
+
+  @Override
+  public Map<String, String> selectCount(TenantDataKeyQueries queries) {
+    List<Object> params = new ArrayList<>();
+    String sql = "SELECT COUNT(*) AS count FROM tenant_data_keys" + where(queries, params) + ";";
+    return new SqlExecutor().selectOne(sql, params);
+  }
+
+  static String where(TenantDataKeyQueries queries, List<Object> params) {
+    List<String> conditions = new ArrayList<>();
+    if (queries.hasTenantId()) {
+      conditions.add("tenant_id = ?::uuid");
+      params.add(queries.tenantId());
+    }
+    if (queries.hasKekId()) {
+      conditions.add("kek_id = ?");
+      params.add(queries.kekId());
+    }
+    if (queries.hasStatus()) {
+      conditions.add("status = ?");
+      params.add(queries.status());
+    }
+    if (queries.hasPurpose()) {
+      conditions.add("purpose = ?");
+      params.add(queries.purpose());
+    }
+    return conditions.isEmpty() ? "" : " WHERE " + String.join(" AND ", conditions);
   }
 
   @Override

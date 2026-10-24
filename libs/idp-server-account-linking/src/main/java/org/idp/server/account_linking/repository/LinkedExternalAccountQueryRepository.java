@@ -37,6 +37,9 @@ public interface LinkedExternalAccountQueryRepository {
   /** How many of the tenant's links match the filters, regardless of limit and offset. */
   long findTotalCount(Tenant tenant, LinkedExternalAccountQueries queries);
 
+  /** How many of the tenant's links have their tokens encrypted under this data key. */
+  long countByDataKey(Tenant tenant, String dataKeyId);
+
   /** One link by its identifier, whoever's it is. */
   LinkedExternalAccount find(Tenant tenant, LinkedExternalAccountIdentifier identifier);
 
