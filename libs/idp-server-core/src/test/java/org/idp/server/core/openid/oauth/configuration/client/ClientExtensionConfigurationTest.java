@@ -36,6 +36,29 @@ class ClientExtensionConfigurationTest {
   }
 
   @Nested
+  @DisplayName("linking_max_auth_age")
+  class LinkingMaxAuthAge {
+
+    @Test
+    @DisplayName("未設定なら 300 秒、toMap に含まれない")
+    void defaultsToFiveMinutes() {
+      ClientExtensionConfiguration config = fromSnakeCaseJson("{}");
+      assertEquals(300, config.linkingMaxAuthAge());
+      assertFalse(config.toMap().containsKey("linking_max_auth_age"));
+    }
+
+    @Test
+    @DisplayName("0 は毎回ログインし直し。負の値は既定に戻す")
+    void zeroMeansEveryTime() {
+      assertEquals(0, fromSnakeCaseJson("{\"linking_max_auth_age\": 0}").linkingMaxAuthAge());
+      assertEquals(300, fromSnakeCaseJson("{\"linking_max_auth_age\": -1}").linkingMaxAuthAge());
+      assertEquals(
+          0L,
+          fromSnakeCaseJson("{\"linking_max_auth_age\": 0}").toMap().get("linking_max_auth_age"));
+    }
+  }
+
+  @Nested
   @DisplayName("rotateRefreshToken の null vs false の区別")
   class RotateRefreshTokenNullability {
 

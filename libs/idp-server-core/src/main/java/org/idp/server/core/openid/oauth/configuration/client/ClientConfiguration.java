@@ -507,6 +507,11 @@ public class ClientConfiguration implements JsonReadable, Configurable {
     return extension.linkingTokenProviders();
   }
 
+  /** See {@link ClientExtensionConfiguration#linkingMaxAuthAge()}. */
+  public long linkingMaxAuthAge() {
+    return extension.linkingMaxAuthAge();
+  }
+
   public boolean hasAccessTokenDuration() {
     return extension.hasAccessTokenDuration();
   }

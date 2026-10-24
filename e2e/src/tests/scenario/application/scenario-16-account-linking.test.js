@@ -8,7 +8,7 @@ import {
   publicClient,
   serverConfig
 } from "../../testConfig";
-import { authorize, postAuthentication, requestToken } from "../../../api/oauthClient";
+import { authorize, deny, postAuthentication, requestToken } from "../../../api/oauthClient";
 import { deletion, get, post, postWithJson, putWithJson } from "../../../lib/http";
 import { requestAuthorizations } from "../../../oauth/request";
 import { generateECP256JWKS } from "../../../lib/jose";
@@ -1345,6 +1345,103 @@ describe("account linking", () => {
     });
   });
 
+  /**
+   * ブラウザに OP セッションが無いとき（ネイティブアプリの ephemeral なブラウザなど）、/linking/start は
+   * RP へ戻さず、連携を始めた本人としてのログインへ送る。ログインは普段の認可フロー（始めたクライアントの
+   * oauth のポリシー）を通り、最後にコードを出さずに /linking/start へ戻る。
+   */
+  describe("sign-in again at /linking/start", () => {
+    const authorizationsBase = `${backendUrl}/${serverConfig.tenantId}/v1/authorizations`;
+
+    const ownerSub = async (accessToken) => {
+      const userinfo = await get({
+        url: `${backendUrl}/${serverConfig.tenantId}/v1/userinfo`,
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      expect(userinfo.status).toBe(200);
+      return userinfo.data.sub;
+    };
+
+    /** セッションの無いブラウザで start_url を開き、送られた認可リクエストを返す。 */
+    const signInRequestFor = async (startUrl) => {
+      const response = await axios.get(startUrl, { maxRedirects: 0, validateStatus: () => true });
+      expect(response.status).toBe(302);
+      const location = new URL(response.headers.location);
+      expect(`${location.origin}${location.pathname}`).toBe(authorizationsBase);
+      return location;
+    };
+
+    /** 送られた認可リクエストを開いて、認証画面の認可リクエスト ID を得る。 */
+    const openSignIn = async (location) => {
+      const response = await get({ url: location.toString() });
+      expect(response.status).toBe(302);
+      return convertNextAction(response.headers.location).params.get("id");
+    };
+
+    it("sends a browser without a session to sign in as the user who started the link", async () => {
+      const accessToken = await login(ownerUser);
+      const linkResponse = await startLink(accessToken);
+      expect(linkResponse.status).toBe(201);
+
+      const location = await signInRequestFor(linkResponse.data.start_url);
+      const params = location.searchParams;
+      expect(params.get("client_id")).toBe(clientSecretPostClient.clientId);
+      expect(params.get("prompt")).toBe("login");
+      expect(params.get("login_hint")).toBe(`sub:${await ownerSub(accessToken)}`);
+      expect(params.get("idp_linking_state")).toBe(linkResponse.data.state);
+    });
+
+    it("issues no code: the sign-in goes back to /linking/start, and the link goes on to the external IdP", async () => {
+      const accessToken = await login(ownerUser);
+      const linkResponse = await startLink(accessToken);
+      const id = await openSignIn(await signInRequestFor(linkResponse.data.start_url));
+
+      const signedIn = await postAuthentication({
+        endpoint: `${authorizationsBase}/{id}/password-authentication`,
+        id,
+        body: ownerUser,
+      });
+      expect(signedIn.status).toBe(200);
+
+      const authorized = await authorize({ endpoint: `${authorizationsBase}/{id}/authorize`, id, body: {} });
+      expect(authorized.status).toBe(200);
+      const resume = new URL(authorized.data.redirect_uri);
+      expect(resume.pathname).toBe(`/${serverConfig.tenantId}/v1/linking/start`);
+      expect(resume.searchParams.get("state")).toBe(linkResponse.data.state);
+      expect(resume.searchParams.get("code")).toBeNull();
+
+      const startResponse = await get({ url: resume.toString() });
+      expect(startResponse.status).toBe(302);
+      expect(startResponse.headers.location).toContain(federationServerConfig.tenantId);
+    });
+
+    it("does not let anyone else sign in for the link", async () => {
+      const accessToken = await login(ownerUser);
+      const linkResponse = await startLink(accessToken);
+      const id = await openSignIn(await signInRequestFor(linkResponse.data.start_url));
+
+      const someoneElse = await postAuthentication({
+        endpoint: `${authorizationsBase}/{id}/password-authentication`,
+        id,
+        body: otherUser,
+      });
+      expect(someoneElse.status).toBe(400);
+    });
+
+    it("hands a cancelled sign-in back to the link rather than to the client", async () => {
+      const accessToken = await login(ownerUser);
+      const linkResponse = await startLink(accessToken);
+      const id = await openSignIn(await signInRequestFor(linkResponse.data.start_url));
+
+      const denied = await deny({ endpoint: `${authorizationsBase}/{id}/deny`, id });
+      expect(denied.status).toBe(200);
+      const resume = new URL(denied.data.redirect_uri);
+      expect(resume.pathname).toBe(`/${serverConfig.tenantId}/v1/linking/start`);
+      expect(resume.searchParams.get("reauthenticated")).toBe("true");
+      expect(resume.searchParams.get("error")).toBeNull();
+    });
+  });
+
   describe("provider scope", () => {
     it("requires openid of a provider configured for it, so the external account is identified", async () => {
       const accessToken = await login(ownerUser);
@@ -1484,12 +1581,13 @@ describe("account linking", () => {
       expectErrorPage(response.headers.location, "invalid_request");
     });
 
-    it("returns login_required to the client when /linking/start has no browser session, without the state", async () => {
+    it("returns login_required, without the state, when the browser comes back from the sign-in still without a session", async () => {
       const accessToken = await login(ownerUser);
       const linkResponse = await startLink(accessToken);
       expect(linkResponse.status).toBe(201);
 
-      const response = await getWithoutCookies(linkResponse.data.start_url);
+      // 戻ってきてもセッションが無いなら、もう一度ログインへは送らない（セッションを書けない環境でループしない）。
+      const response = await getWithoutCookies(`${linkResponse.data.start_url}&reauthenticated=true`);
       expect(response.status).toBe(302);
       expectReturnedFailure(response.headers.location, "login_required", null);
 

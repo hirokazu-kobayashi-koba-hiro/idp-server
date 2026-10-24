@@ -49,6 +49,7 @@ public interface AccountLinkingApi {
   AccountLinkingResult authorizeStart(
       TenantIdentifier tenantIdentifier,
       AccountLinkingState state,
+      boolean resumed,
       RequestAttributes requestAttributes);
 
   /** Browser navigation from the external IdP. Establishes nothing on its own. */

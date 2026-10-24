@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Box,
   Button,
@@ -471,6 +471,29 @@ export const ConsentStep = ({ tenantId, id, viewData }: Props) => {
       setLoading(false);
     }
   };
+
+  // A sign-in an account link asked for (idp-server put the link's state on the request): nothing
+  // is granted to the app, so there is nothing to consent to. Continue straight back to the link.
+  const signInOnly = Boolean(viewData?.custom_params?.idp_linking_state);
+  const continued = useRef(false);
+  useEffect(() => {
+    if (signInOnly && !continued.current) {
+      continued.current = true;
+      void submit("authorize");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signInOnly]);
+
+  if (signInOnly) {
+    return (
+      <Stack spacing={2} alignItems="center">
+        <CircularProgress size={28} />
+        <Typography variant="body2" color="text.secondary">
+          Signed in. Returning to {clientName}…
+        </Typography>
+      </Stack>
+    );
+  }
 
   return (
     <Stack spacing={3}>
