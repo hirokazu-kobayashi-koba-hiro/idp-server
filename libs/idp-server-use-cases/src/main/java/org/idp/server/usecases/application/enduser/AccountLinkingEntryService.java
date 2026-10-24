@@ -49,6 +49,7 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
+import org.idp.server.platform.security.event.SecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
 
 /**
@@ -278,19 +279,24 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
         tokenHandler.handle(new LinkedExternalAccountTokenRequest(tenant, alias, inputs));
     AccountLinkingResult result = tokenResult.result();
 
-    publish(tenant, result, requestAttributes);
+    Map<String, Object> details = tokenResult.eventDetails();
+    if (result.hasEventType()) {
+      publishWithDetails(tenant, result, result.eventType(), details, requestAttributes);
+    }
     if (tokenResult.refreshed()) {
-      publish(
+      publishWithDetails(
           tenant,
           result,
-          DefaultSecurityEventType.external_account_token_refreshed,
+          DefaultSecurityEventType.external_account_token_refreshed.toEventType(),
+          details,
           requestAttributes);
     }
     if (tokenResult.relinkRequired()) {
-      publish(
+      publishWithDetails(
           tenant,
           result,
-          DefaultSecurityEventType.external_account_relink_required,
+          DefaultSecurityEventType.external_account_relink_required.toEventType(),
+          details,
           requestAttributes);
     }
 
@@ -308,16 +314,22 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
     eventPublisher.publish(tenant, oAuthToken, result.eventType(), requestAttributes);
   }
 
-  private void publish(
+  /** Events of a token retrieval carry the provider and the refusal's error under this key. */
+  static final String EVENT_DETAILS_KEY = "account_linking";
+
+  private void publishWithDetails(
       Tenant tenant,
       AccountLinkingResult result,
-      DefaultSecurityEventType eventType,
+      SecurityEventType eventType,
+      Map<String, Object> details,
       RequestAttributes requestAttributes) {
     eventPublisher.publish(
         tenant,
         result.requestedClientId(),
         result.hasUser() ? result.user() : new User(),
-        eventType.toEventType(),
+        eventType,
+        EVENT_DETAILS_KEY,
+        details,
         requestAttributes);
   }
 

@@ -16,6 +16,10 @@
 
 package org.idp.server.account_linking.io;
 
+import java.util.HashMap;
+import java.util.Map;
+import org.idp.server.account_linking.ExternalIdpProvider;
+
 /**
  * Outcome of a stored token retrieval.
  *
@@ -28,12 +32,20 @@ public class LinkedExternalAccountTokenResult {
   AccountLinkingResult result;
   boolean refreshed;
   boolean relinkRequired;
+  ExternalIdpProvider provider;
+  String error;
 
   public LinkedExternalAccountTokenResult(
-      AccountLinkingResult result, boolean refreshed, boolean relinkRequired) {
+      AccountLinkingResult result,
+      boolean refreshed,
+      boolean relinkRequired,
+      ExternalIdpProvider provider,
+      String error) {
     this.result = result;
     this.refreshed = refreshed;
     this.relinkRequired = relinkRequired;
+    this.provider = provider;
+    this.error = error;
   }
 
   public AccountLinkingResult result() {
@@ -46,5 +58,24 @@ public class LinkedExternalAccountTokenResult {
 
   public boolean relinkRequired() {
     return relinkRequired;
+  }
+
+  /**
+   * What the events of this retrieval carry: the provider, once the account was found, and the
+   * error code of a refusal.
+   *
+   * <p>The provider lets a monitor count failures per provider, which tells a provider that revoked
+   * its grants from one client probing for tokens. The alias is left out: it identifies the user's
+   * link and is not needed to count.
+   */
+  public Map<String, Object> eventDetails() {
+    Map<String, Object> details = new HashMap<>();
+    if (provider != null && provider.exists()) {
+      details.put("provider", provider.value());
+    }
+    if (error != null) {
+      details.put("error", error);
+    }
+    return details;
   }
 }

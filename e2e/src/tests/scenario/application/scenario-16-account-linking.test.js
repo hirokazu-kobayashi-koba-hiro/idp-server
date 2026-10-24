@@ -436,6 +436,68 @@ describe("account linking", () => {
       expect(introspectionResponse.data.active).toBe(false);
     });
 
+    /**
+     * 取り出しのイベントには、連携先（account_linking.provider）と断った理由（account_linking.error）
+     * が付く。連携先ごとに数えて、連携先の不調とクライアントの探りを分けるため。alias は付けない。
+     */
+    const countEvents = async (eventType, query) => {
+      const response = await get({
+        url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/security-events?event_type=${eventType}${query}&limit=1`,
+        headers: { Authorization: `Bearer ${await requestAdminAccessToken()}` },
+      });
+      expect(response.status).toBe(200);
+      return response.data;
+    };
+
+    /** イベントは非同期に記録されるので、件数が増えるまで待って最新の 1 件を返す。 */
+    const waitForNewEvent = async (eventType, query, before) => {
+      for (let i = 0; i < 20; i++) {
+        const events = await countEvents(eventType, query);
+        if (events.total_count > before) {
+          return events.list[0];
+        }
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+      return null;
+    };
+
+    it("records the provider on the retrieval's events, so failures can be counted per provider", async () => {
+      const accessToken = await login(ownerUser, `openid profile email ${MANAGE_SCOPE} ${READ_TOKEN_SCOPE}`);
+      const alias = await linkOnce(accessToken, PROVIDER, "openid profile email offline_access");
+      const query = `&details.account_linking.provider=${PROVIDER}`;
+      const before = (await countEvents("external_account_token_retrieved", query)).total_count;
+
+      const retrieved = await retrieveToken({
+        alias,
+        token: accessToken,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      expect(retrieved.status).toBe(200);
+
+      const event = await waitForNewEvent("external_account_token_retrieved", query, before);
+      expect(event).not.toBeNull();
+      // alias は account_linking に入れない（リクエストの URL としては既存の details に残る）。
+      expect(event.detail.account_linking).toEqual({ provider: PROVIDER });
+    });
+
+    it("records the error, and no provider, when it refuses before finding the account", async () => {
+      const query = "&details.account_linking.error=invalid_token";
+      const before = (await countEvents("external_account_token_retrieval_failed", query)).total_count;
+
+      const refused = await retrieveToken({
+        alias: `${PROVIDER}-1`,
+        token: "not-a-token",
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      expect(refused.status).toBe(401);
+
+      const event = await waitForNewEvent("external_account_token_retrieval_failed", query, before);
+      expect(event).not.toBeNull();
+      expect(event.detail.account_linking).toEqual({ error: "invalid_token" });
+    });
+
     it("refuses a user token without linked_account:read_token", async () => {
       const accessToken = await login(ownerUser);
 

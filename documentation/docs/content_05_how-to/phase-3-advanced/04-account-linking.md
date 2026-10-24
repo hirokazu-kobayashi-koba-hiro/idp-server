@@ -301,6 +301,23 @@ curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/t
 
 2. 応答の `result.id` を、ロールの更新（`PUT .../roles/{role-id}`）の `permissions` に足す。`permissions` は権限の `id` の一覧で、送った内容で置き換わるので、既存の権限の `id` も含めて送る
 
+### 連携先の不調を見つける
+
+保管トークンの取り出しのイベント（`external_account_token_*`、`external_account_relink_required`）は、details の `account_linking` に連携先（`provider`）と、断った理由（`error`）を持ちます。
+
+```json
+{ "account_linking": { "provider": "example-idp", "error": "relink_required" } }
+```
+
+| `error` | 意味 | `provider` |
+|---|---|---|
+| `relink_required` | リフレッシュトークンが期限切れか、連携先に断られた。ユーザーに連携し直してもらう必要がある | あり |
+| `temporarily_unavailable` | 連携先がリフレッシュに 5xx を返した | あり |
+| `unauthorized_client` | クライアントに許可されていない連携先か、ユーザーのトークンが別のクライアントのもの | 連携先の判定ならあり |
+| `invalid_client` / `invalid_token` / `insufficient_scope` / `invalid_request` / `not_found` | クライアントやユーザーのトークンの問題 | なし |
+
+連携先ごとに `external_account_relink_required` を数えると、連携先が許可をまとめて取り消したときに気づけます。`temporarily_unavailable` が続くなら連携先の障害です。`provider` の無い失敗が続くなら、連携先ではなくクライアントの問題です。管理API の `security-events` では、`details.account_linking.provider=<連携先>` で絞り込めます。
+
 ### 期限切れの連携セッションを消す
 
 確定されずに期限を過ぎた連携セッションは、期限切れデータの一括削除 `POST /v1/admin/operations/delete-expired-data` で消えます。応答の内訳は `deleted.account_linking_session` です。定期実行（Cron 等）に組み込んでください（[運用の概念](../../content_03_concepts/07-operations/concept-04-operations.md)）。
