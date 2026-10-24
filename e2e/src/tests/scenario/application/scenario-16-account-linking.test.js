@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "@jest/globals";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "@jest/globals";
 import {
   adminServerConfig,
   backendUrl,
@@ -1533,6 +1533,210 @@ describe("account linking", () => {
         body: { tenant_id: "not-a-uuid" },
       });
       expect(malformed.status).toBe(400);
+    });
+  });
+
+  /**
+   * テナントのデータ鍵（DEK）の管理 API。組織・システムの管理 API で、テナントの DEK を一覧し、
+   * 新しい世代を作る。運用 API の一覧はテナントをまたいで引き、KEK で絞り込める。
+   * 鍵そのもの（wrapped_key）はどこからも返さない。
+   */
+  describe("data key management API", () => {
+    const orgDataKeys = `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/data-keys`;
+    const opsHeaders = {
+      Authorization: `Basic ${Buffer.from(
+        `${process.env.IDP_SERVER_API_KEY}:${process.env.IDP_SERVER_API_SECRET}`
+      ).toString("base64")}`,
+    };
+    let adminToken;
+    const operators = [];
+
+    beforeAll(async () => {
+      adminToken = await requestAdminAccessToken();
+      // 連携が 1 件はある状態にする。DEK は最初の連携で作られる。
+      const accessToken = await login(ownerUser, `openid profile email ${MANAGE_SCOPE}`);
+      await linkOnce(accessToken, "account-linking-oauth2");
+    });
+
+    // 管理者トークンの有効期間は 120 秒しかない。
+    beforeEach(async () => {
+      adminToken = await requestAdminAccessToken();
+    });
+
+    afterAll(async () => {
+      await deleteOperators(
+        await requestAdminAccessToken(),
+        serverConfig.organizationId,
+        serverConfig.tenantId,
+        operators
+      );
+    });
+
+    const listKeys = async (query = "") =>
+      await get({ url: `${orgDataKeys}${query}`, headers: { Authorization: `Bearer ${adminToken}` } });
+
+    const linkingKeys = (list) => list.filter((it) => it.purpose === "account-linking-token");
+
+    /** 権限レコードが無ければ作ってから、その権限だけを持つ管理者を作る。 */
+    const operatorHolding = async (permissionName) => {
+      let permissionIds = await fetchPermissionIds(adminToken, serverConfig.organizationId, serverConfig.tenantId);
+      if (!permissionIds.has(permissionName)) {
+        const created = await postWithJson({
+          url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/permissions`,
+          headers: { Authorization: `Bearer ${adminToken}` },
+          body: { name: permissionName, description: permissionName },
+        });
+        expect(created.status).toBe(201);
+        permissionIds = await fetchPermissionIds(adminToken, serverConfig.organizationId, serverConfig.tenantId);
+      }
+      const operator = await createOperatorWithPermission({
+        managementToken: adminToken,
+        organizationId: serverConfig.organizationId,
+        tenantId: serverConfig.tenantId,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+        permissionName,
+        permissionId: permissionIds.get(permissionName),
+        label: permissionName.replace(/[^a-z]/g, "-"),
+      });
+      operators.push(operator);
+      return operator.accessToken;
+    };
+
+    it("lists the tenant's data keys with how many links each still encrypts, never the key", async () => {
+      const response = await listKeys();
+      expect(response.status).toBe(200);
+      const keys = linkingKeys(response.data.list);
+      expect(keys.length).toBeGreaterThanOrEqual(1);
+      expect(keys.filter((it) => it.status === "active")).toHaveLength(1);
+      expect(response.data.total_count).toBe(response.data.list.length);
+      for (const key of keys) {
+        expect(key.tenant_id).toBe(serverConfig.tenantId);
+        expect(key.kek_id).toBeTruthy();
+        expect(typeof key.linked_external_accounts).toBe("number");
+      }
+      expect(keys.reduce((sum, it) => sum + it.linked_external_accounts, 0)).toBeGreaterThanOrEqual(1);
+      expect(JSON.stringify(response.data)).not.toContain("wrapped_key");
+    });
+
+    it("narrows the list by status and refuses an unknown one", async () => {
+      const active = await listKeys("?status=active&purpose=account-linking-token");
+      expect(active.status).toBe(200);
+      expect(active.data.list).toHaveLength(1);
+      expect(active.data.list[0].status).toBe("active");
+
+      const unknown = await listKeys("?status=retired");
+      expect(unknown.status).toBe(400);
+    });
+
+    it("starts a new generation: the new key is active and the previous one only opens", async () => {
+      const before = linkingKeys((await listKeys()).data.list);
+      const previous = before.find((it) => it.status === "active");
+
+      const dryRun = await postWithJson({
+        url: `${orgDataKeys}/rotate?dry_run=true`,
+        headers: { Authorization: `Bearer ${adminToken}` },
+        body: { purpose: "account-linking-token" },
+      });
+      expect(dryRun.status).toBe(200);
+      expect(dryRun.data.dry_run).toBe(true);
+      expect(linkingKeys((await listKeys()).data.list)).toHaveLength(before.length);
+
+      const rotated = await postWithJson({
+        url: `${orgDataKeys}/rotate`,
+        headers: { Authorization: `Bearer ${adminToken}` },
+        body: { purpose: "account-linking-token" },
+      });
+      expect(rotated.status).toBe(200);
+      expect(rotated.data.data_key_id).toBeTruthy();
+
+      const after = linkingKeys((await listKeys()).data.list);
+      expect(after).toHaveLength(before.length + 1);
+      const current = after.find((it) => it.status === "active");
+      expect(current.id).toBe(rotated.data.data_key_id);
+      expect(current.version).toBe(Math.max(...before.map((it) => it.version)) + 1);
+      expect(after.find((it) => it.id === previous.id).status).toBe("passive");
+      // 一括で暗号化し直さないので、連携の数の合計は変わらない。
+      const total = (keys) => keys.reduce((sum, it) => sum + it.linked_external_accounts, 0);
+      expect(total(after)).toBe(total(before));
+    });
+
+    it("refuses to rotate for an unknown purpose", async () => {
+      const response = await postWithJson({
+        url: `${orgDataKeys}/rotate`,
+        headers: { Authorization: `Bearer ${adminToken}` },
+        body: { purpose: "oauth-token" },
+      });
+      expect(response.status).toBe(400);
+    });
+
+    it("lets an operator holding only idp:data-key:read list, and not rotate", async () => {
+      const token = await operatorHolding("idp:data-key:read");
+      const list = await get({ url: orgDataKeys, headers: { Authorization: `Bearer ${token}` } });
+      expect(list.status).toBe(200);
+
+      const rotation = await postWithJson({
+        url: `${orgDataKeys}/rotate`,
+        headers: { Authorization: `Bearer ${token}` },
+        body: {},
+      });
+      expect(rotation.status).toBe(403);
+    });
+
+    it("refuses the list to an operator without idp:data-key:read", async () => {
+      const token = await operatorHolding("idp:linked-account:read");
+      const list = await get({ url: orgDataKeys, headers: { Authorization: `Bearer ${token}` } });
+      expect(list.status).toBe(403);
+    });
+
+    it("answers the same list through the system-level management API", async () => {
+      const systemToken = await requestToken({
+        endpoint: adminServerConfig.tokenEndpoint,
+        grantType: "password",
+        username: adminServerConfig.oauth.username,
+        password: adminServerConfig.oauth.password,
+        scope: adminServerConfig.adminClient.scope,
+        clientId: adminServerConfig.adminClient.clientId,
+        clientSecret: adminServerConfig.adminClient.clientSecret,
+      });
+      expect(systemToken.status).toBe(200);
+      const response = await get({
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/data-keys`,
+        headers: { Authorization: `Bearer ${systemToken.data.access_token}` },
+      });
+      expect(response.status).toBe(200);
+      expect(response.data.list.map((it) => it.id).sort()).toEqual(
+        (await listKeys()).data.list.map((it) => it.id).sort()
+      );
+    });
+
+    it("lists data keys across tenants for the operator, narrowed by tenant or KEK", async () => {
+      const ops = (query) =>
+        get({ url: `${backendUrl}/v1/admin/operations/data-keys/list${query}`, headers: opsHeaders });
+
+      const byTenant = await ops(`?tenant_id=${serverConfig.tenantId}&limit=100`);
+      expect(byTenant.status).toBe(200);
+      expect(byTenant.data.total_count).toBe((await listKeys()).data.list.length);
+      for (const key of byTenant.data.list) {
+        expect(key.tenant_id).toBe(serverConfig.tenantId);
+        expect(key.kek_configured).toBe(true);
+      }
+      expect(JSON.stringify(byTenant.data)).not.toContain("wrapped_key");
+
+      const byKek = await ops(`?kek_id=${byTenant.data.list[0].kek_id}&limit=1`);
+      expect(byKek.status).toBe(200);
+      expect(byKek.data.list).toHaveLength(1);
+      expect(byKek.data.total_count).toBeGreaterThanOrEqual(byTenant.data.total_count);
+
+      const unknownKek = await ops("?kek_id=no-such-kek");
+      expect(unknownKek.status).toBe(200);
+      expect(unknownKek.data.total_count).toBe(0);
+
+      expect((await ops("?tenant_id=not-a-uuid")).status).toBe(400);
+      expect((await ops("?status=retired")).status).toBe(400);
+      expect(
+        (await get({ url: `${backendUrl}/v1/admin/operations/data-keys/list` })).status
+      ).toBe(401);
     });
   });
 

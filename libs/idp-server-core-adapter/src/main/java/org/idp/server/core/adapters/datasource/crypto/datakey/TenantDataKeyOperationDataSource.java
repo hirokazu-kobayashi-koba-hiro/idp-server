@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.crypto.datakey.TenantDataKey;
 import org.idp.server.platform.crypto.datakey.TenantDataKeyOperationRepository;
+import org.idp.server.platform.crypto.datakey.TenantDataKeyQueries;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
@@ -44,6 +45,17 @@ public class TenantDataKeyOperationDataSource implements TenantDataKeyOperationR
   @Override
   public void updateWrapping(Tenant tenant, TenantDataKey key) {
     executor.updateWrapping(key);
+  }
+
+  @Override
+  public List<TenantDataKey> findList(Tenant tenant, TenantDataKeyQueries queries) {
+    return executor.selectList(queries).stream().map(ModelConverter::convert).toList();
+  }
+
+  @Override
+  public long findTotalCount(Tenant tenant, TenantDataKeyQueries queries) {
+    Map<String, String> row = executor.selectCount(queries);
+    return row == null || row.get("count") == null ? 0 : Long.parseLong(row.get("count"));
   }
 
   @Override

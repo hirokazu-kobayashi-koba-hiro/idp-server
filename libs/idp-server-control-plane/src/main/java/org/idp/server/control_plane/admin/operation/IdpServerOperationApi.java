@@ -16,6 +16,7 @@
 
 package org.idp.server.control_plane.admin.operation;
 
+import java.util.Map;
 import org.idp.server.control_plane.admin.operation.io.IdpServerOperationRequest;
 import org.idp.server.control_plane.admin.operation.io.IdpServerOperationResponse;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
@@ -33,6 +34,12 @@ public interface IdpServerOperationApi {
       TenantIdentifier adminTenantIdentifier, RequestAttributes requestAttributes);
 
   /** Re-wraps tenant data keys with the active key encryption key, up to {@code max_number}. */
+  /** Data keys across tenants, filtered by tenant, key encryption key, status and purpose. */
+  IdpServerOperationResponse dataKeyList(
+      TenantIdentifier adminTenantIdentifier,
+      Map<String, String> queries,
+      RequestAttributes requestAttributes);
+
   IdpServerOperationResponse rewrapDataKeys(
       TenantIdentifier adminTenantIdentifier,
       IdpServerOperationRequest request,

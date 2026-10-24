@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.crypto.datakey.DataKeyStatus;
 import org.idp.server.platform.crypto.datakey.TenantDataKey;
+import org.idp.server.platform.crypto.datakey.TenantDataKeyQueries;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface TenantDataKeySqlExecutor {
@@ -29,6 +30,8 @@ public interface TenantDataKeySqlExecutor {
   Map<String, String> selectActiveCommitted(Tenant tenant, String purpose);
 
   Map<String, String> selectOne(Tenant tenant, String id);
+
+  List<Map<String, String>> selectList(Tenant tenant);
 
   Map<String, String> selectLatestVersion(Tenant tenant, String purpose);
 
@@ -44,6 +47,12 @@ public interface TenantDataKeySqlExecutor {
 
   /** Across tenants. */
   void updateWrapping(TenantDataKey key);
+
+  /** Across tenants. */
+  List<Map<String, String>> selectList(TenantDataKeyQueries queries);
+
+  /** Across tenants. */
+  Map<String, String> selectCount(TenantDataKeyQueries queries);
 
   /** Across tenants: data keys per KEK, destroyed ones aside. */
   List<Map<String, String>> countByKekId();

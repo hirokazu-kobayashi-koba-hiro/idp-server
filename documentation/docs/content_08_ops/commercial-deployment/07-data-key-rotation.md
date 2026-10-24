@@ -76,6 +76,31 @@ curl -u "$IDP_SERVER_API_KEY:$IDP_SERVER_API_SECRET" \
 
 鍵そのもの（`wrapped_key` を含む）は返しません。
 
+### DEK の一覧
+
+件数ではなく DEK を 1 本ずつ見るときは、一覧を使います。テナントをまたいで引き、`tenant_id`・`kek_id`・`status`・`purpose` で絞り込めます（`limit` は 1〜1000、既定 20）。
+
+```bash
+curl -u "$IDP_SERVER_API_KEY:$IDP_SERVER_API_SECRET" \
+  "https://<host>/v1/admin/operations/data-keys/list?kek_id=default&limit=100"
+```
+
+```json
+{
+  "list": [
+    { "id": "…", "tenant_id": "…", "purpose": "account-linking-token", "version": 1,
+      "status": "active", "kek_id": "default", "created_at": "…", "kek_configured": true }
+  ],
+  "total_count": 20,
+  "limit": 100,
+  "offset": 0
+}
+```
+
+`kek_configured` は、応答した台がその KEK を持っているかです。`unopenable` が 0 でないときは、`key_encryption_keys` で `configured: false` の key id を `kek_id` に指定すると、開けなくなっているテナントが分かります。
+
+テナントの管理者は、管理API（`GET .../tenants/{tenant-id}/data-keys`、権限 `idp:data-key:read`）で自分のテナントの DEK を見られます。こちらには、DEK ごとにその DEK で暗号化している連携の数（`linked_external_accounts`）が付きます。
+
 ---
 
 ## KEK を替える
@@ -130,6 +155,8 @@ curl -u "$IDP_SERVER_API_KEY:$IDP_SERVER_API_SECRET" \
 - 新しい保管トークンは新しい世代で暗号化します。前の世代は開くためだけに残り、一括で暗号化し直すことはしません。
 - 前の世代の行は、トークンが取り出されたときに新しい世代へ移ります。
 - 他の台は、active な DEK を最大 60 秒キャッシュします。その間は前の世代で書くことがありますが、前の世代も開けるので壊れません。
+- 前の世代で暗号化した連携が残っているかは、管理API の一覧の `linked_external_accounts` で分かります。
+- テナントの管理者も、管理API（`POST .../tenants/{tenant-id}/data-keys/rotate`、権限 `idp:data-key:rotate`）で新しい世代を作れます。`dry_run=true` で事前に確かめられ、監査ログに残ります。
 - `purpose` を省くと `account-linking-token` です。`tenant_id` が無いか UUID でない場合と、`purpose` が他の値の場合は `400 invalid_request`、テナントが存在しない場合は `404` を返します。
 
 ---

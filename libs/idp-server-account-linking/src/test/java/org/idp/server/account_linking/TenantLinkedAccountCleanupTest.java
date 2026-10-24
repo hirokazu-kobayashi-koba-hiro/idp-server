@@ -75,6 +75,11 @@ class TenantLinkedAccountCleanupTest {
     }
 
     @Override
+    public long countByDataKey(Tenant tenant, String dataKeyId) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
     public LinkedExternalAccount find(Tenant tenant, LinkedExternalAccountIdentifier identifier) {
       throw new UnsupportedOperationException();
     }

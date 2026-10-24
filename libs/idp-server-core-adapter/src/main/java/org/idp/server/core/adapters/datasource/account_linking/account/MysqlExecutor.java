@@ -161,6 +161,15 @@ public class MysqlExecutor implements LinkedExternalAccountSqlExecutor {
   }
 
   @Override
+  public Map<String, String> selectCountByDataKey(Tenant tenant, String dataKeyId) {
+    return new SqlExecutor()
+        .selectOne(
+            "SELECT count(*) AS count FROM linked_external_accounts"
+                + " WHERE tenant_id = ? AND encryption_key_id = ?;",
+            List.of(tenant.identifierValue(), dataKeyId));
+  }
+
+  @Override
   public Map<String, String> selectCount(Tenant tenant, LinkedExternalAccountQueries queries) {
     List<Object> params = new ArrayList<>();
     String where = where(tenant, queries, params);

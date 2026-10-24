@@ -15,6 +15,7 @@
  */
 package org.idp.server.core.adapters.datasource.crypto.datakey;
 
+import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.crypto.datakey.DataKeyStatus;
 import org.idp.server.platform.crypto.datakey.TenantDataKey;
@@ -42,6 +43,11 @@ public class TenantDataKeyDataSource implements TenantDataKeyRepository {
   @Override
   public TenantDataKey find(Tenant tenant, String id) {
     return ModelConverter.convert(executor.selectOne(tenant, id));
+  }
+
+  @Override
+  public List<TenantDataKey> findList(Tenant tenant) {
+    return executor.selectList(tenant).stream().map(ModelConverter::convert).toList();
   }
 
   @Override

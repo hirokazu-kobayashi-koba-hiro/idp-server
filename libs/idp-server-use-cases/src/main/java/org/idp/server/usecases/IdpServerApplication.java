@@ -1154,6 +1154,8 @@ public class IdpServerApplication {
                 authorizationServerConfigurationCommandRepository,
                 userCommandRepository,
                 tenantLinkedAccountCleanup,
+                dataKeyService,
+                linkedExternalAccountQueryRepository,
                 auditLogPublisher),
             TenantManagementApi.class,
             databaseTypeProvider);
@@ -1420,6 +1422,8 @@ public class IdpServerApplication {
                 authorizationServerConfigurationCommandRepository,
                 userCommandRepository,
                 tenantLinkedAccountCleanup,
+                dataKeyService,
+                linkedExternalAccountQueryRepository,
                 auditLogPublisher),
             OrgTenantManagementApi.class,
             databaseTypeProvider);

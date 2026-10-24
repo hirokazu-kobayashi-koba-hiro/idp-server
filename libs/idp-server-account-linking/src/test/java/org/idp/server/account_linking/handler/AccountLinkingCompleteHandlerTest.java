@@ -141,6 +141,11 @@ class AccountLinkingCompleteHandlerTest {
     }
 
     @Override
+    public long countByDataKey(Tenant tenant, String dataKeyId) {
+      return rows.size();
+    }
+
+    @Override
     public LinkedExternalAccount find(Tenant tenant, LinkedExternalAccountIdentifier identifier) {
       return new LinkedExternalAccount();
     }

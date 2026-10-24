@@ -16,15 +16,16 @@
 
 package org.idp.server.usecases.control_plane.system_administrator;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import org.idp.server.account_linking.AccountLinkingTokenCipher;
 import org.idp.server.account_linking.repository.AccountLinkingSessionOperationCommandRepository;
 import org.idp.server.control_plane.admin.operation.IdpServerOperationApi;
 import org.idp.server.control_plane.admin.operation.io.IdpServerOperationRequest;
 import org.idp.server.control_plane.admin.operation.io.IdpServerOperationResponse;
 import org.idp.server.control_plane.admin.operation.io.IdpServerOperationStatus;
+import org.idp.server.control_plane.management.tenant.DataKeyPurposes;
 import org.idp.server.core.extension.ciba.repository.BackchannelAuthenticationRequestOperationCommandRepository;
 import org.idp.server.core.extension.ciba.repository.CibaGrantOperationCommandRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationTransactionOperationCommandRepository;
@@ -36,6 +37,8 @@ import org.idp.server.core.openid.oauth.repository.AuthorizationRequestOperation
 import org.idp.server.core.openid.token.repository.OAuthTokenOperationCommandRepository;
 import org.idp.server.platform.crypto.datakey.DataKeyService;
 import org.idp.server.platform.crypto.datakey.DataKeyStatusReport;
+import org.idp.server.platform.crypto.datakey.TenantDataKey;
+import org.idp.server.platform.crypto.datakey.TenantDataKeyQueries;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -68,9 +71,6 @@ public class IdpServerOperationEntryService implements IdpServerOperationApi {
 
   static final int MAX_DELETION_NUMBER = 100000;
   static final int MAX_REWRAP_NUMBER = 10000;
-
-  /** Purposes a data key may be rotated for through this API. */
-  static final Set<String> DATA_KEY_PURPOSES = Set.of(AccountLinkingTokenCipher.PURPOSE);
 
   public IdpServerOperationEntryService(
       TenantQueryRepository tenantQueryRepository,
@@ -187,6 +187,37 @@ public class IdpServerOperationEntryService implements IdpServerOperationApi {
   }
 
   @Override
+  public IdpServerOperationResponse dataKeyList(
+      TenantIdentifier adminTenantIdentifier,
+      Map<String, String> queries,
+      RequestAttributes requestAttributes) {
+
+    TenantDataKeyQueries dataKeyQueries = new TenantDataKeyQueries(queries);
+    if (!dataKeyQueries.isTenantIdValid()) {
+      return invalidRequest("tenant_id must be a UUID.");
+    }
+    if (!dataKeyQueries.isStatusValid()) {
+      return invalidRequest("status must be one of active, passive, destroyed.");
+    }
+
+    Tenant adminTenant = tenantQueryRepository.get(adminTenantIdentifier);
+    List<Map<String, Object>> list = new ArrayList<>();
+    for (TenantDataKey key : dataKeyService.findList(adminTenant, dataKeyQueries)) {
+      Map<String, Object> item = key.toMap();
+      // Whether the answering server can open the key; false means its KEK is missing here.
+      item.put("kek_configured", dataKeyService.holds(key.kekId()));
+      list.add(item);
+    }
+
+    Map<String, Object> contents = new LinkedHashMap<>();
+    contents.put("list", list);
+    contents.put("total_count", dataKeyService.findTotalCount(adminTenant, dataKeyQueries));
+    contents.put("limit", dataKeyQueries.limit());
+    contents.put("offset", dataKeyQueries.offset());
+    return new IdpServerOperationResponse(IdpServerOperationStatus.OK, contents);
+  }
+
+  @Override
   public IdpServerOperationResponse rewrapDataKeys(
       TenantIdentifier adminTenantIdentifier,
       IdpServerOperationRequest request,
@@ -241,13 +272,12 @@ public class IdpServerOperationEntryService implements IdpServerOperationApi {
 
     String tenantId = request.optString("tenant_id");
     Object purposeValue = request.get("purpose");
-    String purpose =
-        purposeValue == null ? AccountLinkingTokenCipher.PURPOSE : purposeValue.toString();
+    String purpose = purposeValue == null ? DataKeyPurposes.DEFAULT : purposeValue.toString();
     if (tenantId == null || !isUuid(tenantId)) {
       return invalidRequest("tenant_id is required and must be a UUID.");
     }
-    if (!DATA_KEY_PURPOSES.contains(purpose)) {
-      return invalidRequest("purpose must be one of " + DATA_KEY_PURPOSES + ".");
+    if (!DataKeyPurposes.isKnown(purpose)) {
+      return invalidRequest("purpose must be one of " + DataKeyPurposes.ALL + ".");
     }
 
     Tenant tenant = tenantQueryRepository.find(new TenantIdentifier(tenantId));

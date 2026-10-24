@@ -144,4 +144,50 @@ public class TenantManagementV1Api implements ParameterTransformable {
     return new ResponseEntity<>(
         response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
+
+  @GetMapping("/{tenant-id}/data-keys")
+  public ResponseEntity<?> getDataKeys(
+      @AuthenticationPrincipal OperatorPrincipal operatorPrincipal,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @RequestParam Map<String, String> queries,
+      HttpServletRequest httpServletRequest) {
+
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    TenantManagementResponse response =
+        tenantManagementApi.findDataKeys(
+            operatorPrincipal.authenticationContext(),
+            tenantIdentifier,
+            queries,
+            requestAttributes);
+
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.add("content-type", "application/json");
+    return new ResponseEntity<>(
+        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+  }
+
+  @PostMapping("/{tenant-id}/data-keys/rotate")
+  public ResponseEntity<?> rotateDataKey(
+      @AuthenticationPrincipal OperatorPrincipal operatorPrincipal,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @RequestBody(required = false) Map<String, Object> body,
+      @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
+      HttpServletRequest httpServletRequest) {
+
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    TenantManagementResponse response =
+        tenantManagementApi.rotateDataKey(
+            operatorPrincipal.authenticationContext(),
+            tenantIdentifier,
+            body,
+            requestAttributes,
+            dryRun);
+
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.add("content-type", "application/json");
+    return new ResponseEntity<>(
+        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+  }
 }

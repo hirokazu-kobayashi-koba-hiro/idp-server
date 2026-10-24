@@ -42,6 +42,8 @@ public interface LinkedExternalAccountSqlExecutor {
 
   Map<String, String> selectCount(Tenant tenant, LinkedExternalAccountQueries queries);
 
+  Map<String, String> selectCountByDataKey(Tenant tenant, String dataKeyId);
+
   Map<String, String> selectById(Tenant tenant, LinkedExternalAccountIdentifier identifier);
 
   Map<String, String> selectByIdForUpdate(

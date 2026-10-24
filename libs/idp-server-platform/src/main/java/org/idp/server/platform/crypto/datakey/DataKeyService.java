@@ -171,6 +171,32 @@ public class DataKeyService {
     return stale.size();
   }
 
+  /** Every generation of the tenant's keys. */
+  public List<TenantDataKey> keys(Tenant tenant) {
+    return repository.findList(tenant);
+  }
+
+  /**
+   * Data keys across tenants.
+   *
+   * @param tenant the administrator's tenant the operation runs under
+   */
+  public List<TenantDataKey> findList(Tenant tenant, TenantDataKeyQueries queries) {
+    return operationRepository.findList(tenant, queries);
+  }
+
+  /**
+   * @param tenant the administrator's tenant the operation runs under
+   */
+  public long findTotalCount(Tenant tenant, TenantDataKeyQueries queries) {
+    return operationRepository.findTotalCount(tenant, queries);
+  }
+
+  /** Whether this server holds the key encryption key, and so can open what it wraps. */
+  public boolean holds(String kekId) {
+    return keyring.keyIds().contains(kekId);
+  }
+
   /** Data keys per key encryption key, and which key encryption keys this server holds. */
   public DataKeyStatusReport report(Tenant tenant) {
     Map<String, Long> counts = new LinkedHashMap<>(operationRepository.countByKekId(tenant));
