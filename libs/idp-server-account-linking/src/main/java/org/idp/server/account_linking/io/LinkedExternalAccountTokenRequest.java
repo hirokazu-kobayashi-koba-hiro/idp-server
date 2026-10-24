@@ -77,7 +77,9 @@ public class LinkedExternalAccountTokenRequest implements AuthorizationHeaderHan
         return new RequestedClientId(subject);
       }
     }
-    return new RequestedClientId();
+    // Empty rather than absent: the refusal is recorded as an event, and an event without a client
+    // id is not stored.
+    return new RequestedClientId("");
   }
 
   public ClientSecretBasic clientSecretBasic() {

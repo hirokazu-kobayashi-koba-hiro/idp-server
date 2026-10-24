@@ -87,7 +87,7 @@ public class LinkedExternalAccountDeleteByIdService
     if (!account.exists()) {
       throw new ResourceNotFoundException("Linked external account not found.");
     }
-    User user = userQueryRepository.get(tenant, account.userIdentifier());
+    User user = owner(tenant, account);
     builder.withBefore(user);
 
     if (dryRun) {
@@ -117,5 +117,20 @@ public class LinkedExternalAccountDeleteByIdService
         requestAttributes);
 
     return new UserManagementResponse(UserManagementStatus.NO_CONTENT, Map.of());
+  }
+
+  /**
+   * The link's owner, or only its identifier when the user is gone.
+   *
+   * <p>Links have no foreign key to the user; deleting a user removes them afterwards, and if that
+   * cleanup failed the link is left behind with working tokens. Removing it here is then the only
+   * way to revoke them short of deleting the tenant, so a missing user must not stop it.
+   */
+  private User owner(Tenant tenant, LinkedExternalAccount account) {
+    User user = userQueryRepository.findById(tenant, account.userIdentifier());
+    if (user.exists()) {
+      return user;
+    }
+    return new User().setSub(account.userIdentifier().value());
   }
 }
