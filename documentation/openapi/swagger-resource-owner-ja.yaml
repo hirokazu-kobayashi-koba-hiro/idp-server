@@ -1462,6 +1462,7 @@ paths:
             `redirect_uri` が未指定、またはクライアントの `linking_return_uris` に登録されていない。
             または `{provider}` の連携先が設定されていない・無効。
             または `scope` が連携先の設定の `scopes_supported` の範囲を超えている。
+            または連携先の `scopes_supported` に `openid` があるのに、`scope` に `openid` が無い。
           content:
             application/json:
               schema:

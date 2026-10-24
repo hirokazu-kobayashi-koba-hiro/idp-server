@@ -18,6 +18,7 @@ package org.idp.server.account_linking.handler;
 
 import java.time.LocalDateTime;
 import org.idp.server.account_linking.*;
+import org.idp.server.account_linking.exception.AccountLinkingInvalidRequestException;
 import org.idp.server.account_linking.exception.AccountLinkingNotFoundException;
 import org.idp.server.account_linking.exception.AccountLinkingSessionStateException;
 import org.idp.server.account_linking.exception.ExternalIdpRequestFailedException;
@@ -143,6 +144,11 @@ public class AccountLinkingCallbackHandler {
    * that started this link: its authorization code is never redeemed, and a denial from it does not
    * end the link. The session is left for the browser that can.
    *
+   * <p>The callback must also be the one of the provider the link was started with. Each provider
+   * is registered with its own callback, so a response arriving at another provider's is a mix-up:
+   * its code was issued by a provider this link never asked, and is not redeemed at this one. (RFC
+   * 9207's {@code iss} on the response would tell the same, where the provider sends it.)
+   *
    * @return the error page to send the browser to, or {@code null} when the browser is verified
    */
   private AccountLinkingResult verifyBrowser(
@@ -158,6 +164,10 @@ public class AccountLinkingCallbackHandler {
       if (!session.status().isAuthorized()) {
         throw new AccountLinkingSessionStateException(
             "Account linking session is not awaiting a callback.");
+      }
+      if (!session.provider().equals(request.provider())) {
+        throw new AccountLinkingInvalidRequestException(
+            "The callback belongs to another provider than the one this link was started with.");
       }
       session.verifyBrowserBinding(request.browserBindingSecret());
       return null;

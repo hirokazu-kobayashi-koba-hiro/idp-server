@@ -17,6 +17,7 @@
 package org.idp.server.account_linking.io;
 
 import org.idp.server.account_linking.AccountLinkingState;
+import org.idp.server.account_linking.ExternalIdpProvider;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
@@ -26,6 +27,7 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 public class AccountLinkingCallbackRequest {
 
   Tenant tenant;
+  ExternalIdpProvider provider;
   AccountLinkingState state;
   String code;
   String error;
@@ -34,12 +36,14 @@ public class AccountLinkingCallbackRequest {
 
   public AccountLinkingCallbackRequest(
       Tenant tenant,
+      ExternalIdpProvider provider,
       AccountLinkingState state,
       String code,
       String error,
       String errorDescription,
       String browserBindingSecret) {
     this.tenant = tenant;
+    this.provider = provider;
     this.state = state;
     this.code = code;
     this.error = error;
@@ -49,6 +53,11 @@ public class AccountLinkingCallbackRequest {
 
   public Tenant tenant() {
     return tenant;
+  }
+
+  /** The provider the callback URL names: each provider is registered with its own one. */
+  public ExternalIdpProvider provider() {
+    return provider;
   }
 
   public AccountLinkingState state() {
