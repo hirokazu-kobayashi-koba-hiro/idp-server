@@ -26,7 +26,14 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 public class AccountLinkingConfigurationResolver {
 
   /** The federation type links resolve their provider under. */
-  public static final FederationType FEDERATION_TYPE = new FederationType("oidc");
+  /**
+   * The {@code type} a linking provider is registered under in {@code federation-configurations}.
+   *
+   * <p>Kept apart from the login federation's {@code oidc}: a login configuration is never resolved
+   * as a linking provider, nor a linking one offered at login, and the two may share a provider
+   * name. The payload is the same OIDC configuration.
+   */
+  public static final FederationType FEDERATION_TYPE = new FederationType("account-linking");
 
   FederationConfigurationQueryRepository configurationQueryRepository;
 

@@ -1,6 +1,6 @@
 {
   "id": "f7c2b9d1-4e83-4a26-8b5f-1d0e6c9a3742",
-  "type": "oidc",
+  "type": "account-linking",
   "sso_provider": "account-linking",
   "enabled": true,
   "payload": {

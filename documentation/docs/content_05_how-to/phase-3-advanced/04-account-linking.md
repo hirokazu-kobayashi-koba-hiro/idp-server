@@ -46,14 +46,14 @@ e2e の例では、外部IdP役テナントのクライアント（`config/examp
 
 ## Step 2: 連携先を登録
 
-連携先は `federation-configurations` に `type: oidc` で登録します。**ログイン用の設定とは別の `sso_provider` で登録してください**（ログイン用を共用すると、ログインの同意画面にAPI用のスコープが出ます）。
+連携先は `federation-configurations` に `type: account-linking` で登録します。ログイン用の Federation（`type: oidc`）とは別の設定で、ログインには使われず、ログイン用の設定が連携先として使われることもありません。同じ `sso_provider` の名前を付けても構いません。`payload` の形はログイン用の OIDC の設定と同じです。
 
 ```bash
 curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/federation-configurations" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
-    "type": "oidc",
+    "type": "account-linking",
     "sso_provider": "example-idp",
     "enabled": true,
     "payload": {
@@ -101,8 +101,8 @@ curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/t
 
 **実例**:
 - `config/examples/standard-oidc-web-app/federation-account-linking.json` - サンプルアプリ用
-- `config/examples/e2e/test-tenant/federation/oidc/account-linking.json` - OIDC の連携先
-- `config/examples/e2e/test-tenant/federation/oidc/account-linking-oauth2.json` - OAuth 2.0 だけの連携先（`openid` も userinfo も無い）。外部アカウントを識別できないので、連携するたびに新しい連携として増えます
+- `config/examples/e2e/test-tenant/federation/account-linking/account-linking.json` - OIDC の連携先
+- `config/examples/e2e/test-tenant/federation/account-linking/account-linking-oauth2.json` - OAuth 2.0 だけの連携先（`openid` も userinfo も無い）。外部アカウントを識別できないので、連携するたびに新しい連携として増えます
 
 ---
 

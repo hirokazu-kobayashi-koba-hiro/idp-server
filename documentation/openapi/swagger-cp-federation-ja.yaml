@@ -345,7 +345,8 @@ components:
           - oauth2
           - saml2
           - oidc
-          description: Federation type
+          - account-linking
+          description: Federation type。`account-linking` はアカウント連携の連携先（payload は `oidc` と同じ形で、ログインには使われない）
           example: oidc
         sso_provider:
           type: string
@@ -417,7 +418,8 @@ components:
           - oauth2
           - saml2
           - oidc
-          description: Federation type
+          - account-linking
+          description: Federation type。`account-linking` はアカウント連携の連携先（payload は `oidc` と同じ形で、ログインには使われない）
           example: oidc
         sso_provider:
           type: string
@@ -451,7 +453,8 @@ components:
           - oauth2
           - saml2
           - oidc
-          description: Federation type
+          - account-linking
+          description: Federation type。`account-linking` はアカウント連携の連携先（payload は `oidc` と同じ形で、ログインには使われない）
         sso_provider:
           type: string
           description: SSO provider identifier（設定の引き当てキー。全置換のため GET の値を必ず含めること）
