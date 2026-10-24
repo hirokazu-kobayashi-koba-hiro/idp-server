@@ -187,7 +187,7 @@ describe("account linking", () => {
   /** 保管された外部トークンを、クライアント認証 + ユーザーのアクセストークンで取り出す。 */
   const retrieveToken = async ({ alias, token, clientId, clientSecret, headers = {} }) => {
     const params = new URLSearchParams();
-    params.append("token", token);
+    if (token !== undefined) params.append("token", token);
     if (clientId) params.append("client_id", clientId);
     if (clientSecret) params.append("client_secret", clientSecret);
     return await post({
@@ -533,6 +533,44 @@ describe("account linking", () => {
         token: accessToken,
         clientId: clientSecretPostClient.clientId,
         clientSecret: "wrong-secret",
+      });
+      console.log(response.status, response.data);
+      expect(response.status).toBe(401);
+      expect(response.data.error).toBe("invalid_client");
+    });
+
+    it("refuses a request without the user's token", async () => {
+      const response = await retrieveToken({
+        alias: `${PROVIDER}-1`,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      console.log(response.status, response.data);
+      expect(response.status).toBe(400);
+      expect(response.data.error).toBe("invalid_request");
+    });
+
+    // エラーの優先順位: クライアント認証を先に見る。順番が入れ替わると、認証できないクライアントに
+    // ユーザートークンの状態（無い・別のクライアント向け）を教えることになる。
+    it("answers invalid_client before looking at a missing user token", async () => {
+      const response = await retrieveToken({
+        alias: `${PROVIDER}-1`,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: "wrong-secret",
+      });
+      console.log(response.status, response.data);
+      expect(response.status).toBe(401);
+      expect(response.data.error).toBe("invalid_client");
+    });
+
+    it("answers invalid_client before looking at whom the user token was issued to", async () => {
+      const accessToken = await login(ownerUser, `openid profile email ${MANAGE_SCOPE} ${READ_TOKEN_SCOPE}`);
+
+      const basic = Buffer.from(`${clientSecretBasicClient.clientId}:wrong-secret`).toString("base64");
+      const response = await retrieveToken({
+        alias: `${PROVIDER}-1`,
+        token: accessToken,
+        headers: { Authorization: `Basic ${basic}` },
       });
       console.log(response.status, response.data);
       expect(response.status).toBe(401);

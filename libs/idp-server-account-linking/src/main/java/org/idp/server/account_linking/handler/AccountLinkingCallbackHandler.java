@@ -18,8 +18,6 @@ package org.idp.server.account_linking.handler;
 
 import java.time.LocalDateTime;
 import org.idp.server.account_linking.*;
-import org.idp.server.account_linking.exception.AccountLinkingInvalidRequestException;
-import org.idp.server.account_linking.exception.AccountLinkingNotFoundException;
 import org.idp.server.account_linking.exception.AccountLinkingSessionStateException;
 import org.idp.server.account_linking.exception.ExternalIdpRequestFailedException;
 import org.idp.server.account_linking.gateway.ExternalIdpIdTokenGateway;
@@ -29,6 +27,7 @@ import org.idp.server.account_linking.io.AccountLinkingCallbackRequest;
 import org.idp.server.account_linking.io.AccountLinkingResult;
 import org.idp.server.account_linking.repository.AccountLinkingSessionCommandRepository;
 import org.idp.server.account_linking.repository.AccountLinkingSessionQueryRepository;
+import org.idp.server.account_linking.verifier.AccountLinkingCallbackVerifier;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.federation.sso.oidc.OidcSsoConfiguration;
 import org.idp.server.federation.sso.oidc.OidcTokenResult;
@@ -55,6 +54,7 @@ public class AccountLinkingCallbackHandler {
   ExternalIdpIdTokenGateway idTokenGateway;
   ExternalIdpUserinfoGateway userinfoGateway;
   TenantDataCipher tokenCipher;
+  AccountLinkingCallbackVerifier callbackVerifier;
   AccountLinkingErrorHandler errorHandler;
   LoggerWrapper log = LoggerWrapper.getLogger(AccountLinkingCallbackHandler.class);
 
@@ -73,6 +73,7 @@ public class AccountLinkingCallbackHandler {
     this.idTokenGateway = idTokenGateway;
     this.userinfoGateway = userinfoGateway;
     this.tokenCipher = tokenCipher;
+    this.callbackVerifier = new AccountLinkingCallbackVerifier();
     this.errorHandler = new AccountLinkingErrorHandler();
   }
 
@@ -133,23 +134,8 @@ public class AccountLinkingCallbackHandler {
   }
 
   /**
-   * Checks that this callback belongs to a link awaiting it, from the browser that started it.
-   *
-   * <p>The status is looked at before the binding. A link that has already moved on is most often
-   * the same browser coming back — a reload, or the back button after the cookie was spent — and
-   * telling that user the link was started elsewhere would be wrong, as would counting it as a
-   * binding mismatch.
-   *
-   * <p>A browser that cannot present the secret issued at {@code /linking/start} is not the one
-   * that started this link: its authorization code is never redeemed, and a denial from it does not
-   * end the link. The session is left for the browser that can.
-   *
-   * <p>The callback must also be the one of the provider the link was started with. Each provider
-   * is registered with its own callback, so a response arriving at another provider's is a mix-up:
-   * its code was issued by a provider this link never asked, and is not redeemed at this one. (RFC
-   * 9207's {@code iss} on the response would tell the same, where the provider sends it.)
-   *
-   * @return the error page to send the browser to, or {@code null} when the browser is verified
+   * The error page for a callback that is not this link's, from this browser; {@code null} when it
+   * is.
    */
   private AccountLinkingResult verifyBrowser(
       Tenant tenant,
@@ -157,19 +143,7 @@ public class AccountLinkingCallbackHandler {
       AccountLinkingCallbackRequest request,
       LocalDateTime now) {
     try {
-      if (!session.exists()) {
-        throw new AccountLinkingNotFoundException("Account linking session not found.");
-      }
-      session.verifyNotExpired(now);
-      if (!session.status().isAuthorized()) {
-        throw new AccountLinkingSessionStateException(
-            "Account linking session is not awaiting a callback.");
-      }
-      if (!session.provider().equals(request.provider())) {
-        throw new AccountLinkingInvalidRequestException(
-            "The callback belongs to another provider than the one this link was started with.");
-      }
-      session.verifyBrowserBinding(request.browserBindingSecret());
+      callbackVerifier.verify(session, request, now);
       return null;
     } catch (Exception exception) {
       return errorPage(tenant, session, exception);
