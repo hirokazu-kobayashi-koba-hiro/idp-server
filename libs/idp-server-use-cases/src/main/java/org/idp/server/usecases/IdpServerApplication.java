@@ -803,6 +803,7 @@ public class IdpServerApplication {
             userLifecycleEventPublisher,
             oidcSessionHandler,
             clientConfigurationQueryRepository,
+            authorizationServerConfigurationQueryRepository,
             aesCipher);
     this.rawOAuthFlowApi = oAuthFlowEntryService;
     this.oAuthFlowApi =
@@ -926,7 +927,9 @@ public class IdpServerApplication {
                 new AccountLinkingAuthorizeHandler(
                     accountLinkingSessionQueryRepository,
                     accountLinkingSessionCommandRepository,
-                    accountLinkingConfigurationResolver),
+                    accountLinkingConfigurationResolver,
+                    clientConfigurationQueryRepository,
+                    authorizationServerConfigurationQueryRepository),
                 new AccountLinkingCallbackHandler(
                     accountLinkingSessionQueryRepository,
                     accountLinkingSessionCommandRepository,

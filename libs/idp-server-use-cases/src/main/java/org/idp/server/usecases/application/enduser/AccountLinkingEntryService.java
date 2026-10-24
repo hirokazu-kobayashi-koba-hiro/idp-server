@@ -132,17 +132,19 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
   public AccountLinkingResult authorizeStart(
       TenantIdentifier tenantIdentifier,
       AccountLinkingState state,
+      boolean resumed,
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
     // The subject is established here, not carried over from link. Skipping this check is what
-    // lets an attacker's session be walked through by a victim, so an absent OP session is an
-    // error rather than something to fall through: a step-up authentication belongs here.
+    // lets an attacker's session be walked through by a victim, so an absent OP session is never
+    // fallen through: the browser is sent to sign in as the link's user and back here.
     Optional<OPSession> opSession =
         oidcSessionHandler.getOPSessionFromCookie(tenant, sessionCookieDelegate);
     if (opSession.isEmpty()) {
-      AccountLinkingResult result = authorizeHandler.handleWithoutBrowserSession(tenant, state);
+      AccountLinkingResult result =
+          authorizeHandler.handleWithoutBrowserSession(tenant, state, resumed);
       publish(tenant, result, requestAttributes);
       return result;
     }
@@ -151,7 +153,7 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
     AccountLinkingAuthorizeResult authorization =
         authorizeHandler.handle(
             new AccountLinkingAuthorizeRequest(
-                tenant, state, browserSession.user(), browserSession.authentication()));
+                tenant, state, browserSession.user(), browserSession.authentication(), resumed));
     AccountLinkingResult result = authorization.result();
 
     if (authorization.hasBrowserBinding()) {

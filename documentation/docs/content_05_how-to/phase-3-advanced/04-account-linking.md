@@ -157,6 +157,7 @@ RP のクライアント設定に次を追加します。クライアントの�
 | `extension.linking_return_uris` | 連携が終わったあとにブラウザを戻す先。`link` の `redirect_uri` と**完全一致**で照合する。認可の `redirect_uris` とは別 |
 | `extension.linking_providers` | 連携の開始を許す連携先（`sso_provider`）。書いていない連携先への `link` は `403` |
 | `extension.linking_token_providers` | 保管トークンの取得を許す連携先（`sso_provider`）。書いていない連携先のトークンは取り出せない（`403 unauthorized_client`） |
+| `extension.linking_max_auth_age` | `/linking/start` がそのまま受け入れるログインの新しさ（秒）。古ければその場でログインし直させる。`0` で毎回。省略時は `300` |
 | `token_endpoint_auth_method` | 保管トークンを取得するなら confidential クライアントにする。`none` は拒否される |
 
 RP は認可リクエストの `scope` にもこれらを含め、ユーザーのアクセストークンに付与させます。
@@ -201,13 +202,15 @@ curl -X POST "${IDP_SERVER_URL}/${TENANT_ID}/v1/me/linked-external-accounts/link
 
 idp-server はログインセッションで操作者を確認してから外部IdPへ送り、外部IdPから戻るとトークンを交換して預かり、Step 4 の戻り先へ 302 します。
 
+ブラウザにログインが無いか、ログインがクライアントの `linking_max_auth_age`（既定 300 秒）より古いときは、idp-server がその場で認証画面へ送ります。ログインできるのは連携を始めた本人だけで、ログインが終わると外部IdPへ進みます。RP 側で何かする必要はありません。ネイティブアプリは `start_url` を ASWebAuthenticationSession や Custom Tabs で開いてください（ephemeral でも構いません。WebView は使わないでください）。
+
 ### 5.3 戻り先で結果を処理する
 
 | 戻り先のクエリ | RP がすること |
 |---------------|--------------|
 | `linking=done&state=...` | 連携を確定する（下記） |
 | `linking=failed&error=...&state=...` | エラーを表示する。この連携セッションは削除済みなので、やり直すときは 5.1 から |
-| `linking=failed&error=login_required`（`state` なし） | idp-server へサインインし直してもらい、5.1 からやり直す |
+| `linking=failed&error=login_required`（`state` なし） | 連携の途中のログインが取り消されたか、ブラウザにログインを残せなかった。5.1 からやり直す |
 
 `error` は `access_denied` / `login_required` / `temporarily_unavailable` / `server_error` のどれかです。
 
@@ -355,7 +358,7 @@ cd e2e && npm test -- --testPathPattern=scenario-16
 |------|------|------|
 | `link` が `400`（`redirect_uri is not registered for this client.`） | `redirect_uri` が `linking_return_uris` と一致しない | 末尾のスラッシュまで含めて一致させる |
 | `/me` の連携APIが `403 insufficient_scope` | スコープがテナントかクライアントに無い、または認可リクエストで要求していない | Step 3・4 を確認し、トークンを取り直す |
-| 戻り先に `error=login_required` | `/linking/start` の時点で idp-server のログインセッションが無い | サインインし直してから 5.1 からやり直す。`cookie_same_site` が `Strict` でないか確認 |
+| 戻り先に `error=login_required` | 連携の途中のログインを取り消した、またはログインしてもブラウザにセッションが残らない | 5.1 からやり直す。続くなら `cookie_same_site` が `Strict` でないか、セッションの保存先（Redis）が動いているか確認 |
 | `start_url` を開くとエラー画面 | `{provider}` の名前が `sso_provider` と違う、または連携先が `enabled: false`（`link` は名前を検査しない） | `sso_provider` を確認 |
 | 戻り先に `error=server_error` | 外部IdPでのトークン交換・ID Token 検証・userinfo の失敗 | `client_authentication_type`・`redirect_uri`・`issuer`・`jwks_uri` を確認 |
 | `complete` が `403` | 連携を始めたクライアントと別のクライアントのトークンで確定した | 開始と同じクライアントのトークンを使う |

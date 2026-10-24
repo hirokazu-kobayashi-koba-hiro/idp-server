@@ -17,7 +17,9 @@
 package org.idp.server.account_linking.handler;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 import org.idp.server.account_linking.*;
+import org.idp.server.account_linking.exception.AccountLinkingInvalidRequestException;
 import org.idp.server.account_linking.exception.AccountLinkingNotFoundException;
 import org.idp.server.account_linking.exception.AccountLinkingSessionStateException;
 import org.idp.server.account_linking.io.AccountLinkingAuthorizeRequest;
@@ -26,6 +28,12 @@ import org.idp.server.account_linking.io.AccountLinkingResult;
 import org.idp.server.account_linking.io.AccountLinkingStatus;
 import org.idp.server.account_linking.repository.AccountLinkingSessionCommandRepository;
 import org.idp.server.account_linking.repository.AccountLinkingSessionQueryRepository;
+import org.idp.server.core.openid.authentication.Authentication;
+import org.idp.server.core.openid.oauth.AccountLinkingReauthentication;
+import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
+import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
+import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.federation.sso.oidc.OidcSsoConfiguration;
 import org.idp.server.platform.date.SystemDateTime;
@@ -46,15 +54,23 @@ public class AccountLinkingAuthorizeHandler {
   AccountLinkingSessionQueryRepository sessionQueryRepository;
   AccountLinkingSessionCommandRepository sessionCommandRepository;
   AccountLinkingConfigurationResolver configurationResolver;
+  ClientConfigurationQueryRepository clientConfigurationQueryRepository;
+  AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
   AccountLinkingErrorHandler errorHandler;
 
   public AccountLinkingAuthorizeHandler(
       AccountLinkingSessionQueryRepository sessionQueryRepository,
       AccountLinkingSessionCommandRepository sessionCommandRepository,
-      AccountLinkingConfigurationResolver configurationResolver) {
+      AccountLinkingConfigurationResolver configurationResolver,
+      ClientConfigurationQueryRepository clientConfigurationQueryRepository,
+      AuthorizationServerConfigurationQueryRepository
+          authorizationServerConfigurationQueryRepository) {
     this.sessionQueryRepository = sessionQueryRepository;
     this.sessionCommandRepository = sessionCommandRepository;
     this.configurationResolver = configurationResolver;
+    this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
+    this.authorizationServerConfigurationQueryRepository =
+        authorizationServerConfigurationQueryRepository;
     this.errorHandler = new AccountLinkingErrorHandler();
   }
 
@@ -67,6 +83,17 @@ public class AccountLinkingAuthorizeHandler {
     try {
       AccountLinkingSession session = getSession(tenant, state);
       session.verifyNotExpired(now);
+      // Someone else's browser is turned away before anything else: sending it to sign in as the
+      // link's user would only show that user's sign-in page to a stranger.
+      session.verifyOperator(request.operator().userIdentifier());
+
+      ClientConfiguration client =
+          clientConfigurationQueryRepository.get(tenant, session.requestedClientId());
+      if (!isRecentEnough(request.authentication(), session, client.linkingMaxAuthAge(), now)) {
+        return AccountLinkingAuthorizeResult.of(
+            request.resumed() ? loginRequired(session) : signInAgain(tenant, session, client),
+            null);
+      }
 
       AccountLinkingBrowserBinding browserBinding = AccountLinkingBrowserBinding.generate();
       AccountLinkingSession authorized =
@@ -112,7 +139,7 @@ public class AccountLinkingAuthorizeHandler {
    * would bury the mismatches that event exists to surface.
    */
   public AccountLinkingResult handleWithoutBrowserSession(
-      Tenant tenant, AccountLinkingState state) {
+      Tenant tenant, AccountLinkingState state, boolean resumed) {
     AccountLinkingSession session = sessionQueryRepository.find(tenant, state);
     LocalDateTime now = SystemDateTime.now();
 
@@ -121,7 +148,81 @@ public class AccountLinkingAuthorizeHandler {
           new AccountLinkingErrorPage(tenant, AccountLinkingStatus.NOT_FOUND).value(),
           DefaultSecurityEventType.external_account_link_failed);
     }
+    if (resumed) {
+      return loginRequired(session);
+    }
+    try {
+      ClientConfiguration client =
+          clientConfigurationQueryRepository.get(tenant, session.requestedClientId());
+      return signInAgain(tenant, session, client);
+    } catch (Exception exception) {
+      AccountLinkingResult failure = errorHandler.handle(exception);
+      return failure.redirectingTo(new AccountLinkingErrorPage(tenant, failure.status()).value());
+    }
+  }
 
+  /**
+   * Whether the browser's sign-in may start this link.
+   *
+   * <p>Recent enough is within the client's {@code linking_max_auth_age}, or after this link was
+   * started — that is, the sign-in this server asked for on the way. Without the second, a limit of
+   * 0 could never be met, since the sign-in is always a moment before the browser returns.
+   */
+  static boolean isRecentEnough(
+      Authentication authentication,
+      AccountLinkingSession session,
+      long maxAuthAgeSeconds,
+      LocalDateTime now) {
+    if (authentication == null || authentication.time() == null) {
+      return false;
+    }
+    LocalDateTime signedIn = authentication.time();
+    LocalDateTime linkStarted =
+        session.expiresAt().minusSeconds(AccountLinkingStartHandler.SESSION_DURATION_SECONDS);
+    return !signedIn.isBefore(now.minusSeconds(maxAuthAgeSeconds))
+        || !signedIn.isBefore(linkStarted);
+  }
+
+  /**
+   * Sends the browser to sign in as the link's user, through the ordinary authorization flow, and
+   * back here afterwards.
+   *
+   * <p>The request is the client's own — its id and a redirect URI it registered — so its
+   * authentication policy applies as on any sign-in. {@code login_hint} pins the user who started
+   * the link; {@code prompt=login} asks for a sign-in even over a session. The link's state rides
+   * along as {@link AccountLinkingReauthentication#STATE_PARAMETER}, which makes the flow end at
+   * {@code /linking/start} instead of issuing a code. The PKCE challenge is there for clients that
+   * require one; its verifier is thrown away with the code that is never issued.
+   */
+  private AccountLinkingResult signInAgain(
+      Tenant tenant, AccountLinkingSession session, ClientConfiguration client) {
+    if (client.redirectUris().isEmpty()) {
+      throw new AccountLinkingInvalidRequestException(
+          "The client has no redirect URI to sign in again through.");
+    }
+    AuthorizationServerConfiguration server =
+        authorizationServerConfigurationQueryRepository.get(tenant);
+    AccountLinkingPkce pkce = AccountLinkingPkce.generate();
+
+    HttpQueryParams params = new HttpQueryParams();
+    params.add("response_type", "code");
+    params.add("client_id", session.requestedClientId().value());
+    params.add("redirect_uri", client.redirectUris().get(0));
+    params.add("scope", "openid");
+    params.add("prompt", "login");
+    params.add("login_hint", "sub:" + session.userIdentifier().value());
+    params.add("state", UUID.randomUUID().toString());
+    params.add("nonce", UUID.randomUUID().toString());
+    params.add("code_challenge", pkce.codeChallenge());
+    params.add("code_challenge_method", pkce.codeChallengeMethod());
+    params.add(AccountLinkingReauthentication.STATE_PARAMETER, session.state().value());
+
+    return AccountLinkingResult.redirect(
+        String.format("%s?%s", server.authorizationEndpoint(), params.params()));
+  }
+
+  /** The sign-in did not happen: the RP is told so, without the state, as before. */
+  private static AccountLinkingResult loginRequired(AccountLinkingSession session) {
     return AccountLinkingResult.redirect(
         AccountLinkingReturnUri.failedUnverified(
                 session.redirectUri(), AccountLinkingReturnError.LOGIN_REQUIRED)

@@ -49,6 +49,7 @@ public class ClientExtensionConfiguration implements JsonReadable {
   List<String> linkingReturnUris;
   List<String> linkingProviders;
   List<String> linkingTokenProviders;
+  Long linkingMaxAuthAge;
   Map<String, Object> customProperties = new HashMap<>();
 
   public ClientExtensionConfiguration() {}
@@ -313,6 +314,28 @@ public class ClientExtensionConfiguration implements JsonReadable {
     return linkingTokenProviders != null && !linkingTokenProviders.isEmpty();
   }
 
+  /**
+   * How old a sign-in may be, in seconds, for the user to start a link without signing in again.
+   */
+  static final long DEFAULT_LINKING_MAX_AUTH_AGE = 300;
+
+  /**
+   * The longest time since the browser's sign-in, in seconds, for {@code /linking/start} to accept
+   * it. An older sign-in, or none, is made again before the link goes on; 0 asks for it every time.
+   *
+   * <p>A link attaches access to an external service to the account, as sensitive as changing a
+   * credential, so it is not left to a session signed in long ago. Five minutes when unset.
+   */
+  public long linkingMaxAuthAge() {
+    return linkingMaxAuthAge == null || linkingMaxAuthAge < 0
+        ? DEFAULT_LINKING_MAX_AUTH_AGE
+        : linkingMaxAuthAge;
+  }
+
+  public boolean hasLinkingMaxAuthAge() {
+    return linkingMaxAuthAge != null;
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     if (hasAccessTokenDuration()) map.put("access_token_duration", accessTokenDuration);
@@ -351,6 +374,7 @@ public class ClientExtensionConfiguration implements JsonReadable {
     if (hasLinkingReturnUris()) map.put("linking_return_uris", linkingReturnUris);
     if (hasLinkingProviders()) map.put("linking_providers", linkingProviders);
     if (hasLinkingTokenProviders()) map.put("linking_token_providers", linkingTokenProviders);
+    if (hasLinkingMaxAuthAge()) map.put("linking_max_auth_age", linkingMaxAuthAge);
     if (hasCustomProperties()) map.put("custom_properties", customProperties);
     return map;
   }
