@@ -1973,7 +1973,7 @@ describe("account linking", () => {
         headers,
         body: {
           id: uuidv4(),
-          type: "oidc",
+          type: "account-linking",
           sso_provider: LINKING_PROVIDER,
           enabled: true,
           payload: {

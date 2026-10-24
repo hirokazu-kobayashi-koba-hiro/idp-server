@@ -173,11 +173,11 @@ iframe に埋め込むと third-party 文脈になり、Safari の ITP と Chrom
 
 ### 連携先IdP
 
-`federation-configurations`（`type: oidc`）に登録します。`redirect_uri` には連携用コールバックを指定します。
+`federation-configurations` に `type: account-linking` で登録します。`payload` はログイン用の OIDC の設定（`type: oidc`）と同じ形ですが、別の設定として扱い、ログインと連携で互いに使われません。`redirect_uri` には連携用コールバックを指定します。
 
 ```json
 {
-  "type": "oidc",
+  "type": "account-linking",
   "sso_provider": "example-idp",
   "enabled": true,
   "payload": {
@@ -223,10 +223,6 @@ iframe に埋め込むと third-party 文脈になり、Safari の ITP と Chrom
 | `allow` | 複数ユーザーがそれぞれ自分の連携として保持できる |
 
 **データベース側では一意制約をかけていません。** 保管している外部アカウント識別子は識別子であって identity ではなく（この値で認証する経路はありません）、一律に禁止すると共用の法人アカウントのような正当なケースを塞ぐうえ、先に連携した側が本来の持ち主を締め出せてしまうためです。ログイン用の Federation は `idp_user` 側に一意制約を持っており、そちらは「1つの外部 identity が2人に解決されない」ことを担保する必要があるので事情が異なります。
-
-:::warning ログイン用の設定とは分けてください
-連携はAPIアクセス用のスコープ（例: `drive.readonly`）を要求し、コールバック先も異なります。ログイン用の設定を共用すると、ログインの同意画面にAPIスコープが現れます。
-:::
 
 ### クライアント
 
