@@ -137,10 +137,11 @@ class TenantDataCipherTest {
     }
 
     @Override
-    public List<TenantDataKey> findWrappedByOtherThan(Tenant tenant, String kekId, int limit) {
+    public List<TenantDataKey> findWrappedBy(
+        Tenant tenant, java.util.Set<String> kekIds, int limit) {
       List<TenantDataKey> result = new ArrayList<>();
       for (TenantDataKey k : rows.values()) {
-        if (!k.kekId().equals(kekId) && result.size() < limit) result.add(k);
+        if (kekIds.contains(k.kekId()) && result.size() < limit) result.add(k);
       }
       return result;
     }
@@ -306,6 +307,18 @@ class TenantDataCipherTest {
   }
 
   @Test
+  void rewrapSkipsDataKeysUnderAKekThisServerDoesNotHold() {
+    Store store = new Store();
+    server(store, "lost:" + K1, "lost").sealer(A); // wrapped by a KEK no server holds any more
+    server(store, "k1:" + K1, "k1").sealer(B);
+    DataKeyService rotating = service(store, "k2:" + K2 + ",k1:" + K1, "k2");
+
+    assertEquals(1, rotating.rewrap(A, 100));
+    assertEquals(0, rotating.rewrap(A, 100));
+    assertEquals(1, rotating.report(A).unopenable());
+  }
+
+  @Test
   void removingAKekTooEarlyIsReported() {
     Store store = new Store();
     server(store, "k1:" + K1, "k1").sealer(A).seal("token");
@@ -323,9 +336,26 @@ class TenantDataCipherTest {
 
     String next = service.rotate(A, PURPOSE);
     assertNotEquals(first.keyId(), next);
-    assertFalse(cipher.isCurrent(A, first.keyId()));
+    assertTrue(cipher.isBehindActive(A, first.keyId()));
     assertEquals(next, cipher.sealer(A).keyId());
     assertEquals("old", cipher.open(A, first.keyId(), old));
+  }
+
+  @Test
+  void aServerThatHasNotSeenTheRotationDoesNotMoveDataBack() {
+    Store store = new Store();
+    DataKeyService rotating = service(store, "k1:" + K1, "k1");
+    DataKeyService stale = service(store, "k1:" + K1, "k1");
+    TenantDataCipher onRotating = new TenantDataCipher(rotating, PURPOSE);
+    TenantDataCipher onStale = new TenantDataCipher(stale, PURPOSE);
+    String previous = onRotating.sealer(A).keyId();
+    assertEquals(previous, onStale.sealer(A).keyId()); // read and cached as active here
+
+    String next = rotating.rotate(A, PURPOSE);
+
+    assertTrue(onRotating.isBehindActive(A, previous));
+    assertFalse(onStale.isBehindActive(A, next));
+    assertFalse(onStale.isBehindActive(A, previous));
   }
 
   @Test

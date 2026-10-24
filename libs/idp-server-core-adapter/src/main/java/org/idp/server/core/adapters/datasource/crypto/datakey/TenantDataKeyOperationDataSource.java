@@ -18,6 +18,7 @@ package org.idp.server.core.adapters.datasource.crypto.datakey;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.idp.server.platform.crypto.datakey.TenantDataKey;
 import org.idp.server.platform.crypto.datakey.TenantDataKeyOperationRepository;
 import org.idp.server.platform.crypto.datakey.TenantDataKeyQueries;
@@ -36,10 +37,8 @@ public class TenantDataKeyOperationDataSource implements TenantDataKeyOperationR
   }
 
   @Override
-  public List<TenantDataKey> findWrappedByOtherThan(Tenant tenant, String kekId, int limit) {
-    return executor.selectWrappedByOtherThan(kekId, limit).stream()
-        .map(ModelConverter::convert)
-        .toList();
+  public List<TenantDataKey> findWrappedBy(Tenant tenant, Set<String> kekIds, int limit) {
+    return executor.selectWrappedBy(kekIds, limit).stream().map(ModelConverter::convert).toList();
   }
 
   @Override

@@ -108,7 +108,7 @@ class InMemoryDataKeys implements TenantDataKeyRepository, TenantDataKeyOperatio
   public void updateStatus(Tenant tenant, String id, DataKeyStatus status) {}
 
   @Override
-  public List<TenantDataKey> findWrappedByOtherThan(Tenant tenant, String kekId, int limit) {
+  public List<TenantDataKey> findWrappedBy(Tenant tenant, java.util.Set<String> kekIds, int limit) {
     return List.of();
   }
 

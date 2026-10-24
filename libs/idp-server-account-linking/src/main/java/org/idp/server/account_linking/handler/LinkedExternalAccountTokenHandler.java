@@ -142,9 +142,9 @@ public class LinkedExternalAccountTokenHandler {
       LocalDateTime now = SystemDateTime.now();
       if (isUsable(account, now)) {
         LinkedExternalAccount current =
-            tokenCipher.isCurrent(tenant, account.encryptionKeyId())
-                ? account
-                : reencryptUnderLock(tenant, user.userIdentifier(), request);
+            tokenCipher.isBehindActive(tenant, account.encryptionKeyId())
+                ? reencryptUnderLock(tenant, user.userIdentifier(), request)
+                : account;
         return retrieved(tenant, current, false, requestedClientId, user);
       }
 
@@ -252,8 +252,7 @@ public class LinkedExternalAccountTokenHandler {
   private LinkedExternalAccount refreshUnderLock(
       Tenant tenant, UserIdentifier userIdentifier, LinkedExternalAccountTokenRequest request) {
 
-    LinkedExternalAccount locked =
-        accountQueryRepository.lock(tenant, userIdentifier, request.alias());
+    LinkedExternalAccount locked = lockOrNotFound(tenant, userIdentifier, request);
     LocalDateTime now = SystemDateTime.now();
     if (isUsable(locked, now)) {
       return locked;
@@ -297,9 +296,8 @@ public class LinkedExternalAccountTokenHandler {
   private LinkedExternalAccount reencryptUnderLock(
       Tenant tenant, UserIdentifier userIdentifier, LinkedExternalAccountTokenRequest request) {
 
-    LinkedExternalAccount locked =
-        accountQueryRepository.lock(tenant, userIdentifier, request.alias());
-    if (tokenCipher.isCurrent(tenant, locked.encryptionKeyId())) {
+    LinkedExternalAccount locked = lockOrNotFound(tenant, userIdentifier, request);
+    if (!tokenCipher.isBehindActive(tenant, locked.encryptionKeyId())) {
       return locked;
     }
 
@@ -328,6 +326,21 @@ public class LinkedExternalAccountTokenHandler {
         keyId,
         sealer.keyId());
     return reencrypted;
+  }
+
+  /**
+   * The account, read again under its row lock.
+   *
+   * <p>It was read without the lock first, so an unlink or a deletion may have removed it since.
+   */
+  private LinkedExternalAccount lockOrNotFound(
+      Tenant tenant, UserIdentifier userIdentifier, LinkedExternalAccountTokenRequest request) {
+    LinkedExternalAccount locked =
+        accountQueryRepository.lock(tenant, userIdentifier, request.alias());
+    if (!locked.exists()) {
+      throw LinkedExternalAccountTokenException.notFound("Linked external account not found.");
+    }
+    return locked;
   }
 
   /**
