@@ -1355,6 +1355,17 @@ describe("account linking", () => {
       const withOpenid = await startLink(accessToken, PROVIDER, "openid profile");
       expect(withOpenid.status).toBe(201);
     });
+
+    it("asks the provider for its configured scope when the scope is blank", async () => {
+      // 空の scope は省略と同じ。そのまま外部IdP に送ると openid が付かず、外部アカウントを識別できない。
+      const accessToken = await login(ownerUser);
+      const blank = await startLink(accessToken, PROVIDER, "   ");
+      expect(blank.status).toBe(201);
+      const startResponse = await get({ url: blank.data.start_url });
+      expect(startResponse.status).toBe(302);
+      const scope = new URL(startResponse.headers.location).searchParams.get("scope");
+      expect(scope.split(" ")).toContain("openid");
+    });
   });
 
   describe("failure returns", () => {

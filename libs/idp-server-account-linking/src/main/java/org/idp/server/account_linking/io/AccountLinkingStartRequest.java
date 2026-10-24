@@ -65,8 +65,16 @@ public class AccountLinkingStartRequest {
     return optString("redirect_uri");
   }
 
+  /**
+   * The scope to ask the provider for, or {@code null} for the provider's configured one.
+   *
+   * <p>A blank scope means the same as none. It must not be kept as given: the checks skip a blank
+   * scope as absent, and a blank one stored for the session would be sent to the provider as is,
+   * without the openid the checks would have required.
+   */
   public String scope() {
-    return optString("scope");
+    String scope = optString("scope");
+    return scope == null || scope.isBlank() ? null : scope.trim();
   }
 
   private String optString(String key) {
