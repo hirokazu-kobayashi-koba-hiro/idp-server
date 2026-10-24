@@ -25,7 +25,6 @@ import org.idp.server.control_plane.admin.operation.IdpServerOperationApi;
 import org.idp.server.control_plane.admin.operation.io.IdpServerOperationRequest;
 import org.idp.server.control_plane.admin.operation.io.IdpServerOperationResponse;
 import org.idp.server.control_plane.admin.operation.io.IdpServerOperationStatus;
-import org.idp.server.control_plane.management.tenant.DataKeyPurposes;
 import org.idp.server.core.extension.ciba.repository.BackchannelAuthenticationRequestOperationCommandRepository;
 import org.idp.server.core.extension.ciba.repository.CibaGrantOperationCommandRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationTransactionOperationCommandRepository;
@@ -35,6 +34,7 @@ import org.idp.server.core.openid.identity.contact.ContactVerificationChallengeO
 import org.idp.server.core.openid.oauth.repository.AuthorizationCodeGrantOperationCommandRepository;
 import org.idp.server.core.openid.oauth.repository.AuthorizationRequestOperationCommandRepository;
 import org.idp.server.core.openid.token.repository.OAuthTokenOperationCommandRepository;
+import org.idp.server.platform.crypto.datakey.DataKeyPurposes;
 import org.idp.server.platform.crypto.datakey.DataKeyService;
 import org.idp.server.platform.crypto.datakey.DataKeyStatusReport;
 import org.idp.server.platform.crypto.datakey.TenantDataKey;
@@ -68,6 +68,7 @@ public class IdpServerOperationEntryService implements IdpServerOperationApi {
       clientInstanceRegistrationChallengeOperationCommandRepository;
   AccountLinkingSessionOperationCommandRepository accountLinkingSessionOperationCommandRepository;
   DataKeyService dataKeyService;
+  DataKeyPurposes dataKeyPurposes;
 
   static final int MAX_DELETION_NUMBER = 100000;
   static final int MAX_REWRAP_NUMBER = 10000;
@@ -90,7 +91,8 @@ public class IdpServerOperationEntryService implements IdpServerOperationApi {
           clientInstanceRegistrationChallengeOperationCommandRepository,
       AccountLinkingSessionOperationCommandRepository
           accountLinkingSessionOperationCommandRepository,
-      DataKeyService dataKeyService) {
+      DataKeyService dataKeyService,
+      DataKeyPurposes dataKeyPurposes) {
     this.tenantQueryRepository = tenantQueryRepository;
     this.oAuthTokenOperationCommandRepository = oAuthTokenOperationCommandRepository;
     this.authenticationTransactionOperationCommandRepository =
@@ -110,6 +112,7 @@ public class IdpServerOperationEntryService implements IdpServerOperationApi {
     this.accountLinkingSessionOperationCommandRepository =
         accountLinkingSessionOperationCommandRepository;
     this.dataKeyService = dataKeyService;
+    this.dataKeyPurposes = dataKeyPurposes;
   }
 
   @Override
@@ -272,12 +275,13 @@ public class IdpServerOperationEntryService implements IdpServerOperationApi {
 
     String tenantId = request.optString("tenant_id");
     Object purposeValue = request.get("purpose");
-    String purpose = purposeValue == null ? DataKeyPurposes.DEFAULT : purposeValue.toString();
+    String purpose =
+        purposeValue == null ? dataKeyPurposes.soleName().orElse(null) : purposeValue.toString();
     if (tenantId == null || !isUuid(tenantId)) {
       return invalidRequest("tenant_id is required and must be a UUID.");
     }
-    if (!DataKeyPurposes.isKnown(purpose)) {
-      return invalidRequest("purpose must be one of " + DataKeyPurposes.ALL + ".");
+    if (purpose == null || !dataKeyPurposes.isKnown(purpose)) {
+      return invalidRequest("purpose must be one of " + dataKeyPurposes.names() + ".");
     }
 
     // A disabled tenant is included: stopping a tenant is a likely first step when its key is

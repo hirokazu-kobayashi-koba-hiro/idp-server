@@ -18,14 +18,13 @@ package org.idp.server.usecases.control_plane.system_manager;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.account_linking.LinkedAccountProviderUsage;
-import org.idp.server.account_linking.repository.LinkedExternalAccountQueryRepository;
 import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.management.federation.FederationConfigurationManagementApi;
 import org.idp.server.control_plane.management.federation.handler.*;
 import org.idp.server.control_plane.management.federation.io.*;
 import org.idp.server.core.openid.federation.FederationConfigurationIdentifier;
+import org.idp.server.core.openid.federation.FederationConfigurationRules;
 import org.idp.server.core.openid.federation.FederationQueries;
 import org.idp.server.core.openid.federation.repository.FederationConfigurationCommandRepository;
 import org.idp.server.core.openid.federation.repository.FederationConfigurationQueryRepository;
@@ -70,12 +69,14 @@ public class FederationConfigurationManagementEntryService
       TenantQueryRepository tenantQueryRepository,
       FederationConfigurationQueryRepository federationConfigurationQueryRepository,
       FederationConfigurationCommandRepository federationConfigurationCommandRepository,
-      LinkedExternalAccountQueryRepository linkedExternalAccountQueryRepository,
+      FederationConfigurationRules federationConfigurationRules,
       AuditLogPublisher auditLogPublisher) {
 
     Map<String, FederationConfigManagementService<?>> services = new HashMap<>();
     services.put(
-        "create", new FederationConfigCreationService(federationConfigurationCommandRepository));
+        "create",
+        new FederationConfigCreationService(
+            federationConfigurationCommandRepository, federationConfigurationRules));
     services.put(
         "findList", new FederationConfigFindListService(federationConfigurationQueryRepository));
     services.put("get", new FederationConfigFindService(federationConfigurationQueryRepository));
@@ -84,13 +85,13 @@ public class FederationConfigurationManagementEntryService
         new FederationConfigUpdateService(
             federationConfigurationQueryRepository,
             federationConfigurationCommandRepository,
-            new LinkedAccountProviderUsage(linkedExternalAccountQueryRepository)));
+            federationConfigurationRules));
     services.put(
         "delete",
         new FederationConfigDeletionService(
             federationConfigurationQueryRepository,
             federationConfigurationCommandRepository,
-            new LinkedAccountProviderUsage(linkedExternalAccountQueryRepository)));
+            federationConfigurationRules));
 
     this.handler = new FederationConfigManagementHandler(services, this, tenantQueryRepository);
     this.auditLogPublisher = auditLogPublisher;

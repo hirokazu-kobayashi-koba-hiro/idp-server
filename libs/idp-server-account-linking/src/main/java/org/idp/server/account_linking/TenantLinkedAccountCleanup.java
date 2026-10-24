@@ -23,6 +23,7 @@ import org.idp.server.account_linking.repository.LinkedExternalAccountCommandRep
 import org.idp.server.account_linking.repository.LinkedExternalAccountQueryRepository;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantDeletionStep;
 
 /**
  * Revokes every external token a tenant holds, before the tenant is deleted.
@@ -35,7 +36,7 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
  * time, so the next page is always the rows still left. Revocation is best effort, as on unlink.
  * Every token takes a call to the external IdP, so the time grows with the number of links.
  */
-public class TenantLinkedAccountCleanup {
+public class TenantLinkedAccountCleanup implements TenantDeletionStep {
 
   static final int PAGE_SIZE = 500;
 
@@ -57,6 +58,16 @@ public class TenantLinkedAccountCleanup {
     this.sessionQueryRepository = sessionQueryRepository;
     this.sessionCommandRepository = sessionCommandRepository;
     this.revoker = revoker;
+  }
+
+  @Override
+  public String name() {
+    return "linked-external-account-revocation";
+  }
+
+  @Override
+  public void beforeDeletion(Tenant tenant) {
+    cleanup(tenant);
   }
 
   /** Revokes and removes the tenant's links and parked linking sessions. */

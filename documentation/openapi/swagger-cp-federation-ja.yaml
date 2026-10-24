@@ -195,12 +195,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-        '409':
-          description: アカウント連携の連携先として使われていて、連携がまだ残っています。先に連携を削除してください
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LinkedAccountConflict'
     delete:
       summary: Delete federation configuration
       description: 既存のフェデレーション設定を削除します
@@ -239,7 +233,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '409':
-          description: アカウント連携の連携先として使われていて、連携がまだ残っています。先に連携を削除してください
+          description: この設定にまだ依存するデータがあります（アカウント連携の連携先なら、残っている連携）。先に削除してください
           content:
             application/json:
               schema:
@@ -292,22 +286,21 @@ components:
     LinkedAccountConflict:
       type: object
       description: |
-        連携が残っている連携先の削除、または type / sso_provider の変更を拒否したときの応答。
-        dry_run=true でも同じ応答を返します。
+        依存するデータが残っている設定の削除を拒否したときの応答。dry_run=true でも同じ応答を返します。
+        依存するデータの件数が、名前ごとに入ります（アカウント連携の連携先なら `linked_external_accounts`）。
       properties:
         error:
           type: string
           example: conflict
         error_description:
           type: string
-          example: Linked external accounts still use this provider. Remove them first.
+          example: Data still depends on this federation configuration. Remove it first.
         linked_external_accounts:
           type: integer
           description: この連携先を使っている連携の数
       required:
       - error
       - error_description
-      - linked_external_accounts
     ErrorResponse:
       type: object
       properties:

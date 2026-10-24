@@ -42,6 +42,11 @@ public enum DuplicateLinkPolicy {
     };
   }
 
+  /** Whether the value names a policy, so a misspelling is not taken silently for the default. */
+  public static boolean isKnown(String value) {
+    return value != null && (value.equalsIgnoreCase("allow") || value.equalsIgnoreCase("reject"));
+  }
+
   public boolean isReject() {
     return this == REJECT;
   }

@@ -97,7 +97,7 @@ curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/t
 
 ログイン用の設定例にある `store_credentials` と `access_token_expires_in` は、連携では読みません。アクセストークンの期限は外部IdPのトークン応答の `expires_in` で決まります。
 
-連携が 1 件でも残っている間は、この設定の削除と、`type` / `sso_provider` の変更は `409` になります（`dry_run=true` でも同じ）。応答の `linked_external_accounts` が残っている連携の数です。先に [管理APIでの確認・解除](#管理apiでの確認解除) で連携を解除してください。連携先を消すときは、まず `enabled: false` にして新しい連携を止めてから、残った連携を解除し、最後に削除します。無効にしないまま進めると、解除と削除の間に新しい連携ができることがあります。
+登録と更新のときに中身を確かめ、必須の項目が無い、`redirect_uri` がこの連携先のコールバックでない、`duplicate_link_policy` の値が違う、`openid` を入れたのに `issuer` / `jwks_uri` が無い、といった設定は `400` になります。`type` と `sso_provider` は後から変えられません（`400`）。連携が 1 件でも残っている間は、この設定の削除は `409` になります（`dry_run=true` でも同じ）。応答の `linked_external_accounts` が残っている連携の数です。先に [管理APIでの確認・解除](#管理apiでの確認解除) で連携を解除してください。連携先を消すときは、まず `enabled: false` にして新しい連携を止めてから、残った連携を解除し、最後に削除します。無効にしないまま進めると、解除と削除の間に新しい連携ができることがあります。
 
 **実例**:
 - `config/examples/standard-oidc-web-app/federation-account-linking.json` - サンプルアプリ用

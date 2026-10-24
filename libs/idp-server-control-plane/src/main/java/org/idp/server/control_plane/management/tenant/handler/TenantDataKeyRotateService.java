@@ -19,13 +19,13 @@ import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.control_plane.management.exception.InvalidRequestException;
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
-import org.idp.server.control_plane.management.tenant.DataKeyPurposes;
 import org.idp.server.control_plane.management.tenant.TenantManagementContextBuilder;
 import org.idp.server.control_plane.management.tenant.io.TenantDataKeyRotateRequest;
 import org.idp.server.control_plane.management.tenant.io.TenantManagementResponse;
 import org.idp.server.control_plane.management.tenant.io.TenantManagementStatus;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.crypto.datakey.DataKeyPurposes;
 import org.idp.server.platform.crypto.datakey.DataKeyService;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
@@ -43,10 +43,15 @@ public class TenantDataKeyRotateService
   TenantQueryRepository tenantQueryRepository;
   DataKeyService dataKeyService;
 
+  DataKeyPurposes dataKeyPurposes;
+
   public TenantDataKeyRotateService(
-      TenantQueryRepository tenantQueryRepository, DataKeyService dataKeyService) {
+      TenantQueryRepository tenantQueryRepository,
+      DataKeyService dataKeyService,
+      DataKeyPurposes dataKeyPurposes) {
     this.tenantQueryRepository = tenantQueryRepository;
     this.dataKeyService = dataKeyService;
+    this.dataKeyPurposes = dataKeyPurposes;
   }
 
   @Override
@@ -66,9 +71,11 @@ public class TenantDataKeyRotateService
     }
     builder.withBefore(tenant);
     String purpose =
-        request.purpose() == null ? DataKeyPurposes.DEFAULT : request.purpose().toString();
-    if (!DataKeyPurposes.isKnown(purpose)) {
-      throw new InvalidRequestException("purpose must be one of " + DataKeyPurposes.ALL + ".");
+        request.purpose() == null
+            ? dataKeyPurposes.soleName().orElse(null)
+            : request.purpose().toString();
+    if (purpose == null || !dataKeyPurposes.isKnown(purpose)) {
+      throw new InvalidRequestException("purpose must be one of " + dataKeyPurposes.names() + ".");
     }
 
     Map<String, Object> response = new HashMap<>();
