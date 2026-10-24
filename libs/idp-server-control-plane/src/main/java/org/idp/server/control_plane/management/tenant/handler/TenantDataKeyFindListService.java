@@ -19,8 +19,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.account_linking.AccountLinkingTokenCipher;
-import org.idp.server.account_linking.repository.LinkedExternalAccountQueryRepository;
 import org.idp.server.control_plane.management.exception.InvalidRequestException;
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
 import org.idp.server.control_plane.management.tenant.TenantManagementContextBuilder;
@@ -29,6 +27,7 @@ import org.idp.server.control_plane.management.tenant.io.TenantManagementRespons
 import org.idp.server.control_plane.management.tenant.io.TenantManagementStatus;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.crypto.datakey.DataKeyPurposes;
 import org.idp.server.platform.crypto.datakey.DataKeyService;
 import org.idp.server.platform.crypto.datakey.DataKeyStatus;
 import org.idp.server.platform.crypto.datakey.TenantDataKey;
@@ -39,24 +38,24 @@ import org.idp.server.platform.type.RequestAttributes;
 /**
  * Lists every generation of a tenant's data keys, without the key material.
  *
- * <p>Each key of the account linking purpose comes with how many links it still encrypts: an older
- * generation at zero no longer holds anything. A tenant has a handful of keys, so they are not
- * paged.
+ * <p>Each key comes with how much of its purpose's data it still encrypts, as the purpose reports
+ * it: an older generation at zero no longer holds anything. A tenant has a handful of keys, so they
+ * are not paged.
  */
 public class TenantDataKeyFindListService
     implements TenantManagementService<TenantDataKeyFindListRequest> {
 
   TenantQueryRepository tenantQueryRepository;
   DataKeyService dataKeyService;
-  LinkedExternalAccountQueryRepository linkedExternalAccountQueryRepository;
+  DataKeyPurposes dataKeyPurposes;
 
   public TenantDataKeyFindListService(
       TenantQueryRepository tenantQueryRepository,
       DataKeyService dataKeyService,
-      LinkedExternalAccountQueryRepository linkedExternalAccountQueryRepository) {
+      DataKeyPurposes dataKeyPurposes) {
     this.tenantQueryRepository = tenantQueryRepository;
     this.dataKeyService = dataKeyService;
-    this.linkedExternalAccountQueryRepository = linkedExternalAccountQueryRepository;
+    this.dataKeyPurposes = dataKeyPurposes;
   }
 
   @Override
@@ -85,11 +84,9 @@ public class TenantDataKeyFindListService
         continue;
       }
       Map<String, Object> item = key.toMap();
-      if (AccountLinkingTokenCipher.PURPOSE.equals(key.purpose())) {
-        item.put(
-            "linked_external_accounts",
-            linkedExternalAccountQueryRepository.countByDataKey(tenant, key.id()));
-      }
+      dataKeyPurposes
+          .of(key.purpose())
+          .ifPresent(purpose -> item.put(purpose.dataName(), purpose.countUnder(tenant, key.id())));
       list.add(item);
     }
 

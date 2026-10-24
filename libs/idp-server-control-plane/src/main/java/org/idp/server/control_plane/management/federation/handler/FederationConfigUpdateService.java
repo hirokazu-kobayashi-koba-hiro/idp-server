@@ -18,7 +18,6 @@ package org.idp.server.control_plane.management.federation.handler;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.account_linking.LinkedAccountProviderUsage;
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
 import org.idp.server.control_plane.management.federation.FederationConfigManagementContextBuilder;
 import org.idp.server.control_plane.management.federation.io.FederationConfigManagementResponse;
@@ -26,6 +25,7 @@ import org.idp.server.control_plane.management.federation.io.FederationConfigMan
 import org.idp.server.control_plane.management.federation.io.FederationConfigRequest;
 import org.idp.server.control_plane.management.federation.io.FederationConfigUpdateRequest;
 import org.idp.server.core.openid.federation.FederationConfiguration;
+import org.idp.server.core.openid.federation.FederationConfigurationRules;
 import org.idp.server.core.openid.federation.repository.FederationConfigurationCommandRepository;
 import org.idp.server.core.openid.federation.repository.FederationConfigurationQueryRepository;
 import org.idp.server.core.openid.identity.User;
@@ -47,15 +47,15 @@ public class FederationConfigUpdateService
 
   private final FederationConfigurationQueryRepository queryRepository;
   private final FederationConfigurationCommandRepository commandRepository;
-  private final LinkedAccountProviderUsage linkedAccountProviderUsage;
+  private final FederationConfigurationChecks checks;
 
   public FederationConfigUpdateService(
       FederationConfigurationQueryRepository queryRepository,
       FederationConfigurationCommandRepository commandRepository,
-      LinkedAccountProviderUsage linkedAccountProviderUsage) {
+      FederationConfigurationRules rules) {
     this.queryRepository = queryRepository;
     this.commandRepository = commandRepository;
-    this.linkedAccountProviderUsage = linkedAccountProviderUsage;
+    this.checks = new FederationConfigurationChecks(rules);
   }
 
   @Override
@@ -84,14 +84,8 @@ public class FederationConfigUpdateService
     builder.withBefore(before);
     builder.withAfter(after);
 
-    // Links find this configuration by its type and sso_provider. Changed while links remain, they
-    // could no longer refresh or revoke their stored tokens.
-    if (LinkedAccountProviderUsage.changesLinkingKey(before, after)) {
-      long links = linkedAccountProviderUsage.linksOf(tenant, before);
-      if (links > 0) {
-        return LinkedAccountConflict.response(links);
-      }
-    }
+    checks.verifyUpdate(before, after);
+    checks.verifyUsable(after);
 
     // 4. Build response with diff
     JsonNodeWrapper beforeJson = JsonNodeWrapper.fromMap(before.toMap());

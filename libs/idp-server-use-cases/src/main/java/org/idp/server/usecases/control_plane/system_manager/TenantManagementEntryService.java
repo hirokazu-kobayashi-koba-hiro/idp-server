@@ -18,8 +18,6 @@ package org.idp.server.usecases.control_plane.system_manager;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.account_linking.TenantLinkedAccountCleanup;
-import org.idp.server.account_linking.repository.LinkedExternalAccountQueryRepository;
 import org.idp.server.control_plane.base.AdminAuthenticationContext;
 import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.base.verifier.TenantVerifier;
@@ -31,10 +29,12 @@ import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationCommandRepository;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogPublisher;
+import org.idp.server.platform.crypto.datakey.DataKeyPurposes;
 import org.idp.server.platform.crypto.datakey.DataKeyService;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.platform.multi_tenancy.tenant.TenantCommandRepository;
+import org.idp.server.platform.multi_tenancy.tenant.TenantDeletionSteps;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
@@ -52,9 +52,9 @@ public class TenantManagementEntryService implements TenantManagementApi {
       AuthorizationServerConfigurationCommandRepository
           authorizationServerConfigurationCommandRepository,
       UserCommandRepository userCommandRepository,
-      TenantLinkedAccountCleanup linkedAccountCleanup,
+      TenantDeletionSteps tenantDeletionSteps,
       DataKeyService dataKeyService,
-      LinkedExternalAccountQueryRepository linkedExternalAccountQueryRepository,
+      DataKeyPurposes dataKeyPurposes,
       AuditLogPublisher auditLogPublisher) {
     this.auditLogPublisher = auditLogPublisher;
 
@@ -72,9 +72,9 @@ public class TenantManagementEntryService implements TenantManagementApi {
             authorizationServerConfigurationCommandRepository,
             userCommandRepository,
             tenantManagementVerifier,
-            linkedAccountCleanup,
+            tenantDeletionSteps,
             dataKeyService,
-            linkedExternalAccountQueryRepository);
+            dataKeyPurposes);
   }
 
   private TenantManagementHandler createHandler(
@@ -85,9 +85,9 @@ public class TenantManagementEntryService implements TenantManagementApi {
           authorizationServerConfigurationCommandRepository,
       UserCommandRepository userCommandRepository,
       TenantManagementVerifier tenantManagementVerifier,
-      TenantLinkedAccountCleanup linkedAccountCleanup,
+      TenantDeletionSteps tenantDeletionSteps,
       DataKeyService dataKeyService,
-      LinkedExternalAccountQueryRepository linkedExternalAccountQueryRepository) {
+      DataKeyPurposes dataKeyPurposes) {
 
     Map<String, TenantManagementService<?>> services = new HashMap<>();
 
@@ -109,13 +109,13 @@ public class TenantManagementEntryService implements TenantManagementApi {
     services.put(
         "delete",
         new TenantDeletionService(
-            tenantQueryRepository, tenantCommandRepository, linkedAccountCleanup));
+            tenantQueryRepository, tenantCommandRepository, tenantDeletionSteps));
     services.put(
         "findDataKeys",
-        new TenantDataKeyFindListService(
-            tenantQueryRepository, dataKeyService, linkedExternalAccountQueryRepository));
+        new TenantDataKeyFindListService(tenantQueryRepository, dataKeyService, dataKeyPurposes));
     services.put(
-        "rotateDataKey", new TenantDataKeyRotateService(tenantQueryRepository, dataKeyService));
+        "rotateDataKey",
+        new TenantDataKeyRotateService(tenantQueryRepository, dataKeyService, dataKeyPurposes));
 
     return new TenantManagementHandler(services, this, tenantQueryRepository);
   }

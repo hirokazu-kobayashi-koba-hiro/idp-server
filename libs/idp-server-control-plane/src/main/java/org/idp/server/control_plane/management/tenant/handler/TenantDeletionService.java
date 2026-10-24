@@ -18,7 +18,6 @@ package org.idp.server.control_plane.management.tenant.handler;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.account_linking.TenantLinkedAccountCleanup;
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
 import org.idp.server.control_plane.management.tenant.TenantManagementContextBuilder;
 import org.idp.server.control_plane.management.tenant.io.TenantDeleteRequest;
@@ -28,6 +27,7 @@ import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantCommandRepository;
+import org.idp.server.platform.multi_tenancy.tenant.TenantDeletionSteps;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
@@ -41,26 +41,26 @@ import org.idp.server.platform.type.RequestAttributes;
  *
  * <ul>
  *   <li>Tenant existence verification
- *   <li>Revocation of the external tokens the tenant's linked accounts hold
+ *   <li>Each feature's work before the deletion (e.g. revoking linked accounts' external tokens)
  *   <li>Tenant deletion from repository
  * </ul>
  *
- * <p>The tenant's rows go with it through foreign key cascades, which revoke nothing at external
- * IdPs. Linked accounts are revoked and removed first so their tokens do not outlive the tenant.
+ * <p>The tenant's rows go with it through foreign key cascades, which do nothing outside this
+ * database. Features undo what they hold elsewhere first, through {@link TenantDeletionSteps}.
  */
 public class TenantDeletionService implements TenantManagementService<TenantDeleteRequest> {
 
   private final TenantQueryRepository tenantQueryRepository;
   private final TenantCommandRepository tenantCommandRepository;
-  private final TenantLinkedAccountCleanup linkedAccountCleanup;
+  private final TenantDeletionSteps deletionSteps;
 
   public TenantDeletionService(
       TenantQueryRepository tenantQueryRepository,
       TenantCommandRepository tenantCommandRepository,
-      TenantLinkedAccountCleanup linkedAccountCleanup) {
+      TenantDeletionSteps deletionSteps) {
     this.tenantQueryRepository = tenantQueryRepository;
     this.tenantCommandRepository = tenantCommandRepository;
-    this.linkedAccountCleanup = linkedAccountCleanup;
+    this.deletionSteps = deletionSteps;
   }
 
   @Override
@@ -91,8 +91,8 @@ public class TenantDeletionService implements TenantManagementService<TenantDele
       return new TenantManagementResponse(TenantManagementStatus.OK, response);
     }
 
-    // 3. Revoke external tokens the cascade below would drop unrevoked
-    linkedAccountCleanup.cleanup(before);
+    // 3. What features hold outside this database, undone while the rows still say what it is
+    deletionSteps.runBefore(before);
 
     // 4. Repository operation
     tenantCommandRepository.delete(tenantIdentifier);

@@ -24,7 +24,6 @@ import org.idp.server.account_linking.AccountLinkingConfigurationResolver;
 import org.idp.server.account_linking.AccountLinkingCookieDelegate;
 import org.idp.server.account_linking.AccountLinkingTokenCipher;
 import org.idp.server.account_linking.LinkedExternalAccountRevoker;
-import org.idp.server.account_linking.TenantLinkedAccountCleanup;
 import org.idp.server.account_linking.gateway.ExternalIdpIdTokenGateway;
 import org.idp.server.account_linking.gateway.ExternalIdpTokenGateway;
 import org.idp.server.account_linking.gateway.ExternalIdpUserinfoGateway;
@@ -138,6 +137,7 @@ import org.idp.server.core.openid.clientinstance.registration.ClientInstanceRegi
 import org.idp.server.core.openid.clientinstance.registration.ClientInstanceRegistrationProtocol;
 import org.idp.server.core.openid.clientinstance.registration.ClientInstanceRegistrationProtocols;
 import org.idp.server.core.openid.discovery.*;
+import org.idp.server.core.openid.federation.FederationConfigurationRules;
 import org.idp.server.core.openid.federation.FederationInteractors;
 import org.idp.server.core.openid.federation.plugin.FederationDependencyContainer;
 import org.idp.server.core.openid.federation.repository.FederationConfigurationCommandRepository;
@@ -213,6 +213,7 @@ import org.idp.server.platform.crypto.AesCipher;
 import org.idp.server.platform.crypto.EncryptionKeyring;
 import org.idp.server.platform.crypto.HmacHasher;
 import org.idp.server.platform.crypto.ServerNonceCodec;
+import org.idp.server.platform.crypto.datakey.DataKeyPurposes;
 import org.idp.server.platform.crypto.datakey.DataKeyService;
 import org.idp.server.platform.crypto.datakey.TenantDataCipher;
 import org.idp.server.platform.crypto.datakey.TenantDataKeyOperationRepository;
@@ -233,6 +234,7 @@ import org.idp.server.platform.http.SsrfProtectedHttpClient;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationTenantResolverApi;
 import org.idp.server.platform.multi_tenancy.tenant.*;
+import org.idp.server.platform.multi_tenancy.tenant.TenantDeletionSteps;
 import org.idp.server.platform.notification.email.EmailSenders;
 import org.idp.server.platform.notification.sms.SmsSenders;
 import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
@@ -726,6 +728,13 @@ public class IdpServerApplication {
     AuthenticationInteractors authenticationInteractors =
         AuthenticationInteractorPluginLoader.load(authenticationDependencyContainer);
 
+    // What features contribute to managing tenants, federation configurations and data keys.
+    // Loaded with the user lifecycle executors, once the components they resolve are registered.
+    FederationConfigurationRules federationConfigurationRules =
+        FederationConfigurationRules.load(applicationComponentContainer);
+    TenantDeletionSteps tenantDeletionSteps =
+        TenantDeletionSteps.load(applicationComponentContainer);
+    DataKeyPurposes dataKeyPurposes = DataKeyPurposes.load(applicationComponentContainer);
     UserLifecycleEventExecutorsMap userLifecycleEventExecutorsMap =
         UserLifecycleEventExecutorPluginLoader.load(
             applicationComponentContainer, authenticationDependencyContainer);
@@ -761,7 +770,8 @@ public class IdpServerApplication {
                 clientInstanceRegistrationChallengeOperationCommandRepository,
                 applicationComponentContainer.resolve(
                     AccountLinkingSessionOperationCommandRepository.class),
-                dataKeyService),
+                dataKeyService,
+                dataKeyPurposes),
             IdpServerOperationApi.class,
             databaseTypeProvider);
 
@@ -907,13 +917,6 @@ public class IdpServerApplication {
             accountLinkingConfigurationResolver,
             new ExternalIdpTokenGateway(httpRequestExecutor),
             accountLinkingTokenCipher);
-    TenantLinkedAccountCleanup tenantLinkedAccountCleanup =
-        new TenantLinkedAccountCleanup(
-            linkedExternalAccountQueryRepository,
-            linkedExternalAccountCommandRepository,
-            accountLinkingSessionQueryRepository,
-            accountLinkingSessionCommandRepository,
-            linkedExternalAccountRevoker);
     this.accountLinkingApi =
         TenantAwareEntryServiceProxy.createProxy(
             new AccountLinkingEntryService(
@@ -1156,9 +1159,9 @@ public class IdpServerApplication {
                 organizationRepository,
                 authorizationServerConfigurationCommandRepository,
                 userCommandRepository,
-                tenantLinkedAccountCleanup,
+                tenantDeletionSteps,
                 dataKeyService,
-                linkedExternalAccountQueryRepository,
+                dataKeyPurposes,
                 auditLogPublisher),
             TenantManagementApi.class,
             databaseTypeProvider);
@@ -1286,7 +1289,7 @@ public class IdpServerApplication {
                 tenantQueryRepository,
                 federationConfigurationQueryRepository,
                 federationConfigurationCommandRepository,
-                linkedExternalAccountQueryRepository,
+                federationConfigurationRules,
                 auditLogPublisher),
             FederationConfigurationManagementApi.class,
             databaseTypeProvider);
@@ -1424,9 +1427,9 @@ public class IdpServerApplication {
                 organizationRepository,
                 authorizationServerConfigurationCommandRepository,
                 userCommandRepository,
-                tenantLinkedAccountCleanup,
+                tenantDeletionSteps,
                 dataKeyService,
-                linkedExternalAccountQueryRepository,
+                dataKeyPurposes,
                 auditLogPublisher),
             OrgTenantManagementApi.class,
             databaseTypeProvider);
@@ -1523,7 +1526,7 @@ public class IdpServerApplication {
                 organizationRepository,
                 federationConfigurationQueryRepository,
                 federationConfigurationCommandRepository,
-                linkedExternalAccountQueryRepository,
+                federationConfigurationRules,
                 auditLogPublisher),
             OrgFederationConfigManagementApi.class,
             databaseTypeProvider);

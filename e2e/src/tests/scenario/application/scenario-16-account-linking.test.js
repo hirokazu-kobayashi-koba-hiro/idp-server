@@ -1267,7 +1267,7 @@ describe("account linking", () => {
       expect(response.data.total_count).toBe(2);
     });
 
-    it("refuses to remove or rename a provider that links still use", async () => {
+    it("refuses to remove a provider that links still use, and never renames one", async () => {
       const configUrl = `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/federation-configurations/9e3b7d52-1c48-4a06-b7f9-2d5e8c0a4f13`;
       const current = await get({ url: configUrl, headers: { Authorization: `Bearer ${adminToken}` } });
       expect(current.status).toBe(200);
@@ -1283,7 +1283,27 @@ describe("account linking", () => {
         headers: { Authorization: `Bearer ${adminToken}` },
         body: { ...current.data, sso_provider: `${PROVIDER_FILTER}-renamed` },
       });
-      expect(rename.status).toBe(409);
+      // 連携は連携先を名前で引くので、連携の有無に関係なく名前と種類は変えられない（400）。
+      expect(rename.status).toBe(400);
+
+      const retyped = await putWithJson({
+        url: `${configUrl}?dry_run=true`,
+        headers: { Authorization: `Bearer ${adminToken}` },
+        body: { ...current.data, type: "oidc" },
+      });
+      expect(retyped.status).toBe(400);
+
+      // 使えない設定（別の連携先のコールバック）は、更新の時点で断る。
+      const broken = await putWithJson({
+        url: `${configUrl}?dry_run=true`,
+        headers: { Authorization: `Bearer ${adminToken}` },
+        body: {
+          ...current.data,
+          payload: { ...current.data.payload, redirect_uri: `${backendUrl}/${serverConfig.tenantId}/v1/linking/callback/other` },
+        },
+      });
+      expect(broken.status).toBe(400);
+      expect(JSON.stringify(broken.data.error_messages)).toContain("redirect_uri");
 
       // 名前と種類を変えない更新は通る。
       const unchanged = await putWithJson({

@@ -13,19 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.idp.server.control_plane.management.tenant;
+package org.idp.server.core.openid.federation;
 
-import java.util.Set;
-import org.idp.server.account_linking.AccountLinkingTokenCipher;
+import org.idp.server.platform.dependency.ApplicationComponentContainer;
 
-/** The purposes a tenant's data key exists for, and so the ones an administrator may rotate. */
-public class DataKeyPurposes {
+public interface FederationConfigurationRuleFactory {
 
-  public static final String DEFAULT = AccountLinkingTokenCipher.PURPOSE;
-
-  public static final Set<String> ALL = Set.of(AccountLinkingTokenCipher.PURPOSE);
-
-  public static boolean isKnown(String purpose) {
-    return ALL.contains(purpose);
-  }
+  FederationConfigurationRule create(ApplicationComponentContainer applicationComponentContainer);
 }
