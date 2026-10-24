@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 430" width="980" height="430" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans JP', sans-serif">
+  <title>保管トークンを守る 2 段の鍵</title>
+  <desc>環境変数の鍵暗号化鍵がテナントごとのデータ鍵を包み、データ鍵が連携の行のトークンを暗号化する構成。鍵暗号化鍵を替えて書き換わるのはデータ鍵の表だけであることを示す</desc>
+
+  <rect width="980" height="430" fill="#ffffff"/>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#8a94a0"/>
+    </marker>
+  </defs>
+
+  <!-- ── column headers ─────────────────────────────────── -->
+  <text x="32" y="36" font-size="15" font-weight="700" fill="#1a1a1a">鍵暗号化鍵（KEK）</text>
+  <text x="362" y="36" font-size="15" font-weight="700" fill="#1a1a1a">データ鍵（DEK）</text>
+  <text x="692" y="36" font-size="15" font-weight="700" fill="#1a1a1a">保管トークン</text>
+
+  <!-- ── KEK column ─────────────────────────────────────── -->
+  <rect x="32" y="52" width="270" height="290" rx="10" fill="#fbf7f0" stroke="#d8c4a0"/>
+  <text x="48" y="78" font-size="12" font-weight="700" fill="#7a5a2a">環境変数 ENCRYPTION_KEYS</text>
+
+  <g>
+    <rect x="52" y="98" width="230" height="58" rx="8" fill="#f7f0e6" stroke="#d8c4a0"/>
+    <text x="68" y="122" font-size="13" font-weight="700" fill="#1a1a1a">k2026</text>
+    <text x="68" y="142" font-size="11" fill="#5a6470">active：新しい DEK を包む</text>
+  </g>
+  <g>
+    <rect x="52" y="186" width="230" height="58" rx="8" fill="#f7f0e6" stroke="#d8c4a0"/>
+    <text x="68" y="210" font-size="13" font-weight="700" fill="#1a1a1a">default</text>
+    <text x="68" y="230" font-size="11" fill="#5a6470">passive：包んだ DEK を開くだけ</text>
+  </g>
+  <text x="48" y="326" font-size="11" fill="#7a5a2a">デプロイ全体で数本。DB には置かない</text>
+
+  <!-- ── DEK column ─────────────────────────────────────── -->
+  <rect x="362" y="52" width="270" height="290" rx="10" fill="#f4f6f9" stroke="#c8cdd4"/>
+  <text x="378" y="78" font-size="12" font-weight="700" fill="#3a4450">tenant_data_keys</text>
+
+  <g>
+    <rect x="382" y="98" width="230" height="56" rx="8" fill="#eef2f7" stroke="#c8cdd4"/>
+    <text x="398" y="121" font-size="13" font-weight="700" fill="#1a1a1a">テナント A　v2</text>
+    <text x="398" y="140" font-size="11" fill="#5a6470">active ・ kek_id = k2026</text>
+  </g>
+  <g>
+    <rect x="382" y="168" width="230" height="56" rx="8" fill="#eef2f7" stroke="#c8cdd4"/>
+    <text x="398" y="191" font-size="13" font-weight="700" fill="#1a1a1a">テナント A　v1</text>
+    <text x="398" y="210" font-size="11" fill="#5a6470">passive ・ kek_id = k2026</text>
+  </g>
+  <g>
+    <rect x="382" y="238" width="230" height="56" rx="8" fill="#eef2f7" stroke="#c8cdd4"/>
+    <text x="398" y="261" font-size="13" font-weight="700" fill="#1a1a1a">テナント B　v1</text>
+    <text x="398" y="280" font-size="11" fill="#5a6470">active ・ kek_id = default</text>
+  </g>
+  <text x="378" y="326" font-size="11" fill="#5a6470">テナント × 用途ごと。KEK で包んだ形で保存</text>
+
+  <!-- ── rows column ────────────────────────────────────── -->
+  <rect x="692" y="52" width="256" height="290" rx="10" fill="#f4f6f9" stroke="#c8cdd4"/>
+  <text x="708" y="78" font-size="12" font-weight="700" fill="#3a4450">linked_external_accounts</text>
+
+  <g>
+    <rect x="712" y="98" width="216" height="56" rx="8" fill="#ffffff" stroke="#c8cdd4"/>
+    <text x="728" y="121" font-size="13" font-weight="700" fill="#1a1a1a">A の連携</text>
+    <text x="728" y="140" font-size="11" fill="#5a6470">encryption_key_id = A v2</text>
+  </g>
+  <g>
+    <rect x="712" y="168" width="216" height="56" rx="8" fill="#ffffff" stroke="#c8cdd4"/>
+    <text x="728" y="191" font-size="13" font-weight="700" fill="#1a1a1a">A の連携</text>
+    <text x="728" y="210" font-size="11" fill="#5a6470">encryption_key_id = A v1</text>
+  </g>
+  <g>
+    <rect x="712" y="238" width="216" height="56" rx="8" fill="#ffffff" stroke="#c8cdd4"/>
+    <text x="728" y="261" font-size="13" font-weight="700" fill="#1a1a1a">B の連携</text>
+    <text x="728" y="280" font-size="11" fill="#5a6470">encryption_key_id = B v1</text>
+  </g>
+  <text x="708" y="326" font-size="11" fill="#5a6470">1,000 万行規模。トークンは DEK で暗号化</text>
+
+  <!-- ── arrows ─────────────────────────────────────────── -->
+  <path d="M 282 127 L 380 127" stroke="#8a94a0" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <path d="M 282 127 C 330 127, 330 196, 380 196" stroke="#8a94a0" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <path d="M 282 215 C 330 215, 330 266, 380 266" stroke="#8a94a0" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <text x="312" y="118" font-size="11" fill="#5a6470" text-anchor="middle">包む</text>
+
+  <path d="M 612 126 L 710 126" stroke="#8a94a0" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <path d="M 612 196 L 710 196" stroke="#8a94a0" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <path d="M 612 266 L 710 266" stroke="#8a94a0" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <text x="662" y="117" font-size="11" fill="#5a6470" text-anchor="middle">暗号化</text>
+
+  <!-- ── what a KEK rotation touches ────────────────────── -->
+  <rect x="362" y="358" width="270" height="52" rx="8" fill="#e6f2ea" stroke="#8fbfa3"/>
+  <text x="497" y="380" font-size="12" font-weight="700" text-anchor="middle" fill="#1f5c3d">KEK を替えて書き換わるのはここだけ</text>
+  <text x="497" y="398" font-size="11" text-anchor="middle" fill="#337050">DEK を包み直す（テナント数 × 世代の行）</text>
+
+  <rect x="692" y="358" width="256" height="52" rx="8" fill="#ffffff" stroke="#c8cdd4" stroke-dasharray="4 3"/>
+  <text x="820" y="380" font-size="12" font-weight="700" text-anchor="middle" fill="#3a4450">書き換えない</text>
+  <text x="820" y="398" font-size="11" text-anchor="middle" fill="#5a6470">DEK が同じなので、そのまま開ける</text>
+</svg>

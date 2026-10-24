@@ -23,6 +23,7 @@ import org.idp.server.control_plane.management.federation.io.FederationConfigDel
 import org.idp.server.control_plane.management.federation.io.FederationConfigManagementResponse;
 import org.idp.server.control_plane.management.federation.io.FederationConfigManagementStatus;
 import org.idp.server.core.openid.federation.FederationConfiguration;
+import org.idp.server.core.openid.federation.FederationConfigurationRules;
 import org.idp.server.core.openid.federation.repository.FederationConfigurationCommandRepository;
 import org.idp.server.core.openid.federation.repository.FederationConfigurationQueryRepository;
 import org.idp.server.core.openid.identity.User;
@@ -41,12 +42,15 @@ public class FederationConfigDeletionService
 
   private final FederationConfigurationQueryRepository queryRepository;
   private final FederationConfigurationCommandRepository commandRepository;
+  private final FederationConfigurationChecks checks;
 
   public FederationConfigDeletionService(
       FederationConfigurationQueryRepository queryRepository,
-      FederationConfigurationCommandRepository commandRepository) {
+      FederationConfigurationCommandRepository commandRepository,
+      FederationConfigurationRules rules) {
     this.queryRepository = queryRepository;
     this.commandRepository = commandRepository;
+    this.checks = new FederationConfigurationChecks(rules);
   }
 
   @Override
@@ -69,6 +73,13 @@ public class FederationConfigDeletionService
 
     // Populate builder with configuration to be deleted
     builder.withBefore(configuration);
+
+    // Data that belongs to this configuration's type may need it to be undone — a link's stored
+    // tokens are revoked through it. Removed first, that data could not be.
+    Map<String, Long> dependents = checks.dependents(tenant, configuration);
+    if (!dependents.isEmpty()) {
+      return FederationConfigurationChecks.conflict(dependents);
+    }
 
     if (dryRun) {
       Map<String, Object> response =

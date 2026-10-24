@@ -25,7 +25,18 @@ public class OAuthDenyResponse {
   String error;
   String errorDescription;
 
+  /** Where a request that issues nothing sends the browser instead of the client. */
+  String continueUri;
+
   public OAuthDenyResponse() {}
+
+  /** The browser goes on to {@code continueUri}; the client is not told of the denial. */
+  public static OAuthDenyResponse continueTo(String continueUri) {
+    OAuthDenyResponse response = new OAuthDenyResponse();
+    response.status = OAuthDenyStatus.OK;
+    response.continueUri = continueUri;
+    return response;
+  }
 
   public OAuthDenyResponse(OAuthDenyStatus status, AuthorizationErrorResponse errorResponse) {
     this.status = status;
@@ -47,6 +58,9 @@ public class OAuthDenyResponse {
   }
 
   public String redirectUriValue() {
+    if (continueUri != null) {
+      return continueUri;
+    }
     return errorResponse.redirectUriValue();
   }
 
