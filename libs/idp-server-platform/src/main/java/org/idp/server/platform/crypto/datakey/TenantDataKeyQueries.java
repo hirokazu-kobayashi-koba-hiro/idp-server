@@ -75,8 +75,10 @@ public class TenantDataKeyQueries {
     return hasValue("status");
   }
 
+  /** The status as stored, lower case, whatever case it was given in. */
   public String status() {
-    return values.get("status");
+    String status = values.get("status");
+    return isStatusValid() && status != null ? DataKeyStatus.of(status).value() : status;
   }
 
   /** Whether {@code status}, when given, is one a data key can have. */
@@ -85,7 +87,7 @@ public class TenantDataKeyQueries {
       return true;
     }
     try {
-      DataKeyStatus.of(status());
+      DataKeyStatus.of(values.get("status"));
       return true;
     } catch (IllegalArgumentException exception) {
       return false;

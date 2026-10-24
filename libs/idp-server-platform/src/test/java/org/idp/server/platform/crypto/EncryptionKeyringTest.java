@@ -107,6 +107,15 @@ class EncryptionKeyringTest {
         () ->
             EncryptionKeyring.of(
                 "k1:" + Base64.getEncoder().encodeToString(new byte[15]), "k1", null));
+    // The key id is stored with every data key it wraps, in a 64-character column.
+    String longId = "k".repeat(65);
+    assertThrows(
+        AesCryptoRuntimeException.class,
+        () -> EncryptionKeyring.of(longId + ":" + K1, longId, null));
+    assertThrows(
+        AesCryptoRuntimeException.class, () -> EncryptionKeyring.of("k 1:" + K1, "k 1", null));
+    String longest = "k".repeat(64);
+    assertEquals(longest, EncryptionKeyring.of(longest + ":" + K1, longest, null).activeKeyId());
   }
 
   @Test

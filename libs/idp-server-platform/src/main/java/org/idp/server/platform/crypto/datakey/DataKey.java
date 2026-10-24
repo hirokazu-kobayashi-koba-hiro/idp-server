@@ -19,15 +19,22 @@ package org.idp.server.platform.crypto.datakey;
 public class DataKey {
 
   String id;
+  int version;
   byte[] key;
 
-  DataKey(String id, byte[] key) {
+  DataKey(String id, int version, byte[] key) {
     this.id = id;
+    this.version = version;
     this.key = key;
   }
 
   public String id() {
     return id;
+  }
+
+  /** The generation; a later rotation has a higher one. */
+  public int version() {
+    return version;
   }
 
   byte[] key() {

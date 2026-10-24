@@ -76,9 +76,20 @@ public class TenantDataCipher {
             context(tenant, dataKeyId, sealingContext));
   }
 
-  /** Whether data under this key id is under the tenant's current key. */
-  public boolean isCurrent(Tenant tenant, String dataKeyId) {
-    return dataKeyService.active(tenant, purpose).id().equals(dataKeyId);
+  /**
+   * Whether data under this key id is under an older generation than the tenant's active key, and
+   * so should move to it.
+   *
+   * <p>Compared by generation, not by id. The active key is cached for up to a minute, so a server
+   * that has not yet seen a rotation still takes the previous generation for the active one; going
+   * by id, it would move data the new generation already holds back to the previous one.
+   */
+  public boolean isBehindActive(Tenant tenant, String dataKeyId) {
+    DataKey active = dataKeyService.active(tenant, purpose);
+    if (active.id().equals(dataKeyId)) {
+      return false;
+    }
+    return dataKeyService.key(tenant, purpose, dataKeyId).version() < active.version();
   }
 
   private AesCipher messageCipher(DataKey dataKey, byte[] salt) {

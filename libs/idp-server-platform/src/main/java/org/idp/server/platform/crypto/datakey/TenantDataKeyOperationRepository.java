@@ -17,6 +17,7 @@ package org.idp.server.platform.crypto.datakey;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
@@ -28,11 +29,13 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 public interface TenantDataKeyOperationRepository {
 
   /**
+   * Data keys wrapped by one of the given key encryption keys, destroyed ones aside, by id.
+   *
    * @param tenant the administrator's tenant the operation runs under
-   * @param kekId the key encryption key the returned keys are not wrapped by
+   * @param kekIds the key encryption keys the returned keys are wrapped by; not empty
    * @param limit the most keys returned
    */
-  List<TenantDataKey> findWrappedByOtherThan(Tenant tenant, String kekId, int limit);
+  List<TenantDataKey> findWrappedBy(Tenant tenant, Set<String> kekIds, int limit);
 
   /** Stores a new wrapping of the same data key. */
   void updateWrapping(Tenant tenant, TenantDataKey key);

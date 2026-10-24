@@ -22,8 +22,10 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import org.idp.server.platform.crypto.AesCryptoRuntimeException;
@@ -31,6 +33,7 @@ import org.idp.server.platform.crypto.EncryptedData;
 import org.idp.server.platform.crypto.EncryptionKeyring;
 import org.idp.server.platform.crypto.KeyedAesCipher;
 import org.idp.server.platform.date.SystemDateTime;
+import org.idp.server.platform.exception.ConflictException;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -88,7 +91,7 @@ public class DataKeyService {
             purpose,
             created.stored.version(),
             created.stored.kekId());
-        return new DataKey(created.stored.id(), created.material);
+        return new DataKey(created.stored.id(), created.stored.version(), created.material);
       }
       stored = repository.findActiveCommitted(tenant, purpose);
       if (!stored.exists()) {
@@ -97,7 +100,7 @@ public class DataKeyService {
       }
     }
 
-    DataKey dataKey = new DataKey(stored.id(), unwrap(stored));
+    DataKey dataKey = new DataKey(stored.id(), stored.version(), unwrap(stored));
     actives.put(cacheKey, new Cached(dataKey, ACTIVE_CACHE_TTL));
     keys.put(stored.id(), new Cached(dataKey, KEY_CACHE_TTL));
     return dataKey;
@@ -121,7 +124,7 @@ public class DataKeyService {
       throw new AesCryptoRuntimeException("Data key is destroyed: " + id);
     }
 
-    DataKey dataKey = new DataKey(stored.id(), unwrap(stored));
+    DataKey dataKey = new DataKey(stored.id(), stored.version(), unwrap(stored));
     keys.put(stored.id(), new Cached(dataKey, KEY_CACHE_TTL));
     return dataKey;
   }
@@ -142,7 +145,8 @@ public class DataKeyService {
     }
     NewKey created = newKey(tenant, purpose, repository.latestVersion(tenant, purpose) + 1);
     if (!repository.registerIfAbsent(tenant, created.stored)) {
-      throw new AesCryptoRuntimeException("Data key rotation raced another rotation: " + purpose);
+      throw new ConflictException(
+          "Another rotation of this data key is in progress. Try again: " + purpose);
     }
     actives.remove(tenant.identifierValue() + "|" + purpose);
     log.info(
@@ -162,8 +166,14 @@ public class DataKeyService {
    */
   public int rewrap(Tenant tenant, int limit) {
     String activeKekId = kekCipher.activeKeyId();
-    List<TenantDataKey> stale =
-        operationRepository.findWrappedByOtherThan(tenant, activeKekId, limit);
+    // Only keys under a key encryption key this server holds. One it cannot open would fail the
+    // batch, and since the batch starts from the same key every time, the re-wrap would stop there.
+    Set<String> openable = new LinkedHashSet<>(keyring.keyIds());
+    openable.remove(activeKekId);
+    if (openable.isEmpty()) {
+      return 0;
+    }
+    List<TenantDataKey> stale = operationRepository.findWrappedBy(tenant, openable, limit);
     for (TenantDataKey key : stale) {
       byte[] material = unwrap(key);
       operationRepository.updateWrapping(tenant, key.rewrapped(wrap(key, material), activeKekId));

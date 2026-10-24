@@ -54,6 +54,12 @@ public class EncryptionKeyring {
     this.activeKeyId = activeKeyId;
   }
 
+  /** As long as the {@code kek_id} column holds; stored with every data key it wraps. */
+  static final int MAX_KEY_ID_LENGTH = 64;
+
+  static final java.util.regex.Pattern KEY_ID_PATTERN =
+      java.util.regex.Pattern.compile("[A-Za-z0-9._-]{1," + MAX_KEY_ID_LENGTH + "}");
+
   /**
    * Builds the keyring from its configuration.
    *
@@ -80,6 +86,13 @@ public class EncryptionKeyring {
             "Each encryption key must be written as <key id>:<base64 key>.");
       }
       String keyId = trimmed.substring(0, separator);
+      if (!KEY_ID_PATTERN.matcher(keyId).matches()) {
+        throw new AesCryptoRuntimeException(
+            "Encryption key id must be 1 to "
+                + MAX_KEY_ID_LENGTH
+                + " characters of letters, digits, '.', '_' or '-': "
+                + keyId);
+      }
       if (keys.containsKey(keyId)) {
         throw new AesCryptoRuntimeException("Duplicate encryption key id: " + keyId);
       }

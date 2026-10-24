@@ -17,6 +17,7 @@ package org.idp.server.core.adapters.datasource.crypto.datakey;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.idp.server.platform.crypto.datakey.DataKeyStatus;
 import org.idp.server.platform.crypto.datakey.TenantDataKey;
 import org.idp.server.platform.crypto.datakey.TenantDataKeyQueries;
@@ -42,8 +43,8 @@ public interface TenantDataKeySqlExecutor {
 
   void updateStatus(Tenant tenant, String id, DataKeyStatus status);
 
-  /** Across tenants: keys not wrapped by this KEK, destroyed ones aside. */
-  List<Map<String, String>> selectWrappedByOtherThan(String kekId, int limit);
+  /** Across tenants: keys wrapped by one of these KEKs, destroyed ones aside. */
+  List<Map<String, String>> selectWrappedBy(Set<String> kekIds, int limit);
 
   /** Across tenants. */
   void updateWrapping(TenantDataKey key);

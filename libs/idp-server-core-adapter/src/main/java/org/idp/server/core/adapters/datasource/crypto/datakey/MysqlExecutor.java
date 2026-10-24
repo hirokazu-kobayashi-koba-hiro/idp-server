@@ -18,6 +18,7 @@ package org.idp.server.core.adapters.datasource.crypto.datakey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.idp.server.platform.crypto.datakey.DataKeyStatus;
 import org.idp.server.platform.crypto.datakey.TenantDataKey;
 import org.idp.server.platform.crypto.datakey.TenantDataKeyQueries;
@@ -50,9 +51,13 @@ public class MysqlExecutor implements TenantDataKeySqlExecutor {
     return new SqlExecutor().selectOne(sql, List.of(tenant.identifierValue(), purpose));
   }
 
+  /**
+   * A locking read, for the same reason as {@link #selectActiveCommitted}: a stored token read
+   * under its row lock may name a data key created after this transaction's snapshot.
+   */
   @Override
   public Map<String, String> selectOne(Tenant tenant, String id) {
-    String sql = SELECT_COLUMNS + " WHERE tenant_id = ? AND id = ?;";
+    String sql = SELECT_COLUMNS + " WHERE tenant_id = ? AND id = ? FOR SHARE;";
     return new SqlExecutor().selectOne(sql, List.of(tenant.identifierValue(), id));
   }
 
@@ -152,15 +157,16 @@ public class MysqlExecutor implements TenantDataKeySqlExecutor {
   }
 
   @Override
-  public List<Map<String, String>> selectWrappedByOtherThan(String kekId, int limit) {
+  public List<Map<String, String>> selectWrappedBy(Set<String> kekIds, int limit) {
+    String placeholders = String.join(", ", java.util.Collections.nCopies(kekIds.size(), "?"));
     String sql =
         SELECT_COLUMNS
-            + """
-             WHERE kek_id <> ? AND status <> 'destroyed'
-             ORDER BY id
-             LIMIT ?;
-            """;
-    return new SqlExecutor().selectList(sql, List.of(kekId, limit));
+            + " WHERE kek_id IN ("
+            + placeholders
+            + ") AND status <> 'destroyed' ORDER BY id LIMIT ?;";
+    List<Object> params = new ArrayList<>(kekIds);
+    params.add(limit);
+    return new SqlExecutor().selectList(sql, params);
   }
 
   @Override

@@ -280,7 +280,9 @@ public class IdpServerOperationEntryService implements IdpServerOperationApi {
       return invalidRequest("purpose must be one of " + DataKeyPurposes.ALL + ".");
     }
 
-    Tenant tenant = tenantQueryRepository.find(new TenantIdentifier(tenantId));
+    // A disabled tenant is included: stopping a tenant is a likely first step when its key is
+    // suspected to have leaked, and its data key still has to be replaceable then.
+    Tenant tenant = tenantQueryRepository.findWithDisabled(new TenantIdentifier(tenantId), true);
     if (!tenant.exists()) {
       return new IdpServerOperationResponse(
           IdpServerOperationStatus.NOT_FOUND,
