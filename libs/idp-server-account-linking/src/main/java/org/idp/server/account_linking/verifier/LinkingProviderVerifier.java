@@ -36,6 +36,8 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
  */
 public class LinkingProviderVerifier {
 
+  static final String OPENID = "openid";
+
   AccountLinkingConfigurationResolver configurationResolver;
 
   public LinkingProviderVerifier(AccountLinkingConfigurationResolver configurationResolver) {
@@ -81,6 +83,15 @@ public class LinkingProviderVerifier {
     if (!beyond.isEmpty()) {
       throw new AccountLinkingInvalidRequestException(
           "The requested scope is not configured for this provider: " + String.join(" ", beyond));
+    }
+    // A provider configured for openid identifies the external account by the id_token's sub.
+    // Without openid there is no id_token, so the link could not be told apart from a link to
+    // another account, and the duplicate policy would not apply.
+    if (supported != null
+        && supported.contains(OPENID)
+        && Arrays.stream(requestedScope.trim().split("\\s+")).noneMatch(OPENID::equals)) {
+      throw new AccountLinkingInvalidRequestException(
+          "The scope must include openid for this provider.");
     }
   }
 }

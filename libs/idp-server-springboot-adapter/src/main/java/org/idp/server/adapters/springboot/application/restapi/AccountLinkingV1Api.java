@@ -20,6 +20,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.net.URI;
 import org.idp.server.account_linking.AccountLinkingApi;
 import org.idp.server.account_linking.AccountLinkingState;
+import org.idp.server.account_linking.ExternalIdpProvider;
 import org.idp.server.account_linking.io.AccountLinkingResult;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
@@ -76,6 +77,7 @@ public class AccountLinkingV1Api implements ParameterTransformable {
     AccountLinkingResult response =
         accountLinkingApi.handleCallback(
             tenantIdentifier,
+            new ExternalIdpProvider(provider),
             new AccountLinkingState(state),
             code,
             error,

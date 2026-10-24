@@ -1325,6 +1325,36 @@ describe("account linking", () => {
       expect(startResponse.status).toBe(302);
       expectErrorPage(startResponse.headers.location, "access_denied");
     });
+
+    it("does not redeem a code that comes back to another provider's callback", async () => {
+      // 連携先ごとにコールバックは別。始めた連携先と違うコールバックに届いた応答は取り違えなので、
+      // code を交換せずにエラー画面へ送る。
+      const accessToken = await login(ownerUser);
+      const linkResponse = await startLink(accessToken);
+      expect(linkResponse.status).toBe(201);
+      const startResponse = await get({ url: linkResponse.data.start_url });
+      expect(startResponse.status).toBe(302);
+      const callbackUri = await consentAtExternalIdp(startResponse.headers.location);
+      expect(callbackUri).toContain(`/v1/linking/callback/${PROVIDER}?`);
+
+      const mixedUp = await get({
+        url: callbackUri.replace(`/v1/linking/callback/${PROVIDER}?`, "/v1/linking/callback/account-linking-oauth2?"),
+      });
+      expect(mixedUp.status).toBe(302);
+      expectErrorPage(mixedUp.headers.location, "invalid_request");
+    });
+  });
+
+  describe("provider scope", () => {
+    it("requires openid of a provider configured for it, so the external account is identified", async () => {
+      const accessToken = await login(ownerUser);
+      const withoutOpenid = await startLink(accessToken, PROVIDER, "profile email offline_access");
+      expect(withoutOpenid.status).toBe(400);
+      expect(withoutOpenid.data.error).toBe("invalid_request");
+
+      const withOpenid = await startLink(accessToken, PROVIDER, "openid profile");
+      expect(withOpenid.status).toBe(201);
+    });
   });
 
   describe("failure returns", () => {

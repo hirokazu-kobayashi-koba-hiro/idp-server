@@ -84,6 +84,12 @@ public class ExternalIdpIdTokenGateway {
           "Account linking could not verify the id_token issued by the external identity provider.");
     }
 
+    // A provider type that does not verify id_tokens itself reports success with no claims; that
+    // is not a verified token to take the subject from.
+    if (verification.claims() == null) {
+      throw new ExternalIdpRequestFailedException(
+          "Account linking could not verify the id_token issued by the external identity provider.");
+    }
     String subject = verification.claims().getSub();
     if (subject == null || subject.isEmpty()) {
       // sub is REQUIRED in OpenID Connect. A token without one is malformed, not a provider that

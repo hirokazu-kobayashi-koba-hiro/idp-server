@@ -54,6 +54,7 @@ public interface AccountLinkingApi {
   /** Browser navigation from the external IdP. Establishes nothing on its own. */
   AccountLinkingResult handleCallback(
       TenantIdentifier tenantIdentifier,
+      ExternalIdpProvider provider,
       AccountLinkingState state,
       String code,
       String error,

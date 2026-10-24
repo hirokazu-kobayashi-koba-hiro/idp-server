@@ -90,14 +90,14 @@ curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/t
 | `payload.userinfo_endpoint` | 任意。設定すると `email` のマッピングが一覧の `federated_username` になり、ID Token が無いときは `external_user_id` が外部アカウントの識別子になる |
 | `payload.client_authentication_type` | `client_secret_basic` なら Basic 認証、それ以外はボディに `client_secret` を入れる。`private_key_jwt` などには対応していない。トークン交換・リフレッシュ・失効で共通 |
 | `payload.redirect_uri` | Step 1 で登録したコールバックURLと同じ値 |
-| `payload.scopes_supported` | RP が `link` で `scope` を省略したときに外部IdPへ要求するスコープ |
+| `payload.scopes_supported` | RP が `link` で `scope` を省略したときに外部IdPへ要求するスコープ。RP はこの範囲でしか指定できない。`openid` を入れた連携先では、RP の `scope` にも `openid` が要る |
 | `payload.revocation_endpoint` | 任意。解除とユーザー削除のときに保管トークンを失効させる先。無ければ失効させずに連携だけを消す |
 | `payload.refresh_token_expires_in` | 保管するリフレッシュトークンの有効期間（秒）。外部IdPの実際の期限に合わせる。未設定なら期限は不明として扱い、アクセストークンが切れるたびにリフレッシュを試す |
 | `payload.duplicate_link_policy` | 同じ外部アカウントが別ユーザーに連携済みのとき。`reject`（既定、409）/ `allow` |
 
 ログイン用の設定例にある `store_credentials` と `access_token_expires_in` は、連携では読みません。アクセストークンの期限は外部IdPのトークン応答の `expires_in` で決まります。
 
-連携が 1 件でも残っている間は、この設定の削除と、`type` / `sso_provider` の変更は `409` になります（`dry_run=true` でも同じ）。応答の `linked_external_accounts` が残っている連携の数です。先に [管理APIでの確認・解除](#管理apiでの確認解除) で連携を解除してください。
+連携が 1 件でも残っている間は、この設定の削除と、`type` / `sso_provider` の変更は `409` になります（`dry_run=true` でも同じ）。応答の `linked_external_accounts` が残っている連携の数です。先に [管理APIでの確認・解除](#管理apiでの確認解除) で連携を解除してください。連携先を消すときは、まず `enabled: false` にして新しい連携を止めてから、残った連携を解除し、最後に削除します。無効にしないまま進めると、解除と削除の間に新しい連携ができることがあります。
 
 **実例**:
 - `config/examples/standard-oidc-web-app/federation-account-linking.json` - サンプルアプリ用

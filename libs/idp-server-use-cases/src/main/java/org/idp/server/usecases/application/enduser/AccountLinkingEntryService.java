@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.idp.server.account_linking.*;
+import org.idp.server.account_linking.ExternalIdpProvider;
 import org.idp.server.account_linking.handler.AccountLinkingAuthorizeHandler;
 import org.idp.server.account_linking.handler.AccountLinkingCallbackHandler;
 import org.idp.server.account_linking.handler.AccountLinkingCompleteHandler;
@@ -173,6 +174,7 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
   @Override
   public AccountLinkingResult handleCallback(
       TenantIdentifier tenantIdentifier,
+      ExternalIdpProvider provider,
       AccountLinkingState state,
       String code,
       String error,
@@ -187,7 +189,7 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
     AccountLinkingResult result =
         callbackHandler.handle(
             new AccountLinkingCallbackRequest(
-                tenant, state, code, error, errorDescription, browserBindingSecret));
+                tenant, provider, state, code, error, errorDescription, browserBindingSecret));
 
     // The cookie has done its job either way. Dropping it on failure keeps a stale value from
     // being replayed; the linking session itself is left for the browser that can present one.
