@@ -316,8 +316,6 @@ services:
         BASE_PATH: ""
         NEXT_PUBLIC_BACKEND_URL: "https://api.local.test"
     container_name: app-view
-    ports:
-      - "3000:3000"
     environment:
       NODE_ENV: production
     depends_on:
