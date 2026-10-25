@@ -197,6 +197,24 @@ describe("account linking", () => {
     });
   };
 
+  /** Cookie を持たないブラウザ。OP セッションも束縛 Cookie も無い。 */
+  const getWithoutCookies = async (url) =>
+    await axios.get(url, { maxRedirects: 0, validateStatus: () => true });
+
+  /** 連携の失敗として RP の戻り先へ返されたことを確かめる。state は渡したときだけ載る。 */
+  const expectReturnedFailure = (location, error, state) => {
+    expect(location.startsWith(`${RETURN_TO}?`)).toBe(true);
+    const params = new URL(location).searchParams;
+    expect(params.get("linking")).toBe("failed");
+    expect(params.get("error")).toBe(error);
+    expect(params.get("error_description")).toBeNull();
+    if (state) {
+      expect(params.get("state")).toBe(state);
+    } else {
+      expect(params.get("state")).toBeNull();
+    }
+  };
+
   /** 外部IdP 側でトークンがまだ有効か。外部IdP役テナントにも同じ client が居る。 */
   const isActiveAtExternalIdp = async (token) => {
     const params = new URLSearchParams();
@@ -1495,8 +1513,28 @@ describe("account linking", () => {
       expect(denied.status).toBe(200);
       const resume = new URL(denied.data.redirect_uri);
       expect(resume.pathname).toBe(`/${serverConfig.tenantId}/v1/linking/start`);
-      expect(resume.searchParams.get("reauthenticated")).toBe("true");
       expect(resume.searchParams.get("error")).toBeNull();
+
+      // 一度ログインへ送ったことは連携セッションが覚えているので、戻ってきたブラウザをもう一度
+      // ログインへは送らず、RP に login_required を返す。
+      const back = await getWithoutCookies(resume.toString());
+      expect(back.status).toBe(302);
+      expectReturnedFailure(back.headers.location, "login_required", null);
+    });
+
+    it("carries nothing on the resume URL that decides whether the browser is sent round again", async () => {
+      const accessToken = await login(ownerUser);
+      const linkResponse = await startLink(accessToken);
+      const id = await openSignIn(await signInRequestFor(linkResponse.data.start_url));
+
+      const denied = await deny({ endpoint: `${authorizationsBase}/{id}/deny`, id });
+      const resume = new URL(denied.data.redirect_uri);
+      expect([...resume.searchParams.keys()]).toEqual(["state"]);
+
+      // 以前の印（reauthenticated=true）を付けても、まだログインへ送っていない連携には効かない。
+      const fresh = await startLink(accessToken);
+      const location = await signInRequestFor(`${fresh.data.start_url}&reauthenticated=true`);
+      expect(location.searchParams.get("idp_linking_state")).toBe(fresh.data.state);
     });
   });
 
@@ -1525,10 +1563,6 @@ describe("account linking", () => {
 
   describe("failure returns", () => {
 
-    /** Cookie を持たないブラウザ。OP セッションも束縛 Cookie も無い。 */
-    const getWithoutCookies = async (url) =>
-      await axios.get(url, { maxRedirects: 0, validateStatus: () => true });
-
     const callbackUrl = (params) =>
       `${backendUrl}/${serverConfig.tenantId}/v1/linking/callback/${PROVIDER}?${new URLSearchParams(params).toString()}`;
 
@@ -1540,19 +1574,6 @@ describe("account linking", () => {
       const startResponse = await get({ url: linkResponse.data.start_url });
       expect(startResponse.status).toBe(302);
       return { accessToken, state: linkResponse.data.state };
-    };
-
-    const expectReturnedFailure = (location, error, state) => {
-      expect(location.startsWith(`${RETURN_TO}?`)).toBe(true);
-      const params = new URL(location).searchParams;
-      expect(params.get("linking")).toBe("failed");
-      expect(params.get("error")).toBe(error);
-      expect(params.get("error_description")).toBeNull();
-      if (state) {
-        expect(params.get("state")).toBe(state);
-      } else {
-        expect(params.get("state")).toBeNull();
-      }
     };
 
     it("returns a denial at the external IdP to the client, with the state", async () => {
@@ -1644,8 +1665,15 @@ describe("account linking", () => {
       const linkResponse = await startLink(accessToken);
       expect(linkResponse.status).toBe(201);
 
+      // 1 回目はログインへ送る。連携セッションにそのことを記録する。
+      const first = await getWithoutCookies(linkResponse.data.start_url);
+      expect(first.status).toBe(302);
+      expect(new URL(first.headers.location).searchParams.get("idp_linking_state")).toBe(
+        linkResponse.data.state
+      );
+
       // 戻ってきてもセッションが無いなら、もう一度ログインへは送らない（セッションを書けない環境でループしない）。
-      const response = await getWithoutCookies(`${linkResponse.data.start_url}&reauthenticated=true`);
+      const response = await getWithoutCookies(linkResponse.data.start_url);
       expect(response.status).toBe(302);
       expectReturnedFailure(response.headers.location, "login_required", null);
 

@@ -44,6 +44,7 @@ public class ModelConverter {
             .acr(result.get("acr"))
             .amr(result.get("amr"))
             .authenticatedAt(toDateTime(result.get("authenticated_at")))
+            .reauthenticationRequestedAt(toDateTime(result.get("reauthentication_requested_at")))
             .status(AccountLinkingSessionStatus.valueOf(result.get("status").toUpperCase()))
             .browserBindingHash(result.get("browser_binding_hash"))
             .expiresAt(toDateTime(result.get("expires_at")));

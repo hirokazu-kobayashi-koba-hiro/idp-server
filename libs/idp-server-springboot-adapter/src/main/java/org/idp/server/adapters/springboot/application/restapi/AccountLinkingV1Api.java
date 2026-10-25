@@ -51,17 +51,13 @@ public class AccountLinkingV1Api implements ParameterTransformable {
   public ResponseEntity<?> start(
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @RequestParam(value = "state", required = false) String state,
-      @RequestParam(value = "reauthenticated", required = false) String reauthenticated,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     AccountLinkingResult response =
         accountLinkingApi.authorizeStart(
-            tenantIdentifier,
-            new AccountLinkingState(state),
-            "true".equals(reauthenticated),
-            requestAttributes);
+            tenantIdentifier, new AccountLinkingState(state), requestAttributes);
 
     return toResponseEntity(response);
   }

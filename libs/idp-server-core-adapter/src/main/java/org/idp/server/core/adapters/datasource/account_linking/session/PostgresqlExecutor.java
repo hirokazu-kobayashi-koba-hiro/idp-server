@@ -102,6 +102,7 @@ public class PostgresqlExecutor implements AccountLinkingSessionSqlExecutor {
                acr = ?,
                amr = ?,
                authenticated_at = ?,
+               reauthentication_requested_at = ?,
                federated_user_id = ?,
                federated_username = ?,
                granted_scope = ?,
@@ -121,6 +122,7 @@ public class PostgresqlExecutor implements AccountLinkingSessionSqlExecutor {
     params.add(session.acr());
     params.add(session.amr());
     params.add(session.authenticatedAt());
+    params.add(session.reauthenticationRequestedAt());
     params.add(credentials == null ? null : credentials.federatedUserId());
     params.add(credentials == null ? null : credentials.federatedUsername());
     params.add(credentials == null ? null : credentials.grantedScope());
@@ -159,7 +161,8 @@ public class PostgresqlExecutor implements AccountLinkingSessionSqlExecutor {
         """
         SELECT state, tenant_id, user_id, client_id, provider, account_alias,
                redirect_uri, requested_scope, code_verifier, nonce, acr, amr,
-               authenticated_at, status, browser_binding_hash, federated_user_id,
+               authenticated_at, reauthentication_requested_at, status, browser_binding_hash,
+               federated_user_id,
                federated_username, granted_scope, encrypted_access_token,
                encrypted_refresh_token, encryption_key_id, access_token_expires_at,
                refresh_token_expires_at, expires_at
@@ -191,7 +194,8 @@ public class PostgresqlExecutor implements AccountLinkingSessionSqlExecutor {
         """
         SELECT state, tenant_id, user_id, client_id, provider, account_alias,
                redirect_uri, requested_scope, code_verifier, nonce, acr, amr,
-               authenticated_at, status, browser_binding_hash, federated_user_id,
+               authenticated_at, reauthentication_requested_at, status, browser_binding_hash,
+               federated_user_id,
                federated_username, granted_scope, encrypted_access_token,
                encrypted_refresh_token, encryption_key_id, access_token_expires_at,
                refresh_token_expires_at, expires_at
@@ -211,7 +215,8 @@ public class PostgresqlExecutor implements AccountLinkingSessionSqlExecutor {
         """
         SELECT state, tenant_id, user_id, client_id, provider, account_alias,
                redirect_uri, requested_scope, code_verifier, nonce, acr, amr,
-               authenticated_at, status, browser_binding_hash, federated_user_id,
+               authenticated_at, reauthentication_requested_at, status, browser_binding_hash,
+               federated_user_id,
                federated_username, granted_scope, encrypted_access_token,
                encrypted_refresh_token, encryption_key_id, access_token_expires_at,
                refresh_token_expires_at, expires_at

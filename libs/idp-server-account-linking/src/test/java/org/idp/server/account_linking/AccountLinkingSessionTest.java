@@ -230,5 +230,20 @@ class AccountLinkingSessionTest {
           () -> pending.verifyNotExpired(NOW.plusMinutes(16)));
       assertDoesNotThrow(() -> pending.verifyNotExpired(NOW));
     }
+
+    @Test
+    @DisplayName("ログインし直しへ送った記録は状態を変えずに残り、以後の遷移にも引き継がれる")
+    void reauthenticationRequestIsKept() {
+      AccountLinkingSession pending = pendingSessionFor(VICTIM);
+      assertFalse(pending.isReauthenticationRequested());
+
+      AccountLinkingSession requested = pending.requestReauthentication(NOW);
+      assertTrue(requested.isReauthenticationRequested());
+      assertEquals(AccountLinkingSessionStatus.PENDING, requested.status());
+
+      AccountLinkingSession authorized =
+          requested.authorize(VICTIM, AccountLinkingBrowserBinding.generate(), authentication());
+      assertTrue(authorized.isReauthenticationRequested());
+    }
   }
 }

@@ -65,6 +65,7 @@ public class AccountLinkingSession {
   String acr;
   String amr;
   LocalDateTime authenticatedAt;
+  LocalDateTime reauthenticationRequestedAt;
   AccountLinkingSessionStatus status;
   String browserBindingHash;
   ParkedCredentials parkedCredentials;
@@ -86,6 +87,7 @@ public class AccountLinkingSession {
     this.acr = builder.acr;
     this.amr = builder.amr;
     this.authenticatedAt = builder.authenticatedAt;
+    this.reauthenticationRequestedAt = builder.reauthenticationRequestedAt;
     this.status = builder.status;
     this.browserBindingHash = builder.browserBindingHash;
     this.parkedCredentials = builder.parkedCredentials;
@@ -141,6 +143,22 @@ public class AccountLinkingSession {
         .authenticatedAt(authentication.time())
         .status(AccountLinkingSessionStatus.AUTHORIZED)
         .build();
+  }
+
+  /**
+   * Records that {@code /linking/start} sent the browser to sign in again as this link's user.
+   *
+   * <p>Kept on the session rather than on the URL the browser comes back with, so that nothing the
+   * browser sends decides whether it is sent round again. A link is sent to sign in at most once:
+   * coming back still without a recent sign-in — the user cancelled, or the sign-in could not be
+   * kept — ends the link instead of looping.
+   */
+  public AccountLinkingSession requestReauthentication(LocalDateTime now) {
+    return toBuilder().reauthenticationRequestedAt(now).build();
+  }
+
+  public boolean isReauthenticationRequested() {
+    return reauthenticationRequestedAt != null;
   }
 
   /**
@@ -270,6 +288,10 @@ public class AccountLinkingSession {
     return authenticatedAt;
   }
 
+  public LocalDateTime reauthenticationRequestedAt() {
+    return reauthenticationRequestedAt;
+  }
+
   public AccountLinkingSessionStatus status() {
     return status;
   }
@@ -305,6 +327,7 @@ public class AccountLinkingSession {
         .acr(acr)
         .amr(amr)
         .authenticatedAt(authenticatedAt)
+        .reauthenticationRequestedAt(reauthenticationRequestedAt)
         .status(status)
         .browserBindingHash(browserBindingHash)
         .parkedCredentials(parkedCredentials)
@@ -326,6 +349,7 @@ public class AccountLinkingSession {
     String acr;
     String amr;
     LocalDateTime authenticatedAt;
+    LocalDateTime reauthenticationRequestedAt;
     AccountLinkingSessionStatus status = AccountLinkingSessionStatus.PENDING;
     String browserBindingHash;
     ParkedCredentials parkedCredentials;
@@ -393,6 +417,11 @@ public class AccountLinkingSession {
 
     public Builder authenticatedAt(LocalDateTime authenticatedAt) {
       this.authenticatedAt = authenticatedAt;
+      return this;
+    }
+
+    public Builder reauthenticationRequestedAt(LocalDateTime reauthenticationRequestedAt) {
+      this.reauthenticationRequestedAt = reauthenticationRequestedAt;
       return this;
     }
 
