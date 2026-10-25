@@ -39,6 +39,13 @@ public final class AccountLinkingReauthentication {
   /** The custom parameter carrying the link's state. */
   public static final String STATE_PARAMETER = "idp_linking_state";
 
+  /**
+   * Added to the resume URI. {@code /linking/start} reached with it and still without a recent
+   * sign-in does not send the browser round again, which would loop where the session cannot be
+   * written.
+   */
+  public static final String RESUMED_PARAMETER = "reauthenticated";
+
   private AccountLinkingReauthentication() {}
 
   public static boolean isRequestedBy(AuthorizationRequest authorizationRequest) {
@@ -57,13 +64,11 @@ public final class AccountLinkingReauthentication {
   /**
    * Where the browser goes once signed in, or once it gives up.
    *
-   * <p>Only the state goes back. Whether the browser was already sent to sign in is kept on the
-   * linking session, not on this URL.
-   *
    * @param issuer the tenant's authorization server issuer, which already carries the tenant
    */
   public static String resumeUri(String issuer, String state) {
     return String.format(
-        "%s/v1/linking/start?state=%s", issuer, URLEncoder.encode(state, StandardCharsets.UTF_8));
+        "%s/v1/linking/start?state=%s&%s=true",
+        issuer, URLEncoder.encode(state, StandardCharsets.UTF_8), RESUMED_PARAMETER);
   }
 }

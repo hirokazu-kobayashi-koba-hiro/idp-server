@@ -81,7 +81,6 @@ CREATE TABLE account_linking_sessions
     acr                      VARCHAR(255),
     amr                      TEXT,
     authenticated_at         DATETIME(6),
-    reauthentication_requested_at DATETIME(6),
     status                   VARCHAR(20)                              NOT NULL,
     browser_binding_hash     VARCHAR(255),
     federated_user_id        VARCHAR(255),

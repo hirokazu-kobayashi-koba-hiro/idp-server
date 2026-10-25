@@ -33,13 +33,24 @@ public class AccountLinkingAuthorizeRequest {
   AccountLinkingState state;
   User operator;
   Authentication authentication;
+  boolean resumed;
 
   public AccountLinkingAuthorizeRequest(
-      Tenant tenant, AccountLinkingState state, User operator, Authentication authentication) {
+      Tenant tenant,
+      AccountLinkingState state,
+      User operator,
+      Authentication authentication,
+      boolean resumed) {
     this.tenant = tenant;
     this.state = state;
     this.operator = operator;
     this.authentication = authentication;
+    this.resumed = resumed;
+  }
+
+  /** Whether the browser is back from the sign-in this server sent it to. */
+  public boolean resumed() {
+    return resumed;
   }
 
   public Tenant tenant() {

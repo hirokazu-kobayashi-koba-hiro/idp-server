@@ -1529,8 +1529,8 @@ paths:
         | 状況 | `Location` |
         |---|---|
         | 操作者が一致した | 外部IdPの認可URL（`state`・`nonce`・`code_challenge`（`S256`）付き） |
-        | ブラウザセッションが無い、またはログインが `linking_max_auth_age` より古い（連携セッションは有効） | このサーバーの認可エンドポイント（`prompt=login`・`login_hint=sub:<連携を始めたユーザー>`）。ログインが終わると認可コードを発行せずに `/linking/start?state=...` へ戻る。ログインへ送るのは 1 つの連携につき 1 回まで（連携セッションに記録する） |
-        | 一度ログインへ送った連携で、まだブラウザセッションが無い（または古い）。ログインを取り消した場合もこれ | `{redirect_uri}?linking=failed&error=login_required`（`state` は付けない） |
+        | ブラウザセッションが無い、またはログインが `linking_max_auth_age` より古い（連携セッションは有効） | このサーバーの認可エンドポイント（`prompt=login`・`login_hint=sub:<連携を始めたユーザー>`）。ログインが終わると認可コードを発行せずに `/linking/start?state=...&reauthenticated=true` へ戻る |
+        | ログインから戻ってもブラウザセッションが無い、またはログインを取り消した | `{redirect_uri}?linking=failed&error=login_required`（`state` は付けない） |
         | ブラウザセッションが無く、連携セッションが無い・期限切れ・開始済み | テナントのエラー画面（`error=invalid_request`） |
         | 操作者が一致しない | テナントのエラー画面（`error=access_denied`） |
         | 連携セッションが無い・期限切れ・開始済み | テナントのエラー画面（`error=invalid_request`） |
@@ -1553,6 +1553,14 @@ paths:
 
             クエリ自体が無い場合はリクエストパラメータの欠落として共通のエラーハンドラが処理し、
             `302` ではなく `500` の JSON（`server_error`）が返ります。
+          schema:
+            type: string
+        - name: reauthenticated
+          in: query
+          required: false
+          description: |
+            ログインし直しから戻ったときに idp-server が付ける。これが `true` で、まだブラウザセッションが無い（または古い）ときは、
+            もう一度ログインへは送らずに `login_required` を返す。RP が付ける必要はない。
           schema:
             type: string
             enum: ["true"]

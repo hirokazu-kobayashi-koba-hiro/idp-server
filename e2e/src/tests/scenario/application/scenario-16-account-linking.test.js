@@ -1513,28 +1513,13 @@ describe("account linking", () => {
       expect(denied.status).toBe(200);
       const resume = new URL(denied.data.redirect_uri);
       expect(resume.pathname).toBe(`/${serverConfig.tenantId}/v1/linking/start`);
+      expect(resume.searchParams.get("reauthenticated")).toBe("true");
       expect(resume.searchParams.get("error")).toBeNull();
 
-      // 一度ログインへ送ったことは連携セッションが覚えているので、戻ってきたブラウザをもう一度
-      // ログインへは送らず、RP に login_required を返す。
+      // 戻ったブラウザはもう一度ログインへは送られず、RP に login_required が返る。
       const back = await getWithoutCookies(resume.toString());
       expect(back.status).toBe(302);
       expectReturnedFailure(back.headers.location, "login_required", null);
-    });
-
-    it("carries nothing on the resume URL that decides whether the browser is sent round again", async () => {
-      const accessToken = await login(ownerUser);
-      const linkResponse = await startLink(accessToken);
-      const id = await openSignIn(await signInRequestFor(linkResponse.data.start_url));
-
-      const denied = await deny({ endpoint: `${authorizationsBase}/{id}/deny`, id });
-      const resume = new URL(denied.data.redirect_uri);
-      expect([...resume.searchParams.keys()]).toEqual(["state"]);
-
-      // 以前の印（reauthenticated=true）を付けても、まだログインへ送っていない連携には効かない。
-      const fresh = await startLink(accessToken);
-      const location = await signInRequestFor(`${fresh.data.start_url}&reauthenticated=true`);
-      expect(location.searchParams.get("idp_linking_state")).toBe(fresh.data.state);
     });
   });
 
@@ -1665,15 +1650,8 @@ describe("account linking", () => {
       const linkResponse = await startLink(accessToken);
       expect(linkResponse.status).toBe(201);
 
-      // 1 回目はログインへ送る。連携セッションにそのことを記録する。
-      const first = await getWithoutCookies(linkResponse.data.start_url);
-      expect(first.status).toBe(302);
-      expect(new URL(first.headers.location).searchParams.get("idp_linking_state")).toBe(
-        linkResponse.data.state
-      );
-
       // 戻ってきてもセッションが無いなら、もう一度ログインへは送らない（セッションを書けない環境でループしない）。
-      const response = await getWithoutCookies(linkResponse.data.start_url);
+      const response = await getWithoutCookies(`${linkResponse.data.start_url}&reauthenticated=true`);
       expect(response.status).toBe(302);
       expectReturnedFailure(response.headers.location, "login_required", null);
 

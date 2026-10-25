@@ -91,9 +91,7 @@ public class AccountLinkingAuthorizeHandler {
           clientConfigurationQueryRepository.get(tenant, session.requestedClientId());
       if (!isRecentEnough(request.authentication(), session, client.linkingMaxAuthAge(), now)) {
         return AccountLinkingAuthorizeResult.of(
-            session.isReauthenticationRequested()
-                ? loginRequired(session)
-                : signInAgain(tenant, session, client, now),
+            request.resumed() ? loginRequired(session) : signInAgain(tenant, session, client),
             null);
       }
 
@@ -141,7 +139,7 @@ public class AccountLinkingAuthorizeHandler {
    * would bury the mismatches that event exists to surface.
    */
   public AccountLinkingResult handleWithoutBrowserSession(
-      Tenant tenant, AccountLinkingState state) {
+      Tenant tenant, AccountLinkingState state, boolean resumed) {
     AccountLinkingSession session = sessionQueryRepository.find(tenant, state);
     LocalDateTime now = SystemDateTime.now();
 
@@ -150,13 +148,13 @@ public class AccountLinkingAuthorizeHandler {
           new AccountLinkingErrorPage(tenant, AccountLinkingStatus.NOT_FOUND).value(),
           DefaultSecurityEventType.external_account_link_failed);
     }
-    if (session.isReauthenticationRequested()) {
+    if (resumed) {
       return loginRequired(session);
     }
     try {
       ClientConfiguration client =
           clientConfigurationQueryRepository.get(tenant, session.requestedClientId());
-      return signInAgain(tenant, session, client, now);
+      return signInAgain(tenant, session, client);
     } catch (Exception exception) {
       AccountLinkingResult failure = errorHandler.handle(exception);
       return failure.redirectingTo(new AccountLinkingErrorPage(tenant, failure.status()).value());
@@ -195,17 +193,13 @@ public class AccountLinkingAuthorizeHandler {
    * along as {@link AccountLinkingReauthentication#STATE_PARAMETER}, which makes the flow end at
    * {@code /linking/start} instead of issuing a code. The PKCE challenge is there for clients that
    * require one; its verifier is thrown away with the code that is never issued.
-   *
-   * <p>The session records that it was sent, so a browser that comes back still without a recent
-   * sign-in is told so instead of being sent round again.
    */
   private AccountLinkingResult signInAgain(
-      Tenant tenant, AccountLinkingSession session, ClientConfiguration client, LocalDateTime now) {
+      Tenant tenant, AccountLinkingSession session, ClientConfiguration client) {
     if (client.redirectUris().isEmpty()) {
       throw new AccountLinkingInvalidRequestException(
           "The client has no redirect URI to sign in again through.");
     }
-    sessionCommandRepository.update(tenant, session.requestReauthentication(now));
     AuthorizationServerConfiguration server =
         authorizationServerConfigurationQueryRepository.get(tenant);
     AccountLinkingPkce pkce = AccountLinkingPkce.generate();
@@ -227,10 +221,7 @@ public class AccountLinkingAuthorizeHandler {
         String.format("%s?%s", server.authorizationEndpoint(), params.params()));
   }
 
-  /**
-   * The browser was already sent to sign in once and is still without a recent sign-in: the RP is
-   * told a sign-in is needed, without the state.
-   */
+  /** The sign-in did not happen: the RP is told so, without the state, as before. */
   private static AccountLinkingResult loginRequired(AccountLinkingSession session) {
     return AccountLinkingResult.redirect(
         AccountLinkingReturnUri.failedUnverified(
