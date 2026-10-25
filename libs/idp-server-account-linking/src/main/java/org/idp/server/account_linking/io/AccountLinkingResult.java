@@ -18,6 +18,7 @@ package org.idp.server.account_linking.io;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.account_linking.AccountLinkingScope;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
@@ -109,11 +110,11 @@ public class AccountLinkingResult {
   }
 
   /** The user's token does not carry a scope this operation needs (RFC 6750 §3.1). */
-  public static AccountLinkingResult insufficientScope(String scope) {
+  public static AccountLinkingResult insufficientScope(AccountLinkingScope scope) {
     Map<String, Object> contents = new HashMap<>();
     contents.put("error", "insufficient_scope");
-    contents.put("error_description", "The request requires the '" + scope + "' scope.");
-    contents.put("scope", scope);
+    contents.put("error_description", "The request requires the '" + scope.value() + "' scope.");
+    contents.put("scope", scope.value());
     return new AccountLinkingResult(
         AccountLinkingStatus.FORBIDDEN, contents, null, null, null, noClient());
   }

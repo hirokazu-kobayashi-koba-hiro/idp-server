@@ -592,9 +592,10 @@ public class OAuthFlowEntryService
       case CHECK_BROWSER_COOKIE, PROCEED, SIGNED_IN_DURING_FLOW -> {}
     }
 
-    if (AccountLinkingReauthentication.isRequestedBy(authorizationRequest)) {
-      return continueToAccountLinking(
-          tenant, binding, authorizationRequest, authenticationTransaction);
+    AccountLinkingReauthentication reauthentication =
+        AccountLinkingReauthentication.of(authorizationRequest);
+    if (reauthentication.exists()) {
+      return continueToAccountLinking(tenant, binding, reauthentication, authenticationTransaction);
     }
 
     User user = authenticationTransaction.user();
@@ -744,6 +745,8 @@ public class OAuthFlowEntryService
     }
 
     CrossSiteAuthorizationBinding binding = bindingFor(tenant, authorizationRequest);
+    AccountLinkingReauthentication reauthentication =
+        AccountLinkingReauthentication.of(authorizationRequest);
     AuthSessionId cookieAuthSessionId =
         authSessionCookieDelegate
             .getAuthSessionId()
@@ -757,8 +760,8 @@ public class OAuthFlowEntryService
             authenticationTransaction,
             cookieAuthSessionId,
             authProof,
-            AccountLinkingReauthentication.isRequestedBy(authorizationRequest)
-                ? new RedirectUri(accountLinkingResumeUri(tenant, authorizationRequest))
+            reauthentication.exists()
+                ? new RedirectUri(accountLinkingResumeUri(tenant, reauthentication))
                 : registeredRedirectUri(tenant, authorizationRequest));
     if (!check.isAccepted()) {
       return OAuthCompleteResponse.errorPage(tenant, "invalid_request", check.errorDescription());
@@ -822,14 +825,14 @@ public class OAuthFlowEntryService
   private OAuthAuthorizeResponse continueToAccountLinking(
       Tenant tenant,
       CrossSiteAuthorizationBinding binding,
-      AuthorizationRequest authorizationRequest,
+      AccountLinkingReauthentication reauthentication,
       AuthenticationTransaction authenticationTransaction) {
     if (!authenticationTransaction.isSuccess()) {
       return new OAuthAuthorizeResponse(
           OAuthAuthorizeStatus.BAD_REQUEST, "invalid_request", "the sign-in is not complete.");
     }
     OAuthAuthorizeResponse response =
-        OAuthAuthorizeResponse.continueTo(accountLinkingResumeUri(tenant, authorizationRequest));
+        OAuthAuthorizeResponse.continueTo(accountLinkingResumeUri(tenant, reauthentication));
     if (binding.crossSite()) {
       handOff(
           tenant, binding, authenticationTransaction, authenticationTransaction.user(), response);
@@ -841,10 +844,10 @@ public class OAuthFlowEntryService
     return response;
   }
 
-  private String accountLinkingResumeUri(Tenant tenant, AuthorizationRequest authorizationRequest) {
+  private String accountLinkingResumeUri(
+      Tenant tenant, AccountLinkingReauthentication reauthentication) {
     String issuer = authorizationServerConfigurationQueryRepository.get(tenant).issuer();
-    return AccountLinkingReauthentication.resumeUri(
-        issuer, AccountLinkingReauthentication.stateOf(authorizationRequest));
+    return reauthentication.resumeUri(issuer);
   }
 
   private OAuthAuthorizeResponse alreadyAuthorized() {
@@ -915,7 +918,7 @@ public class OAuthFlowEntryService
         oAuthProtocol.get(tenant, authorizationRequestIdentifier);
 
     // Asked for a fresh sign-in for an account link: an existing session is what was not enough.
-    if (AccountLinkingReauthentication.isRequestedBy(authorizationRequest)) {
+    if (AccountLinkingReauthentication.of(authorizationRequest).exists()) {
       return new OAuthAuthorizeResponse(
           OAuthAuthorizeStatus.BAD_REQUEST,
           "invalid_request",
@@ -1032,11 +1035,13 @@ public class OAuthFlowEntryService
 
     // A sign-in for an account link that the user gave up on. The client asked for no grant and is
     // not told; the link learns it, and tells the RP the sign-in did not happen.
-    if (AccountLinkingReauthentication.isRequestedBy(authorizationRequest)) {
+    AccountLinkingReauthentication reauthentication =
+        AccountLinkingReauthentication.of(authorizationRequest);
+    if (reauthentication.exists()) {
       authenticationTransactionCommandRepository.delete(
           tenant, authenticationTransaction.identifier());
       authSessionCookieDelegate.clearAuthSessionCookie(tenant);
-      return OAuthDenyResponse.continueTo(accountLinkingResumeUri(tenant, authorizationRequest));
+      return OAuthDenyResponse.continueTo(accountLinkingResumeUri(tenant, reauthentication));
     }
 
     OAuthDenyRequest denyRequest =

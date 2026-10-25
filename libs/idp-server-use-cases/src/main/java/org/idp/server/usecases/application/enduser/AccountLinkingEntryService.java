@@ -115,7 +115,7 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
-    if (!AccountLinkingScope.allowsManage(oAuthToken)) {
+    if (!AccountLinkingScope.MANAGE.isGrantedBy(oAuthToken)) {
       return AccountLinkingResult.insufficientScope(AccountLinkingScope.MANAGE);
     }
 
@@ -216,7 +216,7 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
-    if (!AccountLinkingScope.allowsManage(oAuthToken)) {
+    if (!AccountLinkingScope.MANAGE.isGrantedBy(oAuthToken)) {
       return AccountLinkingResult.insufficientScope(AccountLinkingScope.MANAGE);
     }
 
@@ -238,7 +238,7 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
-    if (!AccountLinkingScope.allowsRead(oAuthToken)) {
+    if (!AccountLinkingScope.READ.isGrantedBy(oAuthToken)) {
       return AccountLinkingResult.insufficientScope(AccountLinkingScope.READ);
     }
 
@@ -263,7 +263,7 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
-    if (!AccountLinkingScope.allowsManage(oAuthToken)) {
+    if (!AccountLinkingScope.MANAGE.isGrantedBy(oAuthToken)) {
       return AccountLinkingResult.insufficientScope(AccountLinkingScope.MANAGE);
     }
 

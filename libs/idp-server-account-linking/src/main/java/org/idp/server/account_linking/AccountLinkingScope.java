@@ -15,6 +15,7 @@
  */
 package org.idp.server.account_linking;
 
+import java.util.List;
 import org.idp.server.core.openid.token.OAuthToken;
 
 /**
@@ -28,22 +29,34 @@ import org.idp.server.core.openid.token.OAuthToken;
  * <p>Handing out the stored tokens is a separate grant again ({@link #READ_TOKEN}). Neither of the
  * others implies it, and it implies neither of them.
  */
-public class AccountLinkingScope {
+public enum AccountLinkingScope {
 
   /** See the user's linked accounts. */
-  public static final String READ = "linked_account:read";
+  READ("linked_account:read"),
 
   /** Start, complete and remove links. Includes {@link #READ}. */
-  public static final String MANAGE = "linked_account:manage";
+  MANAGE("linked_account:manage"),
 
   /** Retrieve the access token stored for a linked account. */
-  public static final String READ_TOKEN = "linked_account:read_token";
+  READ_TOKEN("linked_account:read_token");
 
-  public static boolean allowsRead(OAuthToken oAuthToken) {
-    return oAuthToken.scopeAsList().contains(READ) || allowsManage(oAuthToken);
+  String value;
+
+  AccountLinkingScope(String value) {
+    this.value = value;
   }
 
-  public static boolean allowsManage(OAuthToken oAuthToken) {
-    return oAuthToken.scopeAsList().contains(MANAGE);
+  /** The scope value as it appears in a token. */
+  public String value() {
+    return value;
+  }
+
+  /** Whether the token carries this scope, or one that includes it. */
+  public boolean isGrantedBy(OAuthToken oAuthToken) {
+    List<String> scopes = oAuthToken.scopeAsList();
+    return switch (this) {
+      case READ -> scopes.contains(READ.value) || scopes.contains(MANAGE.value);
+      case MANAGE, READ_TOKEN -> scopes.contains(value);
+    };
   }
 }

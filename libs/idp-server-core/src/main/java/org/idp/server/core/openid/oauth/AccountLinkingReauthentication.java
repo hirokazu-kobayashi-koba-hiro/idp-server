@@ -34,7 +34,7 @@ import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
  * session and the link afresh. A forged state only gets its sender to a page they could open
  * directly.
  */
-public final class AccountLinkingReauthentication {
+public class AccountLinkingReauthentication {
 
   /** The custom parameter carrying the link's state. */
   public static final String STATE_PARAMETER = "idp_linking_state";
@@ -48,19 +48,29 @@ public final class AccountLinkingReauthentication {
    */
   public static final String RETURNED_FROM_SIGN_IN_PARAMETER = "returned_from_sign_in";
 
-  private AccountLinkingReauthentication() {}
+  String state;
 
-  public static boolean isRequestedBy(AuthorizationRequest authorizationRequest) {
-    return stateOf(authorizationRequest) != null;
+  AccountLinkingReauthentication() {}
+
+  AccountLinkingReauthentication(String state) {
+    this.state = state;
   }
 
-  /** The link's state, or {@code null} when the request is not one of these. */
-  public static String stateOf(AuthorizationRequest authorizationRequest) {
+  /** The link a sign-in was requested for; empty when the request is an ordinary one. */
+  public static AccountLinkingReauthentication of(AuthorizationRequest authorizationRequest) {
     if (authorizationRequest == null || authorizationRequest.customParams() == null) {
-      return null;
+      return new AccountLinkingReauthentication();
     }
     String state = authorizationRequest.customParams().values().get(STATE_PARAMETER);
-    return state == null || state.isEmpty() ? null : state;
+    if (state == null || state.isEmpty()) {
+      return new AccountLinkingReauthentication();
+    }
+    return new AccountLinkingReauthentication(state);
+  }
+
+  /** Whether the request only signs the user in again for an account link. */
+  public boolean exists() {
+    return state != null;
   }
 
   /**
@@ -68,7 +78,7 @@ public final class AccountLinkingReauthentication {
    *
    * @param issuer the tenant's authorization server issuer, which already carries the tenant
    */
-  public static String resumeUri(String issuer, String state) {
+  public String resumeUri(String issuer) {
     return String.format(
         "%s/v1/linking/start?state=%s&%s=true",
         issuer, URLEncoder.encode(state, StandardCharsets.UTF_8), RETURNED_FROM_SIGN_IN_PARAMETER);

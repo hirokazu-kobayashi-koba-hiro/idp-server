@@ -33,9 +33,6 @@ import org.idp.server.core.openid.token.OAuthToken;
  */
 public class LinkedExternalAccountTokenVerifier {
 
-  /** The scope a user grants for a client to read their linked accounts' tokens. */
-  public static final String READ_TOKEN_SCOPE = AccountLinkingScope.READ_TOKEN;
-
   /** The user's access token, as the client presented it. */
   public void verifyUserToken(OAuthToken userToken, ClientConfiguration client, LocalDateTime now) {
     verifyTokenExistsAndNotExpired(userToken, now);
@@ -89,9 +86,9 @@ public class LinkedExternalAccountTokenVerifier {
 
   /** The user granted this client {@code linked_account:read_token}. */
   private void verifyHasReadTokenScope(OAuthToken userToken) {
-    if (!userToken.scopeAsList().contains(READ_TOKEN_SCOPE)) {
+    if (!AccountLinkingScope.READ_TOKEN.isGrantedBy(userToken)) {
       throw LinkedExternalAccountTokenException.insufficientScope(
-          "token does not carry " + READ_TOKEN_SCOPE + ".");
+          "token does not carry " + AccountLinkingScope.READ_TOKEN.value() + ".");
     }
   }
 
