@@ -1513,7 +1513,7 @@ describe("account linking", () => {
       expect(denied.status).toBe(200);
       const resume = new URL(denied.data.redirect_uri);
       expect(resume.pathname).toBe(`/${serverConfig.tenantId}/v1/linking/start`);
-      expect(resume.searchParams.get("reauthenticated")).toBe("true");
+      expect(resume.searchParams.get("returned_from_sign_in")).toBe("true");
       expect(resume.searchParams.get("error")).toBeNull();
 
       // 戻ったブラウザはもう一度ログインへは送られず、RP に login_required が返る。
@@ -1651,7 +1651,7 @@ describe("account linking", () => {
       expect(linkResponse.status).toBe(201);
 
       // 戻ってきてもセッションが無いなら、もう一度ログインへは送らない（セッションを書けない環境でループしない）。
-      const response = await getWithoutCookies(`${linkResponse.data.start_url}&reauthenticated=true`);
+      const response = await getWithoutCookies(`${linkResponse.data.start_url}&returned_from_sign_in=true`);
       expect(response.status).toBe(302);
       expectReturnedFailure(response.headers.location, "login_required", null);
 

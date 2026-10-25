@@ -1529,7 +1529,7 @@ paths:
         | 状況 | `Location` |
         |---|---|
         | 操作者が一致した | 外部IdPの認可URL（`state`・`nonce`・`code_challenge`（`S256`）付き） |
-        | ブラウザセッションが無い、またはログインが `linking_max_auth_age` より古い（連携セッションは有効） | このサーバーの認可エンドポイント（`prompt=login`・`login_hint=sub:<連携を始めたユーザー>`）。ログインが終わると認可コードを発行せずに `/linking/start?state=...&reauthenticated=true` へ戻る |
+        | ブラウザセッションが無い、またはログインが `linking_max_auth_age` より古い（連携セッションは有効） | このサーバーの認可エンドポイント（`prompt=login`・`login_hint=sub:<連携を始めたユーザー>`）。ログインが終わると認可コードを発行せずに `/linking/start?state=...&returned_from_sign_in=true` へ戻る（ログインを取り消した場合も同じ） |
         | ログインから戻ってもブラウザセッションが無い、またはログインを取り消した | `{redirect_uri}?linking=failed&error=login_required`（`state` は付けない） |
         | ブラウザセッションが無く、連携セッションが無い・期限切れ・開始済み | テナントのエラー画面（`error=invalid_request`） |
         | 操作者が一致しない | テナントのエラー画面（`error=access_denied`） |
@@ -1555,11 +1555,12 @@ paths:
             `302` ではなく `500` の JSON（`server_error`）が返ります。
           schema:
             type: string
-        - name: reauthenticated
+        - name: returned_from_sign_in
           in: query
           required: false
           description: |
-            ログインし直しから戻ったときに idp-server が付ける。これが `true` で、まだブラウザセッションが無い（または古い）ときは、
+            idp-server が送り出したログインし直しから戻るときに、idp-server が付ける（ログインを取り消した場合も付く）。
+            認証の結果は表さない。これが `true` で、まだブラウザセッションが無い（または古い）ときは、
             もう一度ログインへは送らずに `login_required` を返す。RP が付ける必要はない。
           schema:
             type: string

@@ -132,7 +132,7 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
   public AccountLinkingResult authorizeStart(
       TenantIdentifier tenantIdentifier,
       AccountLinkingState state,
-      boolean resumed,
+      boolean returnedFromSignIn,
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
@@ -144,7 +144,7 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
         oidcSessionHandler.getOPSessionFromCookie(tenant, sessionCookieDelegate);
     if (opSession.isEmpty()) {
       AccountLinkingResult result =
-          authorizeHandler.handleWithoutBrowserSession(tenant, state, resumed);
+          authorizeHandler.handleWithoutBrowserSession(tenant, state, returnedFromSignIn);
       publish(tenant, result, requestAttributes);
       return result;
     }
@@ -153,7 +153,11 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
     AccountLinkingAuthorizeResult authorization =
         authorizeHandler.handle(
             new AccountLinkingAuthorizeRequest(
-                tenant, state, browserSession.user(), browserSession.authentication(), resumed));
+                tenant,
+                state,
+                browserSession.user(),
+                browserSession.authentication(),
+                returnedFromSignIn));
     AccountLinkingResult result = authorization.result();
 
     if (authorization.hasBrowserBinding()) {

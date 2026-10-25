@@ -91,7 +91,9 @@ public class AccountLinkingAuthorizeHandler {
           clientConfigurationQueryRepository.get(tenant, session.requestedClientId());
       if (!isRecentEnough(request.authentication(), session, client.linkingMaxAuthAge(), now)) {
         return AccountLinkingAuthorizeResult.of(
-            request.resumed() ? loginRequired(session) : signInAgain(tenant, session, client),
+            request.returnedFromSignIn()
+                ? loginRequired(session)
+                : signInAgain(tenant, session, client),
             null);
       }
 
@@ -139,7 +141,7 @@ public class AccountLinkingAuthorizeHandler {
    * would bury the mismatches that event exists to surface.
    */
   public AccountLinkingResult handleWithoutBrowserSession(
-      Tenant tenant, AccountLinkingState state, boolean resumed) {
+      Tenant tenant, AccountLinkingState state, boolean returnedFromSignIn) {
     AccountLinkingSession session = sessionQueryRepository.find(tenant, state);
     LocalDateTime now = SystemDateTime.now();
 
@@ -148,7 +150,7 @@ public class AccountLinkingAuthorizeHandler {
           new AccountLinkingErrorPage(tenant, AccountLinkingStatus.NOT_FOUND).value(),
           DefaultSecurityEventType.external_account_link_failed);
     }
-    if (resumed) {
+    if (returnedFromSignIn) {
       return loginRequired(session);
     }
     try {

@@ -40,11 +40,13 @@ public final class AccountLinkingReauthentication {
   public static final String STATE_PARAMETER = "idp_linking_state";
 
   /**
-   * Added to the resume URI. {@code /linking/start} reached with it and still without a recent
+   * Added to the resume URI: the browser is on its way back from the sign-in {@code /linking/start}
+   * sent it to, whether it signed in or cancelled. It says nothing about authentication, only that
+   * the round trip happened. {@code /linking/start} reached with it and still without a recent
    * sign-in does not send the browser round again, which would loop where the session cannot be
    * written.
    */
-  public static final String RESUMED_PARAMETER = "reauthenticated";
+  public static final String RETURNED_FROM_SIGN_IN_PARAMETER = "returned_from_sign_in";
 
   private AccountLinkingReauthentication() {}
 
@@ -69,6 +71,6 @@ public final class AccountLinkingReauthentication {
   public static String resumeUri(String issuer, String state) {
     return String.format(
         "%s/v1/linking/start?state=%s&%s=true",
-        issuer, URLEncoder.encode(state, StandardCharsets.UTF_8), RESUMED_PARAMETER);
+        issuer, URLEncoder.encode(state, StandardCharsets.UTF_8), RETURNED_FROM_SIGN_IN_PARAMETER);
   }
 }
