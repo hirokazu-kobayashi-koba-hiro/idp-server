@@ -158,6 +158,7 @@ RP のクライアント設定に次を追加します。クライアントの�
 | `extension.linking_providers` | 連携の開始を許す連携先（`sso_provider`）。書いていない連携先への `link` は `403` |
 | `extension.linking_token_providers` | 保管トークンの取得を許す連携先（`sso_provider`）。書いていない連携先のトークンは取り出せない（`403 unauthorized_client`） |
 | `extension.linking_max_auth_age` | `/linking/start` がそのまま受け入れるログインの新しさ（秒）。古ければその場でログインし直させる。`0` で毎回。省略時は `300` |
+| `extension.linking_acr_values` | 連携に普段より強い認証を求めるときの acr（例：FIDO だけのポリシーに当てた値）。ログインがこれに当たらなければログインし直させ、そのログインに `acr_values` として載せる。省略時は制限なし |
 | `token_endpoint_auth_method` | 保管トークンを取得するなら confidential クライアントにする。`none` は拒否される |
 
 RP は認可リクエストの `scope` にもこれらを含め、ユーザーのアクセストークンに付与させます。
@@ -202,7 +203,7 @@ curl -X POST "${IDP_SERVER_URL}/${TENANT_ID}/v1/me/linked-external-accounts/link
 
 idp-server はログインセッションで操作者を確認してから外部IdPへ送り、外部IdPから戻るとトークンを交換して預かり、Step 4 の戻り先へ 302 します。
 
-ブラウザにログインが無いか、ログインがクライアントの `linking_max_auth_age`（既定 300 秒）より古いときは、idp-server がその場で認証画面へ送ります。ログインできるのは連携を始めた本人だけで、ログインが終わると外部IdPへ進みます。RP 側で何かする必要はありません。ネイティブアプリは `start_url` を ASWebAuthenticationSession や Custom Tabs で開いてください（ephemeral でも構いません。WebView は使わないでください）。
+ブラウザにログインが無いか、ログインがクライアントの `linking_max_auth_age`（既定 300 秒）より古いとき、または `linking_acr_values` を設定していてログインの acr がどれにも当たらないときは、idp-server がその場で認証画面へ送ります。ログインできるのは連携を始めた本人だけで、ログインが終わると外部IdPへ進みます。RP 側で何かする必要はありません。ネイティブアプリは `start_url` を ASWebAuthenticationSession や Custom Tabs で開いてください（ephemeral でも構いません。WebView は使わないでください）。
 
 ### 5.3 戻り先で結果を処理する
 

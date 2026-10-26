@@ -1491,6 +1491,41 @@ describe("account linking", () => {
       expect(startResponse.headers.location).toContain(federationServerConfig.tenantId);
     });
 
+    // 連携に普段より強いログインを求める設定（linking_acr_values）。ログインが新しくても acr が当たらなければ
+    // ログインし直しへ送り、その認可リクエストに acr_values を載せて、acr に当てた認証ポリシーを効かせる。
+    it("sends a recent sign-in that did not reach the client's linking_acr_values to sign in again with acr_values", async () => {
+      const clientUrl = `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/clients/${clientSecretPostClient.clientId}`;
+      const adminHeaders = { Authorization: `Bearer ${await requestAdminAccessToken()}` };
+      const current = await get({ url: clientUrl, headers: adminHeaders });
+      expect(current.status).toBe(200);
+      const { created_at, updated_at, ...clientBody } = current.data;
+      const strongAcr = "urn:e2e:linking:strong";
+
+      const updated = await putWithJson({
+        url: clientUrl,
+        headers: adminHeaders,
+        body: { ...clientBody, extension: { ...clientBody.extension, linking_acr_values: [strongAcr] } },
+      });
+      expect(updated.status).toBe(200);
+      try {
+        const accessToken = await login(ownerUser);
+        const linkResponse = await startLink(accessToken);
+        expect(linkResponse.status).toBe(201);
+
+        // ログインは今したばかりでも、acr が linking_acr_values に当たらないので外部IdP へは進まない。
+        const startResponse = await get({ url: linkResponse.data.start_url });
+        expect(startResponse.status).toBe(302);
+        const location = new URL(startResponse.headers.location);
+        expect(`${location.origin}${location.pathname}`).toBe(authorizationsBase);
+        expect(location.searchParams.get("acr_values")).toBe(strongAcr);
+        expect(location.searchParams.get("prompt")).toBe("login");
+        expect(location.searchParams.get("idp_linking_state")).toBe(linkResponse.data.state);
+      } finally {
+        const restored = await putWithJson({ url: clientUrl, headers: adminHeaders, body: clientBody });
+        expect(restored.status).toBe(200);
+      }
+    });
+
     it("does not let anyone else sign in for the link", async () => {
       const accessToken = await login(ownerUser);
       const linkResponse = await startLink(accessToken);

@@ -512,6 +512,11 @@ public class ClientConfiguration implements JsonReadable, Configurable {
     return extension.linkingMaxAuthAge();
   }
 
+  /** See {@link ClientExtensionConfiguration#linkingAcrValues()}. */
+  public java.util.List<String> linkingAcrValues() {
+    return extension.linkingAcrValues();
+  }
+
   public boolean hasAccessTokenDuration() {
     return extension.hasAccessTokenDuration();
   }

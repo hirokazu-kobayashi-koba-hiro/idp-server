@@ -59,6 +59,30 @@ class ClientExtensionConfigurationTest {
   }
 
   @Nested
+  @DisplayName("linking_acr_values")
+  class LinkingAcrValues {
+
+    @Test
+    @DisplayName("未設定なら空、toMap に含まれない")
+    void defaultsToEmpty() {
+      ClientExtensionConfiguration config = fromSnakeCaseJson("{}");
+      assertTrue(config.linkingAcrValues().isEmpty());
+      assertFalse(config.hasLinkingAcrValues());
+      assertFalse(config.toMap().containsKey("linking_acr_values"));
+    }
+
+    @Test
+    @DisplayName("設定した順で読み、toMap に戻る")
+    void keepsOrder() {
+      ClientExtensionConfiguration config =
+          fromSnakeCaseJson("{\"linking_acr_values\": [\"urn:acr:fido\", \"urn:acr:mfa\"]}");
+      assertEquals(List.of("urn:acr:fido", "urn:acr:mfa"), config.linkingAcrValues());
+      assertEquals(
+          List.of("urn:acr:fido", "urn:acr:mfa"), config.toMap().get("linking_acr_values"));
+    }
+  }
+
+  @Nested
   @DisplayName("rotateRefreshToken の null vs false の区別")
   class RotateRefreshTokenNullability {
 

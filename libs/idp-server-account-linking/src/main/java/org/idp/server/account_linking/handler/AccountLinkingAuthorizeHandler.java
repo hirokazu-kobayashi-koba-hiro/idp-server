@@ -17,6 +17,7 @@
 package org.idp.server.account_linking.handler;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 import org.idp.server.account_linking.*;
 import org.idp.server.account_linking.exception.AccountLinkingInvalidRequestException;
@@ -89,7 +90,8 @@ public class AccountLinkingAuthorizeHandler {
 
       ClientConfiguration client =
           clientConfigurationQueryRepository.get(tenant, session.requestedClientId());
-      if (!isRecentEnough(request.authentication(), session, client.linkingMaxAuthAge(), now)) {
+      if (!isRecentEnough(request.authentication(), session, client.linkingMaxAuthAge(), now)
+          || !hasReachedLinkingAcr(request.authentication(), client.linkingAcrValues())) {
         return AccountLinkingAuthorizeResult.of(
             request.returnedFromSignIn()
                 ? loginRequired(session)
@@ -186,6 +188,22 @@ public class AccountLinkingAuthorizeHandler {
   }
 
   /**
+   * Whether the browser's sign-in reached one of the client's {@code linking_acr_values}.
+   *
+   * <p>A recent sign-in is not enough on its own when the client asks for a stronger one for links:
+   * an ordinary sign-in a minute ago would otherwise let a link through without it. With no values
+   * configured, any sign-in passes.
+   */
+  static boolean hasReachedLinkingAcr(Authentication authentication, List<String> acrValues) {
+    if (acrValues.isEmpty()) {
+      return true;
+    }
+    return authentication != null
+        && authentication.acr() != null
+        && acrValues.contains(authentication.acr());
+  }
+
+  /**
    * Sends the browser to sign in as the link's user, through the ordinary authorization flow, and
    * back here afterwards.
    *
@@ -195,6 +213,9 @@ public class AccountLinkingAuthorizeHandler {
    * along as {@link AccountLinkingReauthentication#STATE_PARAMETER}, which makes the flow end at
    * {@code /linking/start} instead of issuing a code. The PKCE challenge is there for clients that
    * require one; its verifier is thrown away with the code that is never issued.
+   *
+   * <p>The client's {@code linking_acr_values} go out as {@code acr_values}, so the authentication
+   * policy matched on them, rather than the client's ordinary one, applies to this sign-in.
    */
   private AccountLinkingResult signInAgain(
       Tenant tenant, AccountLinkingSession session, ClientConfiguration client) {
@@ -217,13 +238,19 @@ public class AccountLinkingAuthorizeHandler {
     params.add("nonce", UUID.randomUUID().toString());
     params.add("code_challenge", pkce.codeChallenge());
     params.add("code_challenge_method", pkce.codeChallengeMethod());
+    if (!client.linkingAcrValues().isEmpty()) {
+      params.add("acr_values", String.join(" ", client.linkingAcrValues()));
+    }
     params.add(AccountLinkingReauthentication.STATE_PARAMETER, session.state().value());
 
     return AccountLinkingResult.redirect(
         String.format("%s?%s", server.authorizationEndpoint(), params.params()));
   }
 
-  /** The sign-in did not happen: the RP is told so, without the state, as before. */
+  /**
+   * The sign-in did not happen, or did not reach the client's {@code linking_acr_values}: the RP is
+   * told a sign-in is needed, without the state.
+   */
   private static AccountLinkingResult loginRequired(AccountLinkingSession session) {
     return AccountLinkingResult.redirect(
         AccountLinkingReturnUri.failedUnverified(

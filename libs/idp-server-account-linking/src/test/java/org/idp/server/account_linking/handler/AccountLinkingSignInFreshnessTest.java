@@ -18,6 +18,7 @@ package org.idp.server.account_linking.handler;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import org.idp.server.account_linking.AccountLinkingSession;
 import org.idp.server.core.openid.authentication.Authentication;
 import org.junit.jupiter.api.Test;
@@ -71,5 +72,31 @@ class AccountLinkingSignInFreshnessTest {
             new Authentication(), STARTED_TWO_MINUTES_AGO, 300, NOW));
     assertFalse(
         AccountLinkingAuthorizeHandler.isRecentEnough(null, STARTED_TWO_MINUTES_AGO, 300, NOW));
+  }
+
+  @Test
+  void acceptsAnySignInWhenNoLinkingAcrIsConfigured() {
+    assertTrue(
+        AccountLinkingAuthorizeHandler.hasReachedLinkingAcr(
+            signedIn(NOW).addAcr("urn:acr:pwd"), List.of()));
+    assertTrue(AccountLinkingAuthorizeHandler.hasReachedLinkingAcr(signedIn(NOW), List.of()));
+  }
+
+  /** A recent ordinary sign-in does not stand in for the stronger one the client asks for links. */
+  @Test
+  void asksAgainForASignInThatDidNotReachTheLinkingAcr() {
+    List<String> fidoOnly = List.of("urn:acr:fido");
+    assertFalse(
+        AccountLinkingAuthorizeHandler.hasReachedLinkingAcr(
+            signedIn(NOW).addAcr("urn:acr:pwd"), fidoOnly));
+    assertFalse(AccountLinkingAuthorizeHandler.hasReachedLinkingAcr(signedIn(NOW), fidoOnly));
+    assertFalse(AccountLinkingAuthorizeHandler.hasReachedLinkingAcr(null, fidoOnly));
+  }
+
+  @Test
+  void acceptsASignInThatReachedOneOfTheLinkingAcrValues() {
+    assertTrue(
+        AccountLinkingAuthorizeHandler.hasReachedLinkingAcr(
+            signedIn(NOW).addAcr("urn:acr:mfa"), List.of("urn:acr:fido", "urn:acr:mfa")));
   }
 }

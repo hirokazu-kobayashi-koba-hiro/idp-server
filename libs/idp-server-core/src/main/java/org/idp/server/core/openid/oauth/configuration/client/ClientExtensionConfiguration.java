@@ -50,6 +50,7 @@ public class ClientExtensionConfiguration implements JsonReadable {
   List<String> linkingProviders;
   List<String> linkingTokenProviders;
   Long linkingMaxAuthAge;
+  List<String> linkingAcrValues;
   Map<String, Object> customProperties = new HashMap<>();
 
   public ClientExtensionConfiguration() {}
@@ -336,6 +337,24 @@ public class ClientExtensionConfiguration implements JsonReadable {
     return linkingMaxAuthAge != null;
   }
 
+  /**
+   * Authentication context classes a sign-in must have reached for {@code /linking/start} to accept
+   * it, in order of preference.
+   *
+   * <p>A link may call for a stronger sign-in than the client's ordinary one (FIDO only, say). The
+   * sign-in {@code /linking/start} asks for carries these as {@code acr_values}, so the
+   * authentication policy matched on them applies; a recent sign-in that reached none of them is
+   * made again. Kept on the client rather than taken from the request, so the client cannot lower
+   * it. Empty means any sign-in recent enough is accepted.
+   */
+  public List<String> linkingAcrValues() {
+    return linkingAcrValues == null ? List.of() : linkingAcrValues;
+  }
+
+  public boolean hasLinkingAcrValues() {
+    return linkingAcrValues != null && !linkingAcrValues.isEmpty();
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     if (hasAccessTokenDuration()) map.put("access_token_duration", accessTokenDuration);
@@ -375,6 +394,7 @@ public class ClientExtensionConfiguration implements JsonReadable {
     if (hasLinkingProviders()) map.put("linking_providers", linkingProviders);
     if (hasLinkingTokenProviders()) map.put("linking_token_providers", linkingTokenProviders);
     if (hasLinkingMaxAuthAge()) map.put("linking_max_auth_age", linkingMaxAuthAge);
+    if (hasLinkingAcrValues()) map.put("linking_acr_values", linkingAcrValues);
     if (hasCustomProperties()) map.put("custom_properties", customProperties);
     return map;
   }
