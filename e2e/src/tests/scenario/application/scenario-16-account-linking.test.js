@@ -9,7 +9,7 @@ import {
   serverConfig
 } from "../../testConfig";
 import { authorize, deny, postAuthentication, requestToken } from "../../../api/oauthClient";
-import { deletion, get, post, postWithJson, putWithJson } from "../../../lib/http";
+import { cookieJar, deletion, get, post, postWithJson, putWithJson } from "../../../lib/http";
 import { requestAuthorizations } from "../../../oauth/request";
 import { generateECP256JWKS } from "../../../lib/jose";
 import { convertNextAction } from "../../../lib/util";
@@ -264,10 +264,16 @@ describe("account linking", () => {
       // コールバックは Bearer を運べないので、start が発行するこの Cookie だけが
       // 「戻ってきたブラウザは start を通ったブラウザか」を判定できる。
       // SameSite=Lax でないと外部IdPからのクロスサイト遷移で送られず、連携が成立しない。
-      const setCookie = (startResponse.headers["set-cookie"] || []).join("; ");
-      expect(setCookie).toContain("IDP_LINK_BINDING=");
-      expect(setCookie).toContain("HttpOnly");
-      expect(setCookie).toContain("SameSite=Lax");
+      // __Host- なので兄弟サブドメインからは書けない。Path=/ になる分、テナントは名前で分ける。
+      const binding = (startResponse.headers["set-cookie"] || []).find((it) =>
+        it.startsWith(`__Host-IDP_LINK_BINDING_${serverConfig.tenantId}=`),
+      );
+      expect(binding).toBeDefined();
+      expect(binding).toContain("Path=/;");
+      expect(binding).toContain("Secure");
+      expect(binding).not.toContain("Domain=");
+      expect(binding).toContain("HttpOnly");
+      expect(binding).toContain("SameSite=Lax");
 
       const externalAuthorizationUri = startResponse.headers.location;
       console.log(externalAuthorizationUri);
@@ -1402,6 +1408,48 @@ describe("account linking", () => {
       expectErrorPage(startResponse.headers.location, "access_denied");
     });
 
+    /**
+     * 兄弟サブドメインから、攻撃者の OP セッションの Cookie だけを被害者のブラウザに置かれた場合。
+     * IDP_IDENTITY だけでは、このブラウザがログインして受け取ったものか分からない。
+     * __Host- の証の Cookie が無いので、セッションが無いのと同じに扱い、攻撃者本人としてのログインへ送る。
+     */
+    it("does not take a session cookie this browser did not sign in for", async () => {
+      const attackerAccessToken = await login(ownerUser);
+      const linkResponse = await startLink(attackerAccessToken);
+      expect(linkResponse.status).toBe(201);
+
+      const cookies = await cookieJar.getCookies(linkResponse.data.start_url);
+      const identity = cookies.find((it) => it.key === "IDP_IDENTITY");
+      const proof = cookies.find((it) => it.key === `__Host-IDP_BROWSER_${serverConfig.tenantId}`);
+      expect(identity).toBeDefined();
+      expect(proof).toBeDefined();
+
+      const startIn = async (cookieHeader) =>
+        await axios.get(linkResponse.data.start_url, {
+          maxRedirects: 0,
+          validateStatus: () => true,
+          headers: { Cookie: cookieHeader },
+        });
+
+      // 被害者のブラウザ：攻撃者の IDP_IDENTITY だけが載っている
+      const planted = await startIn(`IDP_IDENTITY=${identity.value}`);
+      expect(planted.status).toBe(302);
+      const location = new URL(planted.headers.location);
+      expect(`${location.origin}${location.pathname}`).toBe(
+        `${backendUrl}/${serverConfig.tenantId}/v1/authorizations`,
+      );
+      expect(location.searchParams.get("prompt")).toBe("login");
+      expect(location.searchParams.get("idp_linking_state")).toBe(linkResponse.data.state);
+      // 束縛 Cookie は出さない（外部IdP へ進む道に乗らない）
+      const issued = (planted.headers["set-cookie"] || []).join("; ");
+      expect(issued).not.toContain("__Host-IDP_LINK_BINDING_");
+
+      // 対照：ログインしたブラウザ自身（証も載っている）なら外部IdP へ進む
+      const owner = await startIn(`IDP_IDENTITY=${identity.value}; ${proof.key}=${proof.value}`);
+      expect(owner.status).toBe(302);
+      expect(owner.headers.location).toContain(federationServerConfig.tenantId);
+    });
+
     it("does not redeem a code that comes back to another provider's callback", async () => {
       // 連携先ごとにコールバックは別。始めた連携先と違うコールバックに届いた応答は取り違えなので、
       // code を交換せずにエラー画面へ送る。
@@ -1643,6 +1691,38 @@ describe("account linking", () => {
 
       // 連携を始めたブラウザからは、まだ続きが通る。
       const owner = await get({ url: callbackUrl({ error: "access_denied", state }) });
+      expect(owner.status).toBe(302);
+      expectReturnedFailure(owner.headers.location, "access_denied", state);
+    });
+
+    it("sends a browser presenting the binding twice to the error page", async () => {
+      const { state } = await startedLink();
+      const url = callbackUrl({ error: "access_denied", state });
+      const binding = (await cookieJar.getCookies(url)).find(
+        (it) => it.key === `__Host-IDP_LINK_BINDING_${serverConfig.tenantId}`,
+      );
+      expect(binding).toBeDefined();
+
+      // __Host- の Cookie はこのホストしか書けない。同じ名前が 2 つ来たら、どちらも信じない。
+      const twice = await axios.get(url, {
+        maxRedirects: 0,
+        validateStatus: () => true,
+        headers: { Cookie: `${binding.key}=${binding.value}; ${binding.key}=${binding.value}` },
+      });
+      expect(twice.status).toBe(302);
+      expectErrorPage(twice.headers.location, "access_denied");
+
+      // 束縛の古い名前で値を置いても読まない
+      const oldName = await axios.get(url, {
+        maxRedirects: 0,
+        validateStatus: () => true,
+        headers: { Cookie: `IDP_LINK_BINDING=${binding.value}` },
+      });
+      expect(oldName.status).toBe(302);
+      expectErrorPage(oldName.headers.location, "access_denied");
+
+      // 連携を始めたブラウザからは、まだ続きが通る。
+      const owner = await get({ url });
       expect(owner.status).toBe(302);
       expectReturnedFailure(owner.headers.location, "access_denied", state);
     });

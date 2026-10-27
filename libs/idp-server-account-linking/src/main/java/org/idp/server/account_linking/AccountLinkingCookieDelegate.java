@@ -28,6 +28,10 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
  * {@code Strict} would otherwise break linking outright, so this cookie does not follow the
  * tenant's {@code cookie_same_site} setting.
  *
+ * <p>It is a {@code __Host-} cookie for the same reason the callback needs it at all: a value
+ * placed in the browser by a host on a sibling subdomain would otherwise pass for the one issued
+ * here. The tenant is in its name, because {@code Path=/} no longer keeps tenants apart.
+ *
  * @see AccountLinkingBrowserBinding
  */
 public interface AccountLinkingCookieDelegate {
@@ -39,8 +43,12 @@ public interface AccountLinkingCookieDelegate {
    */
   void setBrowserBindingCookie(Tenant tenant, String secret, long maxAgeSeconds);
 
-  /** Reads the binding secret presented by the browser at the callback. */
-  Optional<String> getBrowserBindingSecret();
+  /**
+   * Reads the binding secret presented by the browser at the callback.
+   *
+   * @return the secret, or empty if not present or presented more than once
+   */
+  Optional<String> getBrowserBindingSecret(Tenant tenant);
 
   /** Clears the cookie once the link is settled, whether it succeeded or failed. */
   void clearBrowserBindingCookie(Tenant tenant);

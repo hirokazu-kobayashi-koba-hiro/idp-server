@@ -1520,7 +1520,8 @@ paths:
         RP はブラウザを**トップレベル遷移**でここへ送ります（iframe の中では成立しません）。
 
         idp-server のブラウザセッションから操作者を解決し、連携を開始したユーザーと一致するかを照合します。
-        一致すれば、ブラウザ束縛の Cookie（`IDP_LINK_BINDING`、`SameSite=Lax`）を発行し、外部IdPの認可エンドポイントへ `302` で送ります。
+        ブラウザセッションとして使うのは、ログインで発行した `__Host-IDP_BROWSER_{tenant-id}` Cookie が OP セッションと合うときだけです。合わなければセッションが無いのと同じに扱います。
+        一致すれば、ブラウザ束縛の Cookie（`__Host-IDP_LINK_BINDING_{tenant-id}`、`Secure`・`Path=/`・`SameSite=Lax`）を発行し、外部IdPの認可エンドポイントへ `302` で送ります。
 
         Bearer は不要です。JSON は返さず、成功も失敗も `302` で答えます。
 
@@ -1582,7 +1583,7 @@ paths:
                 error_page:
                   value: "https://auth.example.com/error/?error=access_denied&error_description=...&tenant_id=67e7eae6-62b0-4500-9eff-87459f63fc66"
             Set-Cookie:
-              description: 外部IdPへ送るときだけ、ブラウザ束縛の `IDP_LINK_BINDING` を発行します
+              description: 外部IdPへ送るときだけ、ブラウザ束縛の `__Host-IDP_LINK_BINDING_{tenant-id}` を発行します
               schema:
                 type: string
         '500':
@@ -1596,7 +1597,7 @@ paths:
       description: |
         外部IdPが認可応答を返す先です。連携先設定（`federation-configurations`）の `redirect_uri` にこの URL を登録します。
 
-        `state` から連携セッションを引き、`/v1/linking/start` を通ったブラウザか（`IDP_LINK_BINDING` Cookie）を**認可コードを交換する前に**照合します。
+        `state` から連携セッションを引き、`/v1/linking/start` を通ったブラウザか（`__Host-IDP_LINK_BINDING_{tenant-id}` Cookie）を**認可コードを交換する前に**照合します。同じ名前の Cookie が 2 つ以上届いたときは照合に失敗します。
         照合できたら認可コードを交換し（PKCE）、ID Token の検証・userinfo の取得を経て、トークンを暗号化して連携セッションに預けます。
         **連携はまだ確定しません。** RP が戻り先で受け取った `state` で `POST /v1/me/linked-external-accounts/complete` を呼んで確定します。
 

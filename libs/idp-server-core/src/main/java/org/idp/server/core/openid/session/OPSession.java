@@ -48,6 +48,7 @@ public class OPSession implements Serializable, JsonReadable {
   private TerminationReason terminationReason;
   private String ipAddress;
   private String userAgent;
+  private String browserProofHash;
 
   /** Default constructor for JSON deserialization. */
   public OPSession() {
@@ -93,22 +94,26 @@ public class OPSession implements Serializable, JsonReadable {
       Map<String, Map<String, Object>> interactionResults,
       long sessionTimeoutSeconds,
       String ipAddress,
-      String userAgent) {
+      String userAgent,
+      BrowserProof browserProof) {
     Instant now = Instant.now();
-    return new OPSession(
-        OPSessionIdentifier.generate(),
-        tenantId,
-        user,
-        authTime,
-        acr,
-        amr,
-        interactionResults,
-        BrowserState.generate(),
-        now,
-        now.plusSeconds(sessionTimeoutSeconds),
-        now,
-        ipAddress,
-        userAgent);
+    OPSession session =
+        new OPSession(
+            OPSessionIdentifier.generate(),
+            tenantId,
+            user,
+            authTime,
+            acr,
+            amr,
+            interactionResults,
+            BrowserState.generate(),
+            now,
+            now.plusSeconds(sessionTimeoutSeconds),
+            now,
+            ipAddress,
+            userAgent);
+    session.browserProofHash = browserProof.hash();
+    return session;
   }
 
   public OPSessionIdentifier id() {
@@ -227,18 +232,32 @@ public class OPSession implements Serializable, JsonReadable {
    * are replaced together and never merged, even when the new acr is weaker. Keeping an earlier,
    * stronger acr beside the new auth_time would claim an authentication that never happened, and a
    * request with both acr_values and max_age would pass on it.
+   *
+   * <p>The browser proof is replaced with them: the cookie handed out with this sign-in is the one
+   * the browser now holds.
    */
   public OPSession reauthenticate(
       Instant authTime,
       String acr,
       List<String> amr,
-      Map<String, Map<String, Object>> interactionResults) {
+      Map<String, Map<String, Object>> interactionResults,
+      BrowserProof browserProof) {
     this.authTime = authTime;
     this.acr = acr;
     this.amr = amr;
     this.interactionResults = interactionResults;
+    this.browserProofHash = browserProof.hash();
     this.lastAccessedAt = Instant.now();
     return this;
+  }
+
+  /**
+   * Whether the presented proof is the one handed out with this session.
+   *
+   * <p>A session recorded before proofs were issued has none, and is held by no browser.
+   */
+  public boolean isHeldBy(String presentedBrowserProof) {
+    return BrowserProof.matches(browserProofHash, presentedBrowserProof);
   }
 
   public OPSession terminate(TerminationReason reason) {

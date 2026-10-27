@@ -19,6 +19,8 @@ package org.idp.server.adapters.springboot.application.session;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import org.idp.server.core.openid.session.SessionCookieDelegate;
 import org.idp.server.platform.log.LoggerWrapper;
@@ -45,6 +47,7 @@ public class SessionCookieService implements SessionCookieDelegate {
 
   public static final String IDENTITY_COOKIE_NAME = "IDP_IDENTITY";
   public static final String SESSION_COOKIE_NAME = "IDP_SESSION";
+  public static final String BROWSER_PROOF_COOKIE_PREFIX = "__Host-IDP_BROWSER_";
 
   private static final LoggerWrapper log = LoggerWrapper.getLogger(SessionCookieService.class);
   private static final boolean DEFAULT_SECURE = true;
@@ -95,6 +98,32 @@ public class SessionCookieService implements SessionCookieDelegate {
   }
 
   @Override
+  public void registerBrowserProofCookie(Tenant tenant, String browserProof, long maxAgeSeconds) {
+    addHostCookie(browserProofCookieName(tenant), browserProof, (int) maxAgeSeconds, tenant);
+  }
+
+  @Override
+  public Optional<String> getBrowserProof(Tenant tenant) {
+    String cookieName = browserProofCookieName(tenant);
+    Cookie[] cookies = httpServletRequest.getCookies();
+    if (cookies == null) {
+      return Optional.empty();
+    }
+    List<String> values =
+        Arrays.stream(cookies)
+            .filter(cookie -> cookieName.equals(cookie.getName()))
+            .map(Cookie::getValue)
+            .filter(value -> value != null && !value.isEmpty())
+            .toList();
+    // A __Host- cookie can only be set by this host, so two of them is not a browser this server
+    // wrote to; neither is trusted.
+    if (values.size() != 1) {
+      return Optional.empty();
+    }
+    return Optional.of(values.get(0));
+  }
+
+  @Override
   public Optional<String> getIdentityToken() {
     Optional<String> value = getCookieValue(IDENTITY_COOKIE_NAME);
     log.debug(
@@ -132,8 +161,34 @@ public class SessionCookieService implements SessionCookieDelegate {
 
     addCookieWithSameSiteAndDomain(identityCookie, sameSite, cookieDomain);
     addCookieWithSameSiteAndDomain(sessionCookie, sameSite, cookieDomain);
+    addHostCookie(browserProofCookieName(tenant), "", 0, tenant);
 
     log.debug("Session cookies cleared, path={}, domain={}", cookiePath, cookieDomain);
+  }
+
+  /**
+   * Writes a {@code __Host-} cookie.
+   *
+   * <p>The browser keeps one only when it is {@code Secure}, has {@code Path=/} and no {@code
+   * Domain}, so those are fixed here rather than taken from the tenant. {@code SameSite} still
+   * follows the tenant, to travel with the session cookie it accompanies.
+   */
+  private void addHostCookie(String name, String value, int maxAge, Tenant tenant) {
+    StringBuilder cookieHeader = new StringBuilder();
+    cookieHeader.append(name).append("=").append(value);
+    cookieHeader.append("; Max-Age=").append(maxAge);
+    cookieHeader.append("; Path=/");
+    cookieHeader.append("; Secure");
+    cookieHeader.append("; HttpOnly");
+    String sameSite = getSameSite(tenant);
+    if (sameSite != null && !sameSite.isEmpty()) {
+      cookieHeader.append("; SameSite=").append(sameSite);
+    }
+    httpServletResponse.addHeader("Set-Cookie", cookieHeader.toString());
+  }
+
+  private String browserProofCookieName(Tenant tenant) {
+    return BROWSER_PROOF_COOKIE_PREFIX + tenant.identifierValue();
   }
 
   private Optional<String> getCookieValue(String cookieName) {

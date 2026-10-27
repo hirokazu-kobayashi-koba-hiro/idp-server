@@ -140,8 +140,11 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
     // The subject is established here, not carried over from link. Skipping this check is what
     // lets an attacker's session be walked through by a victim, so an absent OP session is never
     // fallen through: the browser is sent to sign in as the link's user and back here.
+    // Only a session this browser signed in to counts. A session cookie placed in it from a
+    // sibling subdomain would otherwise make the attacker the operator here, and the binding
+    // issued below would then go to the victim's browser.
     Optional<OPSession> opSession =
-        oidcSessionHandler.getOPSessionFromCookie(tenant, sessionCookieDelegate);
+        oidcSessionHandler.getBrowserHeldOPSessionFromCookie(tenant, sessionCookieDelegate);
     if (opSession.isEmpty()) {
       AccountLinkingResult result =
           authorizeHandler.handleWithoutBrowserSession(tenant, state, returnedFromSignIn);
@@ -190,7 +193,7 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
     String browserBindingSecret =
-        accountLinkingCookieDelegate.getBrowserBindingSecret().orElse(null);
+        accountLinkingCookieDelegate.getBrowserBindingSecret(tenant).orElse(null);
 
     AccountLinkingResult result =
         callbackHandler.handle(

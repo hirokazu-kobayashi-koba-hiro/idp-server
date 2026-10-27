@@ -74,6 +74,7 @@ import org.idp.server.core.openid.oauth.type.extension.OAuthDenyReason;
 import org.idp.server.core.openid.oauth.type.oauth.RedirectUri;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.session.AuthSessionCookieDelegate;
+import org.idp.server.core.openid.session.BrowserProof;
 import org.idp.server.core.openid.session.ClientSessionIdentifier;
 import org.idp.server.core.openid.session.OIDCSessionHandler;
 import org.idp.server.core.openid.session.OPSession;
@@ -396,6 +397,7 @@ public class OAuthFlowEntryService
 
       // Create or reuse OPSession based on session switch policy
       Authentication authentication = updatedTransaction.authentication();
+      BrowserProof browserProof = BrowserProof.generate();
       OPSession opSession =
           oidcSessionHandler.onAuthenticationSuccess(
               tenant,
@@ -403,14 +405,16 @@ public class OAuthFlowEntryService
               authentication,
               updatedTransaction.interactionResults().toStorageMap(),
               existingSession,
-              requestAttributes);
+              requestAttributes,
+              browserProof);
       // This runs on an XHR from the authorization view. Where that view is on another site the
       // request is third-party, and Safari drops the Set-Cookie outright — which is why /complete
       // writes the cookie again from a first-party top level navigation. The write is kept here so
       // that an authorization view which has not been updated to go through /complete still ends
       // up with a session on a same-site deployment; there, /complete finds this cookie and reuses
       // the session rather than creating a second one.
-      oidcSessionHandler.registerSessionCookies(tenant, opSession, sessionCookieDelegate);
+      oidcSessionHandler.registerSessionCookies(
+          tenant, opSession, browserProof, sessionCookieDelegate);
       createdSession = opSession;
     }
 
@@ -518,6 +522,7 @@ public class OAuthFlowEntryService
       OPSession existingSession = authenticatingSession(binding, tenant, updatedTransaction);
 
       Authentication authentication = updatedTransaction.authentication();
+      BrowserProof browserProof = BrowserProof.generate();
       OPSession opSession =
           oidcSessionHandler.onAuthenticationSuccess(
               tenant,
@@ -525,14 +530,16 @@ public class OAuthFlowEntryService
               authentication,
               updatedTransaction.interactionResults().toStorageMap(),
               existingSession,
-              requestAttributes);
+              requestAttributes,
+              browserProof);
       // This runs on an XHR from the authorization view. Where that view is on another site the
       // request is third-party, and Safari drops the Set-Cookie outright — which is why /complete
       // writes the cookie again from a first-party top level navigation. The write is kept here so
       // that an authorization view which has not been updated to go through /complete still ends
       // up with a session on a same-site deployment; there, /complete finds this cookie and reuses
       // the session rather than creating a second one.
-      oidcSessionHandler.registerSessionCookies(tenant, opSession, sessionCookieDelegate);
+      oidcSessionHandler.registerSessionCookies(
+          tenant, opSession, browserProof, sessionCookieDelegate);
       createdSession = opSession;
     }
 
@@ -772,6 +779,7 @@ public class OAuthFlowEntryService
       // The session the authentication already created. Passing it in is what stops a second one
       // being created and the first being left behind with nothing pointing at it.
       OPSession existingSession = authenticatingSession(binding, tenant, authenticationTransaction);
+      BrowserProof browserProof = BrowserProof.generate();
       OPSession opSession =
           oidcSessionHandler.onAuthenticationSuccess(
               tenant,
@@ -779,9 +787,11 @@ public class OAuthFlowEntryService
               authenticationTransaction.authentication(),
               authenticationTransaction.interactionResults().toStorageMap(),
               existingSession,
-              requestAttributes);
+              requestAttributes,
+              browserProof);
       // First-party write. This is the one that the browser actually keeps.
-      oidcSessionHandler.registerSessionCookies(tenant, opSession, sessionCookieDelegate);
+      oidcSessionHandler.registerSessionCookies(
+          tenant, opSession, browserProof, sessionCookieDelegate);
     }
 
     authenticationTransactionCommandRepository.delete(

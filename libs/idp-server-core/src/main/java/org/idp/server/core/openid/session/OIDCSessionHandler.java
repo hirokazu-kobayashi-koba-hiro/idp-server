@@ -79,6 +79,8 @@ public class OIDCSessionHandler {
    * @param authentication the authentication result
    * @param interactionResults the authentication interaction results for policy evaluation
    * @param existingSession the existing OPSession from cookie, or null if none
+   * @param browserProof the proof to hand the browser with this sign-in, recorded in the session as
+   *     part of it; pass the same one to {@link #registerSessionCookies}
    * @return the OPSession (reused or newly created)
    * @throws DifferentUserAuthenticatedException if STRICT policy and different user
    */
@@ -88,7 +90,8 @@ public class OIDCSessionHandler {
       Authentication authentication,
       Map<String, Map<String, Object>> interactionResults,
       OPSession existingSession,
-      RequestAttributes requestAttributes) {
+      RequestAttributes requestAttributes,
+      BrowserProof browserProof) {
 
     // Check if we have an active existing session
     if (existingSession != null && existingSession.isActive()) {
@@ -107,7 +110,8 @@ public class OIDCSessionHandler {
             authTimeOf(authentication),
             authentication.acr(),
             authentication.methods(),
-            interactionResults);
+            interactionResults,
+            browserProof);
       }
 
       // Different user: apply session switch policy
@@ -142,7 +146,8 @@ public class OIDCSessionHandler {
     }
 
     // Create new session
-    return createNewOPSession(tenant, user, authentication, interactionResults, requestAttributes);
+    return createNewOPSession(
+        tenant, user, authentication, interactionResults, requestAttributes, browserProof);
   }
 
   private OPSession createNewOPSession(
@@ -150,7 +155,8 @@ public class OIDCSessionHandler {
       User user,
       Authentication authentication,
       Map<String, Map<String, Object>> interactionResults,
-      RequestAttributes requestAttributes) {
+      RequestAttributes requestAttributes,
+      BrowserProof browserProof) {
     String ipAddress =
         requestAttributes != null && requestAttributes.hasIpAddress()
             ? requestAttributes.getIpAddress().value()
@@ -170,7 +176,8 @@ public class OIDCSessionHandler {
         interactionResults,
         sessionTimeoutSeconds,
         ipAddress,
-        userAgent);
+        userAgent,
+        browserProof);
   }
 
   /** When the end-user authenticated, or now when the authentication does not say. */
@@ -284,10 +291,14 @@ public class OIDCSessionHandler {
    *
    * @param tenant the tenant (for session timeout configuration)
    * @param opSession the OP session
+   * @param browserProof the proof recorded in the session at {@link #onAuthenticationSuccess}
    * @param sessionCookieDelegate the delegate for setting cookies
    */
   public void registerSessionCookies(
-      Tenant tenant, OPSession opSession, SessionCookieDelegate sessionCookieDelegate) {
+      Tenant tenant,
+      OPSession opSession,
+      BrowserProof browserProof,
+      SessionCookieDelegate sessionCookieDelegate) {
     long maxAgeSeconds = getSessionTimeoutSeconds(tenant);
 
     String identityTokenValue = opSession.id().value();
@@ -295,6 +306,26 @@ public class OIDCSessionHandler {
 
     sessionCookieDelegate.registerSessionCookies(
         tenant, identityTokenValue, sessionHash, maxAgeSeconds);
+    sessionCookieDelegate.registerBrowserProofCookie(tenant, browserProof.value(), maxAgeSeconds);
+  }
+
+  /**
+   * Gets the OPSession from cookie, only when this browser holds the proof issued with it.
+   *
+   * <p>For steps that act on who is at the browser rather than only reuse a sign-in. The session
+   * cookie on its own can have been set by a host on a sibling subdomain, pointing at a session of
+   * that host's choosing; the proof cookie cannot. Without a matching proof the browser is treated
+   * as having no session.
+   *
+   * @param tenant the tenant
+   * @param sessionCookieDelegate the delegate for reading cookies
+   * @return the OPSession, or empty if not found or not held by this browser
+   */
+  public Optional<OPSession> getBrowserHeldOPSessionFromCookie(
+      Tenant tenant, SessionCookieDelegate sessionCookieDelegate) {
+    String presentedBrowserProof = sessionCookieDelegate.getBrowserProof(tenant).orElse(null);
+    return getOPSessionFromCookie(tenant, sessionCookieDelegate)
+        .filter(opSession -> opSession.isHeldBy(presentedBrowserProof));
   }
 
   /**

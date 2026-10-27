@@ -8,6 +8,9 @@ const client = wrapper(axios.create({
   withCredentials: true,
 }));
 
+/** The shared browser's cookie jar, for tests that read or carry its cookies elsewhere. */
+export const cookieJar = jar;
+
 
 export const get = async ({ url, headers, params }) => {
   try {

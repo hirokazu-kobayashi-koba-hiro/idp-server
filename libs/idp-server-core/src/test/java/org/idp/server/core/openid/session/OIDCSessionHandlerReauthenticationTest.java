@@ -69,7 +69,8 @@ class OIDCSessionHandlerReauthenticationTest {
             authentication(SECOND_AUTH_TIME, "urn:idp:acr:mfa", List.of("pwd", "fido-uaf")),
             newResults,
             existing,
-            null);
+            null,
+            BrowserProof.generate());
 
     assertEquals(existing.id().value(), reused.id().value());
     OPSession stored = repository.findById(new Tenant(), existing.id()).orElseThrow();
@@ -99,7 +100,8 @@ class OIDCSessionHandlerReauthenticationTest {
         authentication(SECOND_AUTH_TIME, "urn:idp:acr:password", List.of("pwd")),
         Map.of("password-authentication", Map.of("success_count", 1)),
         existing,
-        null);
+        null,
+        BrowserProof.generate());
 
     OPSession stored = repository.findById(new Tenant(), existing.id()).orElseThrow();
     assertEquals(SECOND_AUTH_TIME, stored.authTime());
@@ -120,7 +122,8 @@ class OIDCSessionHandlerReauthenticationTest {
             interactionResults,
             3600,
             "192.168.1.1",
-            "Mozilla/5.0");
+            "Mozilla/5.0",
+            BrowserProof.generate());
     repository.register(new Tenant(), session);
     return session;
   }
