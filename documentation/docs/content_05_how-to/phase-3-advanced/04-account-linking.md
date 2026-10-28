@@ -159,7 +159,7 @@ RP のクライアント設定に次を追加します。クライアントの�
 | `extension.linking_token_providers` | 保管トークンの取得を許す連携先（`sso_provider`）。書いていない連携先のトークンは取り出せない（`403 unauthorized_client`） |
 | `extension.linking_max_auth_age` | `/linking/start` がそのまま受け入れるログインの新しさ（秒）。古ければその場でログインし直させる。`0` で毎回。省略時は `300` |
 | `extension.linking_acr_values` | 連携に普段より強い認証を求めるときの acr（例：FIDO だけのポリシーに当てた値）。ログインがこれに当たらなければログインし直させ、そのログインに `acr_values` として載せる。省略時は制限なし |
-| `token_endpoint_auth_method` | 保管トークンを取得するなら confidential クライアントにする。`none` は拒否される |
+| `token_endpoint_auth_method` | 保管トークンを取得するなら、クライアント認証のある方式にする（`attest_jwt_client_auth` も可）。`none` は拒否される |
 
 RP は認可リクエストの `scope` にもこれらを含め、ユーザーのアクセストークンに付与させます。
 
@@ -267,7 +267,7 @@ curl -X POST "${IDP_SERVER_URL}/${TENANT_ID}/v1/linked-external-accounts/${ALIAS
 | `400 relink_required` | リフレッシュできない。5.1 から連携し直してもらう |
 | `502 temporarily_unavailable` | 外部IdPが一時的に応答しない。時間をおいて再試行 |
 
-DPoP・mTLS などで sender-constrained になっているユーザートークンは、まだ受け付けません（`400 invalid_request`）。
+ユーザートークンが DPoP・mTLS・クライアントインスタンス（ABCA）に縛られているときは、その証明も一緒に出します。DPoP なら `DPoP` ヘッダーの proof（`htu` はこの API の URL、`ath` は `token` のハッシュ）、mTLS なら同じクライアント証明書、ABCA ならトークンを受け取ったインスタンスの鍵でのクライアント認証です。合わなければ `401 invalid_token`。ABCA の縛りを照合するのはこの API だけで、`/me` 系の API（連携・一覧・解除）が照合するのは DPoP と mTLS だけです。`/me` 系でも送り手を縛るなら、ABCA に DPoP を組み合わせます。
 
 ---
 

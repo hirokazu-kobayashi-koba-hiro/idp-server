@@ -20,6 +20,7 @@ import java.util.List;
 import org.idp.server.account_linking.AccountAlias;
 import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationJwt;
 import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationPopJwt;
+import org.idp.server.core.openid.oauth.dpop.DPoPProof;
 import org.idp.server.core.openid.oauth.type.mtls.ClientCert;
 import org.idp.server.core.openid.oauth.type.oauth.ClientSecretBasic;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
@@ -92,6 +93,34 @@ public class LinkedExternalAccountTokenRequest implements AuthorizationHeaderHan
 
   public ClientCert clientCert() {
     return new ClientCert(inputs.tlsClientCertPem());
+  }
+
+  public List<String> clientAttestationHeaders() {
+    return inputs.headerValues(ClientAttestationJwt.HEADER_NAME);
+  }
+
+  public List<String> clientAttestationPopHeaders() {
+    return inputs.headerValues(ClientAttestationPopJwt.HEADER_NAME);
+  }
+
+  public List<String> dpopProofHeaders() {
+    return inputs.headerValues("DPoP");
+  }
+
+  public DPoPProof dpopProof() {
+    List<String> headers = dpopProofHeaders();
+    if (headers.isEmpty()) {
+      return new DPoPProof();
+    }
+    return new DPoPProof(headers.get(0));
+  }
+
+  public String httpMethod() {
+    return inputs.httpMethod() != null ? inputs.httpMethod() : "POST";
+  }
+
+  public String httpUri() {
+    return inputs.httpUri() != null ? inputs.httpUri() : "";
   }
 
   public ClientAttestationJwt clientAttestationJwt() {

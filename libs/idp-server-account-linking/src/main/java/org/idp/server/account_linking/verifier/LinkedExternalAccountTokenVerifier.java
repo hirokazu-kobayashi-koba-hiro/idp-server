@@ -27,9 +27,10 @@ import org.idp.server.core.openid.token.OAuthToken;
 /**
  * Decides whether an authenticated client may have a user's stored external token.
  *
- * <p>The token is released only when every check holds: the user's token is live, names a user, is
- * a plain bearer token issued to that same client and carries {@code linked_account:read_token},
- * the user is active, and the client is allowed the account's provider.
+ * <p>The token is released only when every check holds: the user's token is live, names a user, was
+ * issued to that same client and carries {@code linked_account:read_token}, the user is active, and
+ * the client is allowed the account's provider. Whether the token is presented by the sender it is
+ * bound to is {@link LinkedExternalAccountTokenBindingVerifier}'s.
  */
 public class LinkedExternalAccountTokenVerifier {
 
@@ -37,7 +38,6 @@ public class LinkedExternalAccountTokenVerifier {
   public void verifyUserToken(OAuthToken userToken, ClientConfiguration client, LocalDateTime now) {
     verifyTokenExistsAndNotExpired(userToken, now);
     verifyNotClientCredentialsToken(userToken);
-    verifyNotSenderConstrained(userToken);
     verifyIssuedToAuthenticatedClient(userToken, client);
     verifyHasReadTokenScope(userToken);
   }
@@ -52,22 +52,6 @@ public class LinkedExternalAccountTokenVerifier {
   private void verifyNotClientCredentialsToken(OAuthToken userToken) {
     if (userToken.isClientCredentialsGrant() || !userToken.hasSubject()) {
       throw LinkedExternalAccountTokenException.invalidToken("token does not name a user.");
-    }
-  }
-
-  /**
-   * Refuses sender-constrained tokens.
-   *
-   * <p>A sender-constrained token is only worth something if the proof is checked. Until this
-   * endpoint verifies DPoP proofs and certificate thumbprints, it refuses such tokens instead of
-   * accepting them as if they were bearer tokens.
-   */
-  private void verifyNotSenderConstrained(OAuthToken userToken) {
-    if (userToken.accessToken().hasDPoPBinding()
-        || userToken.accessToken().hasClientCertification()
-        || userToken.accessToken().hasClientInstanceBinding()) {
-      throw LinkedExternalAccountTokenException.invalidRequest(
-          "Sender-constrained user tokens are not supported by this endpoint yet.");
     }
   }
 

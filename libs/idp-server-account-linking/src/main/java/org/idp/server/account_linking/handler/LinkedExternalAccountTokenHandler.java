@@ -30,20 +30,26 @@ import org.idp.server.account_linking.io.LinkedExternalAccountTokenRequest;
 import org.idp.server.account_linking.io.LinkedExternalAccountTokenResult;
 import org.idp.server.account_linking.repository.LinkedExternalAccountQueryRepository;
 import org.idp.server.account_linking.validator.LinkedExternalAccountTokenRequestValidator;
+import org.idp.server.account_linking.verifier.LinkedExternalAccountTokenBindingVerifier;
 import org.idp.server.account_linking.verifier.LinkedExternalAccountTokenVerifier;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
+import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationHeaderValidator;
 import org.idp.server.core.openid.oauth.clientauthenticator.ClientAuthenticationHandler;
+import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
 import org.idp.server.core.openid.oauth.clientauthenticator.exception.ClientUnAuthorizedException;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.exception.ClientConfigurationNotFoundException;
+import org.idp.server.core.openid.oauth.dpop.DPoPProofVerifier;
+import org.idp.server.core.openid.oauth.replay.JwtReplayDetector;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.core.openid.token.repository.OAuthTokenQueryRepository;
+import org.idp.server.core.openid.token.tokenintrospection.verifier.DPoPBindingVerifier;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -53,10 +59,11 @@ import org.idp.server.platform.security.event.DefaultSecurityEventType;
  * Hands the stored access token of one linked external account to a client.
  *
  * <p>The client authenticates, and names the user it acts for with that user's access token. The
- * token is released only when every check holds: the client is confidential, the user's token was
- * issued to that same client and carries {@code linked_account:read_token}, and the client is
- * allowed the account's provider. What to hand out once those hold — refreshing or re-encrypting
- * the stored token first — is {@link LinkedExternalAccountTokenService}'s.
+ * token is released only when every check holds: the client authenticates (not {@code none}), the
+ * user's token was issued to that same client, is presented by the sender it is bound to, and
+ * carries {@code linked_account:read_token}, and the client is allowed the account's provider. What
+ * to hand out once those hold — refreshing or re-encrypting the stored token first — is {@link
+ * LinkedExternalAccountTokenService}'s.
  */
 public class LinkedExternalAccountTokenHandler {
 
@@ -71,6 +78,7 @@ public class LinkedExternalAccountTokenHandler {
   LinkedExternalAccountTokenService tokenService;
   LinkedExternalAccountTokenRequestValidator validator;
   LinkedExternalAccountTokenVerifier verifier;
+  JwtReplayDetector replayDetector;
   LoggerWrapper log = LoggerWrapper.getLogger(LinkedExternalAccountTokenHandler.class);
 
   public LinkedExternalAccountTokenHandler(
@@ -81,7 +89,8 @@ public class LinkedExternalAccountTokenHandler {
       ClientAuthenticationHandler clientAuthenticationHandler,
       UserQueryRepository userQueryRepository,
       LinkedExternalAccountQueryRepository accountQueryRepository,
-      LinkedExternalAccountTokenService tokenService) {
+      LinkedExternalAccountTokenService tokenService,
+      JwtReplayDetector replayDetector) {
     this.oAuthTokenQueryRepository = oAuthTokenQueryRepository;
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
@@ -90,6 +99,7 @@ public class LinkedExternalAccountTokenHandler {
     this.userQueryRepository = userQueryRepository;
     this.accountQueryRepository = accountQueryRepository;
     this.tokenService = tokenService;
+    this.replayDetector = replayDetector;
     this.validator = new LinkedExternalAccountTokenRequestValidator();
     this.verifier = new LinkedExternalAccountTokenVerifier();
   }
@@ -102,12 +112,18 @@ public class LinkedExternalAccountTokenHandler {
     ExternalIdpProvider provider = null;
 
     try {
-      ClientConfiguration client = authenticateClient(request, requestedClientId);
+      AuthorizationServerConfiguration serverConfiguration =
+          authorizationServerConfigurationQueryRepository.get(tenant);
+      AuthenticatedClient authenticated =
+          authenticateClient(request, requestedClientId, serverConfiguration);
+      ClientConfiguration client = authenticated.configuration();
       validator.validate(request.parameters());
 
       OAuthToken userToken =
           oAuthTokenQueryRepository.find(tenant, request.parameters().userAccessToken());
       verifier.verifyUserToken(userToken, client, SystemDateTime.now());
+      bindingVerifier(tenant, serverConfiguration)
+          .verify(userToken, request, authenticated.credentials());
 
       user = userQueryRepository.findById(tenant, new UserIdentifier(userToken.subject().value()));
       verifier.verifyUserIsActive(user);
@@ -128,12 +144,15 @@ public class LinkedExternalAccountTokenHandler {
     }
   }
 
-  private ClientConfiguration authenticateClient(
-      LinkedExternalAccountTokenRequest request, RequestedClientId requestedClientId) {
+  private AuthenticatedClient authenticateClient(
+      LinkedExternalAccountTokenRequest request,
+      RequestedClientId requestedClientId,
+      AuthorizationServerConfiguration serverConfiguration) {
     Tenant tenant = request.tenant();
     try {
-      AuthorizationServerConfiguration serverConfiguration =
-          authorizationServerConfigurationQueryRepository.get(tenant);
+      new ClientAttestationHeaderValidator(
+              request.clientAttestationHeaders(), request.clientAttestationPopHeaders())
+          .validate();
       ClientConfiguration clientConfiguration =
           clientConfigurationQueryRepository.get(tenant, requestedClientId);
 
@@ -144,14 +163,27 @@ public class LinkedExternalAccountTokenHandler {
             "Public clients may not retrieve stored external tokens.");
       }
 
-      clientAuthenticationHandler.authenticate(
-          new LinkedExternalAccountTokenRequestContext(
-              request, requestedClientId, serverConfiguration, clientConfiguration));
-      return clientConfiguration;
+      ClientCredentials credentials =
+          clientAuthenticationHandler.authenticate(
+              new LinkedExternalAccountTokenRequestContext(
+                  request, requestedClientId, serverConfiguration, clientConfiguration));
+      return new AuthenticatedClient(clientConfiguration, credentials);
 
     } catch (ClientConfigurationNotFoundException | ClientUnAuthorizedException exception) {
       throw LinkedExternalAccountTokenException.invalidClient("Client authentication failed.");
     }
+  }
+
+  /** The client as configured, and what its authentication on this request established. */
+  record AuthenticatedClient(ClientConfiguration configuration, ClientCredentials credentials) {}
+
+  /** DPoP proofs are checked against the tenant's window and replay cache, as at {@code /me}. */
+  private LinkedExternalAccountTokenBindingVerifier bindingVerifier(
+      Tenant tenant, AuthorizationServerConfiguration serverConfiguration) {
+    return new LinkedExternalAccountTokenBindingVerifier(
+        new DPoPBindingVerifier(
+            new DPoPProofVerifier(
+                tenant, serverConfiguration.dpopProofAcceptableWindow(), replayDetector)));
   }
 
   private LinkedExternalAccountTokenResult retrieved(

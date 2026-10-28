@@ -290,10 +290,12 @@ token={ユーザーのアクセストークン}&client_id=...&client_secret=...
 
 次の全てを満たす場合だけトークンを返します。
 
-- クライアントが認証に成功している。public クライアント（`none`）は拒否します
+- クライアントが認証に成功している。public クライアント（`none`）は拒否します。`attest_jwt_client_auth`（ABCA）は使えます
 - `token` が有効なユーザーのアクセストークンで、**同じクライアント**に発行され、`linked_account:read_token` スコープを持つ
-- `token` が sender-constrained（DPoP・mTLS 証明書・クライアントインスタンス束縛）でない。証明の検証に対応するまで拒否します
+- `token` が sender-constrained なら、その送り手から出されている。DPoP は `DPoP` ヘッダーの proof（RFC 9449。`htu` はこの API の URL、`ath` は `token` のハッシュ）、mTLS 証明書は TLS クライアント証明書の thumbprint（RFC 8705）、クライアントインスタンス束縛はこのリクエストのクライアント認証で使われたインスタンスの鍵と登録で照合します
 - 連携先がクライアントの `linking_token_providers` に含まれている
+
+クライアントインスタンス束縛を照合するのは、クライアント認証を求めるこの API だけです。`/me/linked-external-accounts` 系の API はクライアント認証を求めないので、照合するのは DPoP と mTLS だけです。`/me` 系でも送り手を縛るなら、ABCA に DPoP を組み合わせます。
 
 ```json
 {
@@ -312,10 +314,10 @@ token={ユーザーのアクセストークン}&client_id=...&client_secret=...
 
 | ステータス | `error` | 発生条件 |
 |---|---|---|
-| 400 | `invalid_request` | `token` が無い / sender-constrained なトークン |
+| 400 | `invalid_request` | `token` が無い / `DPoP` ヘッダーが 2 つ以上 |
 | 400 | `relink_required` | リフレッシュトークンが無い・期限切れ・外部IdPに拒否された / 連携先が削除・無効化された。連携し直す必要があります |
 | 401 | `invalid_client` | クライアント認証に失敗した / public クライアント |
-| 401 | `invalid_token` | `token` が無効・期限切れ・ユーザーを指していない / ユーザーが有効でない |
+| 401 | `invalid_token` | `token` が無効・期限切れ・ユーザーを指していない / ユーザーが有効でない / sender-constrained なのに送り手の証明が合わない |
 | 403 | `unauthorized_client` | `token` が別のクライアントに発行された / 連携先が許可されていない |
 | 403 | `insufficient_scope` | `token` に `linked_account:read_token` が無い |
 | 404 | `not_found` | `alias` がユーザーの連携に無い |

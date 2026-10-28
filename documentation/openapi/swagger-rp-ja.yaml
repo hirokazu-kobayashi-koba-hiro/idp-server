@@ -1692,9 +1692,9 @@ paths:
 
         次の全てを満たす場合だけトークンを返します。
 
-        - クライアントが認証に成功している。public クライアント（`none`）は拒否します
+        - クライアントが認証に成功している。public クライアント（`none`）は拒否します。`attest_jwt_client_auth`（ABCA）は使えます
         - `token` が有効なユーザーのアクセストークン（client_credentials で発行されたものでない）で、**認証したクライアントと同じクライアント**に発行され、`linked_account:read_token` スコープを持つ
-        - `token` が sender-constrained（DPoP・mTLS 証明書・クライアントインスタンス束縛）でない
+        - `token` が sender-constrained なら、その送り手から出されている（DPoP は `DPoP` ヘッダーの proof、mTLS は同じクライアント証明書、クライアントインスタンス束縛はこのリクエストのクライアント認証で使われたインスタンスの鍵）
         - ユーザーが有効である
         - `alias` がそのユーザーの連携にある
         - 連携先がクライアントの `extension.linking_token_providers` に含まれている
@@ -1752,7 +1752,7 @@ paths:
                 $ref: '#/components/schemas/LinkedExternalAccountTokenResponse'
         '400':
           description: |
-            - `invalid_request` — `token` が無い / `token` が sender-constrained
+            - `invalid_request` — `token` が無い / `DPoP` ヘッダーが 2 つ以上
             - `relink_required` — リフレッシュトークンが無い・期限切れ、外部IdPがリフレッシュを 4xx で拒否した、または連携先が削除・無効化された。ユーザーが連携し直す必要があります
           content:
             application/json:
@@ -1770,7 +1770,7 @@ paths:
         '401':
           description: |
             - `invalid_client` — クライアント認証に失敗した / 未登録のクライアント / public クライアント
-            - `invalid_token` — `token` が無効・期限切れ / ユーザーを指していない（client_credentials など） / ユーザーが有効でない
+            - `invalid_token` — `token` が無効・期限切れ / ユーザーを指していない（client_credentials など） / ユーザーが有効でない / sender-constrained なのに送り手の証明が合わない
           content:
             application/json:
               schema:

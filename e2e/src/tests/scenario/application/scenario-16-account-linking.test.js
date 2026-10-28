@@ -11,9 +11,12 @@ import {
 import { authorize, deny, postAuthentication, requestToken } from "../../../api/oauthClient";
 import { cookieJar, deletion, get, post, postWithJson, putWithJson } from "../../../lib/http";
 import { requestAuthorizations } from "../../../oauth/request";
-import { generateECP256JWKS } from "../../../lib/jose";
-import { convertNextAction } from "../../../lib/util";
+import { createJwtWithPrivateKey, generateECP256JWKS, generateJti } from "../../../lib/jose";
+import { convertNextAction, toEpocTime } from "../../../lib/util";
+import * as jose from "jose";
+import { computeAth, createDPoPProof, generateDPoPKeyPair } from "../../../lib/dpop";
 import { v4 as uuidv4 } from "uuid";
+import { encodedClientCert, getClientCert } from "../../../api/cert/clientCert";
 import axios from "axios";
 import {
   createOperatorWithPermission,
@@ -628,6 +631,366 @@ describe("account linking", () => {
       console.log(response.status, response.data);
       expect(response.status).toBe(401);
       expect(response.data.error).toBe("invalid_token");
+    });
+
+    /** DPoP で縛られたユーザートークンは、その鍵の proof と一緒に出されたときだけ受け付ける。 */
+    describe("DPoP-bound user token", () => {
+      let keyPair;
+
+      beforeAll(async () => {
+        keyPair = await generateDPoPKeyPair();
+      });
+
+      const tokenUrl = (alias) =>
+        `${backendUrl}/${serverConfig.tenantId}/v1/linked-external-accounts/${alias}/token`;
+
+      /** RP でログインし、DPoP で縛られたアクセストークンを得る。 */
+      const loginWithDPoP = async (user) => {
+        const { authorizationResponse } = await requestAuthorizations({
+          endpoint: serverConfig.authorizationEndpoint,
+          clientId: clientSecretPostClient.clientId,
+          redirectUri: clientSecretPostClient.redirectUri,
+          responseType: "code",
+          state: "account-linking-dpop",
+          scope: `openid profile email ${MANAGE_SCOPE} ${READ_TOKEN_SCOPE}`,
+          user,
+        });
+        const response = await requestToken({
+          endpoint: serverConfig.tokenEndpoint,
+          code: authorizationResponse.code,
+          grantType: "authorization_code",
+          redirectUri: clientSecretPostClient.redirectUri,
+          clientId: clientSecretPostClient.clientId,
+          clientSecret: clientSecretPostClient.clientSecret,
+          additionalHeaders: {
+            DPoP: await createDPoPProof({
+              privateKey: keyPair.privateKey,
+              publicJwk: keyPair.publicJwk,
+              htu: serverConfig.tokenEndpoint,
+            }),
+          },
+        });
+        expect(response.status).toBe(200);
+        expect(response.data.token_type).toBe("DPoP");
+        return response.data.access_token;
+      };
+
+      it("hands out the stored token when the proof of the bound key comes with it", async () => {
+        const rpToken = await login(ownerUser, `openid profile email ${MANAGE_SCOPE}`);
+        const alias = await linkOnce(rpToken, PROVIDER, "openid profile email offline_access");
+        const boundToken = await loginWithDPoP(ownerUser);
+
+        const response = await retrieveToken({
+          alias,
+          token: boundToken,
+          clientId: clientSecretPostClient.clientId,
+          clientSecret: clientSecretPostClient.clientSecret,
+          headers: {
+            DPoP: await createDPoPProof({
+              privateKey: keyPair.privateKey,
+              publicJwk: keyPair.publicJwk,
+              htu: tokenUrl(alias),
+              ath: computeAth(boundToken),
+            }),
+          },
+        });
+        console.log(response.status, response.data);
+        expect(response.status).toBe(200);
+        expect(response.data.access_token).toBeTruthy();
+      });
+
+      it("refuses the DPoP-bound token without a proof", async () => {
+        const boundToken = await loginWithDPoP(ownerUser);
+
+        const response = await retrieveToken({
+          alias: `${PROVIDER}-1`,
+          token: boundToken,
+          clientId: clientSecretPostClient.clientId,
+          clientSecret: clientSecretPostClient.clientSecret,
+        });
+        console.log(response.status, response.data);
+        expect(response.status).toBe(401);
+        expect(response.data.error).toBe("invalid_token");
+      });
+
+      it("refuses a proof made with another key", async () => {
+        const boundToken = await loginWithDPoP(ownerUser);
+        const otherKeyPair = await generateDPoPKeyPair();
+
+        const response = await retrieveToken({
+          alias: `${PROVIDER}-1`,
+          token: boundToken,
+          clientId: clientSecretPostClient.clientId,
+          clientSecret: clientSecretPostClient.clientSecret,
+          headers: {
+            DPoP: await createDPoPProof({
+              privateKey: otherKeyPair.privateKey,
+              publicJwk: otherKeyPair.publicJwk,
+              htu: tokenUrl(`${PROVIDER}-1`),
+              ath: computeAth(boundToken),
+            }),
+          },
+        });
+        console.log(response.status, response.data);
+        expect(response.status).toBe(401);
+        expect(response.data.error).toBe("invalid_token");
+      });
+    });
+
+    /**
+     * ネイティブアプリは client_secret を持てないが、ABCA（attest_jwt_client_auth）ならアプリの実体を
+     * 確かめられる。断るのは none だけなので、ABCA のクライアントにも払い出す。発行されたユーザー
+     * トークンはインスタンスの鍵に縛られるので、同じ鍵で認証したときだけ受け付ける。
+     */
+    describe("attestation-based client authentication", () => {
+      const ATTESTATION_HEADER = "OAuth-Client-Attestation";
+      const POP_HEADER = "OAuth-Client-Attestation-PoP";
+
+      let attesterJwk;
+      let instanceJwk;
+      let attestedClientId;
+
+      const generateSigningJwk = async (kid) => {
+        const { privateKey } = await jose.generateKeyPair("ES256", { extractable: true });
+        return { ...(await jose.exportJWK(privateKey)), use: "sig", kid, alg: "ES256" };
+      };
+
+      const publicJwkOf = ({ d, ...publicJwk }) => publicJwk;
+
+      /** アプリの実体を証明する 2 つのヘッダー。PoP はリクエストごとに作り直す（jti の再利用は断られる）。 */
+      const attestationHeaders = ({ withPop = true } = {}) => {
+        const attestation = createJwtWithPrivateKey({
+          payload: {
+            iss: "test-attester",
+            sub: attestedClientId,
+            exp: toEpocTime({ adjusted: 300 }),
+            cnf: { jwk: publicJwkOf(instanceJwk) },
+          },
+          privateKey: attesterJwk,
+          algorithm: "ES256",
+          additionalOptions: { header: { typ: "oauth-client-attestation+jwt" } },
+        });
+        if (!withPop) {
+          return { [ATTESTATION_HEADER]: attestation };
+        }
+        const pop = createJwtWithPrivateKey({
+          payload: { aud: serverConfig.issuer, jti: generateJti() },
+          privateKey: instanceJwk,
+          algorithm: "ES256",
+          additionalOptions: { header: { typ: "oauth-client-attestation-pop+jwt" } },
+        });
+        return { [ATTESTATION_HEADER]: attestation, [POP_HEADER]: pop };
+      };
+
+      beforeAll(async () => {
+        attesterJwk = await generateSigningJwk("linking-attester");
+        instanceJwk = await generateSigningJwk("linking-instance");
+
+        const adminTokenResponse = await requestToken({
+          endpoint: adminServerConfig.tokenEndpoint,
+          grantType: "password",
+          username: adminServerConfig.oauth.username,
+          password: adminServerConfig.oauth.password,
+          scope: adminServerConfig.adminClient.scope,
+          clientId: adminServerConfig.adminClient.clientId,
+          clientSecret: adminServerConfig.adminClient.clientSecret,
+        });
+        expect(adminTokenResponse.status).toBe(200);
+
+        attestedClientId = uuidv4();
+        const registration = await postWithJson({
+          url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/clients`,
+          headers: { Authorization: `Bearer ${adminTokenResponse.data.access_token}` },
+          body: {
+            client_id: attestedClientId,
+            client_name: "Account Linking ABCA Client",
+            token_endpoint_auth_method: "attest_jwt_client_auth",
+            extension: {
+              client_attestation_trust_source: "attester_jwks",
+              client_attestation_attester_jwks: JSON.stringify({ keys: [publicJwkOf(attesterJwk)] }),
+              linking_token_providers: [PROVIDER],
+            },
+            grant_types: ["password"],
+            redirect_uris: ["http://localhost:3000/callback"],
+            response_types: ["code"],
+            scope: `openid ${READ_TOKEN_SCOPE}`,
+            enabled: true,
+          },
+        });
+        expect(registration.status).toBe(201);
+      });
+
+      /** ABCA のクライアントに発行された、ユーザーのアクセストークン。 */
+      const loginWithAttestation = async (user) => {
+        const response = await requestToken({
+          endpoint: serverConfig.tokenEndpoint,
+          grantType: "password",
+          username: user.username,
+          password: user.password,
+          scope: `openid ${READ_TOKEN_SCOPE}`,
+          clientId: attestedClientId,
+          additionalHeaders: attestationHeaders(),
+        });
+        expect(response.status).toBe(200);
+        return response.data.access_token;
+      };
+
+      it("hands out the stored token to a client authenticated by client attestation", async () => {
+        // 連携そのものは RP（clientSecretPost）で済ませる。連携はユーザーのもので、クライアントには付かない。
+        const rpToken = await login(ownerUser, `openid profile email ${MANAGE_SCOPE}`);
+        const alias = await linkOnce(rpToken, PROVIDER, "openid profile email offline_access");
+        const appToken = await loginWithAttestation(ownerUser);
+
+        const response = await retrieveToken({
+          alias,
+          token: appToken,
+          headers: attestationHeaders(),
+        });
+        console.log(response.status, response.data);
+        expect(response.status).toBe(200);
+        expect(response.data.access_token).toBeTruthy();
+        expect(response.data.refresh_token).toBeUndefined();
+      });
+
+      it("refuses the user's token when another install of the same app presents it", async () => {
+        const appToken = await loginWithAttestation(ownerUser);
+        // 同じ client_id・同じ Attester だが、別の端末（インスタンスの鍵が違う）。
+        const mine = instanceJwk;
+        instanceJwk = await generateSigningJwk("linking-instance-other");
+        const otherInstanceHeaders = attestationHeaders();
+        instanceJwk = mine;
+
+        const response = await retrieveToken({
+          alias: `${PROVIDER}-1`,
+          token: appToken,
+          headers: otherInstanceHeaders,
+        });
+        console.log(response.status, response.data);
+        expect(response.status).toBe(401);
+        expect(response.data.error).toBe("invalid_token");
+      });
+
+      it("refuses the client without the attestation PoP", async () => {
+        const appToken = await loginWithAttestation(ownerUser);
+
+        const response = await retrieveToken({
+          alias: `${PROVIDER}-1`,
+          token: appToken,
+          headers: attestationHeaders({ withPop: false }),
+        });
+        console.log(response.status, response.data);
+        expect(response.status).toBe(401);
+        expect(response.data.error).toBe("invalid_client");
+      });
+    });
+
+    describe("mTLS-bound user token", () => {
+      const BOUND_CERT = "selfSignedTlsAuth.pem";
+      const ROTATED_CERT = "fapi2TlsClientAuth.pem";
+
+      let mtlsClientId;
+
+      /** PEM の本体（DER の base64）。x5c に載せる形。 */
+      const derBase64 = (certFile) =>
+        getClientCert(certFile)
+          .replace(/-----(BEGIN|END) CERTIFICATE-----/g, "")
+          .replace(/\s/g, "");
+
+      beforeAll(async () => {
+        const adminTokenResponse = await requestToken({
+          endpoint: adminServerConfig.tokenEndpoint,
+          grantType: "password",
+          username: adminServerConfig.oauth.username,
+          password: adminServerConfig.oauth.password,
+          scope: adminServerConfig.adminClient.scope,
+          clientId: adminServerConfig.adminClient.clientId,
+          clientSecret: adminServerConfig.adminClient.clientSecret,
+        });
+        expect(adminTokenResponse.status).toBe(200);
+
+        // 証明書の入れ替え中: どちらの証明書でもクライアント認証は通る。JWK は x5c の先頭の証明書の鍵。
+        const boundKey = await jose.importX509(getClientCert(BOUND_CERT), "ES256", { extractable: true });
+        const publicJwk = await jose.exportJWK(boundKey);
+        mtlsClientId = uuidv4();
+        const registration = await postWithJson({
+          url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/clients`,
+          headers: { Authorization: `Bearer ${adminTokenResponse.data.access_token}` },
+          body: {
+            client_id: mtlsClientId,
+            client_name: "Account Linking mTLS Client",
+            token_endpoint_auth_method: "self_signed_tls_client_auth",
+            tls_client_certificate_bound_access_tokens: true,
+            jwks: JSON.stringify({
+              keys: [{ ...publicJwk, x5c: [derBase64(BOUND_CERT), derBase64(ROTATED_CERT)] }],
+            }),
+            extension: { linking_token_providers: [PROVIDER] },
+            grant_types: ["password"],
+            redirect_uris: ["http://localhost:3000/callback"],
+            response_types: ["code"],
+            scope: `openid ${READ_TOKEN_SCOPE}`,
+            enabled: true,
+          },
+        });
+        expect(registration.status).toBe(201);
+      });
+
+      /** BOUND_CERT で縛られた、ユーザーのアクセストークン。 */
+      const loginWithCertificate = async (user) => {
+        const response = await requestToken({
+          endpoint: serverConfig.tokenEndpoint,
+          grantType: "password",
+          username: user.username,
+          password: user.password,
+          scope: `openid ${READ_TOKEN_SCOPE}`,
+          clientId: mtlsClientId,
+          clientCertFile: BOUND_CERT,
+        });
+        expect(response.status).toBe(200);
+        return response.data.access_token;
+      };
+
+      it("hands out the stored token when the request carries the certificate the token is bound to", async () => {
+        const rpToken = await login(ownerUser, `openid profile email ${MANAGE_SCOPE}`);
+        const alias = await linkOnce(rpToken, PROVIDER, "openid profile email offline_access");
+        const appToken = await loginWithCertificate(ownerUser);
+
+        const response = await retrieveToken({
+          alias,
+          token: appToken,
+          clientId: mtlsClientId,
+          headers: { "x-ssl-cert": encodedClientCert(BOUND_CERT) },
+        });
+        console.log(response.status, response.data);
+        expect(response.status).toBe(200);
+        expect(response.data.access_token).toBeTruthy();
+      });
+
+      it("refuses the user's token presented with another certificate of the same client", async () => {
+        const appToken = await loginWithCertificate(ownerUser);
+
+        const response = await retrieveToken({
+          alias: `${PROVIDER}-1`,
+          token: appToken,
+          clientId: mtlsClientId,
+          headers: { "x-ssl-cert": encodedClientCert(ROTATED_CERT) },
+        });
+        console.log(response.status, response.data);
+        expect(response.status).toBe(401);
+        expect(response.data.error).toBe("invalid_token");
+      });
+
+      it("refuses the client without a certificate", async () => {
+        const appToken = await loginWithCertificate(ownerUser);
+
+        const response = await retrieveToken({
+          alias: `${PROVIDER}-1`,
+          token: appToken,
+          clientId: mtlsClientId,
+        });
+        console.log(response.status, response.data);
+        expect(response.status).toBe(401);
+        expect(response.data.error).toBe("invalid_client");
+      });
     });
 
     it("answers 404 for an alias the user has not linked", async () => {
