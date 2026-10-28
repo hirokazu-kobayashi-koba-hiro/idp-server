@@ -70,6 +70,15 @@ class AccountLinkingFederationConfigurationRuleTest {
   }
 
   @Test
+  void refusesMultipleAccountsThatIsNotABoolean() {
+    Map<String, Object> payload = usable();
+    payload.put("multiple_accounts", "true");
+    assertEquals(1, rule.problems(configuration(payload)).size());
+    payload.put("multiple_accounts", true);
+    assertTrue(rule.problems(configuration(payload)).isEmpty());
+  }
+
+  @Test
   void requiresTheIssuerAndKeysForOpenid() {
     Map<String, Object> payload = usable();
     payload.put("scopes_supported", List.of("openid", "profile"));

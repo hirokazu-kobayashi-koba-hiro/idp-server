@@ -29,12 +29,22 @@ import org.idp.server.platform.json.JsonReadable;
 public class AccountLinkingConfiguration implements JsonReadable {
 
   String duplicateLinkPolicy;
+  boolean multipleAccounts;
   String revocationEndpoint;
 
   public AccountLinkingConfiguration() {}
 
   public DuplicateLinkPolicy duplicateLinkPolicy() {
     return DuplicateLinkPolicy.of(duplicateLinkPolicy);
+  }
+
+  /**
+   * Whether a user may link more than one account of this provider.
+   *
+   * <p>Off by default: a user holds one link per provider, and linking again replaces it.
+   */
+  public boolean allowsMultipleAccounts() {
+    return multipleAccounts;
   }
 
   /** The external IdP's token revocation endpoint (RFC 7009), used when a link is removed. */

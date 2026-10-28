@@ -20,13 +20,18 @@ import java.security.SecureRandom;
 import java.util.Objects;
 
 /**
- * Server-assigned identifier for one linked external account, in the form {@code
- * {provider}-{random}} (e.g. {@code google-k3f9x2qa}).
+ * Server-assigned identifier for one linked external account.
  *
- * <p>The suffix is random rather than a sequence. A sequence is reused once the links that held its
- * numbers are removed, and an RP that kept an alias would then be handed the tokens of another
- * external account under the name it stored. Random suffixes are never reused, and two links
- * completed at the same time do not race for the same number.
+ * <p>A provider that allows one account per user names it after the provider alone (e.g. {@code
+ * google}): the database's unique alias then also keeps a user to one link of the provider, even
+ * when two completions race. Linking again replaces that link, so the alias is reused by design and
+ * always means "this user's account at this provider".
+ *
+ * <p>A provider that allows several accounts uses {@code {provider}-{random}} (e.g. {@code
+ * google-k3f9x2qa}). The suffix is random rather than a sequence. A sequence is reused once the
+ * links that held its numbers are removed, and an RP that kept an alias would then be handed the
+ * tokens of another external account under the name it stored. Random suffixes are never reused,
+ * and two links completed at the same time do not race for the same number.
  *
  * <p>Assigned at completion rather than at link start, because the external account the user will
  * consent with is not known when the flow begins. Never derived from the display name, which the
@@ -46,7 +51,12 @@ public class AccountAlias {
   static final int SUFFIX_LENGTH = 8;
   static final SecureRandom RANDOM = new SecureRandom();
 
-  /** A new alias for an account linked to {@code provider}. */
+  /** The alias of the one account a user may link to {@code provider}. */
+  public static AccountAlias single(ExternalIdpProvider provider) {
+    return new AccountAlias(provider.value());
+  }
+
+  /** A new alias for one of several accounts linked to {@code provider}. */
   public static AccountAlias generate(ExternalIdpProvider provider) {
     StringBuilder suffix = new StringBuilder(SUFFIX_LENGTH);
     for (int i = 0; i < SUFFIX_LENGTH; i++) {

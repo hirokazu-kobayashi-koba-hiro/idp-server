@@ -82,6 +82,11 @@ public class AccountLinkingFederationConfigurationRule implements FederationConf
       problems.add("payload.duplicate_link_policy must be reject or allow.");
     }
 
+    Object multipleAccounts = payload.get("multiple_accounts");
+    if (multipleAccounts != null && !(multipleAccounts instanceof Boolean)) {
+      problems.add("payload.multiple_accounts must be true or false.");
+    }
+
     // With openid the external account is identified by the id_token's sub, which needs the
     // issuer to compare and the keys to verify.
     Object scopes = payload.get("scopes_supported");

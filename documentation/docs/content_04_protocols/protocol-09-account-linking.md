@@ -10,7 +10,7 @@
 |---|---|---|
 | 目的 | 外部IdPで**ログインする** | 外部IdPのトークンを**保管する** |
 | 起点 | 未認証の認可リクエスト | 認証済みユーザーの操作 |
-| 紐付け数 | 1ユーザー1件 | provider ごとに複数可（`account_alias` で識別） |
+| 紐付け数 | 1ユーザー1件 | provider ごとに 1 件（`multiple_accounts: true` で複数可。`account_alias` で識別） |
 | トークン | 平文 JSONB | アプリ層で AES-GCM 暗号化 |
 
 両者は独立した系統です。連携を追加しても Federation の動作は変わりません。
@@ -227,6 +227,15 @@ iframe に埋め込むと third-party 文脈になり、Safari の ITP と Chrom
 
 `revocation_endpoint` は解除、ユーザーの削除、テナントの削除のときに保管トークンを失効させる先です。省略すると、外部IdP側のトークンは失効させずに連携だけを削除します。クライアント認証はトークンエンドポイントと同じ方式で行います。`client_authentication_type` が `client_secret_basic` なら Basic 認証、それ以外はリクエストボディの `client_secret` です。`private_key_jwt` などには対応していません。
 
+`multiple_accounts` は、1 人のユーザーがこの連携先のアカウントをいくつ連携できるかです。
+
+| 値 | 挙動 |
+|---|---|
+| `false`（既定） | 1 件。`alias` は連携先の名前（`sso_provider`）そのもの。もう一度連携すると、その 1 件を連携し直しとして更新する。別の外部アカウント（ID Token の `sub` か userinfo の `external_user_id` が違う）なら 409 を返し、先に解除してもらう。外部アカウントを名乗らない連携先（OAuth 2.0 だけ）は見分けられないので、いつも更新になる |
+| `true` | 複数。`alias` は `{provider}-{8 文字の乱数}`。同じ外部アカウントは更新し、別の外部アカウントは追加する。外部アカウントを名乗らない連携先では、連携するたびに追加になる |
+
+1 件のときの `alias` はデータベースの一意制約 `(tenant_id, user_id, provider, account_alias)` に載るので、同時に complete しても 2 件目はできません。`alias` は解除のあとも同じ値に戻ります。「このユーザーのこの連携先のアカウント」を指す名前で、どの外部アカウントかを指すものではありません。
+
 `duplicate_link_policy` は、同じ外部アカウントが既にテナント内の別ユーザーに紐付いている場合の挙動です。
 
 | 値 | 挙動 |
@@ -393,7 +402,7 @@ token={ユーザーのアクセストークン}&client_id=...&client_secret=...
 | 400 | `redirect_uri` が未指定、または allow-list に無い / 連携先が設定されていない・無効 / 連携の途中で連携先が削除・無効化された |
 | 403 | 操作者が連携セッションのユーザーと一致しない / 確定したクライアントが連携を始めたクライアントと違う / `insufficient_scope`（`linked_account:read` / `linked_account:manage` が無い） |
 | 404 | `state` に対応する連携セッションが無い / 解除する `alias` が呼び出したユーザーの連携に無い（`error` は `not_found`） |
-| 409 | 連携セッションが期限切れ、または期待する状態でない / 同じ外部アカウントが既に他のユーザーに紐付いている（`duplicate_link_policy: reject` のとき） |
+| 409 | 連携セッションが期限切れ、または期待する状態でない / 同じ外部アカウントが既に他のユーザーに紐付いている（`duplicate_link_policy: reject` のとき） / この連携先の別のアカウントを既に連携している（`multiple_accounts: false` のとき） |
 
 409 のうち重複連携は、誰に紐付いているかを返しません。返すと外部アカウントの所有者を列挙する手がかりになるためです。
 

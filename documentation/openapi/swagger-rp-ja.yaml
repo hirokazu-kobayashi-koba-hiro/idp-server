@@ -1724,7 +1724,7 @@ paths:
           description: 連携の識別子（連携一覧の `alias`）
           schema:
             type: string
-            example: example-idp-k3f9x2qa
+            example: example-idp
         - $ref: '#/components/parameters/Authorization'
         - $ref: '#/components/parameters/OAuthClientAttestation'
         - $ref: '#/components/parameters/OAuthClientAttestationPop'

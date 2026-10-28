@@ -8,7 +8,7 @@
     "provider": "standard",
     "issuer": "https://api.local.test/1e68932e-ed4a-43e7-b412-460665e42df3",
     "issuer_name": "account-linking-oauth2",
-    "description": "Plain OAuth 2.0 delegation: no openid scope, so no id_token, and no userinfo endpoint. The provider never says who the resource owner is, which a link does not need it to.",
+    "description": "Plain OAuth 2.0 delegation: no openid scope, so no id_token, and no userinfo endpoint. The provider never says who the resource owner is, which a link does not need it to. Several accounts are allowed, so each link is added.",
     "authorization_endpoint": "https://api.local.test/1e68932e-ed4a-43e7-b412-460665e42df3/v1/authorizations",
     "token_endpoint": "https://api.local.test/1e68932e-ed4a-43e7-b412-460665e42df3/v1/tokens",
     "revocation_endpoint": "https://api.local.test/1e68932e-ed4a-43e7-b412-460665e42df3/v1/tokens/revocation",
@@ -31,6 +31,7 @@
       "refresh_token"
     ],
     "duplicate_link_policy": "reject",
+    "multiple_accounts": true,
     "refresh_token_expires_in": 86400
   }
 }

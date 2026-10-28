@@ -104,7 +104,7 @@ describe("account linking", () => {
    * 外部IdP役テナントは password 認証設定を持たないため、scenario-02 と同じく
    * email 認証で通す。検証コードは管理APIから取り出す。
    */
-  const consentAtExternalIdp = async (externalAuthorizationUri) => {
+  const consentAtExternalIdp = async (externalAuthorizationUri, externalEmail = ownerUser.username) => {
     const authorizationResponse = await get({ url: externalAuthorizationUri });
     expect(authorizationResponse.status).toBe(302);
 
@@ -115,7 +115,7 @@ describe("account linking", () => {
       endpoint: `${backendUrl}/${federationServerConfig.tenantId}/v1/authorizations/{id}/email-authentication-challenge`,
       id,
       body: {
-        email: ownerUser.username,
+        email: externalEmail,
         email_template: "authentication",
       },
     });
@@ -155,25 +155,34 @@ describe("account linking", () => {
     return authorizeResponse.data.redirect_uri;
   };
 
-  /** 連携を1回通して alias を返す。 */
-  const linkOnce = async (accessToken, provider, scope = "account offline_access") => {
+  /** 連携を complete まで通し、complete の応答を返す。外部IdP では externalEmail のユーザーで同意する。 */
+  const linkThroughComplete = async (
+    accessToken,
+    provider,
+    scope = "account offline_access",
+    externalEmail = ownerUser.username
+  ) => {
     const linkResponse = await startLink(accessToken, provider, scope);
     expect(linkResponse.status).toBe(201);
 
     const startResponse = await get({ url: linkResponse.data.start_url });
     expect(startResponse.status).toBe(302);
 
-    const callbackUri = await consentAtExternalIdp(startResponse.headers.location);
+    const callbackUri = await consentAtExternalIdp(startResponse.headers.location, externalEmail);
     const callbackResponse = await get({ url: callbackUri });
     expect(callbackResponse.status).toBe(302);
 
-    const completeResponse = await postWithJson({
+    return await postWithJson({
       url: `${backendUrl}/${serverConfig.tenantId}/v1/me/linked-external-accounts/complete`,
       headers: { Authorization: `Bearer ${accessToken}` },
       body: { state: linkResponse.data.state },
     });
-    expect(completeResponse.status).toBe(201);
+  };
 
+  /** 連携を1回通して alias を返す。 */
+  const linkOnce = async (accessToken, provider, scope = "account offline_access", externalEmail) => {
+    const completeResponse = await linkThroughComplete(accessToken, provider, scope, externalEmail);
+    expect(completeResponse.status).toBe(201);
     return completeResponse.data.alias;
   };
 
@@ -310,7 +319,8 @@ describe("account linking", () => {
       console.log(completeResponse.data);
       expect(completeResponse.status).toBe(201);
       expect(completeResponse.data.provider).toBe(PROVIDER);
-      expect(completeResponse.data.alias).toContain(`${PROVIDER}-`);
+      // 連携先ごとに 1 つ（multiple_accounts の既定）。alias は連携先の名前そのもの。
+      expect(completeResponse.data.alias).toBe(PROVIDER);
       expect(completeResponse.data.access_token_expires_at).not.toBeNull();
 
       const alias = completeResponse.data.alias;
@@ -323,9 +333,7 @@ describe("account linking", () => {
       const aliasesAfter = listResponse.data.list.map((it) => it.alias);
       expect(aliasesAfter).toContain(alias);
 
-      // 同じ外部アカウントをもう一度連携しても行は増えない。
-      // UNIQUE (tenant_id, provider, federated_user_id) があるので、再連携は
-      // 既存行の更新でなければ成立しない。alias は URL に出るため保たれる。
+      // 同じ外部アカウントをもう一度連携しても行は増えない。再連携は既存行の更新で、alias も保たれる。
       expect(aliasesAfter.filter((it) => it === alias)).toHaveLength(1);
       if (aliasesBefore.includes(alias)) {
         expect(aliasesAfter).toHaveLength(aliasesBefore.length);
@@ -398,8 +406,8 @@ describe("account linking", () => {
     });
 
     /**
-     * 識別子が無いと「同じ外部アカウントか」を判定できないので、再連携の検出は成立しない。
-     * もう一度連携すれば別の grant として増える。OAuth 2.0 の委譲としてはそれが自然。
+     * 複数のアカウントを許す連携先（multiple_accounts: true）では、識別子が無いと
+     * 「同じ外部アカウントか」を判定できないので、もう一度連携すれば別の連携として増える。
      */
     it("adds a new link each time, because there is nothing to compare", async () => {
       const accessToken = await login(ownerUser);
@@ -416,6 +424,114 @@ describe("account linking", () => {
       const aliases = listResponse.data.list.map((it) => it.alias);
       expect(aliases).toContain(firstAlias);
       expect(aliases).toContain(secondAlias);
+    });
+  });
+
+  describe("one account per provider", () => {
+    const OAUTH2_PROVIDER = "account-linking-oauth2";
+    const OAUTH2_CONFIG_ID = "9e3b7d52-1c48-4a06-b7f9-2d5e8c0a4f13";
+
+    /** 外部IdP 役のテナントに、同意に使うユーザーを作る。 */
+    const createExternalUser = async () => {
+      const email = `account-linking-external-${uuidv4()}@example.com`;
+      const response = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${federationServerConfig.tenantId}/users`,
+        headers: { Authorization: `Bearer ${await requestAdminAccessToken()}` },
+        body: { sub: uuidv4(), provider_id: "idp-server", name: email, email, raw_password: "successUserCode001" },
+      });
+      expect(response.status).toBe(201);
+      return email;
+    };
+
+    /** 連携に使う、このテストだけのユーザー。ほかのテストの連携と混ざらない。 */
+    const loginAsNewUser = async () => {
+      const email = `account-linking-${uuidv4()}@example.com`;
+      const response = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/users`,
+        headers: { Authorization: `Bearer ${await requestAdminAccessToken()}` },
+        body: { sub: uuidv4(), provider_id: "idp-server", name: email, email, raw_password: "successUserCode001" },
+      });
+      expect(response.status).toBe(201);
+      return await login({ username: email, password: "successUserCode001" });
+    };
+
+    const listLinks = async (accessToken) => {
+      const response = await get({
+        url: `${backendUrl}/${serverConfig.tenantId}/v1/me/linked-external-accounts`,
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      expect(response.status).toBe(200);
+      return response.data.list;
+    };
+
+    it("renews the one link when the same external account is linked again", async () => {
+      const accessToken = await loginAsNewUser();
+      const externalEmail = await createExternalUser();
+      const scope = "openid profile email offline_access";
+
+      const first = await linkOnce(accessToken, PROVIDER, scope, externalEmail);
+      const second = await linkOnce(accessToken, PROVIDER, scope, externalEmail);
+
+      expect(first).toBe(PROVIDER);
+      expect(second).toBe(PROVIDER);
+      expect((await listLinks(accessToken)).filter((it) => it.provider === PROVIDER)).toHaveLength(1);
+    });
+
+    it("refuses another account of the provider while one is linked, and keeps the linked one", async () => {
+      const accessToken = await loginAsNewUser();
+      const scope = "openid profile email offline_access";
+      const linkedEmail = await createExternalUser();
+      const anotherEmail = await createExternalUser();
+      await linkOnce(accessToken, PROVIDER, scope, linkedEmail);
+      const before = (await listLinks(accessToken)).find((it) => it.provider === PROVIDER);
+
+      const response = await linkThroughComplete(accessToken, PROVIDER, scope, anotherEmail);
+      console.log(response.status, response.data);
+      expect(response.status).toBe(409);
+
+      const links = (await listLinks(accessToken)).filter((it) => it.provider === PROVIDER);
+      // 断った complete は何も書かない。つないでいるアカウントはそのまま。
+      expect(links).toEqual([before]);
+
+      // 解除してからなら、別のアカウントをつなげる。
+      expect((await unlink(accessToken, PROVIDER)).status).toBe(204);
+      expect(await linkOnce(accessToken, PROVIDER, scope, anotherEmail)).toBe(PROVIDER);
+    });
+
+    describe("with a provider that names no account", () => {
+      const configUrl = () =>
+        `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/federation-configurations/${OAUTH2_CONFIG_ID}`;
+      let configBefore;
+
+      beforeAll(async () => {
+        const headers = { Authorization: `Bearer ${await requestAdminAccessToken()}` };
+        const current = await get({ url: configUrl(), headers });
+        expect(current.status).toBe(200);
+        configBefore = current.data;
+        const update = await putWithJson({
+          url: configUrl(),
+          headers,
+          body: { ...configBefore, payload: { ...configBefore.payload, multiple_accounts: false } },
+        });
+        expect(update.status).toBe(200);
+      });
+
+      afterAll(async () => {
+        await putWithJson({
+          url: configUrl(),
+          headers: { Authorization: `Bearer ${await requestAdminAccessToken()}` },
+          body: configBefore,
+        });
+      });
+
+      it("renews the one link each time, since there is no way to tell the accounts apart", async () => {
+        const accessToken = await loginAsNewUser();
+
+        expect(await linkOnce(accessToken, OAUTH2_PROVIDER)).toBe(OAUTH2_PROVIDER);
+        expect(await linkOnce(accessToken, OAUTH2_PROVIDER)).toBe(OAUTH2_PROVIDER);
+
+        expect((await listLinks(accessToken)).filter((it) => it.provider === OAUTH2_PROVIDER)).toHaveLength(1);
+      });
     });
   });
 

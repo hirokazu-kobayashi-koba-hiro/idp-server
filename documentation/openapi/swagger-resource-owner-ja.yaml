@@ -1510,6 +1510,7 @@ paths:
         - 連携セッションがコールバックまで進んでおり、まだ確定されていない
 
         同じユーザーが同じ外部アカウントをもう一度連携した場合はエラーにならず、既存の連携を更新します（`alias` は保たれます）。
+        連携先が 1 件だけを許す（`multiple_accounts: false`、既定）ときは、外部アカウントを名乗らない連携先でも、もう一度の連携は既存の 1 件の更新になります。別の外部アカウントは `409` です。
 
         ## 必要なスコープ
         `linked_account:manage`
@@ -1588,6 +1589,7 @@ paths:
             - 連携セッションが期限切れ
             - 連携セッションが確定できる状態にない（コールバック前、または確定済み）
             - 同じ外部アカウントが既に他のユーザーに紐付いている（連携先の `duplicate_link_policy` が `reject` のとき）。誰に紐付いているかは返しません
+            - この連携先の別のアカウントを既に連携している（連携先の `multiple_accounts` が `false` のとき）。先に解除してから連携します
           content:
             application/json:
               schema:
@@ -2806,7 +2808,7 @@ components:
       description: 連携の識別子（一覧の `alias`）
       schema:
         type: string
-        example: example-idp-k3f9x2qa
+        example: example-idp
   schemas:
     InsufficientScopeError:
       type: object
@@ -2867,8 +2869,10 @@ components:
         alias:
           type: string
           description: |
-            連携の識別子。`{provider}-{8 文字の乱数}` の形で、ユーザーの中で一意です。同じ外部アカウントを連携し直しても変わりません。解除した連携の識別子が別の連携に使い回されることはありません。
-          example: example-idp-k3f9x2qa
+            連携の識別子で、ユーザーの中で一意です。同じ外部アカウントを連携し直しても変わりません。
+            連携先が 1 件だけを許す（`multiple_accounts: false`、既定）ときは連携先の名前そのもので、解除してつなぎ直すと同じ値に戻ります。
+            複数を許すときは `{provider}-{8 文字の乱数}` で、解除した連携の識別子が別の連携に使い回されることはありません。
+          example: example-idp
         provider:
           type: string
           description: 連携先の設定名（`sso_provider`）

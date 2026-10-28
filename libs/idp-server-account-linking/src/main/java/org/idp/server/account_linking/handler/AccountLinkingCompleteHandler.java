@@ -28,6 +28,7 @@ import org.idp.server.account_linking.repository.AccountLinkingSessionQueryRepos
 import org.idp.server.account_linking.repository.LinkedExternalAccountCommandRepository;
 import org.idp.server.account_linking.repository.LinkedExternalAccountQueryRepository;
 import org.idp.server.account_linking.verifier.DuplicateLinkVerifier;
+import org.idp.server.account_linking.verifier.SameExternalAccountVerifier;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -42,6 +43,7 @@ public class AccountLinkingCompleteHandler {
   LinkedExternalAccountCommandRepository accountCommandRepository;
   AccountLinkingConfigurationResolver configurationResolver;
   DuplicateLinkVerifier duplicateLinkVerifier;
+  SameExternalAccountVerifier sameExternalAccountVerifier;
   AccountLinkingErrorHandler errorHandler;
 
   public AccountLinkingCompleteHandler(
@@ -56,6 +58,7 @@ public class AccountLinkingCompleteHandler {
     this.accountCommandRepository = accountCommandRepository;
     this.configurationResolver = configurationResolver;
     this.duplicateLinkVerifier = new DuplicateLinkVerifier(accountQueryRepository);
+    this.sameExternalAccountVerifier = new SameExternalAccountVerifier();
     this.errorHandler = new AccountLinkingErrorHandler();
   }
 
@@ -115,11 +118,55 @@ public class AccountLinkingCompleteHandler {
 
   /** The link to write: a re-link of one this user already holds, or a new one. */
   private PreparedLink prepare(Tenant tenant, AccountLinkingSession session, LocalDateTime now) {
+    AccountLinkingProviderConfiguration configuration =
+        configurationResolver.resolve(tenant, session.provider());
+    if (configuration.allowsMultipleAccounts()) {
+      return prepareOneOfSeveral(tenant, session, configuration, now);
+    }
+    return prepareTheOne(tenant, session, configuration, now);
+  }
+
+  /**
+   * The user's one link to the provider: linking again renews it, with the same external account.
+   *
+   * <p>The row is read under its lock, as token retrieval refreshes under the same lock. Without
+   * it, a refresh running alongside would write its tokens over the ones this link brings.
+   */
+  private PreparedLink prepareTheOne(
+      Tenant tenant,
+      AccountLinkingSession session,
+      AccountLinkingProviderConfiguration configuration,
+      LocalDateTime now) {
+    ParkedCredentials credentials = session.parkedCredentials();
+    AccountAlias alias = AccountAlias.single(session.provider());
+
+    LinkedExternalAccount current =
+        accountQueryRepository.lock(tenant, session.userIdentifier(), alias);
+    if (current.exists()) {
+      sameExternalAccountVerifier.verify(current, credentials);
+      return new PreparedLink(current.relinkedWith(credentials, now), true);
+    }
+
+    if (credentials.hasFederatedUserId()) {
+      duplicateLinkVerifier.verify(
+          tenant, session, credentials.federatedUserId(), configuration.duplicateLinkPolicy());
+    }
+    return new PreparedLink(LinkedExternalAccount.fromConsumedSession(session, alias, now), false);
+  }
+
+  /**
+   * One of several links to the provider: the same external account is renewed, another is added.
+   *
+   * <p>Without an identifier from the provider there is nothing to compare, so neither recognising
+   * a re-link nor the duplicate policy applies, and every such link is added.
+   */
+  private PreparedLink prepareOneOfSeveral(
+      Tenant tenant,
+      AccountLinkingSession session,
+      AccountLinkingProviderConfiguration configuration,
+      LocalDateTime now) {
     ParkedCredentials credentials = session.parkedCredentials();
 
-    // Without an identifier from the provider there is nothing to compare, so neither recognising
-    // a re-link nor the duplicate policy applies. Every such link is a new delegation, which is
-    // what an OAuth 2.0 grant is.
     if (credentials.hasFederatedUserId()) {
       LinkedExternalAccount own =
           accountQueryRepository.findByUserAndFederatedUser(
@@ -130,16 +177,10 @@ public class AccountLinkingCompleteHandler {
       }
 
       duplicateLinkVerifier.verify(
-          tenant,
-          session,
-          credentials.federatedUserId(),
-          configurationResolver.resolve(tenant, session.provider()).duplicateLinkPolicy());
+          tenant, session, credentials.federatedUserId(), configuration.duplicateLinkPolicy());
     }
 
-    AccountAlias alias =
-        session.hasAccountAlias()
-            ? session.accountAlias()
-            : AccountAlias.generate(session.provider());
+    AccountAlias alias = AccountAlias.generate(session.provider());
     return new PreparedLink(LinkedExternalAccount.fromConsumedSession(session, alias, now), false);
   }
 

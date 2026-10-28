@@ -37,6 +37,7 @@ import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.federation.sso.oidc.OidcSsoConfiguration;
 import org.idp.server.platform.crypto.SealedData;
 import org.idp.server.platform.datasource.SqlDuplicateKeyException;
+import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.junit.jupiter.api.Test;
@@ -114,6 +115,7 @@ class AccountLinkingCompleteHandlerTest {
     List<LinkedExternalAccount> rows = new ArrayList<>();
     boolean otherUserHolds;
     RuntimeException registerFailure;
+    int updates;
 
     @Override
     public List<LinkedExternalAccount> findList(Tenant tenant, UserIdentifier userIdentifier) {
@@ -188,7 +190,10 @@ class AccountLinkingCompleteHandlerTest {
     }
 
     @Override
-    public void update(Tenant tenant, LinkedExternalAccount account) {}
+    public void update(Tenant tenant, LinkedExternalAccount account) {
+      rows.replaceAll(it -> it.accountAlias().equals(account.accountAlias()) ? account : it);
+      updates++;
+    }
 
     @Override
     public void delete(Tenant tenant, LinkedExternalAccount account) {
@@ -199,8 +204,10 @@ class AccountLinkingCompleteHandlerTest {
     public void deleteAll(Tenant tenant, UserIdentifier userIdentifier) {}
   }
 
-  /** Reject on duplicates, the default policy. */
+  /** Reject on duplicates, the default policy; one account per user unless told otherwise. */
   static class Resolver extends AccountLinkingConfigurationResolver {
+    Map<String, Object> linking = new HashMap<>();
+
     Resolver() {
       super(null);
     }
@@ -209,14 +216,20 @@ class AccountLinkingCompleteHandlerTest {
     public AccountLinkingProviderConfiguration resolve(
         Tenant tenant, ExternalIdpProvider provider) {
       return new AccountLinkingProviderConfiguration(
-          new OidcSsoConfiguration(), new AccountLinkingConfiguration());
+          new OidcSsoConfiguration(),
+          JsonConverter.snakeCaseInstance().read(linking, AccountLinkingConfiguration.class));
     }
   }
 
   Sessions sessions = new Sessions();
   Accounts accounts = new Accounts();
+  Resolver resolver = new Resolver();
   AccountLinkingCompleteHandler handler =
-      new AccountLinkingCompleteHandler(sessions, sessions, accounts, accounts, new Resolver());
+      new AccountLinkingCompleteHandler(sessions, sessions, accounts, accounts, resolver);
+
+  void allowMultipleAccounts() {
+    resolver.linking.put("multiple_accounts", true);
+  }
 
   void parkSession(String federatedUserId) {
     sessions.register(
@@ -254,7 +267,74 @@ class AccountLinkingCompleteHandlerTest {
   }
 
   @Test
+  void theOneLinkToAProviderIsNamedAfterTheProvider() {
+    parkSession("federated-sub");
+
+    assertFalse(complete().isError());
+
+    assertEquals(new AccountAlias("google"), accounts.rows.getFirst().accountAlias());
+  }
+
+  @Test
+  void linkingTheSameAccountAgainRenewsTheOneLink() {
+    parkSession("federated-sub");
+    assertFalse(complete().isError());
+
+    parkSession("federated-sub");
+    assertFalse(complete().isError());
+
+    assertEquals(1, accounts.rows.size());
+    assertEquals(1, accounts.updates);
+  }
+
+  @Test
+  void linkingAgainWithoutAnIdentifierRenewsTheOneLink() {
+    // A plain OAuth 2.0 delegation names no account; linking again is taken as renewing it.
+    parkSession(null);
+    assertFalse(complete().isError());
+
+    parkSession(null);
+    assertFalse(complete().isError());
+
+    assertEquals(1, accounts.rows.size());
+    assertEquals(1, accounts.updates);
+  }
+
+  @Test
+  void linkingAnotherAccountWhileOneIsLinkedIsRefused() {
+    parkSession("federated-sub");
+    assertFalse(complete().isError());
+
+    parkSession("another-federated-sub");
+    AccountLinkingResult result = complete();
+
+    assertTrue(result.isError());
+    assertEquals(409, result.statusCode());
+    assertEquals(1, accounts.rows.size());
+    assertEquals(0, accounts.updates);
+    assertTrue(sessions.find(TENANT, STATE).exists());
+  }
+
+  @Test
+  void anotherAccountIsAddedWhenSeveralAreAllowed() {
+    allowMultipleAccounts();
+    accounts.rows.add(
+        new LinkedExternalAccount.Builder()
+            .userIdentifier(OWNER)
+            .provider(PROVIDER)
+            .accountAlias(new AccountAlias("google-aaaaaaaa"))
+            .federatedUserId("federated-sub")
+            .build());
+    parkSession("another-federated-sub");
+
+    assertFalse(complete().isError());
+
+    assertEquals(2, accounts.rows.size());
+  }
+
+  @Test
   void aliasesAreNeverReusedAfterUnlinking() {
+    allowMultipleAccounts();
     parkSession(null);
     AccountLinkingResult first = complete();
     assertFalse(first.isError());

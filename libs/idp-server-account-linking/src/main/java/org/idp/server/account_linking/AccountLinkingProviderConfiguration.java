@@ -48,6 +48,10 @@ public class AccountLinkingProviderConfiguration {
     return linking.duplicateLinkPolicy();
   }
 
+  public boolean allowsMultipleAccounts() {
+    return linking.allowsMultipleAccounts();
+  }
+
   public boolean hasRevocationEndpoint() {
     return linking.hasRevocationEndpoint();
   }

@@ -76,7 +76,8 @@ curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/t
         { "from": "$.http_request.response_body.email", "to": "email" }
       ],
       "refresh_token_expires_in": 86400,
-      "duplicate_link_policy": "reject"
+      "duplicate_link_policy": "reject",
+      "multiple_accounts": false
     }
   }'
 ```
@@ -94,10 +95,11 @@ curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/t
 | `payload.revocation_endpoint` | 任意。解除とユーザー削除のときに保管トークンを失効させる先。無ければ失効させずに連携だけを消す |
 | `payload.refresh_token_expires_in` | 保管するリフレッシュトークンの有効期間（秒）。外部IdPの実際の期限に合わせる。未設定なら期限は不明として扱い、アクセストークンが切れるたびにリフレッシュを試す |
 | `payload.duplicate_link_policy` | 同じ外部アカウントが別ユーザーに連携済みのとき。`reject`（既定、409）/ `allow` |
+| `payload.multiple_accounts` | 1 人がこの連携先のアカウントを複数連携できるか。`false`（既定）なら 1 件で、`alias` は `sso_provider` と同じ。もう一度連携すると更新し、別のアカウントは 409（先に解除）。`true` なら連携ごとに `alias` が `{provider}-{乱数}` になる |
 
 ログイン用の設定例にある `store_credentials` と `access_token_expires_in` は、連携では読みません。アクセストークンの期限は外部IdPのトークン応答の `expires_in` で決まります。
 
-登録と更新のときに中身を確かめ、必須の項目が無い、`redirect_uri` がこの連携先のコールバックでない、`duplicate_link_policy` の値が違う、`openid` を入れたのに `issuer` / `jwks_uri` が無い、といった設定は `400` になります。`type` と `sso_provider` は後から変えられません（`400`）。連携が 1 件でも残っている間は、この設定の削除は `409` になります（`dry_run=true` でも同じ）。応答の `linked_external_accounts` が残っている連携の数です。先に [管理APIでの確認・解除](#管理apiでの確認解除) で連携を解除してください。連携先を消すときは、まず `enabled: false` にして新しい連携を止めてから、残った連携を解除し、最後に削除します。無効にしないまま進めると、解除と削除の間に新しい連携ができることがあります。
+登録と更新のときに中身を確かめ、必須の項目が無い、`redirect_uri` がこの連携先のコールバックでない、`duplicate_link_policy` の値が違う、`multiple_accounts` が真偽値でない、`openid` を入れたのに `issuer` / `jwks_uri` が無い、といった設定は `400` になります。`type` と `sso_provider` は後から変えられません（`400`）。連携が 1 件でも残っている間は、この設定の削除は `409` になります（`dry_run=true` でも同じ）。応答の `linked_external_accounts` が残っている連携の数です。先に [管理APIでの確認・解除](#管理apiでの確認解除) で連携を解除してください。連携先を消すときは、まず `enabled: false` にして新しい連携を止めてから、残った連携を解除し、最後に削除します。無効にしないまま進めると、解除と削除の間に新しい連携ができることがあります。
 
 **実例**:
 - `config/examples/standard-oidc-web-app/federation-account-linking.json` - サンプルアプリ用
@@ -363,7 +365,7 @@ cd e2e && npm test -- --testPathPattern=scenario-16
 | `start_url` を開くとエラー画面 | `{provider}` の名前が `sso_provider` と違う、または連携先が `enabled: false`（`link` は名前を検査しない） | `sso_provider` を確認 |
 | 戻り先に `error=server_error` | 外部IdPでのトークン交換・ID Token 検証・userinfo の失敗 | `client_authentication_type`・`redirect_uri`・`issuer`・`jwks_uri` を確認 |
 | `complete` が `403` | 連携を始めたクライアントと別のクライアントのトークンで確定した | 開始と同じクライアントのトークンを使う |
-| `complete` が `409` | 連携セッションが期限切れ、または同じ外部アカウントが別ユーザーに連携済み（`reject`） | 5.1 からやり直す / `duplicate_link_policy` を見直す |
+| `complete` が `409` | 連携セッションが期限切れ、または同じ外部アカウントが別ユーザーに連携済み（`reject`）、またはこの連携先の別のアカウントを連携済み（`multiple_accounts: false`） | 5.1 からやり直す / `duplicate_link_policy` を見直す / 前の連携を解除してからつなぐ |
 | トークン取得が `400 relink_required` | リフレッシュトークンが無い・期限切れ・拒否された、または連携先が削除・無効化された | `refresh_token_expires_in` と、外部IdPがリフレッシュトークンを返すスコープ（例: `offline_access`）を確認 |
 | `link` が `403` | 連携先がクライアントの `linking_providers` に無い | Step 4 を確認 |
 | `link` が `400`（scope） | 要求した `scope` が連携先の `scopes_supported` に無い | 要求を連携先の設定の範囲にする |

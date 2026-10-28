@@ -16,6 +16,7 @@
 
 package org.idp.server.account_linking.handler;
 
+import org.idp.server.account_linking.exception.AccountLinkingAnotherAccountLinkedException;
 import org.idp.server.account_linking.exception.AccountLinkingDuplicateException;
 import org.idp.server.account_linking.exception.AccountLinkingInvalidRequestException;
 import org.idp.server.account_linking.exception.AccountLinkingNotFoundException;
@@ -66,6 +67,11 @@ public class AccountLinkingErrorHandler {
       return linkFailed(AccountLinkingStatus.CONFLICT, exception.getMessage());
     }
 
+    if (exception instanceof AccountLinkingAnotherAccountLinkedException) {
+      log.warn("Account linking to another account rejected: {}", exception.getMessage());
+      return linkFailed(AccountLinkingStatus.CONFLICT, exception.getMessage());
+    }
+
     if (exception instanceof AccountLinkingNotFoundException) {
       log.warn("Account linking session not found: {}", exception.getMessage());
       return linkFailed(AccountLinkingStatus.NOT_FOUND, exception.getMessage());
@@ -108,6 +114,7 @@ public class AccountLinkingErrorHandler {
         || exception instanceof AccountLinkingProviderNotAllowedException
         || exception instanceof AccountLinkingSessionStateException
         || exception instanceof AccountLinkingDuplicateException
+        || exception instanceof AccountLinkingAnotherAccountLinkedException
         || exception instanceof AccountLinkingNotFoundException
         || exception instanceof AccountLinkingInvalidRequestException
         || exception instanceof FederationConfigurationNotFoundException
