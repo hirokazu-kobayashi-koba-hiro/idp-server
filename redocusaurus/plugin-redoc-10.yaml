@@ -897,6 +897,41 @@ components:
               description: 追加パラメータ設定
               items:
                 $ref: '#/components/schemas/AuthenticationAdditionalParameterConfig'
+            verifications:
+              type: array
+              description: |
+                実行の後に行う照合。現在は FIDO-UAF 認証（fido-uaf-authentication）で使用する。
+                設定した照合は毎回実行し、未知の type や不正な details は照合失敗として扱う。
+              items:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    description: 照合の種類
+                    enum:
+                      - match
+                  details:
+                    type: object
+                    description: 照合の設定（type が match の場合は rules）
+                    properties:
+                      rules:
+                        type: array
+                        items:
+                          type: object
+                          required:
+                            - path
+                            - target_path
+                          properties:
+                            path:
+                              type: string
+                              description: 照合する値の JSONPath
+                            target_path:
+                              type: string
+                              description: 比較対象の値の JSONPath
+                            operation:
+                              type: string
+                              description: 比較の演算子（省略時は eq）
+                              default: eq
           additionalProperties: true
         response:
           type: object
@@ -1073,11 +1108,15 @@ components:
         lock_conditions:
           $ref: '#/components/schemas/AuthenticationResultConditionConfig'
         device_registration_conditions:
-          description: |
+          description: >
             認証デバイス（FIDO2/FIDO-UAF）登録時に必要な認証レベル（ACR）を定義します。
+
             この条件が設定されている場合、ユーザーは指定された認証方式を完了しないと
-            新しいFIDOデバイスを登録できません。
-            条件を満たさない場合は403 Forbidden、未認証の場合は401 Unauthorizedを返します。
+
+            新しいFIDOデバイスを登録できません。FIDO-UAFでは登録解除にも適用されます。
+
+            条件を満たさない場合は400 Bad Request（`forbidden`）、未認証の場合は400 Bad
+            Request（`unauthorized`）を返します。
           allOf:
             - $ref: '#/components/schemas/AuthenticationResultConditionConfig'
         step_definitions:
@@ -1096,6 +1135,26 @@ components:
             被害者の認証を自分のセッションに紐づける攻撃）を防止します。
 
             セキュリティ上の理由から、本番環境ではtrueを推奨します。
+        custom_params_trusted_sources:
+          type: array
+          items:
+            type: string
+            enum:
+              - pushed
+              - request_object
+              - query
+          default:
+            - pushed
+            - request_object
+          description: |
+            条件式の `$.request.custom_params.*` に見せるカスタムパラメータの出どころ（Issue #1907）。
+            それ以外の出どころの値は、値が無いものとして扱う。
+
+            - `pushed`: クライアント認証をした PAR の本文
+            - `request_object`: 署名されたリクエストオブジェクトのクレーム
+            - `query`: クエリの値。署名の無いリクエストオブジェクトと、公開クライアントの PAR の値も含む（利用者が書き換えられる）
+
+            未知の値は 400。
       additionalProperties: false
     AuthenticationPolicyCondition:
       type: object
@@ -1119,14 +1178,63 @@ components:
       additionalProperties: true
     AuthenticationResultConditionConfig:
       type: object
-      description: Authentication result condition configuration
+      description: >
+        条件式。`any_of` の要素（グループ）のどれか 1 つで、グループ内の条件がすべて成り立てば成立する。
+
+        書き方と参照できるコンテキストは
+        [認証ポリシー設定ガイド](../docs/content_06_developer-guide/05-configuration/authentication-policy.md#success-conditions)
+        を参照。
       properties:
-        conditions:
+        any_of:
           type: array
-          description: List of result conditions
+          description: 条件グループの配列（グループ間は OR）
           items:
-            type: object
-            additionalProperties: true
+            type: array
+            description: 条件の配列（グループ内は AND）
+            items:
+              $ref: '#/components/schemas/AuthenticationResultCondition'
+      additionalProperties: true
+    AuthenticationResultCondition:
+      type: object
+      required:
+        - path
+        - operation
+      properties:
+        path:
+          type: string
+          description: >-
+            左辺の JSONPath（`$.<interaction-type>.*` / `$.user.*` /
+            `$.request.custom_params.*`）
+          example: $.password-authentication.success_count
+        type:
+          type: string
+          description: 値の型の目安。評価には使われない（型は値そのもので決まる）
+          example: integer
+        operation:
+          type: string
+          enum:
+            - eq
+            - ne
+            - gt
+            - gte
+            - lt
+            - lte
+            - in
+            - nin
+            - exists
+            - missing
+            - contains
+            - regex
+        value:
+          description: 右辺の値。`value_path` と同時には書けない
+          example: 1
+        value_path:
+          type: string
+          description: |
+            右辺をコンテキストの JSONPath から読む（Issue #1907）。`eq` / `ne` のみ。
+            どちらかの値が無いとき `eq` は false、`ne` は true。
+            `value` との同時指定、`eq` / `ne` 以外での指定は 400。
+          example: $.user.custom_properties.member_no
       additionalProperties: true
     AuthenticationStepDefinition:
       type: object

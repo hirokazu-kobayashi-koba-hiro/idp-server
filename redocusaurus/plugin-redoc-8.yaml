@@ -790,6 +790,278 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users/{user-id}/linked-external-accounts:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/UserId'
+    get:
+      summary: List user's linked external accounts
+      description: >
+        指定されたユーザーが連携している外部IdPのアカウント一覧を取得します。
+
+
+        `/me`
+        の一覧と同じ項目に加えて、外部IdP側の識別子（`federated_user_id`）を返します。保管しているトークンは返しません。
+
+
+        必要な権限: `idp:linked-account:read`
+      tags:
+        - organization-user
+      responses:
+        '200':
+          description: 連携一覧を正常に取得しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LinkedExternalAccountListResponse'
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: ユーザー、組織、またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users/{user-id}/linked-external-accounts/{alias}:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/UserId'
+      - $ref: '#/components/parameters/LinkedAccountAlias'
+    get:
+      summary: Get user's linked external account
+      description: |
+        指定されたユーザーの連携を1件取得します。保管しているトークンは返しません。
+
+        必要な権限: `idp:linked-account:read`
+      tags:
+        - organization-user
+      responses:
+        '200':
+          description: 連携を正常に取得しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LinkedExternalAccount'
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 連携、ユーザー、組織、またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Remove user's linked external account
+      description: >
+        指定されたユーザーの連携を管理者の操作で解除します。
+
+
+        本人による解除と同じく、行を消す前に保管しているトークンを外部IdPの失効エンドポイント（RFC
+        7009）で失効させます。失効はベストエフォートで、失敗しても連携は解除されます。
+
+        セキュリティイベントは本人の解除（`external_account_unlinked`）と分けて
+        `external_account_unlinked_by_admin` で記録します。
+
+
+        必要な権限: `idp:linked-account:delete`
+      tags:
+        - organization-user
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: dry run の結果（実際には解除していません）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  sub:
+                    type: string
+                    description: 対象ユーザーの識別子
+                  alias:
+                    type: string
+                  dry_run:
+                    type: boolean
+        '204':
+          description: 連携を正常に解除しました
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 連携、ユーザー、組織、またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/linked-external-accounts:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      summary: List the tenant's linked external accounts
+      description: >
+        テナントの連携を、ユーザーをまたいで一覧します。連携先・ユーザー・連携日時で絞り込めます。
+
+
+        `total_count` は絞り込みに合う件数で、`limit` と `offset` に関係しません。`provider` と
+        `limit=1`
+        を指定すると、その連携先に残っている連携の数を確かめられます（連携先を消したり名前を変えたりする前の確認など）。保管しているトークンは返しません。
+
+
+        システムレベルでは `/v1/management/tenants/{tenant-id}/linked-external-accounts`
+        で同じ操作ができます。
+
+
+        必要な権限: `idp:linked-account:read`
+      tags:
+        - organization-user
+      parameters:
+        - name: provider
+          in: query
+          schema:
+            type: string
+          description: 連携先の設定名（`sso_provider`）
+        - name: user_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: ユーザーの識別子。UUID でなければ 400
+        - name: from
+          in: query
+          schema:
+            type: string
+          description: 連携日時の下限
+        - name: to
+          in: query
+          schema:
+            type: string
+          description: 連携日時の上限
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: 連携一覧を正常に取得しました（新しい順）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantLinkedExternalAccountListResponse'
+        '400':
+          description: '`user_id` が UUID でない'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/linked-external-accounts/{id}:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/LinkedExternalAccountId'
+    get:
+      summary: Get one of the tenant's linked external accounts
+      description: |
+        連携を識別子で1件取得します。保管しているトークンは返しません。
+
+        必要な権限: `idp:linked-account:read`
+      tags:
+        - organization-user
+      responses:
+        '200':
+          description: 連携を正常に取得しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantLinkedExternalAccount'
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 連携が見つかりません（識別子が UUID でない場合も含む）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Remove one of the tenant's linked external accounts
+      description: >
+        連携を識別子で指定して、管理者の操作で解除します。ユーザー単位の解除と同じく、保管しているトークンを外部IdPで失効させてから行を消します（ベストエフォート）。セキュリティイベントは
+        `external_account_unlinked_by_admin` です。
+
+
+        必要な権限: `idp:linked-account:delete`
+      tags:
+        - organization-user
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: dry run の結果（実際には解除していません）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  id:
+                    type: string
+                  sub:
+                    type: string
+                    description: 連携の持ち主のユーザーの識別子
+                  alias:
+                    type: string
+                  dry_run:
+                    type: boolean
+        '204':
+          description: 連携を正常に解除しました
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 連携が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 components:
   responses:
     Unauthorized:
@@ -830,6 +1102,21 @@ components:
         type: string
         format: uuid
       description: セッションの識別子
+    LinkedExternalAccountId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 連携の識別子（テナント全体の一覧の `id`）
+    LinkedAccountAlias:
+      name: alias
+      in: path
+      required: true
+      schema:
+        type: string
+      description: 連携の別名（サーバーが採番する `{provider}-{8 文字の乱数}`）
     DryRun:
       name: dry_run
       in: query
@@ -1632,6 +1919,83 @@ components:
           nullable: true
           description: 認証時のUser-Agent
           example: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36
+    LinkedExternalAccountListResponse:
+      type: object
+      description: 連携一覧のレスポンス
+      properties:
+        list:
+          type: array
+          items:
+            $ref: '#/components/schemas/LinkedExternalAccount'
+      required:
+        - list
+    LinkedExternalAccount:
+      type: object
+      description: ユーザーが連携している外部IdPのアカウント。保管しているトークンは含みません
+      properties:
+        alias:
+          type: string
+          description: 連携の別名
+        provider:
+          type: string
+          description: 連携先の設定名（`sso_provider`）
+        federated_user_id:
+          type: string
+          nullable: true
+          description: >-
+            外部IdP側のアカウント識別子。ID Token の sub、無ければ userinfo から得た値。どちらも無い場合（userinfo
+            を持たない OAuth 2.0 の委譲）は null
+        federated_username:
+          type: string
+          nullable: true
+          description: 外部IdP側の表示名（userinfo の email）
+        scope:
+          type: string
+          nullable: true
+          description: 外部IdPから付与されたスコープ
+        access_token_expires_at:
+          type: string
+          nullable: true
+          description: アクセストークンの有効期限（サーバーのタイムゾーン、オフセットなし）
+        refresh_token_expires_at:
+          type: string
+          nullable: true
+          description: リフレッシュトークンの有効期限（サーバーのタイムゾーン、オフセットなし）
+        created_at:
+          type: string
+          description: 連携日時
+        updated_at:
+          type: string
+          description: 更新日時
+    TenantLinkedExternalAccountListResponse:
+      type: object
+      description: テナント全体の連携一覧のレスポンス
+      properties:
+        list:
+          type: array
+          items:
+            $ref: '#/components/schemas/TenantLinkedExternalAccount'
+        total_count:
+          type: integer
+          description: 絞り込みに合う件数（limit / offset に関係しない）
+        limit:
+          type: integer
+        offset:
+          type: integer
+      required:
+        - list
+        - total_count
+    TenantLinkedExternalAccount:
+      allOf:
+        - $ref: '#/components/schemas/LinkedExternalAccount'
+        - type: object
+          properties:
+            id:
+              type: string
+              description: 連携の識別子
+            user_id:
+              type: string
+              description: 連携の持ち主のユーザーの識別子
     UserSessionListResponse:
       type: object
       description: ユーザーセッション一覧のレスポンス

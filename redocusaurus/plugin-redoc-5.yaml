@@ -128,7 +128,20 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
     put:
       summary: Update tenant within organization
-      description: 組織の特定のテナントを更新します
+      description: >
+        組織の特定のテナントを更新します。
+
+
+        **テナント全体を置き換えます（部分更新ではありません）。** リクエストに含めなかった項目は、既存の値を引き継がず既定値になります。
+
+        例えば `attributes` を省くと空になり、`enabled` を省くと `true`
+        になります（無効化したテナントが有効に戻ります）。
+
+        GET の結果に変更を重ね、全項目を送ってください。
+
+
+        `id` / `type` / `authorization_provider` / `main_organization_id`
+        は既存の値を使い、リクエストの値は反映しません。
       tags:
         - organization-tenant
       parameters:
@@ -152,8 +165,12 @@ paths:
                     description: ドライランかどうか
                   result:
                     $ref: '#/components/schemas/Tenant'
+                  diff:
+                    type: object
+                    additionalProperties: true
+                    description: 更新前と更新後の差分。置き換えで既定値に戻る項目もここに現れるため、dry_run で確認できます
         '400':
-          description: 無効なリクエストデータまたはバリデーションエラー
+          description: 無効なリクエストデータまたはバリデーションエラー（`name` / `domain` が無い場合を含む）
           content:
             application/json:
               schema:
@@ -264,7 +281,153 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/data-keys:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      summary: List tenant data keys
+      description: >
+        テナントのデータ鍵（DEK）を、世代ごとに返します。鍵そのもの（KEK で包んだ値）は返しません。
+
+        用途が `account-linking-token` の鍵には、その鍵で保管トークンを暗号化している連携の数が付きます。
+
+        古い世代が 0 になれば、その世代で暗号化したものは残っていません。
+
+
+        権限 `idp:data-key:read` が必要です。システムレベルは `GET
+        /v1/management/tenants/{tenant-id}/data-keys` です。
+      tags:
+        - organization-tenant
+      parameters:
+        - name: purpose
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - account-linking-token
+          description: 用途で絞り込む
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - active
+              - passive
+              - destroyed
+          description: 状態で絞り込む。それ以外の値は 400
+      responses:
+        '200':
+          description: データ鍵の一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TenantDataKey'
+                  total_count:
+                    type: integer
+                    description: 絞り込みに合う鍵の数
+                required:
+                  - list
+                  - total_count
+        '400':
+          description: '`status` が不正です'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限不足または無効な組織・テナントアクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/data-keys/rotate:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+    post:
+      summary: Rotate tenant data key
+      description: >
+        テナントのデータ鍵の新しい世代を作ります。新しく暗号化するものは新しい世代を使い、
+
+        前の世代は開くためだけに残ります。既存のデータを一括で暗号化し直すことはしません。
+
+        他のサーバーは active な鍵を最大 60 秒キャッシュするため、その間は前の世代で暗号化することがあります（前の世代も開けます）。
+
+
+        権限 `idp:data-key:rotate` が必要です。システムレベルは `POST
+        /v1/management/tenants/{tenant-id}/data-keys/rotate` です。
+      tags:
+        - organization-tenant
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                purpose:
+                  type: string
+                  enum:
+                    - account-linking-token
+                  default: account-linking-token
+      responses:
+        '200':
+          description: 新しい世代を作りました（`dry_run=true` のときは作らずに結果だけを返します）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tenant_id:
+                    type: string
+                    format: uuid
+                  purpose:
+                    type: string
+                  data_key_id:
+                    type: string
+                    format: uuid
+                    description: 新しい世代の鍵の id（`dry_run=true` のときは無い）
+                  dry_run:
+                    type: boolean
+                  message:
+                    type: string
+        '400':
+          description: '`purpose` が不正です'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限不足または無効な組織・テナントアクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 同じテナントで、同時に新しい世代を作ろうとしました。やり直してください
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+security:
+  - BearerAuth: []
 components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 組織の admin tenant が発行した、組織の管理者のアクセストークン
   parameters:
     TenantId:
       name: tenant-id
@@ -886,6 +1049,46 @@ components:
               type: integer
               default: 5
               description: CIBAバックチャネル認証のポーリング間隔。
+            client_attestation_challenge_required:
+              type: boolean
+              default: false
+              description: attest_jwt_client_auth の PoP JWT に、サーバーが発行した challenge を必須にする。
+            client_attestation_challenge_duration:
+              type: integer
+              default: 300
+              description: 発行した challenge の有効期間（秒）。
+            client_assertion_max_lifetime_seconds:
+              type: integer
+              default: 60
+              minimum: 1
+              maximum: 600
+              description: >
+                client assertion（private_key_jwt /
+                client_secret_jwt）を受け入れる最長の期間（秒。Issue #1902）。
+
+                iat があれば iat からこの秒数まで、iat が無ければ exp が現在からこの秒数以内のものだけを受け入れる
+
+                （RFC 7523 Section 3 要件 4）。受け付けた assertion の jti は、
+
+                exp とこの期限の早いほうまで Redis に記録し、2 回目は拒否する。範囲外は 400。
+            client_attestation_pop_acceptable_window_seconds:
+              type: integer
+              default: 60
+              minimum: 1
+              maximum: 600
+              description: |
+                Client Attestation PoP JWT の iat と現在時刻の差の許容範囲（秒、前後とも）。
+                受け付けた PoP の jti は、クライアントごとにこの窓が閉じるまで Redis に記録し、
+                2 回目は拒否する（Issue #1893）。範囲外は 400。
+            dpop_proof_acceptable_window_seconds:
+              type: integer
+              default: 60
+              minimum: 1
+              maximum: 600
+              description: |
+                DPoP proof の iat と現在時刻の差の許容範囲（秒、前後とも。RFC 9449 Section 11.1）。
+                受け付けた proof の jti は、鍵（JWK Thumbprint）ごとにこの窓が閉じるまで Redis に記録し、
+                2 回目は拒否する（Issue #1893）。範囲外は 400。
             required_backchannel_auth_user_code:
               type: boolean
               default: false
@@ -937,6 +1140,38 @@ components:
                 `standard_claims:` プレフィックス付きスコープによる、アクセストークンでの標準 OIDC
                 クレーム（email/name/phone_number 等）の選択的包含を有効にする。 デフォルト false。PII
                 をアクセストークンに載せる能力のため、`custom_claims_scope_mapping` とは別の専用 opt-in。
+    TenantDataKey:
+      type: object
+      description: テナントのデータ鍵の 1 世代。KEK で包んだ鍵そのものは含みません
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenant_id:
+          type: string
+          format: uuid
+        purpose:
+          type: string
+          example: account-linking-token
+        version:
+          type: integer
+          description: 世代。新しい世代を作るたびに 1 増えます
+        status:
+          type: string
+          enum:
+            - active
+            - passive
+            - destroyed
+          description: active は新しく暗号化する鍵（用途ごとに 1 本）、passive は開くためだけに残る鍵
+        kek_id:
+          type: string
+          description: この鍵を包んでいる鍵暗号化鍵（KEK）の key id
+        created_at:
+          type: string
+          format: date-time
+        linked_external_accounts:
+          type: integer
+          description: この鍵で保管トークンを暗号化している連携の数。用途が account-linking-token の鍵だけに付きます
     ErrorResponse:
       type: object
       properties:
@@ -989,20 +1224,31 @@ components:
           type: string
           format: uri
           description: Tenant domain URL
-        description:
-          type: string
-          description: Human-readable description of the tenant
         authorization_provider:
           type: string
           description: Authorization provider identifier
-        created_at:
+        attributes:
+          type: object
+          additionalProperties: true
+          description: テナントの任意の属性
+        ui_config:
+          $ref: '#/components/schemas/UIConfiguration'
+        cors_config:
+          $ref: '#/components/schemas/CorsConfiguration'
+        session_config:
+          $ref: '#/components/schemas/SessionConfiguration'
+        security_event_log_config:
+          $ref: '#/components/schemas/SecurityEventLogConfiguration'
+        security_event_user_config:
+          $ref: '#/components/schemas/SecurityEventUserAttributeConfiguration'
+        identity_policy_config:
+          $ref: '#/components/schemas/IdentityPolicyConfiguration'
+        main_organization_id:
           type: string
-          format: date-time
-          description: Creation timestamp
-        updated_at:
-          type: string
-          format: date-time
-          description: Last update timestamp
+          description: テナントが属する組織の ID
+        enabled:
+          type: boolean
+          description: テナントが有効か
     TenantCreateRequest:
       type: object
       description: |
@@ -1033,12 +1279,13 @@ components:
               type: string
               format: uri
               description: Tenant domain URL
-            description:
-              type: string
-              description: Human-readable description of the tenant
             authorization_provider:
               type: string
               description: Authorization provider identifier
+            attributes:
+              type: object
+              additionalProperties: true
+              description: テナントの任意の属性
             ui_config:
               $ref: '#/components/schemas/UIConfiguration'
             cors_config:
@@ -1055,14 +1302,34 @@ components:
           $ref: '#/components/schemas/OpenIDConfiguration'
     TenantUpdateRequest:
       type: object
+      description: >
+        テナント更新リクエスト。テナント全体を置き換えます。含めなかった項目は既定値になるため、GET の結果に変更を重ねて全項目を送ってください。
+
+
+        `id` / `type` / `authorization_provider` / `main_organization_id`
+        は送っても反映されません（既存の値を使います）。
+      required:
+        - name
+        - domain
       properties:
         name:
           type: string
+          minLength: 1
           maxLength: 255
           description: Tenant name
-        description:
+        domain:
           type: string
-          description: Human-readable description of the tenant
+          format: uri
+          minLength: 1
+          description: Tenant domain URL
+        attributes:
+          type: object
+          additionalProperties: true
+          description: テナントの任意の属性。省くと空になります
+        enabled:
+          type: boolean
+          default: true
+          description: テナントが有効か。省くと `true` になります
         ui_config:
           $ref: '#/components/schemas/UIConfiguration'
         cors_config:
@@ -1075,6 +1342,61 @@ components:
           $ref: '#/components/schemas/SecurityEventUserAttributeConfiguration'
         identity_policy_config:
           $ref: '#/components/schemas/IdentityPolicyConfiguration'
+    ContactChangeRule:
+      type: object
+      description: 連絡先の変更の 1 種類（一意キーを動かす変更／属性だけの変更）に適用するルール
+      properties:
+        allowed:
+          type: boolean
+          default: true
+          description: この種類の変更を許可するか
+        authentication_conditions:
+          type: object
+          description: |
+            変更に必要な認証の条件。`any_of` は条件のグループの配列で、グループ内のすべての条件を満たすグループが 1 つあれば満たします。
+            評価の対象は、アクセストークンを発行した認証（`amr`、`acr`、`auth_time`、`auth_age`、`user`）です。
+            読み取れない条件が書かれていると、変更は拒否されます。省略時は、スコープのほかに条件はありません。
+          properties:
+            any_of:
+              type: array
+              items:
+                type: array
+                minItems: 1
+                description: 条件のグループ。空のグループは読み取れない条件として扱われ、変更は拒否されます
+                items:
+                  type: object
+                  required:
+                    - path
+                    - operation
+                  properties:
+                    path:
+                      type: string
+                      description: 評価対象の JSONPath（例：`$.amr`、`$.user.status`）
+                    operation:
+                      type: string
+                      enum:
+                        - eq
+                        - ne
+                        - gt
+                        - lt
+                        - gte
+                        - lte
+                        - in
+                        - nin
+                        - exists
+                        - missing
+                        - contains
+                        - regex
+                    value:
+                      description: 比較する値
+        max_auth_age_seconds:
+          type: integer
+          minimum: 0
+          description: 認証からの経過時間の上限（秒）。0 または省略時は制限なし
+        notify_previous_value:
+          type: boolean
+          default: true
+          description: 変更前の連絡先に通知するか
     AuthenticationDeviceRule:
       type: object
       description: |
@@ -1427,7 +1749,7 @@ components:
         detail_scrub_keys:
           type: string
           default: >-
-            authorization,cookie,password,secret,token,access_token,refresh_token,api_key,api_secret
+            authorization,cookie,password,secret,token,access_token,refresh_token,api_key,api_secret,auth_proof,x-view-binding
           description: スクラブするキー（カンマ区切り）
     SecurityEventUserAttributeConfiguration:
       type: object
@@ -1610,6 +1932,37 @@ components:
               example: 0
         authentication_device_rule:
           $ref: '#/components/schemas/AuthenticationDeviceRule'
+        contact_change_policy:
+          type: object
+          description: |
+            セルフサービスでの連絡先（メールアドレス・電話番号）の変更のルール。
+            変更がテナントの一意キー（`identity_unique_key_type`）を動かすかどうかで、別のルールを適用します。
+            GET では常に含まれます（未設定なら既定値）。
+          properties:
+            identifier_move:
+              $ref: '#/components/schemas/ContactChangeRule'
+            attribute_only:
+              $ref: '#/components/schemas/ContactChangeRule'
+        user_attribute_load_rule:
+          type: object
+          description: ユーザーを読み込むときに、関連データも読み込むか。使わない機能の分を false にすると、その読み込みを省けます
+          properties:
+            include_assigned_organizations:
+              type: boolean
+              default: true
+              description: 割り当てられた組織（`assigned_organizations`）を読み込むか
+            include_assigned_tenants:
+              type: boolean
+              default: true
+              description: 割り当てられたテナント（`assigned_tenants`）を読み込むか
+            include_roles:
+              type: boolean
+              default: true
+              description: ロール（`roles`）を読み込むか
+            include_permissions:
+              type: boolean
+              default: true
+              description: 権限（`permissions`）を読み込むか
       example:
         identity_unique_key_type: EMAIL_OR_EXTERNAL_USER_ID
         password_policy:

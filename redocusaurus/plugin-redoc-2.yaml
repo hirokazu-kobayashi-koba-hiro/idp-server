@@ -194,12 +194,15 @@ paths:
           $ref: '#/components/responses/ServiceUnavailable'
         '504':
           $ref: '#/components/responses/GatewayTimeout'
-  /{tenant-id}/.well-known/fido-uaf/facets:
+  /{tenant-id}/.well-known/fido/facets:
     get:
       tags:
         - FIDO-UAF
       summary: FIDO-UAF Facet情報の取得
-      description: FIDOクライアントが信頼できるアプリとして動作するためのFacet IDリストを取得する。
+      description: |
+        FIDOクライアントが信頼できるアプリとして動作するためのFacet IDリストを取得する。
+
+        FIDOサーバーがエラーを返した場合、定義済みのステータス（401、403、429、503 など）はそのまま返します。
       parameters:
         - in: path
           name: tenant-id
@@ -215,14 +218,18 @@ paths:
                 type: object
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/FidoServerError'
+        '403':
+          $ref: '#/components/responses/FidoServerError'
         '429':
-          $ref: '#/components/responses/TooManyRequests'
+          $ref: '#/components/responses/FidoServerError'
         '500':
           $ref: '#/components/responses/InternalServerError'
         '503':
-          $ref: '#/components/responses/ServiceUnavailable'
+          $ref: '#/components/responses/FidoServerError'
         '504':
-          $ref: '#/components/responses/GatewayTimeout'
+          $ref: '#/components/responses/FidoServerError'
   /{tenant-id}/v1/authentications/{id}/fido-uaf-registration-challenge:
     post:
       tags:
@@ -232,9 +239,10 @@ paths:
         FIDOサーバーから取得したチャレンジ情報をそのまま返却する。
 
         **セキュリティ制約**:
-        - ユーザーが認証済みである必要があります（未認証の場合は401 Unauthorized）
+        - ユーザーが認証済みである必要があります（未認証の場合は400 Bad Request（`unauthorized`））
         - 認証ポリシーに`device_registration_conditions`が設定されている場合、
-          その条件を満たす必要があります（満たさない場合は403 Forbidden）
+          その条件を満たす必要があります（満たさない場合は400 Bad Request（`forbidden`））
+        - FIDOサーバーがエラーを返した場合、定義済みのステータス（401、403、429、503 など）はそのまま返します
       parameters:
         - in: path
           name: tenant-id
@@ -263,19 +271,19 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          $ref: '#/components/responses/FidoServerError'
         '403':
-          $ref: '#/components/responses/Forbidden'
+          $ref: '#/components/responses/FidoServerError'
         '404':
           $ref: '#/components/responses/NotFound'
         '429':
-          $ref: '#/components/responses/TooManyRequests'
+          $ref: '#/components/responses/FidoServerError'
         '500':
           $ref: '#/components/responses/InternalServerError'
         '503':
-          $ref: '#/components/responses/ServiceUnavailable'
+          $ref: '#/components/responses/FidoServerError'
         '504':
-          $ref: '#/components/responses/GatewayTimeout'
+          $ref: '#/components/responses/FidoServerError'
   /{tenant-id}/v1/authentications/{id}/fido-uaf-registration:
     post:
       tags:
@@ -285,9 +293,10 @@ paths:
         クライアントから送信されたFIDO応答を受け取り、登録を完了させる。
 
         **セキュリティ制約**:
-        - ユーザーが認証済みである必要があります（未認証の場合は401 Unauthorized）
+        - ユーザーが認証済みである必要があります（未認証の場合は400 Bad Request（`unauthorized`））
         - 認証ポリシーに`device_registration_conditions`が設定されている場合、
-          その条件を満たす必要があります（満たさない場合は403 Forbidden）
+          その条件を満たす必要があります（満たさない場合は400 Bad Request（`forbidden`））
+        - FIDOサーバーがエラーを返した場合、定義済みのステータス（401、403、429、503 など）はそのまま返します
       parameters:
         - in: path
           name: tenant-id
@@ -321,25 +330,28 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          $ref: '#/components/responses/FidoServerError'
         '403':
-          $ref: '#/components/responses/Forbidden'
+          $ref: '#/components/responses/FidoServerError'
         '404':
           $ref: '#/components/responses/NotFound'
         '429':
-          $ref: '#/components/responses/TooManyRequests'
+          $ref: '#/components/responses/FidoServerError'
         '500':
           $ref: '#/components/responses/InternalServerError'
         '503':
-          $ref: '#/components/responses/ServiceUnavailable'
+          $ref: '#/components/responses/FidoServerError'
         '504':
-          $ref: '#/components/responses/GatewayTimeout'
+          $ref: '#/components/responses/FidoServerError'
   /{tenant-id}/v1/authentications/{id}/fido-uaf-authentication-challenge:
     post:
       tags:
         - FIDO-UAF
       summary: FIDO-UAF 認証チャレンジ
-      description: FIDOサーバーから取得したチャレンジ情報をそのまま返却する。
+      description: |
+        FIDOサーバーから取得したチャレンジ情報をそのまま返却する。
+
+        FIDOサーバーがエラーを返した場合、定義済みのステータス（401、403、429、503 など）はそのまま返します。
       parameters:
         - in: path
           name: tenant-id
@@ -367,22 +379,29 @@ paths:
                 type: object
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/FidoServerError'
+        '403':
+          $ref: '#/components/responses/FidoServerError'
         '404':
           $ref: '#/components/responses/NotFound'
         '429':
-          $ref: '#/components/responses/TooManyRequests'
+          $ref: '#/components/responses/FidoServerError'
         '500':
           $ref: '#/components/responses/InternalServerError'
         '503':
-          $ref: '#/components/responses/ServiceUnavailable'
+          $ref: '#/components/responses/FidoServerError'
         '504':
-          $ref: '#/components/responses/GatewayTimeout'
+          $ref: '#/components/responses/FidoServerError'
   /{tenant-id}/v1/authentications/{id}/fido-uaf-authentication:
     post:
       tags:
         - FIDO-UAF
       summary: FIDO-UAF 認証
-      description: クライアントから送信されたFIDO応答を受け取り、認証を完了させる。
+      description: |
+        クライアントから送信されたFIDO応答を受け取り、認証を完了させる。
+
+        FIDOサーバーがエラーを返した場合、定義済みのステータス（401、403、429、503 など）はそのまま返します。
       parameters:
         - in: path
           name: tenant-id
@@ -406,16 +425,20 @@ paths:
           description: FIDO認証成功
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/FidoServerError'
+        '403':
+          $ref: '#/components/responses/FidoServerError'
         '404':
           $ref: '#/components/responses/NotFound'
         '429':
-          $ref: '#/components/responses/TooManyRequests'
+          $ref: '#/components/responses/FidoServerError'
         '500':
           $ref: '#/components/responses/InternalServerError'
         '503':
-          $ref: '#/components/responses/ServiceUnavailable'
+          $ref: '#/components/responses/FidoServerError'
         '504':
-          $ref: '#/components/responses/GatewayTimeout'
+          $ref: '#/components/responses/FidoServerError'
   /{tenant-id}/v1/authentications/{id}/fido-uaf-deregistration:
     post:
       tags:
@@ -425,9 +448,13 @@ paths:
         クライアントから送信されたFIDO応答を受け取り解除を完了させる。
 
         **セキュリティ制約**:
-        - ユーザーが認証済みである必要があります（未認証の場合は401 Unauthorized）
+        - ユーザーが認証済みである必要があります（未認証の場合は400 Bad Request（`unauthorized`））
         - 認証ポリシーに`device_registration_conditions`が設定されている場合、
-          その条件を満たす必要があります（満たさない場合は403 Forbidden）
+          その条件を満たす必要があります（満たさない場合は400 Bad Request（`forbidden`））
+        - FIDOサーバーがエラーを返した場合、定義済みのステータス（401、403、429、503 など）はそのまま返します
+        - `device_id` はユーザーに登録されたデバイスである必要があります。
+          そうでない場合は、FIDOサーバーにリクエストを送らずに400 Bad Request（`invalid_request`）を返します
+        - FIDOサーバーに送る `device_id` は、確認した値で上書きされます
       parameters:
         - in: path
           name: tenant-id
@@ -445,7 +472,16 @@ paths:
           application/json:
             schema:
               type: object
-              description: FIDOサーバーの仕様に沿った任意のリクエストボディ
+              description: |
+                FIDOサーバーの仕様に沿った任意のリクエストボディ。
+                `device_id` は必須
+              required:
+                - device_id
+              properties:
+                device_id:
+                  type: string
+                  description: 解除するデバイスのID。ユーザーに登録されたデバイスである必要があります
+              additionalProperties: true
       responses:
         '200':
           description: FIDO解除成功
@@ -457,19 +493,19 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          $ref: '#/components/responses/FidoServerError'
         '403':
-          $ref: '#/components/responses/Forbidden'
+          $ref: '#/components/responses/FidoServerError'
         '404':
           $ref: '#/components/responses/NotFound'
         '429':
-          $ref: '#/components/responses/TooManyRequests'
+          $ref: '#/components/responses/FidoServerError'
         '500':
           $ref: '#/components/responses/InternalServerError'
         '503':
-          $ref: '#/components/responses/ServiceUnavailable'
+          $ref: '#/components/responses/FidoServerError'
         '504':
-          $ref: '#/components/responses/GatewayTimeout'
+          $ref: '#/components/responses/FidoServerError'
   /{tenant-id}/v1/authentications/{id}/authentication-cancel:
     post:
       tags:
@@ -796,25 +832,27 @@ components:
               value:
                 error: invalid_request
                 error_description: FIDO2 authentication succeeded but user could not be resolved
-    Unauthorized:
-      description: |
-        認証エラー。ユーザーが未認証、またはアクセストークンが無効・期限切れ
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              error:
-                type: string
-                example: unauthorized
-              error_description:
-                type: string
-                example: >-
+            unauthenticated_user:
+              summary: FIDO-UAF の登録チャレンジ・登録で未認証の場合（登録解除では文言が deregistering になる）
+              value:
+                error: unauthorized
+                error_description: >-
                   User must be authenticated before registering a FIDO-UAF
                   device.
-    Forbidden:
+            device_registration_conditions_not_met:
+              summary: >-
+                FIDO-UAF の登録チャレンジ・登録で device_registration_conditions
+                を満たさない場合（登録解除では文言が deregistration になる）
+              value:
+                error: forbidden
+                error_description: >-
+                  Current authentication level does not meet device registration
+                  requirements. Please complete required authentication steps
+                  (e.g., MFA or existing device authentication).
+    Unauthorized:
       description: |
-        認可エラー。認証レベル（ACR）がデバイス登録ポリシーの要件を満たしていない
+        デバイス認証のエラー。Authorization ヘッダーが無い・形式が不正、デバイスが存在しない、
+        アクセストークンが無効・期限切れ・そのデバイスに紐づいていない、または JWT の署名を検証できない
       content:
         application/json:
           schema:
@@ -822,12 +860,33 @@ components:
             properties:
               error:
                 type: string
-                example: forbidden
+                example: invalid_request
               error_description:
                 type: string
-                example: >-
-                  Current authentication level does not meet device registration
-                  requirements.
+                example: Authorization header is required for device authentication
+    FidoServerError:
+      description: |
+        FIDOサーバーとのやり取りで起きたエラー。
+
+        - FIDOサーバーがエラーを返した場合、定義済みのステータス（401、403、429、503 など）はそのまま返す
+        - idp-server がFIDOサーバーに接続できない場合は503、時間内に応答が無い場合は504、
+          そのほかの通信エラーは502、想定外のエラーは500を返す
+
+        本文は `response.body_mapping_rules` で実行結果を写したもの。
+        429・503・504 は、API Gateway が返却することもある（本文は `message` のみ）。
+        `Retry-After` ヘッダーが含まれる場合は、指定された秒数後にリトライする。
+        認証トランザクションを伴う API では、有効期限（`expires_at`）内であれば同じトランザクションで再試行できる。
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: リトライまでの推奨待機時間（秒）。API Gateway が返却した場合に含まれることがある
+          required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            description: FIDOサーバーの仕様と `body_mapping_rules` の設定による
     NotFound:
       description: |
         認証トランザクションが存在しない、または有効期限切れ
@@ -923,7 +982,6 @@ components:
         このレスポンスは API Gateway がバックエンドの応答を待機してタイムアウトした場合に返却します。
 
         ネットワークの一時的な問題の可能性があります。時間をおいてリトライしてください。
-        FIDO-UAF 系 API では、idp-server と FIDO サーバー間の通信遅延が原因の場合もあります。
         認証トランザクションの有効期限（`expires_at`）内であれば同じトランザクションで再試行できます。
       content:
         application/json:

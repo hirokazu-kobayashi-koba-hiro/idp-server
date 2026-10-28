@@ -1,0 +1,316 @@
+/*
+ * Copyright 2025 Hirokazu Kobayashi
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.idp.server.core.openid.oauth.view;
+
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import org.idp.server.core.openid.grant_management.grant.GrantIdTokenClaims;
+import org.idp.server.core.openid.grant_management.grant.GrantUserinfoClaims;
+import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.identity.id_token.VerifiedClaimsObject;
+import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
+import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
+import org.idp.server.core.openid.oauth.type.extension.CustomProperties;
+import org.idp.server.core.openid.oauth.type.oauth.Scopes;
+import org.idp.server.core.openid.session.OPSession;
+
+public class OAuthViewDataCreator {
+
+  /** Prefix that maps a scope to a user custom property, as the custom claims creators read it. */
+  private static final String customClaimsScopePrefix = "claims:";
+
+  private static final String verifiedClaimsScopePrefix = "verified_claims:";
+  private static final String verificationScopePrefix = "verified_claims:verification:";
+
+  AuthorizationRequest authorizationRequest;
+  AuthorizationServerConfiguration authorizationServerConfiguration;
+  ClientConfiguration clientConfiguration;
+  OPSession opSession;
+  User authenticatedUser;
+  Map<String, Object> additionalViewData;
+
+  public OAuthViewDataCreator(
+      AuthorizationRequest authorizationRequest,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
+      ClientConfiguration clientConfiguration,
+      OPSession opSession,
+      Map<String, Object> additionalViewData) {
+    this(
+        authorizationRequest,
+        authorizationServerConfiguration,
+        clientConfiguration,
+        opSession,
+        User.notFound(),
+        additionalViewData);
+  }
+
+  public OAuthViewDataCreator(
+      AuthorizationRequest authorizationRequest,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
+      ClientConfiguration clientConfiguration,
+      OPSession opSession,
+      User authenticatedUser,
+      Map<String, Object> additionalViewData) {
+    this.authorizationRequest = authorizationRequest;
+    this.authorizationServerConfiguration = authorizationServerConfiguration;
+    this.clientConfiguration = clientConfiguration;
+    this.opSession = opSession;
+    this.authenticatedUser = authenticatedUser;
+    this.additionalViewData = additionalViewData;
+  }
+
+  public OAuthViewData create() {
+    String clientId = authorizationRequest.requestedClientId().value();
+    String clientName = clientConfiguration.clientNameValue();
+    String clientUri = clientConfiguration.clientUri();
+    String logoUri = clientConfiguration.logoUri();
+    List<String> contacts = clientConfiguration.contacts();
+    String tosUri = clientConfiguration.tosUri();
+    String policyUri = clientConfiguration.policyUri();
+    Map<String, String> customParams = authorizationRequest.customParams().values();
+    List<String> scopes = authorizationRequest.scopes().toStringList();
+    Map<String, Object> requestedClaims = createRequestedClaims();
+    boolean sessionEnabled = isSessionEnabled();
+    List<Map<String, Object>> availableFederationsAsMapList =
+        clientConfiguration.availableFederationsAsMapList();
+
+    if (clientConfiguration.hasCustomProperties()) {
+      additionalViewData.put("client_custom_properties", clientConfiguration.customProperties());
+    }
+
+    if (authorizationRequest.hasLoginHint()) {
+      additionalViewData.put("login_hint", authorizationRequest.loginHint().value());
+    }
+
+    // Handed over as requested, without filtering against ui_locales_supported. The spec says an
+    // error SHOULD NOT result from an unsupported locale, and the view is the side that knows which
+    // bundles it actually has — filtering here would also empty the list for a tenant that never
+    // configured ui_locales_supported.
+    if (authorizationRequest.hasUiLocales()) {
+      additionalViewData.put("ui_locales", authorizationRequest.uiLocales().toStringList());
+    }
+
+    Map<String, Object> selectableClaimValues = selectableClaimValues();
+    if (!selectableClaimValues.isEmpty()) {
+      additionalViewData.put("claim_values", selectableClaimValues);
+    }
+
+    return new OAuthViewData(
+        clientId,
+        clientName,
+        clientUri,
+        logoUri,
+        contacts,
+        tosUri,
+        policyUri,
+        scopes,
+        requestedClaims,
+        sessionEnabled,
+        availableFederationsAsMapList,
+        customParams,
+        additionalViewData);
+  }
+
+  /**
+   * Resolves the claims that would be released for this request so the consent view can present
+   * them per-claim (foundation for claim-level consent, OIDC4IDA Section 5.7.3). Reuses the same
+   * scope/claims resolution as token and userinfo issuance ({@link GrantIdTokenClaims} / {@link
+   * GrantUserinfoClaims}). verified_claims requested via the {@code claims} parameter are surfaced
+   * by name; verified_claims requested via {@code verified_claims:*} scopes remain visible in
+   * {@code scopes}.
+   */
+  private Map<String, Object> createRequestedClaims() {
+    Scopes scopes = authorizationRequest.scopes();
+    List<String> supportedClaims = authorizationServerConfiguration.claimsSupported();
+
+    GrantIdTokenClaims idTokenClaims =
+        GrantIdTokenClaims.create(
+            scopes,
+            authorizationRequest.responseType(),
+            supportedClaims,
+            authorizationRequest.requestedIdTokenClaims(),
+            authorizationServerConfiguration.isIdTokenStrictMode());
+    GrantUserinfoClaims userinfoClaims =
+        GrantUserinfoClaims.create(
+            scopes, supportedClaims, authorizationRequest.requestedUserinfoClaims());
+
+    Map<String, Object> requestedClaims = new HashMap<>();
+    requestedClaims.put("id_token", sorted(idTokenClaims.toStringSet()));
+    requestedClaims.put("userinfo", sorted(userinfoClaims.toStringSet()));
+    requestedClaims.put("verified_claims", requestedVerifiedClaimNames());
+    return requestedClaims;
+  }
+
+  /**
+   * Candidate values for requested claims whose backing custom property is an array, so the consent
+   * view can offer the elements individually (#1816).
+   *
+   * <p>Names come from the {@code claims:*} scopes, the same source {@link
+   * org.idp.server.core.openid.identity.id_token.plugin.ScopeMappingCustomClaimsCreator} issues
+   * from — {@link #createRequestedClaims()} resolves standard OIDC claims only, so a custom
+   * property never appears there. The {@code custom_claims_scope_mapping} switch is honored for the
+   * same reason: with it off, those scopes release nothing, and offering a choice over them would
+   * describe a decision that has no effect.
+   *
+   * <p>Only arrays appear: a scalar has nothing to choose between, and the consent view already
+   * expresses "all or nothing" for it through {@code denied_claims}. Values are limited to the
+   * user's {@code custom_properties} — {@code roles} / {@code permissions} / {@code
+   * assigned_tenants} are also released by {@code claims:*} scopes and are also lists, but they are
+   * decided by the server, not by the End-User.
+   *
+   * <p>The arrays under the user's {@code verified_claims.claims} are offered as well, under {@code
+   * verified_claims.claims} (#1947) — the same place the selection is sent back and the claim
+   * appears in a token.
+   *
+   * <p>Nothing is returned until the authentication has succeeded. A user can be resolved before
+   * that — from a {@code login_hint}, or by a first factor — without anyone having proven to be
+   * them, and the values are theirs to choose from, not the caller's to read.
+   */
+  private Map<String, Object> selectableClaimValues() {
+    if (authenticatedUser == null || !authenticatedUser.exists()) {
+      return Map.of();
+    }
+
+    Map<String, Object> selectable = new LinkedHashMap<>(selectableCustomClaimValues());
+    Map<String, Object> verifiedClaims = selectableVerifiedClaimValues();
+    if (!verifiedClaims.isEmpty()) {
+      selectable.put("verified_claims", Map.of("claims", verifiedClaims));
+    }
+    return selectable;
+  }
+
+  private Map<String, Object> selectableCustomClaimValues() {
+    if (!authorizationServerConfiguration.enabledCustomClaimsScopeMapping()) {
+      return Map.of();
+    }
+
+    CustomProperties customProperties = authenticatedUser.customProperties();
+    Map<String, Object> selectable = new LinkedHashMap<>();
+    for (String scope :
+        authorizationRequest.scopes().filterMatchedPrefix(customClaimsScopePrefix)) {
+      String claimName = scope.substring(customClaimsScopePrefix.length());
+      Object value = customProperties.getValue(claimName);
+      if (value instanceof List<?> list && !list.isEmpty()) {
+        selectable.put(claimName, List.copyOf(list));
+      }
+    }
+    return selectable;
+  }
+
+  /**
+   * Candidate values for the verified claims this request would release whose value is an array.
+   *
+   * <p>Names come from both ways a verified claim is requested: a {@code verified_claims:<name>}
+   * scope, which releases nothing unless the access token selective verified claims switch is on,
+   * and the {@code claims} parameter.
+   */
+  private Map<String, Object> selectableVerifiedClaimValues() {
+    if (!(authenticatedUser.verifiedClaims().get("claims") instanceof Map<?, ?> verifiedClaims)) {
+      return Map.of();
+    }
+
+    Set<String> claimNames = new LinkedHashSet<>();
+    if (authorizationServerConfiguration.enabledAccessTokenSelectiveVerifiedClaims()) {
+      for (String scope :
+          authorizationRequest.scopes().filterMatchedPrefix(verifiedClaimsScopePrefix)) {
+        if (!scope.startsWith(verificationScopePrefix)) {
+          claimNames.add(scope.substring(verifiedClaimsScopePrefix.length()));
+        }
+      }
+    }
+    claimNames.addAll(requestedVerifiedClaimNames());
+
+    Map<String, Object> selectable = new LinkedHashMap<>();
+    for (String claimName : claimNames) {
+      if (verifiedClaims.get(claimName) instanceof List<?> list && !list.isEmpty()) {
+        selectable.put(claimName, List.copyOf(list));
+      }
+    }
+    return selectable;
+  }
+
+  private List<String> requestedVerifiedClaimNames() {
+    Set<String> names = new LinkedHashSet<>();
+    VerifiedClaimsObject idToken = authorizationRequest.requestedIdTokenClaims().verifiedClaims();
+    VerifiedClaimsObject userinfo = authorizationRequest.requestedUserinfoClaims().verifiedClaims();
+    if (idToken != null) {
+      names.addAll(idToken.requestedClaimNames());
+    }
+    if (userinfo != null) {
+      names.addAll(userinfo.requestedClaimNames());
+    }
+    return sorted(names);
+  }
+
+  private List<String> sorted(Set<String> values) {
+    return values.stream().sorted().toList();
+  }
+
+  /**
+   * Determines if session-based authorization is enabled.
+   *
+   * <p>Session is enabled when:
+   *
+   * <ul>
+   *   <li>OPSession exists and is active
+   *   <li>prompt=login is not specified (prompt=login forces re-authentication)
+   *   <li>If max_age is specified, auth_time must be within the max_age window
+   *   <li>If acr_values is specified, session's acr must be in the requested acr_values
+   * </ul>
+   *
+   * @return true if session-based authorization can be used
+   */
+  private boolean isSessionEnabled() {
+    // No session available
+    if (opSession == null || !opSession.exists() || !opSession.isActive()) {
+      return false;
+    }
+
+    // prompt=login forces re-authentication
+    if (authorizationRequest.isPromptLogin()) {
+      return false;
+    }
+
+    // Check max_age constraint
+    if (authorizationRequest.hasMaxAge()) {
+      long maxAgeSeconds = authorizationRequest.maxAge().toLongValue();
+      Instant maxAuthTime = opSession.authTime().plusSeconds(maxAgeSeconds);
+      if (Instant.now().isAfter(maxAuthTime)) {
+        return false;
+      }
+    }
+
+    // Check acr_values constraint - prevent ACR downgrade attacks
+    if (authorizationRequest.hasAcrValues()) {
+      String sessionAcr = opSession.acr();
+      if (sessionAcr == null || sessionAcr.isEmpty()) {
+        return false;
+      }
+      if (!authorizationRequest.acrValues().contains(sessionAcr)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+}
