@@ -39,6 +39,7 @@ public class LinkedExternalAccount {
   AccountAlias accountAlias;
   String federatedUserId;
   String federatedUsername;
+  boolean singleAccount;
   String scope;
   SealedData encryptedAccessToken;
   SealedData encryptedRefreshToken;
@@ -59,6 +60,7 @@ public class LinkedExternalAccount {
     this.accountAlias = builder.accountAlias;
     this.federatedUserId = builder.federatedUserId;
     this.federatedUsername = builder.federatedUsername;
+    this.singleAccount = builder.singleAccount;
     this.scope = builder.scope;
     this.encryptedAccessToken = builder.encryptedAccessToken;
     this.encryptedRefreshToken = builder.encryptedRefreshToken;
@@ -75,9 +77,13 @@ public class LinkedExternalAccount {
    *
    * @param session a session already transitioned to {@code CONSUMED}
    * @param accountAlias the alias assigned for this account
+   * @param singleAccount whether the provider allows the user this one account only
    */
   public static LinkedExternalAccount fromConsumedSession(
-      AccountLinkingSession session, AccountAlias accountAlias, LocalDateTime now) {
+      AccountLinkingSession session,
+      AccountAlias accountAlias,
+      boolean singleAccount,
+      LocalDateTime now) {
     ParkedCredentials credentials = session.parkedCredentials();
 
     return new Builder()
@@ -88,6 +94,7 @@ public class LinkedExternalAccount {
         .accountAlias(accountAlias)
         .federatedUserId(credentials.federatedUserId())
         .federatedUsername(credentials.federatedUsername())
+        .singleAccount(singleAccount)
         .scope(credentials.grantedScope())
         .encryptedAccessToken(credentials.encryptedAccessToken())
         .encryptedRefreshToken(credentials.encryptedRefreshToken())
@@ -196,6 +203,14 @@ public class LinkedExternalAccount {
     return federatedUserId;
   }
 
+  /**
+   * Whether the link was made under a provider that allows one account per user. The database keeps
+   * such links unique per user and provider.
+   */
+  public boolean isSingleAccount() {
+    return singleAccount;
+  }
+
   public String federatedUsername() {
     return federatedUsername;
   }
@@ -267,6 +282,7 @@ public class LinkedExternalAccount {
         .accountAlias(accountAlias)
         .federatedUserId(federatedUserId)
         .federatedUsername(federatedUsername)
+        .singleAccount(singleAccount)
         .scope(scope)
         .encryptedAccessToken(encryptedAccessToken)
         .encryptedRefreshToken(encryptedRefreshToken)
@@ -287,6 +303,7 @@ public class LinkedExternalAccount {
     AccountAlias accountAlias;
     String federatedUserId;
     String federatedUsername;
+    boolean singleAccount;
     String scope;
     SealedData encryptedAccessToken;
     SealedData encryptedRefreshToken;
@@ -319,6 +336,11 @@ public class LinkedExternalAccount {
 
     public Builder accountAlias(AccountAlias accountAlias) {
       this.accountAlias = accountAlias;
+      return this;
+    }
+
+    public Builder singleAccount(boolean singleAccount) {
+      this.singleAccount = singleAccount;
       return this;
     }
 

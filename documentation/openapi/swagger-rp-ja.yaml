@@ -1724,7 +1724,7 @@ paths:
           description: 連携の識別子（連携一覧の `alias`）
           schema:
             type: string
-            example: example-idp
+            example: example-idp-k3f9x2qa
         - $ref: '#/components/parameters/Authorization'
         - $ref: '#/components/parameters/OAuthClientAttestation'
         - $ref: '#/components/parameters/OAuthClientAttestationPop'
@@ -1802,7 +1802,7 @@ paths:
                     error: insufficient_scope
                     error_description: "token does not carry linked_account:read_token."
         '404':
-          description: "`not_found` — `alias` がユーザーの連携に無い"
+          description: "`not_found` — `alias` がユーザーの連携に無い。解除して別のアカウントをつなぎ直すと `alias` が変わるので、一覧（`GET /{tenant-id}/v1/me/linked-external-accounts`）を引き直す"
           content:
             application/json:
               schema:

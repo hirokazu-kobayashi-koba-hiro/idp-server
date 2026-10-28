@@ -319,8 +319,7 @@ describe("account linking", () => {
       console.log(completeResponse.data);
       expect(completeResponse.status).toBe(201);
       expect(completeResponse.data.provider).toBe(PROVIDER);
-      // 連携先ごとに 1 つ（multiple_accounts の既定）。alias は連携先の名前そのもの。
-      expect(completeResponse.data.alias).toBe(PROVIDER);
+      expect(completeResponse.data.alias).toMatch(new RegExp(`^${PROVIDER}-[a-z0-9]{8}$`));
       expect(completeResponse.data.access_token_expires_at).not.toBeNull();
 
       const alias = completeResponse.data.alias;
@@ -452,7 +451,10 @@ describe("account linking", () => {
         body: { sub: uuidv4(), provider_id: "idp-server", name: email, email, raw_password: "successUserCode001" },
       });
       expect(response.status).toBe(201);
-      return await login({ username: email, password: "successUserCode001" });
+      return await login(
+        { username: email, password: "successUserCode001" },
+        `openid profile email ${MANAGE_SCOPE} ${READ_TOKEN_SCOPE}`
+      );
     };
 
     const listLinks = async (accessToken) => {
@@ -472,8 +474,8 @@ describe("account linking", () => {
       const first = await linkOnce(accessToken, PROVIDER, scope, externalEmail);
       const second = await linkOnce(accessToken, PROVIDER, scope, externalEmail);
 
-      expect(first).toBe(PROVIDER);
-      expect(second).toBe(PROVIDER);
+      // 連携し直しは更新なので、alias も変わらない。
+      expect(second).toBe(first);
       expect((await listLinks(accessToken)).filter((it) => it.provider === PROVIDER)).toHaveLength(1);
     });
 
@@ -482,7 +484,7 @@ describe("account linking", () => {
       const scope = "openid profile email offline_access";
       const linkedEmail = await createExternalUser();
       const anotherEmail = await createExternalUser();
-      await linkOnce(accessToken, PROVIDER, scope, linkedEmail);
+      const alias = await linkOnce(accessToken, PROVIDER, scope, linkedEmail);
       const before = (await listLinks(accessToken)).find((it) => it.provider === PROVIDER);
 
       const response = await linkThroughComplete(accessToken, PROVIDER, scope, anotherEmail);
@@ -493,9 +495,17 @@ describe("account linking", () => {
       // 断った complete は何も書かない。つないでいるアカウントはそのまま。
       expect(links).toEqual([before]);
 
-      // 解除してからなら、別のアカウントをつなげる。
-      expect((await unlink(accessToken, PROVIDER)).status).toBe(204);
-      expect(await linkOnce(accessToken, PROVIDER, scope, anotherEmail)).toBe(PROVIDER);
+      // 解除してからなら、別のアカウントをつなげる。alias は新しくなり、前の alias は 404 になる。
+      expect((await unlink(accessToken, alias)).status).toBe(204);
+      const next = await linkOnce(accessToken, PROVIDER, scope, anotherEmail);
+      expect(next).not.toBe(alias);
+      const stale = await retrieveToken({
+        alias,
+        token: accessToken,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      expect(stale.status).toBe(404);
     });
 
     describe("with a provider that names no account", () => {
@@ -527,8 +537,8 @@ describe("account linking", () => {
       it("renews the one link each time, since there is no way to tell the accounts apart", async () => {
         const accessToken = await loginAsNewUser();
 
-        expect(await linkOnce(accessToken, OAUTH2_PROVIDER)).toBe(OAUTH2_PROVIDER);
-        expect(await linkOnce(accessToken, OAUTH2_PROVIDER)).toBe(OAUTH2_PROVIDER);
+        const first = await linkOnce(accessToken, OAUTH2_PROVIDER);
+        expect(await linkOnce(accessToken, OAUTH2_PROVIDER)).toBe(first);
 
         expect((await listLinks(accessToken)).filter((it) => it.provider === OAUTH2_PROVIDER)).toHaveLength(1);
       });

@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.idp.server.account_linking.*;
 import org.idp.server.account_linking.io.AccountLinkingCompleteRequest;
 import org.idp.server.account_linking.io.AccountLinkingResult;
@@ -267,12 +268,69 @@ class AccountLinkingCompleteHandlerTest {
   }
 
   @Test
-  void theOneLinkToAProviderIsNamedAfterTheProvider() {
+  void theOneLinkToAProviderIsMarkedAsSuchAndKeepsARandomAlias() {
     parkSession("federated-sub");
 
     assertFalse(complete().isError());
 
-    assertEquals(new AccountAlias("google"), accounts.rows.getFirst().accountAlias());
+    LinkedExternalAccount linked = accounts.rows.getFirst();
+    assertTrue(linked.isSingleAccount());
+    assertTrue(linked.accountAlias().value().matches("google-[a-z0-9]{8}"));
+  }
+
+  @Test
+  void aNewAliasAfterUnlinkingTellsAnRpThatTheAccountMayHaveChanged() {
+    parkSession("federated-sub");
+    assertFalse(complete().isError());
+    AccountAlias first = accounts.rows.getFirst().accountAlias();
+
+    accounts.rows.clear();
+    parkSession("another-federated-sub");
+    assertFalse(complete().isError());
+
+    assertNotEquals(first, accounts.rows.getFirst().accountAlias());
+  }
+
+  @Test
+  void linkingAgainIsRefusedWhileSeveralAccountsOfTheProviderAreLinked() {
+    // Left from when the provider still allowed several: which one to renew cannot be told.
+    for (String alias : List.of("google-aaaaaaaa", "google-bbbbbbbb")) {
+      accounts.rows.add(
+          new LinkedExternalAccount.Builder()
+              .userIdentifier(OWNER)
+              .provider(PROVIDER)
+              .accountAlias(new AccountAlias(alias))
+              .build());
+    }
+    parkSession(null);
+
+    AccountLinkingResult result = complete();
+
+    assertEquals(409, result.statusCode());
+    assertEquals(0, accounts.updates);
+  }
+
+  @Test
+  void theLinkOfTheSameAccountIsRenewedAmongSeveralLeftFromBefore() {
+    for (String[] row :
+        new String[][] {
+          {"google-aaaaaaaa", "another-federated-sub"}, {"google-bbbbbbbb", "federated-sub"}
+        }) {
+      accounts.rows.add(
+          new LinkedExternalAccount.Builder()
+              .identifier(new LinkedExternalAccountIdentifier(UUID.randomUUID().toString()))
+              .userIdentifier(OWNER)
+              .provider(PROVIDER)
+              .accountAlias(new AccountAlias(row[0]))
+              .federatedUserId(row[1])
+              .build());
+    }
+    parkSession("federated-sub");
+
+    assertFalse(complete().isError());
+
+    assertEquals(2, accounts.rows.size());
+    assertEquals(1, accounts.updates);
   }
 
   @Test
@@ -330,6 +388,7 @@ class AccountLinkingCompleteHandlerTest {
     assertFalse(complete().isError());
 
     assertEquals(2, accounts.rows.size());
+    assertFalse(accounts.rows.getLast().isSingleAccount());
   }
 
   @Test

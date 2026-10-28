@@ -78,6 +78,7 @@ public class ModelConverter {
         .accountAlias(new AccountAlias(result.get("account_alias")))
         .federatedUserId(result.get("federated_user_id"))
         .federatedUsername(result.get("federated_username"))
+        .singleAccount(toBoolean(result.get("single_account")))
         .scope(result.get("scope"))
         .encryptedAccessToken(toSealedData(result.get("encrypted_access_token")))
         .encryptedRefreshToken(toSealedData(result.get("encrypted_refresh_token")))
@@ -87,6 +88,15 @@ public class ModelConverter {
         .createdAt(toDateTime(result.get("created_at")))
         .updatedAt(toDateTime(result.get("updated_at")))
         .build();
+  }
+
+  /** PostgreSQL returns a boolean as {@code t}/{@code f}, MySQL as {@code 1}/{@code 0}. */
+  static boolean toBoolean(String value) {
+    if (value == null) {
+      return false;
+    }
+    String normalized = value.toLowerCase().trim();
+    return "t".equals(normalized) || "true".equals(normalized) || "1".equals(normalized);
   }
 
   public static String toJsonOrNull(SealedData data) {

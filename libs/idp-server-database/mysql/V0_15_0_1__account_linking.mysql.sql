@@ -34,6 +34,9 @@ CREATE TABLE linked_external_accounts
     -- not identify the resource owner, and a link is keyed without this column.
     federated_user_id        VARCHAR(255),
     federated_username       VARCHAR(255),
+    single_account           BOOLEAN                                  NOT NULL DEFAULT FALSE,
+    -- MySQL has no partial index: NULL for every row not linked under the one-account rule.
+    single_account_provider  VARCHAR(255) GENERATED ALWAYS AS (IF(single_account, provider, NULL)) STORED,
     scope                    TEXT,
     encrypted_access_token   JSON                                     NOT NULL,
     encrypted_refresh_token  JSON,
@@ -51,7 +54,10 @@ CREATE TABLE linked_external_accounts
     -- alive at the external IdP with nothing left to revoke.
     -- No UNIQUE on (tenant_id, provider, federated_user_id) by design. See the PostgreSQL
     -- migration for the reasoning: this column records whose tokens these are, not an identity.
-    UNIQUE KEY uk_linked_external_accounts_alias (tenant_id, user_id, provider, account_alias)
+    UNIQUE KEY uk_linked_external_accounts_alias (tenant_id, user_id, provider, account_alias),
+    -- A provider that allows one account per user keeps the user to one row. See the PostgreSQL
+    -- migration.
+    UNIQUE KEY uk_linked_external_accounts_single_account (tenant_id, user_id, single_account_provider)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE INDEX idx_linked_external_accounts_user

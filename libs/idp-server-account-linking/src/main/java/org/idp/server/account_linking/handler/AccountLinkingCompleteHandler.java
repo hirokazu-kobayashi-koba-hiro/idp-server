@@ -17,7 +17,9 @@
 package org.idp.server.account_linking.handler;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import org.idp.server.account_linking.*;
+import org.idp.server.account_linking.exception.AccountLinkingAnotherAccountLinkedException;
 import org.idp.server.account_linking.exception.AccountLinkingNotFoundException;
 import org.idp.server.account_linking.exception.AccountLinkingSessionStateException;
 import org.idp.server.account_linking.io.AccountLinkingCompleteRequest;
@@ -130,7 +132,13 @@ public class AccountLinkingCompleteHandler {
    * The user's one link to the provider: linking again renews it, with the same external account.
    *
    * <p>The row is read under its lock, as token retrieval refreshes under the same lock. Without
-   * it, a refresh running alongside would write its tokens over the ones this link brings.
+   * it, a refresh running alongside would write its tokens over the ones this link brings. Two
+   * completions that both find no link race to insert; the database's one-account index lets only
+   * one of them through.
+   *
+   * <p>The alias stays random. Were it the provider's name, it would come back after unlinking and
+   * name whichever account was linked next, and an RP holding it would be handed that account's
+   * tokens without noticing; a new alias answers its old one with 404 instead.
    */
   private PreparedLink prepareTheOne(
       Tenant tenant,
@@ -138,10 +146,8 @@ public class AccountLinkingCompleteHandler {
       AccountLinkingProviderConfiguration configuration,
       LocalDateTime now) {
     ParkedCredentials credentials = session.parkedCredentials();
-    AccountAlias alias = AccountAlias.single(session.provider());
 
-    LinkedExternalAccount current =
-        accountQueryRepository.lock(tenant, session.userIdentifier(), alias);
+    LinkedExternalAccount current = lockTheOne(tenant, session);
     if (current.exists()) {
       sameExternalAccountVerifier.verify(current, credentials);
       return new PreparedLink(current.relinkedWith(credentials, now), true);
@@ -151,7 +157,41 @@ public class AccountLinkingCompleteHandler {
       duplicateLinkVerifier.verify(
           tenant, session, credentials.federatedUserId(), configuration.duplicateLinkPolicy());
     }
-    return new PreparedLink(LinkedExternalAccount.fromConsumedSession(session, alias, now), false);
+    AccountAlias alias = AccountAlias.generate(session.provider());
+    return new PreparedLink(
+        LinkedExternalAccount.fromConsumedSession(session, alias, true, now), false);
+  }
+
+  /**
+   * The user's link to the provider, locked; none if there is none.
+   *
+   * <p>More than one is possible only for links made while the provider still allowed several. The
+   * one for the same external account is renewed; failing that, which to renew cannot be told, so
+   * the user is asked to unlink first.
+   */
+  private LinkedExternalAccount lockTheOne(Tenant tenant, AccountLinkingSession session) {
+    ParkedCredentials credentials = session.parkedCredentials();
+    List<LinkedExternalAccount> linked =
+        accountQueryRepository.findList(tenant, session.userIdentifier()).stream()
+            .filter(account -> account.provider().equals(session.provider()))
+            .toList();
+    if (linked.isEmpty()) {
+      return new LinkedExternalAccount();
+    }
+
+    LinkedExternalAccount chosen =
+        linked.stream()
+            .filter(
+                account ->
+                    credentials.hasFederatedUserId()
+                        && credentials.federatedUserId().equals(account.federatedUserId()))
+            .findFirst()
+            .orElse(linked.size() == 1 ? linked.getFirst() : null);
+    if (chosen == null) {
+      throw new AccountLinkingAnotherAccountLinkedException(
+          "Several accounts of this provider are linked. Unlink them before linking again.");
+    }
+    return accountQueryRepository.lock(tenant, session.userIdentifier(), chosen.accountAlias());
   }
 
   /**
@@ -181,7 +221,8 @@ public class AccountLinkingCompleteHandler {
     }
 
     AccountAlias alias = AccountAlias.generate(session.provider());
-    return new PreparedLink(LinkedExternalAccount.fromConsumedSession(session, alias, now), false);
+    return new PreparedLink(
+        LinkedExternalAccount.fromConsumedSession(session, alias, false, now), false);
   }
 
   record PreparedLink(LinkedExternalAccount account, boolean relink) {}

@@ -29,6 +29,7 @@ CREATE TABLE linked_external_accounts
     account_alias            VARCHAR(255)            NOT NULL,
     federated_user_id        VARCHAR(255),
     federated_username       VARCHAR(255),
+    single_account           BOOLEAN                 NOT NULL DEFAULT FALSE,
     scope                    TEXT,
     encrypted_access_token   JSONB                   NOT NULL,
     encrypted_refresh_token  JSONB,
@@ -50,8 +51,8 @@ CREATE TABLE linked_external_accounts
     -- keeps that constraint on idp_user (uk_external_user), where it stops one external identity
     -- from resolving to two users. Repeating it here would only forbid the legitimate cases —
     -- a shared corporate account linked by two people — and let a first link squat an account
-    -- its owner could then never link, with no unlink API to recover. Whose tokens these are is
-    -- established by the user binding in the linking flow, not by a constraint.
+    -- its owner could then never link: unlinking frees only the squatter's own row. Whose tokens
+    -- these are is established by the user binding in the linking flow, not by a constraint.
 );
 
 ALTER TABLE linked_external_accounts ENABLE ROW LEVEL SECURITY;
@@ -69,6 +70,12 @@ CREATE INDEX idx_linked_external_accounts_federated_user
 
 CREATE INDEX idx_linked_external_accounts_access_token_expires_at
     ON linked_external_accounts (tenant_id, access_token_expires_at);
+
+-- A provider that allows one account per user (multiple_accounts: false) keeps the user to one
+-- row even when two completions race.
+CREATE UNIQUE INDEX uk_linked_external_accounts_single_account
+    ON linked_external_accounts (tenant_id, user_id, provider)
+    WHERE single_account;
 
 -- ============================================================================
 -- 2. account_linking_sessions
@@ -130,8 +137,13 @@ then enables two things that are otherwise skipped: recognising a re-link of the
 account, and the tenant''s duplicate link policy.';
 
 COMMENT ON COLUMN linked_external_accounts.account_alias IS
-'Server-assigned identifier, {provider}-{seq} (google-1, google-2). Appears in URLs.
-Never derived from federated_username, which the external IdP can change.';
+'Server-assigned identifier, {provider}-{8 random characters} (google-k3f9x2qa). Appears in URLs.
+Never reused after unlinking, and never derived from federated_username, which the external IdP
+can change.';
+
+COMMENT ON COLUMN linked_external_accounts.single_account IS
+'Whether the row was linked under a provider that allows one account per user
+(multiple_accounts: false). Such rows are unique per (tenant_id, user_id, provider).';
 
 COMMENT ON COLUMN linked_external_accounts.encryption_key_id IS
 'Key generation used to encrypt the token columns. Currently always ''default'':

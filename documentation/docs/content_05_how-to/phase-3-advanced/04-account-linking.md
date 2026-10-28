@@ -95,7 +95,7 @@ curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/t
 | `payload.revocation_endpoint` | 任意。解除とユーザー削除のときに保管トークンを失効させる先。無ければ失効させずに連携だけを消す |
 | `payload.refresh_token_expires_in` | 保管するリフレッシュトークンの有効期間（秒）。外部IdPの実際の期限に合わせる。未設定なら期限は不明として扱い、アクセストークンが切れるたびにリフレッシュを試す |
 | `payload.duplicate_link_policy` | 同じ外部アカウントが別ユーザーに連携済みのとき。`reject`（既定、409）/ `allow` |
-| `payload.multiple_accounts` | 1 人がこの連携先のアカウントを複数連携できるか。`false`（既定）なら 1 件で、`alias` は `sso_provider` と同じ。もう一度連携すると更新し、別のアカウントは 409（先に解除）。`true` なら連携ごとに `alias` が `{provider}-{乱数}` になる |
+| `payload.multiple_accounts` | 1 人がこの連携先のアカウントを複数連携できるか。`false`（既定）なら 1 件で、もう一度連携すると更新し、別のアカウントは 409（先に解除）。`true` なら連携するたびに追加（同じ外部アカウントは更新）。`alias` はどちらも `{provider}-{乱数}` |
 
 ログイン用の設定例にある `store_credentials` と `access_token_expires_in` は、連携では読みません。アクセストークンの期限は外部IdPのトークン応答の `expires_in` で決まります。
 
@@ -366,6 +366,7 @@ cd e2e && npm test -- --testPathPattern=scenario-16
 | 戻り先に `error=server_error` | 外部IdPでのトークン交換・ID Token 検証・userinfo の失敗 | `client_authentication_type`・`redirect_uri`・`issuer`・`jwks_uri` を確認 |
 | `complete` が `403` | 連携を始めたクライアントと別のクライアントのトークンで確定した | 開始と同じクライアントのトークンを使う |
 | `complete` が `409` | 連携セッションが期限切れ、または同じ外部アカウントが別ユーザーに連携済み（`reject`）、またはこの連携先の別のアカウントを連携済み（`multiple_accounts: false`） | 5.1 からやり直す / `duplicate_link_policy` を見直す / 前の連携を解除してからつなぐ |
+| トークン取得が `404 not_found` | 保存していた `alias` の連携が解除された。別のアカウントにつなぎ直されると `alias` が変わる | 一覧を引き直して、今の `alias` を使う |
 | トークン取得が `400 relink_required` | リフレッシュトークンが無い・期限切れ・拒否された、または連携先が削除・無効化された | `refresh_token_expires_in` と、外部IdPがリフレッシュトークンを返すスコープ（例: `offline_access`）を確認 |
 | `link` が `403` | 連携先がクライアントの `linking_providers` に無い | Step 4 を確認 |
 | `link` が `400`（scope） | 要求した `scope` が連携先の `scopes_supported` に無い | 要求を連携先の設定の範囲にする |

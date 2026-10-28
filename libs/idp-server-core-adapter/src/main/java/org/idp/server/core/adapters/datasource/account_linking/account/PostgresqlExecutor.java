@@ -35,7 +35,7 @@ public class PostgresqlExecutor implements LinkedExternalAccountSqlExecutor {
   static final String SELECT_COLUMNS =
       """
       SELECT id, tenant_id, user_id, provider, account_alias, federated_user_id,
-             federated_username, scope, encrypted_access_token, encrypted_refresh_token,
+             federated_username, single_account, scope, encrypted_access_token, encrypted_refresh_token,
              encryption_key_id, access_token_expires_at, refresh_token_expires_at,
              metadata, created_at, updated_at
         FROM linked_external_accounts
@@ -49,10 +49,10 @@ public class PostgresqlExecutor implements LinkedExternalAccountSqlExecutor {
         """
         INSERT INTO linked_external_accounts (
         id, tenant_id, user_id, provider, account_alias, federated_user_id,
-        federated_username, scope, encrypted_access_token, encrypted_refresh_token,
+        federated_username, single_account, scope, encrypted_access_token, encrypted_refresh_token,
         encryption_key_id, access_token_expires_at, refresh_token_expires_at, metadata
         )
-        VALUES (?::uuid, ?::uuid, ?::uuid, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?, ?, ?, ?::jsonb);
+        VALUES (?::uuid, ?::uuid, ?::uuid, ?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?, ?, ?, ?::jsonb);
         """;
 
     List<Object> params = new ArrayList<>();
@@ -63,6 +63,7 @@ public class PostgresqlExecutor implements LinkedExternalAccountSqlExecutor {
     params.add(account.accountAlias().value());
     params.add(account.federatedUserId());
     params.add(account.federatedUsername());
+    params.add(account.isSingleAccount());
     params.add(account.scope());
     params.add(ModelConverter.toJsonOrNull(account.encryptedAccessToken()));
     params.add(ModelConverter.toJsonOrNull(account.encryptedRefreshToken()));
