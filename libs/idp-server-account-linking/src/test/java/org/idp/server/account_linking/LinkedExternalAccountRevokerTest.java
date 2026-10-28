@@ -259,4 +259,49 @@ class LinkedExternalAccountRevokerTest {
     assertTrue(revoker.revoke(TENANT, pending));
     assertTrue(gateway.revoked.isEmpty());
   }
+
+  @Test
+  void revokesTheTokensARelinkReplaced() {
+    RecordingGateway gateway = new RecordingGateway();
+    LinkedExternalAccountRevoker revoker =
+        new LinkedExternalAccountRevoker(
+            new FixedResolver(configuration(REVOCATION_ENDPOINT)), gateway, aesCipher);
+
+    assertTrue(
+        revoker.revokeReplaced(TENANT, account("old-at", "old-rt"), account("new-at", "new-rt")));
+    assertEquals(List.of("refresh_token:old-rt", "access_token:old-at"), gateway.revoked);
+  }
+
+  @Test
+  void keepsARefreshTokenTheProviderHandedBackUnchanged() {
+    RecordingGateway gateway = new RecordingGateway();
+    LinkedExternalAccountRevoker revoker =
+        new LinkedExternalAccountRevoker(
+            new FixedResolver(configuration(REVOCATION_ENDPOINT)), gateway, aesCipher);
+
+    assertTrue(revoker.revokeReplaced(TENANT, account("old-at", "rt"), account("new-at", "rt")));
+    assertEquals(List.of("access_token:old-at"), gateway.revoked);
+  }
+
+  @Test
+  void revokesNothingWhenTheRenewedTokensCannotBeRead() {
+    RecordingGateway gateway = new RecordingGateway();
+    LinkedExternalAccountRevoker revoker =
+        new LinkedExternalAccountRevoker(
+            new FixedResolver(configuration(REVOCATION_ENDPOINT)), gateway, aesCipher);
+    LinkedExternalAccount unreadable =
+        new LinkedExternalAccount.Builder()
+            .userIdentifier(USER)
+            .provider(PROVIDER)
+            .encryptedAccessToken(
+                new SealedData(
+                    SealedData.VERSION_1,
+                    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+                    "AAAAAAAAAAAAAAAA",
+                    "bm90LWNpcGhlcg=="))
+            .build();
+
+    assertFalse(revoker.revokeReplaced(TENANT, account("old-at", "old-rt"), unreadable));
+    assertTrue(gateway.revoked.isEmpty());
+  }
 }

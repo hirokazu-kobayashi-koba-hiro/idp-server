@@ -46,6 +46,7 @@ public class AccountLinkingCompleteHandler {
   AccountLinkingConfigurationResolver configurationResolver;
   DuplicateLinkVerifier duplicateLinkVerifier;
   SameExternalAccountVerifier sameExternalAccountVerifier;
+  LinkedExternalAccountRevoker revoker;
   AccountLinkingErrorHandler errorHandler;
 
   public AccountLinkingCompleteHandler(
@@ -53,7 +54,8 @@ public class AccountLinkingCompleteHandler {
       AccountLinkingSessionCommandRepository sessionCommandRepository,
       LinkedExternalAccountQueryRepository accountQueryRepository,
       LinkedExternalAccountCommandRepository accountCommandRepository,
-      AccountLinkingConfigurationResolver configurationResolver) {
+      AccountLinkingConfigurationResolver configurationResolver,
+      LinkedExternalAccountRevoker revoker) {
     this.sessionQueryRepository = sessionQueryRepository;
     this.sessionCommandRepository = sessionCommandRepository;
     this.accountQueryRepository = accountQueryRepository;
@@ -61,6 +63,7 @@ public class AccountLinkingCompleteHandler {
     this.configurationResolver = configurationResolver;
     this.duplicateLinkVerifier = new DuplicateLinkVerifier(accountQueryRepository);
     this.sameExternalAccountVerifier = new SameExternalAccountVerifier();
+    this.revoker = revoker;
     this.errorHandler = new AccountLinkingErrorHandler();
   }
 
@@ -77,10 +80,12 @@ public class AccountLinkingCompleteHandler {
       session.verifyClient(request.oAuthToken().requestedClientId());
 
       AccountLinkingSession consumed = session.consume(user.userIdentifier());
+      AccountLinkingProviderConfiguration configuration =
+          configurationResolver.resolve(tenant, consumed.provider());
 
       // Everything that can reject the link is decided before the session is spent, so a rejected
       // completion leaves the parked tokens where they were.
-      PreparedLink link = prepare(tenant, consumed, now);
+      PreparedLink link = prepare(tenant, consumed, configuration, now);
 
       if (!sessionCommandRepository.claim(
           tenant,
@@ -98,6 +103,7 @@ public class AccountLinkingCompleteHandler {
         accountCommandRepository.register(tenant, link.account());
       }
       sessionCommandRepository.delete(tenant, state);
+      revokeReplaced(tenant, configuration, link);
 
       return AccountLinkingResult.success(
           AccountLinkingStatus.CREATED,
@@ -119,9 +125,11 @@ public class AccountLinkingCompleteHandler {
   }
 
   /** The link to write: a re-link of one this user already holds, or a new one. */
-  private PreparedLink prepare(Tenant tenant, AccountLinkingSession session, LocalDateTime now) {
-    AccountLinkingProviderConfiguration configuration =
-        configurationResolver.resolve(tenant, session.provider());
+  private PreparedLink prepare(
+      Tenant tenant,
+      AccountLinkingSession session,
+      AccountLinkingProviderConfiguration configuration,
+      LocalDateTime now) {
     if (configuration.allowsMultipleAccounts()) {
       return prepareOneOfSeveral(tenant, session, configuration, now);
     }
@@ -150,7 +158,7 @@ public class AccountLinkingCompleteHandler {
     LinkedExternalAccount current = lockTheOne(tenant, session);
     if (current.exists()) {
       sameExternalAccountVerifier.verify(current, credentials);
-      return new PreparedLink(current.relinkedWith(credentials, now), true);
+      return PreparedLink.relink(current, current.relinkedWith(credentials, now));
     }
 
     if (credentials.hasFederatedUserId()) {
@@ -158,8 +166,8 @@ public class AccountLinkingCompleteHandler {
           tenant, session, credentials.federatedUserId(), configuration.duplicateLinkPolicy());
     }
     AccountAlias alias = AccountAlias.generate(session.provider());
-    return new PreparedLink(
-        LinkedExternalAccount.fromConsumedSession(session, alias, true, now), false);
+    return PreparedLink.created(
+        LinkedExternalAccount.fromConsumedSession(session, alias, true, now));
   }
 
   /**
@@ -199,6 +207,8 @@ public class AccountLinkingCompleteHandler {
    *
    * <p>Without an identifier from the provider there is nothing to compare, so neither recognising
    * a re-link nor the duplicate policy applies, and every such link is added.
+   *
+   * <p>A link renewed here is locked for the same reason as in {@link #prepareTheOne}.
    */
   private PreparedLink prepareOneOfSeveral(
       Tenant tenant,
@@ -213,7 +223,9 @@ public class AccountLinkingCompleteHandler {
               tenant, session.userIdentifier(), session.provider(), credentials.federatedUserId());
 
       if (own.exists()) {
-        return new PreparedLink(own.relinkedWith(credentials, now), true);
+        LinkedExternalAccount locked =
+            accountQueryRepository.lock(tenant, session.userIdentifier(), own.accountAlias());
+        return PreparedLink.relink(locked, locked.relinkedWith(credentials, now));
       }
 
       duplicateLinkVerifier.verify(
@@ -221,11 +233,39 @@ public class AccountLinkingCompleteHandler {
     }
 
     AccountAlias alias = AccountAlias.generate(session.provider());
-    return new PreparedLink(
-        LinkedExternalAccount.fromConsumedSession(session, alias, false, now), false);
+    return PreparedLink.created(
+        LinkedExternalAccount.fromConsumedSession(session, alias, false, now));
   }
 
-  record PreparedLink(LinkedExternalAccount account, boolean relink) {}
+  /**
+   * Revokes the tokens a re-link replaced, when the provider is set to.
+   *
+   * <p>It runs after the link is written: were the old tokens revoked first and the write then
+   * failed, the row would be left holding revoked tokens. Revocation is best effort and never fails
+   * the link.
+   */
+  private void revokeReplaced(
+      Tenant tenant, AccountLinkingProviderConfiguration configuration, PreparedLink link) {
+    if (link.relink() && configuration.revokesOnRelink()) {
+      revoker.revokeReplaced(tenant, link.replaced(), link.account());
+    }
+  }
+
+  /** The link to write, and for a re-link the row as it was before, holding the old tokens. */
+  record PreparedLink(LinkedExternalAccount account, LinkedExternalAccount replaced) {
+
+    static PreparedLink created(LinkedExternalAccount account) {
+      return new PreparedLink(account, null);
+    }
+
+    static PreparedLink relink(LinkedExternalAccount replaced, LinkedExternalAccount account) {
+      return new PreparedLink(account, replaced);
+    }
+
+    boolean relink() {
+      return replaced != null;
+    }
+  }
 
   private AccountLinkingSession getSession(Tenant tenant, AccountLinkingState state) {
     AccountLinkingSession session = sessionQueryRepository.find(tenant, state);

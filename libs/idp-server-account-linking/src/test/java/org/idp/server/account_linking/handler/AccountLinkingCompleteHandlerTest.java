@@ -164,7 +164,11 @@ class AccountLinkingCompleteHandlerTest {
         UserIdentifier userIdentifier,
         ExternalIdpProvider provider,
         String federatedUserId) {
-      return new LinkedExternalAccount();
+      return rows.stream()
+          .filter(it -> it.provider().equals(provider))
+          .filter(it -> federatedUserId.equals(it.federatedUserId()))
+          .findFirst()
+          .orElse(new LinkedExternalAccount());
     }
 
     @Override
@@ -222,17 +226,43 @@ class AccountLinkingCompleteHandlerTest {
     }
   }
 
+  /** Records the re-links whose replaced tokens it was asked to revoke. */
+  static class RecordingRevoker extends LinkedExternalAccountRevoker {
+    List<LinkedExternalAccount[]> replaced = new ArrayList<>();
+
+    RecordingRevoker() {
+      super(null, null, null);
+    }
+
+    @Override
+    public boolean revokeReplaced(
+        Tenant tenant, LinkedExternalAccount replaced, LinkedExternalAccount renewed) {
+      this.replaced.add(new LinkedExternalAccount[] {replaced, renewed});
+      return true;
+    }
+  }
+
   Sessions sessions = new Sessions();
   Accounts accounts = new Accounts();
   Resolver resolver = new Resolver();
+  RecordingRevoker revoker = new RecordingRevoker();
   AccountLinkingCompleteHandler handler =
-      new AccountLinkingCompleteHandler(sessions, sessions, accounts, accounts, resolver);
+      new AccountLinkingCompleteHandler(sessions, sessions, accounts, accounts, resolver, revoker);
 
   void allowMultipleAccounts() {
     resolver.linking.put("multiple_accounts", true);
   }
 
+  void revokeOnRelink() {
+    resolver.linking.put("revoke_on_relink", true);
+  }
+
   void parkSession(String federatedUserId) {
+    parkSession(federatedUserId, "dek");
+  }
+
+  /** The key id stands in for the tokens: each link brings its own. */
+  void parkSession(String federatedUserId, String encryptionKeyId) {
     sessions.register(
         TENANT,
         new AccountLinkingSession.Builder()
@@ -250,7 +280,7 @@ class AccountLinkingCompleteHandlerTest {
                     .federatedUserId(federatedUserId)
                     .grantedScope("openid")
                     .encryptedAccessToken(new SealedData())
-                    .encryptionKeyId("dek")
+                    .encryptionKeyId(encryptionKeyId)
                     .build())
             .build());
   }
@@ -429,5 +459,68 @@ class AccountLinkingCompleteHandlerTest {
     parkSession(null);
 
     assertThrows(SqlDuplicateKeyException.class, this::complete);
+  }
+
+  @Test
+  void linkingAgainRevokesTheReplacedTokensWhenTheProviderIsSetTo() {
+    revokeOnRelink();
+    parkSession("federated-sub", "old-dek");
+    assertFalse(complete().isError());
+
+    parkSession("federated-sub", "new-dek");
+    assertFalse(complete().isError());
+
+    assertEquals(1, revoker.replaced.size());
+    assertEquals("old-dek", revoker.replaced.getFirst()[0].encryptionKeyId());
+    assertEquals("new-dek", revoker.replaced.getFirst()[1].encryptionKeyId());
+    assertEquals("new-dek", accounts.rows.getFirst().encryptionKeyId());
+  }
+
+  @Test
+  void linkingAgainLeavesTheReplacedTokensByDefault() {
+    parkSession("federated-sub");
+    assertFalse(complete().isError());
+
+    parkSession("federated-sub");
+    assertFalse(complete().isError());
+
+    assertTrue(revoker.replaced.isEmpty());
+  }
+
+  @Test
+  void aNewLinkHasNothingToRevoke() {
+    revokeOnRelink();
+    parkSession("federated-sub");
+
+    assertFalse(complete().isError());
+
+    assertTrue(revoker.replaced.isEmpty());
+  }
+
+  @Test
+  void aRefusedLinkRevokesNothing() {
+    revokeOnRelink();
+    parkSession("federated-sub");
+    assertFalse(complete().isError());
+
+    parkSession("another-federated-sub");
+    assertTrue(complete().isError());
+
+    assertTrue(revoker.replaced.isEmpty());
+  }
+
+  @Test
+  void linkingTheSameAccountAgainRevokesItsReplacedTokensWhenSeveralAreAllowed() {
+    allowMultipleAccounts();
+    revokeOnRelink();
+    parkSession("federated-sub", "old-dek");
+    assertFalse(complete().isError());
+
+    parkSession("federated-sub", "new-dek");
+    assertFalse(complete().isError());
+
+    assertEquals(1, accounts.rows.size());
+    assertEquals(1, revoker.replaced.size());
+    assertEquals("old-dek", revoker.replaced.getFirst()[0].encryptionKeyId());
   }
 }

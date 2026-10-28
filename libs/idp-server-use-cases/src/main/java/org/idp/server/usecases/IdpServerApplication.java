@@ -947,7 +947,8 @@ public class IdpServerApplication {
                     accountLinkingSessionCommandRepository,
                     linkedExternalAccountQueryRepository,
                     linkedExternalAccountCommandRepository,
-                    accountLinkingConfigurationResolver),
+                    accountLinkingConfigurationResolver,
+                    linkedExternalAccountRevoker),
                 new AccountLinkingUnlinkHandler(
                     linkedExternalAccountQueryRepository,
                     linkedExternalAccountCommandRepository,

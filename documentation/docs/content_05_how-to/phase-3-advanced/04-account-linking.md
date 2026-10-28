@@ -77,7 +77,8 @@ curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/t
       ],
       "refresh_token_expires_in": 86400,
       "duplicate_link_policy": "reject",
-      "multiple_accounts": false
+      "multiple_accounts": false,
+      "revoke_on_relink": false
     }
   }'
 ```
@@ -96,10 +97,11 @@ curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/t
 | `payload.refresh_token_expires_in` | 保管するリフレッシュトークンの有効期間（秒）。外部IdPの実際の期限に合わせる。未設定なら期限は不明として扱い、アクセストークンが切れるたびにリフレッシュを試す |
 | `payload.duplicate_link_policy` | 同じ外部アカウントが別ユーザーに連携済みのとき。`reject`（既定、409）/ `allow` |
 | `payload.multiple_accounts` | 1 人がこの連携先のアカウントを複数連携できるか。`false`（既定）なら 1 件で、もう一度連携すると更新し、別のアカウントは 409（先に解除）。`true` なら連携するたびに追加（同じ外部アカウントは更新）。`alias` はどちらも `{provider}-{乱数}` |
+| `payload.revoke_on_relink` | 連携し直したとき、入れ替わる前の保管トークンを `revocation_endpoint` で失効させるか。`false`（既定）なら失効させない。失効でアプリへの許可ごと取り消す外部IdP（Google など）で `true` にすると、新しいトークンまで止まるので使わない |
 
 ログイン用の設定例にある `store_credentials` と `access_token_expires_in` は、連携では読みません。アクセストークンの期限は外部IdPのトークン応答の `expires_in` で決まります。
 
-登録と更新のときに中身を確かめ、必須の項目が無い、`redirect_uri` がこの連携先のコールバックでない、`duplicate_link_policy` の値が違う、`multiple_accounts` が真偽値でない、`openid` を入れたのに `issuer` / `jwks_uri` が無い、といった設定は `400` になります。`type` と `sso_provider` は後から変えられません（`400`）。連携が 1 件でも残っている間は、この設定の削除は `409` になります（`dry_run=true` でも同じ）。応答の `linked_external_accounts` が残っている連携の数です。先に [管理APIでの確認・解除](#管理apiでの確認解除) で連携を解除してください。連携先を消すときは、まず `enabled: false` にして新しい連携を止めてから、残った連携を解除し、最後に削除します。無効にしないまま進めると、解除と削除の間に新しい連携ができることがあります。
+登録と更新のときに中身を確かめ、必須の項目が無い、`redirect_uri` がこの連携先のコールバックでない、`duplicate_link_policy` の値が違う、`multiple_accounts` / `revoke_on_relink` が真偽値でない、`openid` を入れたのに `issuer` / `jwks_uri` が無い、といった設定は `400` になります。`type` と `sso_provider` は後から変えられません（`400`）。連携が 1 件でも残っている間は、この設定の削除は `409` になります（`dry_run=true` でも同じ）。応答の `linked_external_accounts` が残っている連携の数です。先に [管理APIでの確認・解除](#管理apiでの確認解除) で連携を解除してください。連携先を消すときは、まず `enabled: false` にして新しい連携を止めてから、残った連携を解除し、最後に削除します。無効にしないまま進めると、解除と削除の間に新しい連携ができることがあります。
 
 **実例**:
 - `config/examples/standard-oidc-web-app/federation-account-linking.json` - サンプルアプリ用

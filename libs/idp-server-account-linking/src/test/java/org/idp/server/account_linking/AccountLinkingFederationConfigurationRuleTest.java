@@ -79,6 +79,15 @@ class AccountLinkingFederationConfigurationRuleTest {
   }
 
   @Test
+  void refusesRevokeOnRelinkThatIsNotABoolean() {
+    Map<String, Object> payload = usable();
+    payload.put("revoke_on_relink", "true");
+    assertEquals(1, rule.problems(configuration(payload)).size());
+    payload.put("revoke_on_relink", true);
+    assertTrue(rule.problems(configuration(payload)).isEmpty());
+  }
+
+  @Test
   void requiresTheIssuerAndKeysForOpenid() {
     Map<String, Object> payload = usable();
     payload.put("scopes_supported", List.of("openid", "profile"));

@@ -52,6 +52,10 @@ public class AccountLinkingProviderConfiguration {
     return linking.allowsMultipleAccounts();
   }
 
+  public boolean revokesOnRelink() {
+    return linking.revokesOnRelink();
+  }
+
   public boolean hasRevocationEndpoint() {
     return linking.hasRevocationEndpoint();
   }

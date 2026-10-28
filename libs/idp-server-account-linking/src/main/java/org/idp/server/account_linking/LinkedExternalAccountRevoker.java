@@ -66,7 +66,52 @@ public class LinkedExternalAccountRevoker {
         account.provider(),
         account.encryptionKeyId(),
         account.encryptedAccessToken(),
-        account.encryptedRefreshToken());
+        account.encryptedRefreshToken(),
+        null,
+        null);
+  }
+
+  /**
+   * Revokes the tokens a re-link replaced, keeping any the external IdP handed back unchanged.
+   *
+   * <p>A provider may return the same refresh token when access is granted again; revoking it would
+   * cut off the link just renewed. When the renewed tokens cannot be read, which of the old ones
+   * are still in use cannot be told, and nothing is revoked.
+   *
+   * @return whether every replaced token was revoked
+   */
+  public boolean revokeReplaced(
+      Tenant tenant, LinkedExternalAccount replaced, LinkedExternalAccount renewed) {
+    String keptAccessToken;
+    String keptRefreshToken;
+    try {
+      keptAccessToken =
+          open(
+              tenant,
+              renewed.encryptionKeyId(),
+              renewed.encryptedAccessToken(),
+              AccountLinkingTokenCipher.accessToken(renewed.userIdentifier(), renewed.provider()));
+      keptRefreshToken =
+          open(
+              tenant,
+              renewed.encryptionKeyId(),
+              renewed.encryptedRefreshToken(),
+              AccountLinkingTokenCipher.refreshToken(renewed.userIdentifier(), renewed.provider()));
+    } catch (RuntimeException exception) {
+      log.warn(
+          "Renewed account linking tokens could not be read; replaced tokens left unrevoked: {}",
+          exception.getMessage());
+      return false;
+    }
+    return revoke(
+        tenant,
+        replaced.userIdentifier(),
+        replaced.provider(),
+        replaced.encryptionKeyId(),
+        replaced.encryptedAccessToken(),
+        replaced.encryptedRefreshToken(),
+        keptAccessToken,
+        keptRefreshToken);
   }
 
   /**
@@ -91,12 +136,15 @@ public class LinkedExternalAccountRevoker {
         session.provider(),
         credentials.encryptionKeyId(),
         credentials.encryptedAccessToken(),
-        credentials.encryptedRefreshToken());
+        credentials.encryptedRefreshToken(),
+        null,
+        null);
   }
 
   /**
    * The refresh token goes first: per RFC 7009 its revocation should also invalidate the access
-   * tokens issued from it, so the second call is only for providers that do not do that.
+   * tokens issued from it, so the second call is only for providers that do not do that. A token
+   * equal to the one kept in its place is still in use and is left alone.
    */
   private boolean revoke(
       Tenant tenant,
@@ -104,7 +152,9 @@ public class LinkedExternalAccountRevoker {
       ExternalIdpProvider provider,
       String encryptionKeyId,
       SealedData encryptedAccessToken,
-      SealedData encryptedRefreshToken) {
+      SealedData encryptedRefreshToken,
+      String keptAccessToken,
+      String keptRefreshToken) {
     AccountLinkingProviderConfiguration configuration;
     try {
       configuration = configurationResolver.resolveIncludingDisabled(tenant, provider);
@@ -128,6 +178,7 @@ public class LinkedExternalAccountRevoker {
             encryptionKeyId,
             encryptedRefreshToken,
             AccountLinkingTokenCipher.refreshToken(user, provider),
+            keptRefreshToken,
             "refresh_token");
     boolean accessRevoked =
         revoke(
@@ -136,6 +187,7 @@ public class LinkedExternalAccountRevoker {
             encryptionKeyId,
             encryptedAccessToken,
             AccountLinkingTokenCipher.accessToken(user, provider),
+            keptAccessToken,
             "access_token");
     return refreshRevoked && accessRevoked;
   }
@@ -146,17 +198,32 @@ public class LinkedExternalAccountRevoker {
       String encryptionKeyId,
       SealedData encryptedToken,
       SealingContext sealingContext,
+      String keptToken,
       String tokenTypeHint) {
     if (encryptedToken == null) {
       return true;
     }
     try {
       String token = tokenCipher.open(tenant, encryptionKeyId, encryptedToken, sealingContext);
+      if (token.equals(keptToken)) {
+        return true;
+      }
       return tokenGateway.revoke(
           configuration.oidc(), configuration.revocationEndpoint(), token, tokenTypeHint);
     } catch (RuntimeException exception) {
       log.warn("Account linking token could not be revoked: {}", exception.getMessage());
       return false;
     }
+  }
+
+  private String open(
+      Tenant tenant,
+      String encryptionKeyId,
+      SealedData encryptedToken,
+      SealingContext sealingContext) {
+    if (encryptedToken == null) {
+      return null;
+    }
+    return tokenCipher.open(tenant, encryptionKeyId, encryptedToken, sealingContext);
   }
 }

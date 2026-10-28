@@ -466,6 +466,36 @@ describe("account linking", () => {
       return response.data.list;
     };
 
+    const PROVIDER_CONFIG_ID = "c1d4a3f8-6b2e-4d51-9a07-3f8b2c5e1d94";
+
+    /** OIDC の連携先の payload を、この describe の間だけ書き換え、終わったら戻す。 */
+    const patchProviderPayloadDuring = (patch) => {
+      const configUrl = () =>
+        `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/federation-configurations/${PROVIDER_CONFIG_ID}`;
+      let configBefore;
+
+      beforeAll(async () => {
+        const headers = { Authorization: `Bearer ${await requestAdminAccessToken()}` };
+        const current = await get({ url: configUrl(), headers });
+        expect(current.status).toBe(200);
+        configBefore = current.data;
+        const update = await putWithJson({
+          url: configUrl(),
+          headers,
+          body: { ...configBefore, payload: { ...configBefore.payload, ...patch } },
+        });
+        expect(update.status).toBe(200);
+      });
+
+      afterAll(async () => {
+        await putWithJson({
+          url: configUrl(),
+          headers: { Authorization: `Bearer ${await requestAdminAccessToken()}` },
+          body: configBefore,
+        });
+      });
+    };
+
     it("renews the one link when the same external account is linked again", async () => {
       const accessToken = await loginAsNewUser();
       const externalEmail = await createExternalUser();
@@ -541,6 +571,113 @@ describe("account linking", () => {
         expect(await linkOnce(accessToken, OAUTH2_PROVIDER)).toBe(first);
 
         expect((await listLinks(accessToken)).filter((it) => it.provider === OAUTH2_PROVIDER)).toHaveLength(1);
+      });
+    });
+
+    describe("revoking the tokens a re-link replaces", () => {
+      const scope = "openid profile email offline_access";
+
+      const storedAccessToken = async (accessToken, alias) => {
+        const response = await retrieveToken({
+          alias,
+          token: accessToken,
+          clientId: clientSecretPostClient.clientId,
+          clientSecret: clientSecretPostClient.clientSecret,
+        });
+        expect(response.status).toBe(200);
+        return response.data.access_token;
+      };
+
+      const externalUserinfoStatus = async (externalAccessToken) =>
+        (
+          await get({
+            url: `${backendUrl}/${federationServerConfig.tenantId}/v1/userinfo`,
+            headers: { Authorization: `Bearer ${externalAccessToken}` },
+          })
+        ).status;
+
+      it("leaves the replaced tokens alive at the external IdP by default", async () => {
+        const accessToken = await loginAsNewUser();
+        const externalEmail = await createExternalUser();
+        const alias = await linkOnce(accessToken, PROVIDER, scope, externalEmail);
+        const replaced = await storedAccessToken(accessToken, alias);
+
+        expect(await linkOnce(accessToken, PROVIDER, scope, externalEmail)).toBe(alias);
+
+        expect(await externalUserinfoStatus(replaced)).toBe(200);
+      });
+
+      describe("with revoke_on_relink", () => {
+        patchProviderPayloadDuring({ revoke_on_relink: true });
+
+        it("revokes the replaced tokens at the external IdP and keeps the new ones", async () => {
+          const accessToken = await loginAsNewUser();
+          const externalEmail = await createExternalUser();
+          const alias = await linkOnce(accessToken, PROVIDER, scope, externalEmail);
+          const replaced = await storedAccessToken(accessToken, alias);
+
+          expect(await linkOnce(accessToken, PROVIDER, scope, externalEmail)).toBe(alias);
+
+          expect(await externalUserinfoStatus(replaced)).toBe(401);
+          const renewed = await storedAccessToken(accessToken, alias);
+          expect(renewed).not.toBe(replaced);
+          expect(await externalUserinfoStatus(renewed)).toBe(200);
+        });
+      });
+    });
+
+    describe("with multiple_accounts on a provider that names the account", () => {
+      patchProviderPayloadDuring({ multiple_accounts: true });
+
+      it("adds a link for another external account, and renews the link of the same one", async () => {
+        const accessToken = await loginAsNewUser();
+        const scope = "openid profile email offline_access";
+        const firstEmail = await createExternalUser();
+        const secondEmail = await createExternalUser();
+
+        const first = await linkOnce(accessToken, PROVIDER, scope, firstEmail);
+        const second = await linkOnce(accessToken, PROVIDER, scope, secondEmail);
+        expect(second).not.toBe(first);
+
+        // 同じ外部アカウントをもう一度つなぐと、そのアカウントの連携を更新する。行は増えない。
+        expect(await linkOnce(accessToken, PROVIDER, scope, firstEmail)).toBe(first);
+
+        const links = (await listLinks(accessToken)).filter((it) => it.provider === PROVIDER);
+        expect(links.map((it) => it.alias).sort()).toEqual([first, second].sort());
+      });
+    });
+
+    describe("an external account another user has linked", () => {
+      const scope = "openid profile email offline_access";
+
+      it("is refused under duplicate_link_policy reject, the default", async () => {
+        const externalEmail = await createExternalUser();
+        const holder = await loginAsNewUser();
+        await linkOnce(holder, PROVIDER, scope, externalEmail);
+
+        const other = await loginAsNewUser();
+        const response = await linkThroughComplete(other, PROVIDER, scope, externalEmail);
+        console.log(response.status, response.data);
+        expect(response.status).toBe(409);
+
+        expect((await listLinks(other)).filter((it) => it.provider === PROVIDER)).toHaveLength(0);
+        expect((await listLinks(holder)).filter((it) => it.provider === PROVIDER)).toHaveLength(1);
+      });
+
+      describe("with duplicate_link_policy allow", () => {
+        patchProviderPayloadDuring({ duplicate_link_policy: "allow" });
+
+        it("is linked to both users", async () => {
+          const externalEmail = await createExternalUser();
+          const holder = await loginAsNewUser();
+          await linkOnce(holder, PROVIDER, scope, externalEmail);
+
+          const other = await loginAsNewUser();
+          await linkOnce(other, PROVIDER, scope, externalEmail);
+
+          expect((await listLinks(holder)).filter((it) => it.provider === PROVIDER)).toHaveLength(1);
+          expect((await listLinks(other)).filter((it) => it.provider === PROVIDER)).toHaveLength(1);
+        });
       });
     });
   });

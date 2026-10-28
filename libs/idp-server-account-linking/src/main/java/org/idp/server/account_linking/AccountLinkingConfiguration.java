@@ -30,6 +30,7 @@ public class AccountLinkingConfiguration implements JsonReadable {
 
   String duplicateLinkPolicy;
   boolean multipleAccounts;
+  boolean revokeOnRelink;
   String revocationEndpoint;
 
   public AccountLinkingConfiguration() {}
@@ -47,7 +48,21 @@ public class AccountLinkingConfiguration implements JsonReadable {
     return multipleAccounts;
   }
 
-  /** The external IdP's token revocation endpoint (RFC 7009), used when a link is removed. */
+  /**
+   * Whether linking an account again revokes the tokens it replaces at the external IdP.
+   *
+   * <p>Off by default. RFC 7009 lets a provider revoke every token of the grant along with the one
+   * named, and linking again usually lands in the same grant, so on such a provider the tokens just
+   * obtained would stop working too. It is for providers known to revoke only the token named.
+   */
+  public boolean revokesOnRelink() {
+    return revokeOnRelink;
+  }
+
+  /**
+   * The external IdP's token revocation endpoint (RFC 7009), used when a link is removed, and when
+   * it is renewed with {@link #revokesOnRelink()} on.
+   */
   public String revocationEndpoint() {
     return revocationEndpoint;
   }

@@ -87,6 +87,11 @@ public class AccountLinkingFederationConfigurationRule implements FederationConf
       problems.add("payload.multiple_accounts must be true or false.");
     }
 
+    Object revokeOnRelink = payload.get("revoke_on_relink");
+    if (revokeOnRelink != null && !(revokeOnRelink instanceof Boolean)) {
+      problems.add("payload.revoke_on_relink must be true or false.");
+    }
+
     // With openid the external account is identified by the id_token's sub, which needs the
     // issuer to compare and the keys to verify.
     Object scopes = payload.get("scopes_supported");
