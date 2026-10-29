@@ -414,9 +414,10 @@ token={ユーザーのアクセストークン}&client_id=...&client_secret=...
 
 | ステータス | `error` | 発生条件 |
 |---|---|---|
-| 400 | `invalid_request` | `link`: `redirect_uri` が未指定、または allow-list に無い / 連携先が設定されていない・無効 / `scope` が連携先の `scopes_supported` を超える / 連携先が `openid` を持つのに `scope` に `openid` が無い |
+| 400 | `invalid_request` | `link`: `redirect_uri` が未指定、または allow-list に無い / `scope` が連携先の `scopes_supported` を超える / 連携先が `openid` を持つのに `scope` に `openid` が無い |
+| 400 | `provider_unavailable` | `link`: 連携先が設定されていない・無効 |
 | 400 | `expired_link` | `complete`: 連携セッションが期限切れ |
-| 400 | `provider_unavailable` | `complete`: 連携の途中で連携先が削除・無効化された |
+| 400 | `provider_unavailable` | `complete`: 連携の途中で連携先が削除・無効化された（保管トークンの取得も同じ） |
 | 403 | `insufficient_scope` | `linked_account:read` / `linked_account:manage` が無い（`scope` も付く） |
 | 403 | `invalid_request` | `link`: 連携先がクライアントの `linking_providers` に無い |
 | 403 | `client_mismatch` | `complete`: 確定したクライアントが連携を始めたクライアントと違う |

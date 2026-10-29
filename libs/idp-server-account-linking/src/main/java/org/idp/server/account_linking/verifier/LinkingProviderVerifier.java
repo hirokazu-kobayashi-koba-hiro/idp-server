@@ -22,6 +22,7 @@ import org.idp.server.account_linking.AccountLinkingProviderConfiguration;
 import org.idp.server.account_linking.ExternalIdpProvider;
 import org.idp.server.account_linking.exception.AccountLinkingInvalidRequestException;
 import org.idp.server.account_linking.exception.AccountLinkingProviderNotAllowedException;
+import org.idp.server.account_linking.exception.AccountLinkingProviderUnavailableException;
 import org.idp.server.core.openid.federation.FederationConfigurationNotFoundException;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -66,7 +67,7 @@ public class LinkingProviderVerifier {
     try {
       configuration = configurationResolver.resolve(tenant, provider);
     } catch (FederationConfigurationNotFoundException exception) {
-      throw new AccountLinkingInvalidRequestException(
+      throw new AccountLinkingProviderUnavailableException(
           "The linking provider is not configured or not enabled: " + provider.value());
     }
 

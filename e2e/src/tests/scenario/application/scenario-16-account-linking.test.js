@@ -2286,6 +2286,38 @@ describe("account linking", () => {
     });
   });
 
+  describe("a provider an operator has disabled", () => {
+    const configUrl = () =>
+      `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/federation-configurations/c1d4a3f8-6b2e-4d51-9a07-3f8b2c5e1d94`;
+    let configBefore;
+
+    beforeAll(async () => {
+      const headers = { Authorization: `Bearer ${await requestAdminAccessToken()}` };
+      const current = await get({ url: configUrl(), headers });
+      expect(current.status).toBe(200);
+      configBefore = current.data;
+      const update = await putWithJson({ url: configUrl(), headers, body: { ...configBefore, enabled: false } });
+      expect(update.status).toBe(200);
+    });
+
+    afterAll(async () => {
+      await putWithJson({
+        url: configUrl(),
+        headers: { Authorization: `Bearer ${await requestAdminAccessToken()}` },
+        body: configBefore,
+      });
+    });
+
+    it("answers provider_unavailable at link, so the RP can tell the user the service is not available", async () => {
+      const accessToken = await login(ownerUser);
+
+      const response = await startLink(accessToken, PROVIDER);
+      console.log(response.status, response.data);
+      expect(response.status).toBe(400);
+      expect(response.data.error).toBe("provider_unavailable");
+    });
+  });
+
   describe("provider scope", () => {
     it("requires openid of a provider configured for it, so the external account is identified", async () => {
       const accessToken = await login(ownerUser);

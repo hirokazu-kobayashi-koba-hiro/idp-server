@@ -23,6 +23,7 @@ import org.idp.server.account_linking.exception.AccountLinkingInvalidRequestExce
 import org.idp.server.account_linking.exception.AccountLinkingNotFoundException;
 import org.idp.server.account_linking.exception.AccountLinkingOperatorMismatchException;
 import org.idp.server.account_linking.exception.AccountLinkingProviderNotAllowedException;
+import org.idp.server.account_linking.exception.AccountLinkingProviderUnavailableException;
 import org.idp.server.account_linking.exception.AccountLinkingSessionExpiredException;
 import org.idp.server.account_linking.exception.AccountLinkingSessionStateException;
 import org.idp.server.account_linking.exception.AccountLinkingSeveralAccountsLinkedException;
@@ -99,6 +100,12 @@ public class AccountLinkingErrorHandler {
       return linkFailed(AccountLinkingStatus.NOT_FOUND, "not_found", exception.getMessage());
     }
 
+    if (exception instanceof AccountLinkingProviderUnavailableException) {
+      log.warn("Account linking provider unavailable: {}", exception.getMessage());
+      return linkFailed(
+          AccountLinkingStatus.BAD_REQUEST, "provider_unavailable", exception.getMessage());
+    }
+
     if (exception instanceof AccountLinkingInvalidRequestException) {
       log.warn("Account linking request rejected: {}", exception.getMessage());
       return linkFailed(AccountLinkingStatus.BAD_REQUEST, exception.getMessage());
@@ -143,6 +150,7 @@ public class AccountLinkingErrorHandler {
         || exception instanceof AccountLinkingDuplicateException
         || exception instanceof AccountLinkingAnotherAccountLinkedException
         || exception instanceof AccountLinkingNotFoundException
+        || exception instanceof AccountLinkingProviderUnavailableException
         || exception instanceof AccountLinkingInvalidRequestException
         || exception instanceof FederationConfigurationNotFoundException
         || exception instanceof ExternalIdpRequestFailedException;

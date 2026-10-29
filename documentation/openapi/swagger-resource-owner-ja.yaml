@@ -1571,10 +1571,14 @@ paths:
                 $ref: '#/components/schemas/AccountLinkingStartResponse'
         '400':
           description: |
-            `redirect_uri` が未指定、またはクライアントの `linking_return_uris` に登録されていない。
-            または `{provider}` の連携先が設定されていない・無効。
-            または `scope` が連携先の設定の `scopes_supported` の範囲を超えている。
-            または連携先の `scopes_supported` に `openid` があるのに、`scope` に `openid` が無い。
+            次のいずれか。
+
+            - `provider_unavailable` — `{provider}` の連携先が設定されていない、または運用者が無効にしている。利用者には、その連携先が今は使えないことを伝えます
+            - `invalid_request` — `redirect_uri` が未指定、またはクライアントの `linking_return_uris` に登録されていない
+            - `invalid_request` — `scope` が連携先の設定の `scopes_supported` の範囲を超えている
+            - `invalid_request` — 連携先の `scopes_supported` に `openid` があるのに、`scope` に `openid` が無い
+
+            `invalid_request` は RP の作りか設定の誤りで、`error_description` を見て直します。
           content:
             application/json:
               schema:
@@ -1588,9 +1592,9 @@ paths:
                   value:
                     error: invalid_request
                     error_description: "redirect_uri is not registered for this client."
-                provider_not_configured:
+                provider_unavailable:
                   value:
-                    error: invalid_request
+                    error: provider_unavailable
                     error_description: "The linking provider is not configured or not enabled: example-idp"
                 scope_beyond_provider:
                   value:
@@ -3181,7 +3185,7 @@ components:
         error:
           type: string
           description: |
-            エラーコード。確定（`complete`）は理由ごとのコード（`expired_link` / `provider_unavailable` / `client_mismatch` / `access_denied` /
+            エラーコード。連携先が使えないときは `provider_unavailable`（開始・確定）。確定（`complete`）は理由ごとのコード（`expired_link` / `provider_unavailable` / `client_mismatch` / `access_denied` /
             `invalid_link_state` / `account_already_linked` / `another_account_linked` / `several_accounts_linked`）、
             `404` は `not_found`、想定外のエラーは `server_error`、それ以外は `invalid_request`
           example: invalid_request

@@ -84,4 +84,10 @@ class AccountLinkingErrorHandlerTest {
     // The same code as an unknown alias at unlink and at token retrieval.
     assertAnswer(new AccountLinkingNotFoundException("unknown"), 404, "not_found");
   }
+
+  @Test
+  void aProviderNotConfiguredAtLinkIsUnavailable() {
+    assertAnswer(
+        new AccountLinkingProviderUnavailableException("disabled"), 400, "provider_unavailable");
+  }
 }

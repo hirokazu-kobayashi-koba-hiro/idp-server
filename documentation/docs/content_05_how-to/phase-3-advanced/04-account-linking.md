@@ -376,6 +376,7 @@ cd e2e && npm test -- --testPathPattern=scenario-16
 | トークン取得が `400 relink_required` | リフレッシュトークンが無い・期限切れ・拒否された | `refresh_token_expires_in` と、外部IdPがリフレッシュトークンを返すスコープ（例: `offline_access`）を確認 |
 | `link` が `403` | 連携先がクライアントの `linking_providers` に無い | Step 4 を確認 |
 | `link` が `400`（scope） | 要求した `scope` が連携先の `scopes_supported` に無い | 要求を連携先の設定の範囲にする |
+| `link` が `400 provider_unavailable` | `{provider}` の連携先が無い、`sso_provider` の名前が違う、または `enabled: false` | `sso_provider` と `enabled` を確認。運用で止めているなら、RP はその連携先が使えないことを利用者に伝える |
 | トークン取得が `403 unauthorized_client` | 連携先が `linking_token_providers` に無い、またはユーザートークンが別クライアントに発行された | Step 4 を確認 |
 
 ---
