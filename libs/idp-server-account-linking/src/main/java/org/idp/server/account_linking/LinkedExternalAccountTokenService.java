@@ -199,8 +199,8 @@ public class LinkedExternalAccountTokenService {
    * The provider's settings for a refresh.
    *
    * <p>An operator may have removed or disabled the provider since the account was linked. The
-   * stored refresh token cannot be spent without them, so the caller is told to link again, as for
-   * any refresh that cannot be made.
+   * stored refresh token cannot be spent without them. Linking again would fail as well while the
+   * provider is gone, so the caller is told the provider is unavailable rather than to link again.
    */
   private OidcSsoConfiguration providerConfiguration(Tenant tenant, LinkedExternalAccount account) {
     try {
@@ -210,8 +210,8 @@ public class LinkedExternalAccountTokenService {
           "Linking provider is no longer configured. provider={}, alias={}",
           account.provider().value(),
           account.accountAlias().value());
-      throw LinkedExternalAccountTokenException.relinkRequired(
-          "The linking provider is no longer available. Link the account again.");
+      throw LinkedExternalAccountTokenException.providerUnavailable(
+          "The linking provider is no longer available.");
     }
   }
 

@@ -19,9 +19,9 @@ package org.idp.server.account_linking.handler;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.idp.server.account_linking.*;
-import org.idp.server.account_linking.exception.AccountLinkingAnotherAccountLinkedException;
 import org.idp.server.account_linking.exception.AccountLinkingNotFoundException;
 import org.idp.server.account_linking.exception.AccountLinkingSessionStateException;
+import org.idp.server.account_linking.exception.AccountLinkingSeveralAccountsLinkedException;
 import org.idp.server.account_linking.io.AccountLinkingCompleteRequest;
 import org.idp.server.account_linking.io.AccountLinkingResult;
 import org.idp.server.account_linking.io.AccountLinkingStatus;
@@ -196,7 +196,7 @@ public class AccountLinkingCompleteHandler {
             .findFirst()
             .orElse(linked.size() == 1 ? linked.getFirst() : null);
     if (chosen == null) {
-      throw new AccountLinkingAnotherAccountLinkedException(
+      throw new AccountLinkingSeveralAccountsLinkedException(
           "Several accounts of this provider are linked. Unlink them before linking again.");
     }
     return accountQueryRepository.lock(tenant, session.userIdentifier(), chosen.accountAlias());

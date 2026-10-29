@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.LocalDateTime;
 import org.idp.server.account_linking.exception.AccountLinkingOperatorMismatchException;
+import org.idp.server.account_linking.exception.AccountLinkingSessionExpiredException;
 import org.idp.server.account_linking.exception.AccountLinkingSessionStateException;
 import org.idp.server.core.openid.authentication.Authentication;
 import org.idp.server.core.openid.identity.UserIdentifier;
@@ -226,7 +227,7 @@ class AccountLinkingSessionTest {
 
       assertTrue(pending.isExpired(NOW.plusMinutes(15)));
       assertThrows(
-          AccountLinkingSessionStateException.class,
+          AccountLinkingSessionExpiredException.class,
           () -> pending.verifyNotExpired(NOW.plusMinutes(16)));
       assertDoesNotThrow(() -> pending.verifyNotExpired(NOW));
     }

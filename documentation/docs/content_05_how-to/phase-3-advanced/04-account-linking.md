@@ -269,6 +269,7 @@ curl -X POST "${IDP_SERVER_URL}/${TENANT_ID}/v1/linked-external-accounts/${ALIAS
 | 応答 | RP がすること |
 |------|--------------|
 | `400 relink_required` | リフレッシュできない。5.1 から連携し直してもらう |
+| `400 provider_unavailable` | 連携先が削除・無効化された。連携し直しも失敗するので、連携先が使えないことをユーザーに伝える |
 | `502 temporarily_unavailable` | 外部IdPが一時的に応答しない。時間をおいて再試行 |
 
 ユーザートークンが DPoP・mTLS・クライアントインスタンス（ABCA）に縛られているときは、その証明も一緒に出します。DPoP なら `DPoP` ヘッダーの proof（`htu` はこの API の URL、`ath` は `token` のハッシュ）、mTLS なら同じクライアント証明書、ABCA ならトークンを受け取ったインスタンスの鍵でのクライアント認証です。合わなければ `401 invalid_token`。ABCA の縛りを照合するのはこの API だけで、`/me` 系の API（連携・一覧・解除）が照合するのは DPoP と mTLS だけです。`/me` 系でも送り手を縛るなら、ABCA に DPoP を組み合わせます。
@@ -321,6 +322,7 @@ curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/t
 |---|---|---|
 | `relink_required` | リフレッシュトークンが期限切れか、連携先に断られた。ユーザーに連携し直してもらう必要がある | あり |
 | `temporarily_unavailable` | 連携先がリフレッシュに 5xx か 429 を返した、または届かない | あり |
+| `provider_unavailable` | 連携先の設定が削除・無効化された | あり |
 | `unauthorized_client` | クライアントに許可されていない連携先か、ユーザーのトークンが別のクライアントのもの | 連携先の判定ならあり |
 | `invalid_client` / `invalid_token` / `insufficient_scope` / `invalid_request` / `not_found` | クライアントやユーザーのトークンの問題 | なし |
 
@@ -366,10 +368,12 @@ cd e2e && npm test -- --testPathPattern=scenario-16
 | 戻り先に `error=login_required` | 連携の途中のログインを取り消した、またはログインしてもブラウザにセッションが残らない | 5.1 からやり直す。続くなら `cookie_same_site` が `Strict` でないか、セッションの保存先（Redis）が動いているか確認 |
 | `start_url` を開くとエラー画面（RP に戻らない） | 連携セッションが期限切れ・開始済み（再読み込みなど）、別のブラウザや別のユーザーで開いた、または `link` の後で連携先が無効化された | 5.1 の `link` からやり直す。RP は `expires_in` を過ぎたら一覧で結果を確かめる |
 | 戻り先に `error=server_error` | 外部IdPでのトークン交換・ID Token 検証・userinfo の失敗 | `client_authentication_type`・`redirect_uri`・`issuer`・`jwks_uri` を確認 |
-| `complete` が `403` | 連携を始めたクライアントと別のクライアントのトークンで確定した | 開始と同じクライアントのトークンを使う |
-| `complete` が `409` | 連携セッションが期限切れ、または同じ外部アカウントが別ユーザーに連携済み（`reject`）、またはこの連携先の別のアカウントを連携済み（`multiple_accounts: false`） | 期限切れなら 5.1 からやり直す / `duplicate_link_policy` を見直す / 前の連携を解除してから、期限内なら同じ `state` で `complete` を送り直す |
+| `complete` が `403 client_mismatch` | 連携を始めたクライアントと別のクライアントのトークンで確定した | 開始と同じクライアントのトークンを使う |
+| `complete` が `400 expired_link` | 連携セッションが期限切れ（900 秒） | 5.1 からやり直す |
+| `complete` が `409` | `account_already_linked`: 同じ外部アカウントが別ユーザーに連携済み（`reject`） / `another_account_linked`: この連携先の別のアカウントを連携済み（`multiple_accounts: false`） | `duplicate_link_policy` を見直す / 前の連携を解除してから、期限内なら同じ `state` で `complete` を送り直す |
 | トークン取得が `404 not_found` | 保存していた `alias` の連携が解除された。別のアカウントにつなぎ直されると `alias` が変わる | 一覧を引き直して、今の `alias` を使う |
-| トークン取得が `400 relink_required` | リフレッシュトークンが無い・期限切れ・拒否された、または連携先が削除・無効化された | `refresh_token_expires_in` と、外部IdPがリフレッシュトークンを返すスコープ（例: `offline_access`）を確認 |
+| トークン取得が `400 provider_unavailable` | 連携先が削除・無効化された | 連携先の設定を戻す。戻さないなら、その連携は使えないとユーザーに伝える |
+| トークン取得が `400 relink_required` | リフレッシュトークンが無い・期限切れ・拒否された | `refresh_token_expires_in` と、外部IdPがリフレッシュトークンを返すスコープ（例: `offline_access`）を確認 |
 | `link` が `403` | 連携先がクライアントの `linking_providers` に無い | Step 4 を確認 |
 | `link` が `400`（scope） | 要求した `scope` が連携先の `scopes_supported` に無い | 要求を連携先の設定の範囲にする |
 | トークン取得が `403 unauthorized_client` | 連携先が `linking_token_providers` に無い、またはユーザートークンが別クライアントに発行された | Step 4 を確認 |

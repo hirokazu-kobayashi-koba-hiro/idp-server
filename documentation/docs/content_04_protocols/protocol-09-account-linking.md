@@ -335,7 +335,8 @@ token={ユーザーのアクセストークン}&client_id=...&client_secret=...
 | ステータス | `error` | 発生条件 |
 |---|---|---|
 | 400 | `invalid_request` | `token` が無い / `DPoP` ヘッダーが 2 つ以上 |
-| 400 | `relink_required` | リフレッシュトークンが無い・期限切れ・外部IdPに拒否された（429 以外の 4xx） / 連携先が削除・無効化された。連携し直す必要があります |
+| 400 | `relink_required` | リフレッシュトークンが無い・期限切れ・外部IdPに拒否された（429 以外の 4xx）。連携し直す必要があります |
+| 400 | `provider_unavailable` | 連携先が削除・無効化された。連携し直しも失敗します |
 | 401 | `invalid_client` | クライアント認証に失敗した / public クライアント |
 | 401 | `invalid_token` | `token` が無効・期限切れ・ユーザーを指していない / ユーザーが有効でない / sender-constrained なのに送り手の証明が合わない |
 | 403 | `unauthorized_client` | `token` が別のクライアントに発行された / 連携先が許可されていない |
@@ -409,16 +410,27 @@ token={ユーザーのアクセストークン}&client_id=...&client_secret=...
 
 ### API の失敗
 
-`link` / `complete` / 一覧 / 解除のエラーは `{ "error": "...", "error_description": "..." }` の形です。`error` は、スコープ不足が `insufficient_scope`（`scope` も付く）、解除の 404 が `not_found`、想定外のエラーが `server_error`、それ以外は `invalid_request` です。
+`link` / `complete` / 一覧 / 解除のエラーは `{ "error": "...", "error_description": "..." }` の形です。分岐には `error` を使います。`error_description` は人が読むための文で、変わることがあります。
 
-| ステータス | 発生条件 |
-|---|---|
-| 400 | `redirect_uri` が未指定、または allow-list に無い / 連携先が設定されていない・無効 / `scope` が連携先の `scopes_supported` を超える / 連携先が `openid` を持つのに `scope` に `openid` が無い / 連携の途中で連携先が削除・無効化された |
-| 403 | 連携先がクライアントの `linking_providers` に無い / 操作者が連携セッションのユーザーと一致しない / 確定したクライアントが連携を始めたクライアントと違う / `insufficient_scope`（`linked_account:read` / `linked_account:manage` が無い） |
-| 404 | `state` に対応する連携セッションが無い / 解除する `alias` が呼び出したユーザーの連携に無い（`error` は `not_found`） |
-| 409 | 連携セッションが期限切れ、または期待する状態でない / 同じ外部アカウントが既に他のユーザーに紐付いている（`duplicate_link_policy: reject` のとき） / この連携先の別のアカウントを既に連携している（`multiple_accounts: false` のとき） / この連携先の連携が複数あって更新先を決められない / 同じユーザー・同じ連携先の確定が同時に届いた |
+| ステータス | `error` | 発生条件 |
+|---|---|---|
+| 400 | `invalid_request` | `link`: `redirect_uri` が未指定、または allow-list に無い / 連携先が設定されていない・無効 / `scope` が連携先の `scopes_supported` を超える / 連携先が `openid` を持つのに `scope` に `openid` が無い |
+| 400 | `expired_link` | `complete`: 連携セッションが期限切れ |
+| 400 | `provider_unavailable` | `complete`: 連携の途中で連携先が削除・無効化された |
+| 403 | `insufficient_scope` | `linked_account:read` / `linked_account:manage` が無い（`scope` も付く） |
+| 403 | `invalid_request` | `link`: 連携先がクライアントの `linking_providers` に無い |
+| 403 | `client_mismatch` | `complete`: 確定したクライアントが連携を始めたクライアントと違う |
+| 403 | `access_denied` | `complete`: 操作者が連携セッションのユーザーと一致しない |
+| 404 | `invalid_request` | `complete`: `state` に対応する連携セッションが無い |
+| 404 | `not_found` | 解除: `alias` が呼び出したユーザーの連携に無い |
+| 409 | `invalid_link_state` | `complete`: 連携セッションが確定できる状態にない（コールバック前・確定済み） |
+| 409 | `account_already_linked` | `complete`: 同じ外部アカウントが既に他のユーザーに紐付いている（`duplicate_link_policy: reject` のとき） |
+| 409 | `another_account_linked` | `complete`: この連携先の別のアカウントを既に連携している（`multiple_accounts: false` のとき） |
+| 409 | `several_accounts_linked` | `complete`: この連携先の連携が複数あって更新先を決められない |
+| 409 | `invalid_request` | `complete`: 同じユーザー・同じ連携先の確定が同時に届いた。一覧で結果を確かめる |
+| 500 | `server_error` | 想定外のエラー |
 
-`complete` を 400・403・409 で断ったときは、連携セッションは確定を待つ状態のまま残ります。原因を取り除けば、期限内なら同じ `state` で送り直せます。期限切れ・確定済み・404 のときは `link` からやり直します。
+`complete` を 400・403・409 で断ったときは、連携セッションは確定を待つ状態のまま残ります。原因を取り除けば、期限内なら同じ `state` で送り直せます。`expired_link`・`invalid_link_state`（確定済み）・404 のときは `link` からやり直します。
 
 409 のうち重複連携は、誰に紐付いているかを返しません。返すと外部アカウントの所有者を列挙する手がかりになるためです。
 

@@ -71,6 +71,12 @@ public class LinkedExternalAccountTokenException extends RuntimeException {
         AccountLinkingStatus.BAD_REQUEST, "relink_required", description);
   }
 
+  /** The provider of the link was removed or disabled: linking again would fail as well. */
+  public static LinkedExternalAccountTokenException providerUnavailable(String description) {
+    return new LinkedExternalAccountTokenException(
+        AccountLinkingStatus.BAD_REQUEST, "provider_unavailable", description);
+  }
+
   public static LinkedExternalAccountTokenException externalIdpUnavailable(String description) {
     return new LinkedExternalAccountTokenException(
         AccountLinkingStatus.BAD_GATEWAY, "temporarily_unavailable", description);

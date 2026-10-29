@@ -17,12 +17,15 @@
 package org.idp.server.account_linking.handler;
 
 import org.idp.server.account_linking.exception.AccountLinkingAnotherAccountLinkedException;
+import org.idp.server.account_linking.exception.AccountLinkingClientMismatchException;
 import org.idp.server.account_linking.exception.AccountLinkingDuplicateException;
 import org.idp.server.account_linking.exception.AccountLinkingInvalidRequestException;
 import org.idp.server.account_linking.exception.AccountLinkingNotFoundException;
 import org.idp.server.account_linking.exception.AccountLinkingOperatorMismatchException;
 import org.idp.server.account_linking.exception.AccountLinkingProviderNotAllowedException;
+import org.idp.server.account_linking.exception.AccountLinkingSessionExpiredException;
 import org.idp.server.account_linking.exception.AccountLinkingSessionStateException;
+import org.idp.server.account_linking.exception.AccountLinkingSeveralAccountsLinkedException;
 import org.idp.server.account_linking.exception.ExternalIdpRequestFailedException;
 import org.idp.server.account_linking.io.AccountLinkingResult;
 import org.idp.server.account_linking.io.AccountLinkingStatus;
@@ -49,7 +52,17 @@ public class AccountLinkingErrorHandler {
 
     if (exception instanceof AccountLinkingOperatorMismatchException) {
       log.warn("Account linking rejected: {}", exception.getMessage());
-      return linkFailed(AccountLinkingStatus.FORBIDDEN, exception.getMessage());
+      return linkFailed(AccountLinkingStatus.FORBIDDEN, "access_denied", exception.getMessage());
+    }
+
+    if (exception instanceof AccountLinkingClientMismatchException) {
+      log.warn("Account linking completed by another client: {}", exception.getMessage());
+      return linkFailed(AccountLinkingStatus.FORBIDDEN, "client_mismatch", exception.getMessage());
+    }
+
+    if (exception instanceof AccountLinkingSessionExpiredException) {
+      log.warn("Account linking session expired: {}", exception.getMessage());
+      return linkFailed(AccountLinkingStatus.BAD_REQUEST, "expired_link", exception.getMessage());
     }
 
     if (exception instanceof AccountLinkingProviderNotAllowedException) {
@@ -59,17 +72,26 @@ public class AccountLinkingErrorHandler {
 
     if (exception instanceof AccountLinkingSessionStateException) {
       log.warn("Account linking session state rejected: {}", exception.getMessage());
-      return linkFailed(AccountLinkingStatus.CONFLICT, exception.getMessage());
+      return linkFailed(
+          AccountLinkingStatus.CONFLICT, "invalid_link_state", exception.getMessage());
     }
 
     if (exception instanceof AccountLinkingDuplicateException) {
       log.warn("Account linking duplicate rejected: {}", exception.getMessage());
-      return linkFailed(AccountLinkingStatus.CONFLICT, exception.getMessage());
+      return linkFailed(
+          AccountLinkingStatus.CONFLICT, "account_already_linked", exception.getMessage());
     }
 
     if (exception instanceof AccountLinkingAnotherAccountLinkedException) {
       log.warn("Account linking to another account rejected: {}", exception.getMessage());
-      return linkFailed(AccountLinkingStatus.CONFLICT, exception.getMessage());
+      return linkFailed(
+          AccountLinkingStatus.CONFLICT, "another_account_linked", exception.getMessage());
+    }
+
+    if (exception instanceof AccountLinkingSeveralAccountsLinkedException) {
+      log.warn("Account linking with several accounts linked rejected: {}", exception.getMessage());
+      return linkFailed(
+          AccountLinkingStatus.CONFLICT, "several_accounts_linked", exception.getMessage());
     }
 
     if (exception instanceof AccountLinkingNotFoundException) {
@@ -87,7 +109,9 @@ public class AccountLinkingErrorHandler {
       // and the caller can do nothing about it but start again once the provider is back.
       log.warn("Account linking provider no longer configured: {}", exception.getMessage());
       return linkFailed(
-          AccountLinkingStatus.BAD_REQUEST, "The linking provider is no longer available.");
+          AccountLinkingStatus.BAD_REQUEST,
+          "provider_unavailable",
+          "The linking provider is no longer available.");
     }
 
     if (exception instanceof ExternalIdpRequestFailedException) {
@@ -111,6 +135,9 @@ public class AccountLinkingErrorHandler {
    */
   public boolean isRejection(Exception exception) {
     return exception instanceof AccountLinkingOperatorMismatchException
+        || exception instanceof AccountLinkingClientMismatchException
+        || exception instanceof AccountLinkingSessionExpiredException
+        || exception instanceof AccountLinkingSeveralAccountsLinkedException
         || exception instanceof AccountLinkingProviderNotAllowedException
         || exception instanceof AccountLinkingSessionStateException
         || exception instanceof AccountLinkingDuplicateException
@@ -124,5 +151,11 @@ public class AccountLinkingErrorHandler {
   private AccountLinkingResult linkFailed(AccountLinkingStatus status, String description) {
     return AccountLinkingResult.error(
         status, description, DefaultSecurityEventType.external_account_link_failed);
+  }
+
+  private AccountLinkingResult linkFailed(
+      AccountLinkingStatus status, String error, String description) {
+    return AccountLinkingResult.error(
+        status, error, description, DefaultSecurityEventType.external_account_link_failed);
   }
 }

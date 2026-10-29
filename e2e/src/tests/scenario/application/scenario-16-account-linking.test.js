@@ -520,6 +520,7 @@ describe("account linking", () => {
       const response = await linkThroughComplete(accessToken, PROVIDER, scope, anotherEmail);
       console.log(response.status, response.data);
       expect(response.status).toBe(409);
+      expect(response.data.error).toBe("another_account_linked");
 
       const links = (await listLinks(accessToken)).filter((it) => it.provider === PROVIDER);
       // 断った complete は何も書かない。つないでいるアカウントはそのまま。
@@ -657,6 +658,10 @@ describe("account linking", () => {
       );
       console.log(responses.map((it) => [it.status, it.data]));
       expect(responses.map((it) => it.status).sort()).toEqual([201, 409]);
+      // 同時に INSERT した側は共通の 409（invalid_request）、先の連携を見た側は another_account_linked。
+      expect(["invalid_request", "another_account_linked"]).toContain(
+        responses.find((it) => it.status === 409).data.error
+      );
       expect((await listLinks(accessToken)).filter((it) => it.provider === PROVIDER)).toHaveLength(1);
     });
 
@@ -693,6 +698,7 @@ describe("account linking", () => {
         const response = await linkThroughComplete(other, PROVIDER, scope, externalEmail);
         console.log(response.status, response.data);
         expect(response.status).toBe(409);
+        expect(response.data.error).toBe("account_already_linked");
 
         expect((await listLinks(other)).filter((it) => it.provider === PROVIDER)).toHaveLength(0);
         expect((await listLinks(holder)).filter((it) => it.provider === PROVIDER)).toHaveLength(1);
@@ -1562,6 +1568,7 @@ describe("account linking", () => {
         body: { state: linkResponse.data.state },
       });
       expect(completeResponse.status).toBe(403);
+      expect(completeResponse.data.error).toBe("client_mismatch");
 
       // 始めたクライアントからは、まだ確定できる。
       const ownComplete = await postWithJson({

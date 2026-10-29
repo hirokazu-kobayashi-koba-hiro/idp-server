@@ -49,4 +49,15 @@ class LinkedExternalAccountTokenExceptionTest {
     assertEquals("temporarily_unavailable", exception.error());
     assertEquals(AccountLinkingStatus.BAD_GATEWAY, exception.status());
   }
+
+  @Test
+  void tellsTheProviderIsUnavailableRatherThanToLinkAgain() {
+    // Linking again would fail too while the provider is removed or disabled.
+    LinkedExternalAccountTokenException exception =
+        LinkedExternalAccountTokenException.providerUnavailable("gone");
+
+    assertEquals("provider_unavailable", exception.error());
+    assertEquals(AccountLinkingStatus.BAD_REQUEST, exception.status());
+    assertFalse(exception.isRelinkRequired());
+  }
 }

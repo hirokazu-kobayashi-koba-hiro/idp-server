@@ -1772,7 +1772,8 @@ paths:
         '400':
           description: |
             - `invalid_request` — `token` が無い / `DPoP` ヘッダーが 2 つ以上
-            - `relink_required` — リフレッシュトークンが無い・期限切れ、外部IdPがリフレッシュを 4xx（429 を除く）で拒否した、または連携先が削除・無効化された。ユーザーが連携し直す必要があります
+            - `relink_required` — リフレッシュトークンが無い・期限切れ、または外部IdPがリフレッシュを 4xx（429 を除く）で拒否した。ユーザーが連携し直す必要があります
+            - `provider_unavailable` — 連携先の設定が削除・無効化された。連携し直しも失敗するので、ユーザーには連携先が使えないことを伝えます
           content:
             application/json:
               schema:
@@ -1786,6 +1787,10 @@ paths:
                   value:
                     error: relink_required
                     error_description: "The stored token has expired and cannot be refreshed. Link the account again."
+                provider_unavailable:
+                  value:
+                    error: provider_unavailable
+                    error_description: "The linking provider is no longer available."
         '401':
           description: |
             - `invalid_client` — クライアント認証に失敗した / 未登録のクライアント / public クライアント
@@ -3319,7 +3324,7 @@ components:
       properties:
         error:
           type: string
-          enum: [ invalid_request, relink_required, invalid_client, invalid_token, unauthorized_client, insufficient_scope, not_found, temporarily_unavailable ]
+          enum: [ invalid_request, relink_required, provider_unavailable, invalid_client, invalid_token, unauthorized_client, insufficient_scope, not_found, temporarily_unavailable ]
         error_description:
           type: string
           description: エラーの詳細な説明（ユーザー向けではない）

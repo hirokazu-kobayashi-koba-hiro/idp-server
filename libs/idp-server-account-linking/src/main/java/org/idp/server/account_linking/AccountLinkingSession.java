@@ -17,7 +17,9 @@
 package org.idp.server.account_linking;
 
 import java.time.LocalDateTime;
+import org.idp.server.account_linking.exception.AccountLinkingClientMismatchException;
 import org.idp.server.account_linking.exception.AccountLinkingOperatorMismatchException;
+import org.idp.server.account_linking.exception.AccountLinkingSessionExpiredException;
 import org.idp.server.account_linking.exception.AccountLinkingSessionStateException;
 import org.idp.server.core.openid.authentication.Authentication;
 import org.idp.server.core.openid.identity.UserIdentifier;
@@ -108,11 +110,11 @@ public class AccountLinkingSession {
   }
 
   /**
-   * @throws AccountLinkingSessionStateException if the session is past its expiry
+   * @throws AccountLinkingSessionExpiredException if the session is past its expiry
    */
   public void verifyNotExpired(LocalDateTime now) {
     if (isExpired(now)) {
-      throw new AccountLinkingSessionStateException(
+      throw new AccountLinkingSessionExpiredException(
           "Account linking session is expired. state=" + state.value());
     }
   }
@@ -180,11 +182,11 @@ public class AccountLinkingSession {
    * <p>The link is started and completed by one application. Completing it from another would let a
    * client the user never linked through take over a link it did not start.
    *
-   * @throws AccountLinkingOperatorMismatchException if the clients differ
+   * @throws AccountLinkingClientMismatchException if the clients differ
    */
   public void verifyClient(RequestedClientId clientId) {
     if (requestedClientId == null || !requestedClientId.equals(clientId)) {
-      throw new AccountLinkingOperatorMismatchException(
+      throw new AccountLinkingClientMismatchException(
           "Account linking must be completed by the client that started it. state="
               + state.value());
     }

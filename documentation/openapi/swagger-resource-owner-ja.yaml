@@ -1657,7 +1657,9 @@ paths:
         ## 断られたときのやり直し
         `400` / `403` / `409` で断ったとき、連携セッションは確定を待つ状態のまま残ります。
         原因を取り除けば（例: 別のアカウントの連携を解除する）、期限内なら同じ `state` で送り直せます。
-        期限切れ・確定済みのときと `404` のときは、連携開始（`link`）からやり直します。
+        `expired_link`・`invalid_link_state`（確定済み）と `404` のときは、連携開始（`link`）からやり直します。
+
+        分岐には `error` を使ってください。`error_description` は人が読むための文で、変わることがあります。
 
         `state` が無いリクエストは、連携セッションが無いときと同じく `404` です。
 
@@ -1698,23 +1700,32 @@ paths:
                 $ref: '#/components/schemas/LinkedExternalAccount'
         '400':
           description: |
-            連携を開始した後で、連携先の設定が削除・無効化された。
+            次のいずれか。
+
+            - `expired_link` — 連携セッションが期限切れ。連携開始（`link`）からやり直します
+            - `provider_unavailable` — 連携を開始した後で、連携先の設定が削除・無効化された
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AccountLinkingErrorResponse'
-              example:
-                error: invalid_request
-                error_description: "The linking provider is no longer available."
+              examples:
+                expired_link:
+                  value:
+                    error: expired_link
+                    error_description: "Account linking session is expired. state=..."
+                provider_unavailable:
+                  value:
+                    error: provider_unavailable
+                    error_description: "The linking provider is no longer available."
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
           description: |
             次のいずれか。
 
-            - スコープ不足（`linked_account:manage` が必要）。`insufficient_scope` 形式
-            - 連携を開始したクライアントと違うクライアントのトークン
-            - 連携を開始したユーザーと違うユーザーのトークン
+            - `insufficient_scope` — スコープ不足（`linked_account:manage` が必要）
+            - `client_mismatch` — 連携を開始したクライアントと違うクライアントのトークン
+            - `access_denied` — 連携を開始したユーザーと違うユーザーのトークン
           content:
             application/json:
               schema:
@@ -1729,11 +1740,11 @@ paths:
                     scope: linked_account:manage
                 client_mismatch:
                   value:
-                    error: invalid_request
+                    error: client_mismatch
                     error_description: "Account linking must be completed by the client that started it. state=..."
-                user_mismatch:
+                access_denied:
                   value:
-                    error: invalid_request
+                    error: access_denied
                     error_description: "Account linking session is bound to a different user. state=..., provider=..."
         '404':
           description: |
@@ -1749,32 +1760,31 @@ paths:
           description: |
             次のいずれか。
 
-            - 連携セッションが期限切れ
-            - 連携セッションが確定できる状態にない（コールバック前、または確定済み）
-            - 同じ外部アカウントが既に他のユーザーに紐付いている（連携先の `duplicate_link_policy` が `reject` のとき）。誰に紐付いているかは返しません
-            - この連携先の別のアカウントを既に連携している（連携先の `multiple_accounts` が `false` のとき）。先に解除してから連携します
-            - この連携先の連携が複数あり、どれを更新するか決められない（連携先が `multiple_accounts: true` だった間に作られた連携が残っているとき）。不要な連携を解除してから連携します
-            - 同じユーザー・同じ連携先の確定が同時に届き、先に確定した方と重なった（連携先の `multiple_accounts` が `false` のとき）。一覧を引き直して結果を確かめます
+            - `invalid_link_state` — 連携セッションが確定できる状態にない（コールバック前、または確定済み）
+            - `account_already_linked` — 同じ外部アカウントが既に他のユーザーに紐付いている（連携先の `duplicate_link_policy` が `reject` のとき）。誰に紐付いているかは返しません
+            - `another_account_linked` — この連携先の別のアカウントを既に連携している（連携先の `multiple_accounts` が `false` のとき）。先に解除してから連携します
+            - `several_accounts_linked` — この連携先の連携が複数あり、どれを更新するか決められない（連携先が `multiple_accounts: true` だった間に作られた連携が残っているとき）。不要な連携を解除してから連携します
+            - `invalid_request` — 同じユーザー・同じ連携先の確定が同時に届き、先に確定した方と重なった（連携先の `multiple_accounts` が `false` のとき）。一覧を引き直して結果を確かめます
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AccountLinkingErrorResponse'
               examples:
-                expired:
+                invalid_link_state:
                   value:
-                    error: invalid_request
-                    error_description: "Account linking session is expired. state=..."
-                duplicate:
+                    error: invalid_link_state
+                    error_description: "Account linking session is not awaiting completion."
+                account_already_linked:
                   value:
-                    error: invalid_request
+                    error: account_already_linked
                     error_description: "This external account cannot be linked."
                 another_account_linked:
                   value:
-                    error: invalid_request
+                    error: another_account_linked
                     error_description: "Another account of this provider is already linked. Unlink it before linking another."
                 several_accounts_linked:
                   value:
-                    error: invalid_request
+                    error: several_accounts_linked
                     error_description: "Several accounts of this provider are linked. Unlink them before linking again."
                 completed_at_once:
                   value:
@@ -3171,7 +3181,9 @@ components:
         error:
           type: string
           description: |
-            エラーコード。解除の `404` は `not_found`、想定外のエラーは `server_error`、それ以外は `invalid_request`
+            エラーコード。確定（`complete`）は理由ごとのコード（`expired_link` / `provider_unavailable` / `client_mismatch` / `access_denied` /
+            `invalid_link_state` / `account_already_linked` / `another_account_linked` / `several_accounts_linked`）、
+            解除の `404` は `not_found`、想定外のエラーは `server_error`、それ以外は `invalid_request`
           example: invalid_request
         error_description:
           type: string
