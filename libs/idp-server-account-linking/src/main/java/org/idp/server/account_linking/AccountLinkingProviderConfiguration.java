@@ -56,6 +56,10 @@ public class AccountLinkingProviderConfiguration {
     return linking.revokesOnRelink();
   }
 
+  public long refreshBeforeExpirySeconds() {
+    return linking.refreshBeforeExpirySeconds();
+  }
+
   public boolean hasRevocationEndpoint() {
     return linking.hasRevocationEndpoint();
   }

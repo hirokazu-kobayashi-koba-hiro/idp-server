@@ -19,6 +19,7 @@ package org.idp.server.account_linking;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.platform.crypto.SealedData;
@@ -164,6 +165,15 @@ public class LinkedExternalAccount {
 
   public boolean isAccessTokenExpired(LocalDateTime now) {
     return accessTokenExpiresAt == null || !now.isBefore(accessTokenExpiresAt);
+  }
+
+  /**
+   * Whether the access token is no longer the one in {@code read}.
+   *
+   * <p>A refresh or a new link sets a new expiry, a move to another data key does not.
+   */
+  public boolean hasNewAccessTokenSince(LinkedExternalAccount read) {
+    return !Objects.equals(accessTokenExpiresAt, read.accessTokenExpiresAt);
   }
 
   public boolean hasRefreshToken() {

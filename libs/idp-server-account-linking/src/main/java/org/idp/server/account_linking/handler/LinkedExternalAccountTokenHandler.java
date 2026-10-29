@@ -136,7 +136,8 @@ public class LinkedExternalAccountTokenHandler {
       provider = account.provider();
       verifier.verifyProviderInLinkingTokenProviders(client, account);
 
-      ExternalAccessTokenAcquisition acquisition = tokenService.acquire(tenant, account);
+      ExternalAccessTokenAcquisition acquisition =
+          tokenService.acquire(tenant, account, request.parameters().forceRefresh());
       return retrieved(acquisition, provider, requestedClientId, user);
 
     } catch (LinkedExternalAccountTokenException exception) {

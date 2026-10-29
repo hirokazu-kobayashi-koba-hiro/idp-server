@@ -26,5 +26,9 @@ public class LinkedExternalAccountTokenRequestValidator {
     if (!parameters.hasUserAccessToken()) {
       throw LinkedExternalAccountTokenException.invalidRequest("token is required.");
     }
+    if (!parameters.hasValidForceRefresh()) {
+      throw LinkedExternalAccountTokenException.invalidRequest(
+          "force_refresh must be true or false.");
+    }
   }
 }

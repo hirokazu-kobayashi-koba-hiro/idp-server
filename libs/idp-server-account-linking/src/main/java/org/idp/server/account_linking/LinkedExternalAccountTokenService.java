@@ -44,13 +44,6 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
  */
 public class LinkedExternalAccountTokenService {
 
-  /**
-   * How close to expiry an access token is refreshed before it is handed out.
-   *
-   * <p>A token released seconds before it expires fails at the external API the client calls next.
-   */
-  static final long REFRESH_MARGIN_SECONDS = 30;
-
   LinkedExternalAccountQueryRepository accountQueryRepository;
   LinkedExternalAccountCommandRepository accountCommandRepository;
   AccountLinkingConfigurationResolver configurationResolver;
@@ -74,14 +67,20 @@ public class LinkedExternalAccountTokenService {
   /**
    * The account's access token, refreshed or re-encrypted first when needed.
    *
+   * <p>The token is refreshed when it expires within the provider's {@code
+   * refresh_before_expiry_seconds}, or always when {@code forceRefresh} is set.
+   *
    * @param account the account as read without a lock; it is read again under its row lock before
    *     anything is written
+   * @param forceRefresh refresh even when the stored token is still usable
    * @throws LinkedExternalAccountTokenException when the account is gone, the token cannot be
    *     refreshed and the user has to link again, or the external IdP is unavailable
    */
-  public ExternalAccessTokenAcquisition acquire(Tenant tenant, LinkedExternalAccount account) {
+  public ExternalAccessTokenAcquisition acquire(
+      Tenant tenant, LinkedExternalAccount account, boolean forceRefresh) {
 
-    if (isUsable(account, SystemDateTime.now())) {
+    long refreshBeforeExpirySeconds = refreshBeforeExpirySeconds(tenant, account);
+    if (!forceRefresh && isUsable(account, SystemDateTime.now(), refreshBeforeExpirySeconds)) {
       LinkedExternalAccount current =
           tokenCipher.isBehindActive(tenant, account.encryptionKeyId())
               ? reencryptUnderLock(tenant, account)
@@ -89,12 +88,31 @@ public class LinkedExternalAccountTokenService {
       return opened(tenant, current, false);
     }
 
-    LinkedExternalAccount refreshed = refreshUnderLock(tenant, account);
+    LinkedExternalAccount refreshed =
+        refreshUnderLock(tenant, account, forceRefresh, refreshBeforeExpirySeconds);
     return opened(tenant, refreshed, true);
   }
 
-  private boolean isUsable(LinkedExternalAccount account, LocalDateTime now) {
-    return !account.isAccessTokenExpired(now.plusSeconds(REFRESH_MARGIN_SECONDS));
+  private boolean isUsable(
+      LinkedExternalAccount account, LocalDateTime now, long refreshBeforeExpirySeconds) {
+    return !account.isAccessTokenExpired(now.plusSeconds(refreshBeforeExpirySeconds));
+  }
+
+  /**
+   * The provider's {@code refresh_before_expiry_seconds}.
+   *
+   * <p>Read even when the provider is disabled: a token still within its expiry is handed out as
+   * before, and only a refresh needs the provider enabled. A provider that is gone falls back to
+   * the default, and its refresh is refused as unavailable.
+   */
+  private long refreshBeforeExpirySeconds(Tenant tenant, LinkedExternalAccount account) {
+    try {
+      return configurationResolver
+          .resolveIncludingDisabled(tenant, account.provider())
+          .refreshBeforeExpirySeconds();
+    } catch (FederationConfigurationNotFoundException exception) {
+      return AccountLinkingConfiguration.DEFAULT_REFRESH_BEFORE_EXPIRY_SECONDS;
+    }
   }
 
   /**
@@ -103,22 +121,35 @@ public class LinkedExternalAccountTokenService {
    * <p>Concurrent requests for the same account wait here, and the ones that get the lock after a
    * refresh find a usable token and return it. Without the lock both would spend the same refresh
    * token, and a provider that rotates refresh tokens would revoke the grant for the loser.
+   *
+   * <p>A forced refresh is skipped the same way when another request put a new token in place while
+   * this one waited: clients that all got a 401 from the external API and retry at once reach the
+   * external IdP once, not once each.
    */
-  private LinkedExternalAccount refreshUnderLock(Tenant tenant, LinkedExternalAccount account) {
+  private LinkedExternalAccount refreshUnderLock(
+      Tenant tenant,
+      LinkedExternalAccount account,
+      boolean forceRefresh,
+      long refreshBeforeExpirySeconds) {
 
     LinkedExternalAccount locked = lockOrNotFound(tenant, account);
     LocalDateTime now = SystemDateTime.now();
-    if (isUsable(locked, now)) {
+    boolean alreadyRefreshed =
+        forceRefresh
+            ? locked.hasNewAccessTokenSince(account)
+            : isUsable(locked, now, refreshBeforeExpirySeconds);
+    if (alreadyRefreshed) {
       return locked;
     }
 
     if (!locked.hasRefreshToken() || locked.isRefreshTokenExpired(now)) {
       log.warn(
-          "Stored external token expired and cannot be refreshed. provider={}, alias={}",
+          "Stored external token cannot be refreshed. provider={}, alias={}, forced={}",
           locked.provider().value(),
-          locked.accountAlias().value());
+          locked.accountAlias().value(),
+          forceRefresh);
       throw LinkedExternalAccountTokenException.relinkRequired(
-          "The stored token has expired and cannot be refreshed. Link the account again.");
+          relinkRequiredDescription(forceRefresh));
     }
 
     OidcSsoConfiguration configuration = providerConfiguration(tenant, locked);
@@ -213,6 +244,13 @@ public class LinkedExternalAccountTokenService {
       throw LinkedExternalAccountTokenException.providerUnavailable(
           "The linking provider is no longer available.");
     }
+  }
+
+  /** A forced refresh may be refused while the stored token has not expired yet. */
+  private static String relinkRequiredDescription(boolean forceRefresh) {
+    return forceRefresh
+        ? "The stored token cannot be refreshed. Link the account again."
+        : "The stored token has expired and cannot be refreshed. Link the account again.";
   }
 
   private LinkedExternalAccountTokenException refreshFailure(

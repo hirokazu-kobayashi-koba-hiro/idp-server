@@ -28,9 +28,12 @@ import org.idp.server.platform.json.JsonReadable;
  */
 public class AccountLinkingConfiguration implements JsonReadable {
 
+  public static final long DEFAULT_REFRESH_BEFORE_EXPIRY_SECONDS = 30;
+
   String duplicateLinkPolicy;
   boolean multipleAccounts;
   boolean revokeOnRelink;
+  Long refreshBeforeExpirySeconds;
   String revocationEndpoint;
 
   public AccountLinkingConfiguration() {}
@@ -57,6 +60,18 @@ public class AccountLinkingConfiguration implements JsonReadable {
    */
   public boolean revokesOnRelink() {
     return revokeOnRelink;
+  }
+
+  /**
+   * How many seconds before its expiry a stored access token is refreshed before it is handed out.
+   *
+   * <p>30 when not set. A token released seconds before it expires fails at the external API the
+   * client calls next.
+   */
+  public long refreshBeforeExpirySeconds() {
+    return refreshBeforeExpirySeconds == null
+        ? DEFAULT_REFRESH_BEFORE_EXPIRY_SECONDS
+        : refreshBeforeExpirySeconds;
   }
 
   /**

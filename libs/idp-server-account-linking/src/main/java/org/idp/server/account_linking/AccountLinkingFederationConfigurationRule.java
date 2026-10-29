@@ -40,6 +40,14 @@ public class AccountLinkingFederationConfigurationRule implements FederationConf
   static final List<String> REQUIRED =
       List.of("authorization_endpoint", "token_endpoint", "client_id", "redirect_uri");
 
+  /**
+   * The longest {@code refresh_before_expiry_seconds} accepted.
+   *
+   * <p>A margin as long as the access token's lifetime refreshes on every retrieval. The lifetime
+   * comes from each token response, so it cannot be checked here; this only bounds the setting.
+   */
+  static final long MAX_REFRESH_BEFORE_EXPIRY_SECONDS = 3600;
+
   LinkedExternalAccountQueryRepository accountQueryRepository;
 
   public AccountLinkingFederationConfigurationRule(
@@ -92,6 +100,15 @@ public class AccountLinkingFederationConfigurationRule implements FederationConf
       problems.add("payload.revoke_on_relink must be true or false.");
     }
 
+    Object refreshBeforeExpiry = payload.get("refresh_before_expiry_seconds");
+    if (refreshBeforeExpiry != null
+        && !isSecondsUpTo(refreshBeforeExpiry, MAX_REFRESH_BEFORE_EXPIRY_SECONDS)) {
+      problems.add(
+          "payload.refresh_before_expiry_seconds must be an integer from 0 to "
+              + MAX_REFRESH_BEFORE_EXPIRY_SECONDS
+              + ".");
+    }
+
     // With openid the external account is identified by the id_token's sub, which needs the
     // issuer to compare and the keys to verify.
     Object scopes = payload.get("scopes_supported");
@@ -119,6 +136,14 @@ public class AccountLinkingFederationConfigurationRule implements FederationConf
   @Override
   public boolean allowsRename() {
     return false;
+  }
+
+  private static boolean isSecondsUpTo(Object value, long max) {
+    if (!(value instanceof Integer) && !(value instanceof Long)) {
+      return false;
+    }
+    long seconds = ((Number) value).longValue();
+    return seconds >= 0 && seconds <= max;
   }
 
   private static boolean hasText(Object value) {

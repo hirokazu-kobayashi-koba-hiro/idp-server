@@ -1711,8 +1711,13 @@ paths:
         クライアントが持つ idp-server のリフレッシュトークンで、先にユーザーのアクセストークンを取り直してください。
 
         返すのはアクセストークンだけで、リフレッシュトークンは返しません。
-        アクセストークンの期限まで 30 秒を切っていれば、保管しているリフレッシュトークンで更新してから返します。
+        アクセストークンの期限まで、連携先の `refresh_before_expiry_seconds`（既定 30 秒）を切っていれば、保管しているリフレッシュトークンで更新してから返します。
         同じ連携への同時リクエストは行ロックで待ち合わせ、リフレッシュトークンを二重に使いません。
+
+        外部APIが期限前のトークンを `401` で断った（外部IdPで取り消された など）ときは、`force_refresh=true` を付けて取り直します。
+        期限に関わらず更新して返します。更新できなければ `400` `relink_required` です。
+        ほかのリクエストがロックを待つ間に更新を済ませていれば、もう一度は更新せずにそのトークンを返します。
+        `force_refresh` は外部IdPを毎回呼ぶので、外部APIに断られたときだけ付けてください。
 
         ## クライアント認証
 
@@ -1771,7 +1776,7 @@ paths:
                 $ref: '#/components/schemas/LinkedExternalAccountTokenResponse'
         '400':
           description: |
-            - `invalid_request` — `token` が無い / `DPoP` ヘッダーが 2 つ以上
+            - `invalid_request` — `token` が無い / `force_refresh` が `true` でも `false` でもない / `DPoP` ヘッダーが 2 つ以上
             - `relink_required` — リフレッシュトークンが無い・期限切れ、または外部IdPがリフレッシュを 4xx（429 を除く）で拒否した。ユーザーが連携し直す必要があります
             - `provider_unavailable` — 連携先の設定が削除・無効化された。連携し直しも失敗するので、ユーザーには連携先が使えないことを伝えます
           content:
@@ -3261,6 +3266,13 @@ components:
           description: |
             トークンを取り出すユーザーのアクセストークン。`linked_account:read_token` スコープを持ち、
             このリクエストで認証するクライアントに発行されたものに限ります。
+        force_refresh:
+          type: string
+          enum: [ "true", "false" ]
+          default: "false"
+          description: |
+            `true` なら、保管しているアクセストークンを期限に関わらず更新してから返します。
+            外部APIが期限前のトークンを断ったときに使います。
         client_id:
           type: string
           description: |

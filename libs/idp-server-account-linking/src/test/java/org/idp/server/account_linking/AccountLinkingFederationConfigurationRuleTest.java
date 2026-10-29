@@ -88,6 +88,19 @@ class AccountLinkingFederationConfigurationRuleTest {
   }
 
   @Test
+  void acceptsRefreshBeforeExpirySecondsOnlyAsAnIntegerUpToAnHour() {
+    Map<String, Object> payload = usable();
+    for (Object refused : List.of("60", -1, 3601, 1.5)) {
+      payload.put("refresh_before_expiry_seconds", refused);
+      assertEquals(1, rule.problems(configuration(payload)).size(), String.valueOf(refused));
+    }
+    for (Object accepted : List.of(0, 300, 3600L)) {
+      payload.put("refresh_before_expiry_seconds", accepted);
+      assertTrue(rule.problems(configuration(payload)).isEmpty(), String.valueOf(accepted));
+    }
+  }
+
+  @Test
   void requiresTheIssuerAndKeysForOpenid() {
     Map<String, Object> payload = usable();
     payload.put("scopes_supported", List.of("openid", "profile"));

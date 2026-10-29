@@ -78,7 +78,8 @@ curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/t
       "refresh_token_expires_in": 86400,
       "duplicate_link_policy": "reject",
       "multiple_accounts": false,
-      "revoke_on_relink": false
+      "revoke_on_relink": false,
+      "refresh_before_expiry_seconds": 30
     }
   }'
 ```
@@ -98,10 +99,11 @@ curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/t
 | `payload.duplicate_link_policy` | 同じ外部アカウントが別ユーザーに連携済みのとき。`reject`（既定、409）/ `allow` |
 | `payload.multiple_accounts` | 1 人がこの連携先のアカウントを複数連携できるか。`false`（既定）なら 1 件で、もう一度連携すると更新し、別のアカウントは 409（先に解除）。`true` なら連携するたびに追加（同じ外部アカウントは更新）。`alias` はどちらも `{provider}-{乱数}` |
 | `payload.revoke_on_relink` | 連携し直したとき、入れ替わる前の保管トークンを `revocation_endpoint` で失効させるか。`false`（既定）なら失効させない。失効でアプリへの許可ごと取り消す外部IdP（Google など）で `true` にすると、新しいトークンまで止まるので使わない |
+| `payload.refresh_before_expiry_seconds` | 保管トークンの取得で、アクセストークンの期限まで何秒を切ったら更新してから返すか。既定 30、0〜3600。外部IdPのアクセストークンの有効期間以上にすると、取り出すたびに更新する |
 
 ログイン用の設定例にある `store_credentials` と `access_token_expires_in` は、連携では読みません。アクセストークンの期限は外部IdPのトークン応答の `expires_in` で決まります。
 
-登録と更新のときに中身を確かめ、必須の項目が無い、`redirect_uri` がこの連携先のコールバックでない、`duplicate_link_policy` の値が違う、`multiple_accounts` / `revoke_on_relink` が真偽値でない、`openid` を入れたのに `issuer` / `jwks_uri` が無い、といった設定は `400` になります。`type` と `sso_provider` は後から変えられません（`400`）。連携が 1 件でも残っている間は、この設定の削除は `409` になります（`dry_run=true` でも同じ）。応答の `linked_external_accounts` が残っている連携の数です。先に [管理APIでの確認・解除](#管理apiでの確認解除) で連携を解除してください。連携先を消すときは、まず `enabled: false` にして新しい連携を止めてから、残った連携を解除し、最後に削除します。無効にしないまま進めると、解除と削除の間に新しい連携ができることがあります。
+登録と更新のときに中身を確かめ、必須の項目が無い、`redirect_uri` がこの連携先のコールバックでない、`duplicate_link_policy` の値が違う、`multiple_accounts` / `revoke_on_relink` が真偽値でない、`refresh_before_expiry_seconds` が 0〜3600 の整数でない、`openid` を入れたのに `issuer` / `jwks_uri` が無い、といった設定は `400` になります。`type` と `sso_provider` は後から変えられません（`400`）。連携が 1 件でも残っている間は、この設定の削除は `409` になります（`dry_run=true` でも同じ）。応答の `linked_external_accounts` が残っている連携の数です。先に [管理APIでの確認・解除](#管理apiでの確認解除) で連携を解除してください。連携先を消すときは、まず `enabled: false` にして新しい連携を止めてから、残った連携を解除し、最後に削除します。無効にしないまま進めると、解除と削除の間に新しい連携ができることがあります。
 
 **実例**:
 - `config/examples/standard-oidc-web-app/federation-account-linking.json` - サンプルアプリ用
@@ -266,9 +268,19 @@ curl -X POST "${IDP_SERVER_URL}/${TENANT_ID}/v1/linked-external-accounts/${ALIAS
 
 返るのは外部IdPのアクセストークンだけです。期限が近ければ idp-server が保管しているリフレッシュトークンで更新してから返します。取得したトークンはブラウザに渡さず、サーバー側で外部APIの呼び出しに使ってください。
 
+外部APIが期限前のトークンを `401` で断ったときは、`force_refresh=true` を付けて取り直します。期限に関わらず更新して返します。付けるたびに外部IdPを呼ぶので、断られたときだけ付けてください。
+
+```bash
+curl -X POST "${IDP_SERVER_URL}/${TENANT_ID}/v1/linked-external-accounts/${ALIAS}/token" \
+  -u "${CLIENT_ID}:${CLIENT_SECRET}" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "token=${USER_ACCESS_TOKEN}" \
+  -d "force_refresh=true"
+```
+
 | 応答 | RP がすること |
 |------|--------------|
-| `400 relink_required` | リフレッシュできない。5.1 から連携し直してもらう |
+| `400 relink_required` | リフレッシュできない（`force_refresh=true` で更新できなかったときも）。5.1 から連携し直してもらう |
 | `400 provider_unavailable` | 連携先が削除・無効化された。連携し直しも失敗するので、連携先が使えないことをユーザーに伝える |
 | `502 temporarily_unavailable` | 外部IdPが一時的に応答しない。時間をおいて再試行 |
 

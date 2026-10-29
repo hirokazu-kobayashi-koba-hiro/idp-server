@@ -197,15 +197,46 @@ describe("account linking", () => {
   };
 
   /** 保管された外部トークンを、クライアント認証 + ユーザーのアクセストークンで取り出す。 */
-  const retrieveToken = async ({ alias, token, clientId, clientSecret, headers = {} }) => {
+  const retrieveToken = async ({ alias, token, clientId, clientSecret, headers = {}, forceRefresh }) => {
     const params = new URLSearchParams();
     if (token !== undefined) params.append("token", token);
+    if (forceRefresh !== undefined) params.append("force_refresh", forceRefresh);
     if (clientId) params.append("client_id", clientId);
     if (clientSecret) params.append("client_secret", clientSecret);
     return await post({
       url: `${backendUrl}/${serverConfig.tenantId}/v1/linked-external-accounts/${alias}/token`,
       headers,
       body: params.toString(),
+    });
+  };
+
+  const PROVIDER_CONFIG_ID = "c1d4a3f8-6b2e-4d51-9a07-3f8b2c5e1d94";
+
+  /** OIDC の連携先の payload を、この describe の間だけ書き換え、終わったら戻す。 */
+  const patchProviderPayloadDuring = (patch) => {
+    const configUrl = () =>
+      `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/federation-configurations/${PROVIDER_CONFIG_ID}`;
+    let configBefore;
+
+    beforeAll(async () => {
+      const headers = { Authorization: `Bearer ${await requestAdminAccessToken()}` };
+      const current = await get({ url: configUrl(), headers });
+      expect(current.status).toBe(200);
+      configBefore = current.data;
+      const update = await putWithJson({
+        url: configUrl(),
+        headers,
+        body: { ...configBefore, payload: { ...configBefore.payload, ...patch } },
+      });
+      expect(update.status).toBe(200);
+    });
+
+    afterAll(async () => {
+      await putWithJson({
+        url: configUrl(),
+        headers: { Authorization: `Bearer ${await requestAdminAccessToken()}` },
+        body: configBefore,
+      });
     });
   };
 
@@ -464,36 +495,6 @@ describe("account linking", () => {
       });
       expect(response.status).toBe(200);
       return response.data.list;
-    };
-
-    const PROVIDER_CONFIG_ID = "c1d4a3f8-6b2e-4d51-9a07-3f8b2c5e1d94";
-
-    /** OIDC の連携先の payload を、この describe の間だけ書き換え、終わったら戻す。 */
-    const patchProviderPayloadDuring = (patch) => {
-      const configUrl = () =>
-        `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/federation-configurations/${PROVIDER_CONFIG_ID}`;
-      let configBefore;
-
-      beforeAll(async () => {
-        const headers = { Authorization: `Bearer ${await requestAdminAccessToken()}` };
-        const current = await get({ url: configUrl(), headers });
-        expect(current.status).toBe(200);
-        configBefore = current.data;
-        const update = await putWithJson({
-          url: configUrl(),
-          headers,
-          body: { ...configBefore, payload: { ...configBefore.payload, ...patch } },
-        });
-        expect(update.status).toBe(200);
-      });
-
-      afterAll(async () => {
-        await putWithJson({
-          url: configUrl(),
-          headers: { Authorization: `Bearer ${await requestAdminAccessToken()}` },
-          body: configBefore,
-        });
-      });
     };
 
     it("renews the one link when the same external account is linked again", async () => {
@@ -764,6 +765,105 @@ describe("account linking", () => {
         body: introspectionParams.toString(),
       });
       expect(introspectionResponse.data.active).toBe(false);
+    });
+
+    /**
+     * 保管トークンのリフレッシュ。期限まで refresh_before_expiry_seconds（既定 30 秒）を切ると更新する。
+     * 外部IdP役のアクセストークンは 3600 秒なので、既定のままなら続けて取り出しても同じトークンが返る。
+     */
+    describe("refreshing the stored token", () => {
+      const retrieveFor = async (accessToken, alias, forceRefresh) =>
+        await retrieveToken({
+          alias,
+          token: accessToken,
+          clientId: clientSecretPostClient.clientId,
+          clientSecret: clientSecretPostClient.clientSecret,
+          forceRefresh,
+        });
+
+      /** 外部IdP 役でトークンを失効させる。idp-server はアクセストークンと一緒にリフレッシュトークンも消す。 */
+      const revokeAtExternalIdp = async (token) => {
+        const params = new URLSearchParams();
+        params.append("token", token);
+        params.append("client_id", clientSecretPostClient.clientId);
+        params.append("client_secret", clientSecretPostClient.clientSecret);
+        const response = await post({
+          url: `${backendUrl}/${federationServerConfig.tenantId}/v1/tokens/revocation`,
+          body: params.toString(),
+        });
+        expect(response.status).toBe(200);
+      };
+
+      let accessToken;
+      let alias;
+
+      beforeAll(async () => {
+        accessToken = await login(ownerUser, `openid profile email ${MANAGE_SCOPE} ${READ_TOKEN_SCOPE}`);
+        alias = await linkOnce(accessToken, PROVIDER, "openid profile email offline_access");
+      });
+
+      it("hands out the same token while it is far from its expiry", async () => {
+        const first = await retrieveFor(accessToken, alias);
+        const second = await retrieveFor(accessToken, alias, "false");
+        expect(first.status).toBe(200);
+        expect(second.status).toBe(200);
+        expect(second.data.access_token).toBe(first.data.access_token);
+      });
+
+      it("refreshes before the expiry with force_refresh=true", async () => {
+        const before = await retrieveFor(accessToken, alias);
+        const forced = await retrieveFor(accessToken, alias, "true");
+        console.log(forced.status, forced.data);
+        expect(forced.status).toBe(200);
+        expect(forced.data.access_token).not.toBe(before.data.access_token);
+        expect(await isActiveAtExternalIdp(forced.data.access_token)).toBe(true);
+
+        // 強制しなければ、更新したトークンがそのまま返る。
+        const after = await retrieveFor(accessToken, alias);
+        expect(after.data.access_token).toBe(forced.data.access_token);
+      });
+
+      it("refuses a force_refresh that is not true or false", async () => {
+        const response = await retrieveFor(accessToken, alias, "yes");
+        console.log(response.status, response.data);
+        expect(response.status).toBe(400);
+        expect(response.data.error).toBe("invalid_request");
+      });
+
+      it("tells the client to link again when a token revoked at the external IdP cannot be refreshed", async () => {
+        const ownAccessToken = await login(ownerUser, `openid profile email ${MANAGE_SCOPE} ${READ_TOKEN_SCOPE}`);
+        const ownAlias = await linkOnce(ownAccessToken, PROVIDER, "openid profile email offline_access");
+        const stored = await retrieveFor(ownAccessToken, ownAlias);
+        await revokeAtExternalIdp(stored.data.access_token);
+
+        // 期限前なので、強制しなければ失効したトークンがそのまま返る。
+        const stale = await retrieveFor(ownAccessToken, ownAlias);
+        expect(stale.data.access_token).toBe(stored.data.access_token);
+        expect(await isActiveAtExternalIdp(stale.data.access_token)).toBe(false);
+
+        const forced = await retrieveFor(ownAccessToken, ownAlias, "true");
+        console.log(forced.status, forced.data);
+        expect(forced.status).toBe(400);
+        expect(forced.data.error).toBe("relink_required");
+      });
+
+      describe("with refresh_before_expiry_seconds as long as the token's lifetime", () => {
+        patchProviderPayloadDuring({ refresh_before_expiry_seconds: 3600 });
+
+        // 前の it が失効させたのと同じ連携なので、つなぎ直して新しいトークンにしておく。
+        beforeAll(async () => {
+          alias = await linkOnce(accessToken, PROVIDER, "openid profile email offline_access");
+        });
+
+        it("refreshes on every retrieval", async () => {
+          const first = await retrieveFor(accessToken, alias);
+          const second = await retrieveFor(accessToken, alias);
+          console.log(second.status, second.data);
+          expect(first.status).toBe(200);
+          expect(second.status).toBe(200);
+          expect(second.data.access_token).not.toBe(first.data.access_token);
+        });
+      });
     });
 
     /**

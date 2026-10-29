@@ -36,6 +36,8 @@ import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
  */
 public class LinkedExternalAccountTokenParameters implements BackchannelRequestParameters {
 
+  static final String FORCE_REFRESH = "force_refresh";
+
   ArrayValueMap values;
 
   public LinkedExternalAccountTokenParameters(Map<String, String[]> values) {
@@ -49,6 +51,25 @@ public class LinkedExternalAccountTokenParameters implements BackchannelRequestP
 
   public boolean hasUserAccessToken() {
     return contains(OAuthRequestKey.token) && !getValueOrEmpty(OAuthRequestKey.token).isEmpty();
+  }
+
+  /**
+   * Whether the client asks for the stored token to be refreshed even before it expires.
+   *
+   * <p>For a token the external API has refused (for example, revoked at the external IdP) while
+   * its expiry is still ahead.
+   */
+  public boolean forceRefresh() {
+    return "true".equals(values.getFirstOrEmpty(FORCE_REFRESH));
+  }
+
+  /** Whether {@code force_refresh} is absent or one of {@code true} and {@code false}. */
+  public boolean hasValidForceRefresh() {
+    if (!values.contains(FORCE_REFRESH)) {
+      return true;
+    }
+    String value = values.getFirstOrEmpty(FORCE_REFRESH);
+    return "true".equals(value) || "false".equals(value);
   }
 
   @Override
