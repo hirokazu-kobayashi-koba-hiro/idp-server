@@ -44,6 +44,7 @@ cd e2e && npm test
 | `docker-local.md` | `docker-compose*`, `Dockerfile*` | `--build`フラグ必須 |
 | `documentation.md` | `documentation/`, `.claude/skills/` | 想像禁止、コード確認必須 |
 | `springboot-adapter.md` | `idp-server-springboot-adapter/` | Controller層ロジック禁止 |
+| `handler-entry-service.md` | `*Handler.java`, `*EntryService.java` | 段取りだけ、private methodは置き場所の見直し |
 
 ## スキル活用
 - 実装・修正タスクを開始する前に、関連するスキル（`.claude/skills/`）の有無を確認し、該当するスキルがあれば先にロードしてから作業を開始すること
