@@ -78,4 +78,10 @@ class AccountLinkingErrorHandlerTest {
   void aProviderGoneSinceTheLinkStartedIsUnavailable() {
     assertAnswer(new FederationConfigurationNotFoundException("gone"), 400, "provider_unavailable");
   }
+
+  @Test
+  void anUnknownLinkIsNotFound() {
+    // The same code as an unknown alias at unlink and at token retrieval.
+    assertAnswer(new AccountLinkingNotFoundException("unknown"), 404, "not_found");
+  }
 }

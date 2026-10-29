@@ -1529,6 +1529,19 @@ describe("account linking", () => {
       expect((await listWith(accessToken)).status).toBe(200);
     });
 
+    it("answers not_found to a completion of a link that does not exist", async () => {
+      const accessToken = await login(ownerUser);
+
+      const response = await postWithJson({
+        url: `${backendUrl}/${serverConfig.tenantId}/v1/me/linked-external-accounts/complete`,
+        headers: { Authorization: `Bearer ${accessToken}` },
+        body: { state: "unknown-state" },
+      });
+      console.log(response.status, response.data);
+      expect(response.status).toBe(404);
+      expect(response.data.error).toBe("not_found");
+    });
+
     it("refuses to complete a link from a client other than the one that started it", async () => {
       const accessToken = await login(ownerUser);
       const linkResponse = await startLink(accessToken, "account-linking-oauth2", "account offline_access");

@@ -421,8 +421,7 @@ token={ユーザーのアクセストークン}&client_id=...&client_secret=...
 | 403 | `invalid_request` | `link`: 連携先がクライアントの `linking_providers` に無い |
 | 403 | `client_mismatch` | `complete`: 確定したクライアントが連携を始めたクライアントと違う |
 | 403 | `access_denied` | `complete`: 操作者が連携セッションのユーザーと一致しない |
-| 404 | `invalid_request` | `complete`: `state` に対応する連携セッションが無い |
-| 404 | `not_found` | 解除: `alias` が呼び出したユーザーの連携に無い |
+| 404 | `not_found` | `complete`: `state` に対応する連携セッションが無い / 解除: `alias` が呼び出したユーザーの連携に無い |
 | 409 | `invalid_link_state` | `complete`: 連携セッションが確定できる状態にない（コールバック前・確定済み） |
 | 409 | `account_already_linked` | `complete`: 同じ外部アカウントが既に他のユーザーに紐付いている（`duplicate_link_policy: reject` のとき） |
 | 409 | `another_account_linked` | `complete`: この連携先の別のアカウントを既に連携している（`multiple_accounts: false` のとき） |

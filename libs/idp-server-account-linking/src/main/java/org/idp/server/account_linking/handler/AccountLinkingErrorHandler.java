@@ -96,7 +96,7 @@ public class AccountLinkingErrorHandler {
 
     if (exception instanceof AccountLinkingNotFoundException) {
       log.warn("Account linking session not found: {}", exception.getMessage());
-      return linkFailed(AccountLinkingStatus.NOT_FOUND, exception.getMessage());
+      return linkFailed(AccountLinkingStatus.NOT_FOUND, "not_found", exception.getMessage());
     }
 
     if (exception instanceof AccountLinkingInvalidRequestException) {

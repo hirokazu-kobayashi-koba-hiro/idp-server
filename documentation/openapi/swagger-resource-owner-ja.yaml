@@ -1754,7 +1754,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/AccountLinkingErrorResponse'
               example:
-                error: invalid_request
+                error: not_found
                 error_description: "Account linking session not found."
         '409':
           description: |
@@ -3183,7 +3183,7 @@ components:
           description: |
             エラーコード。確定（`complete`）は理由ごとのコード（`expired_link` / `provider_unavailable` / `client_mismatch` / `access_denied` /
             `invalid_link_state` / `account_already_linked` / `another_account_linked` / `several_accounts_linked`）、
-            解除の `404` は `not_found`、想定外のエラーは `server_error`、それ以外は `invalid_request`
+            `404` は `not_found`、想定外のエラーは `server_error`、それ以外は `invalid_request`
           example: invalid_request
         error_description:
           type: string
