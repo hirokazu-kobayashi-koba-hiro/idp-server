@@ -83,6 +83,7 @@ gh pr diff <pr_number>
 | 両DB対応 | ✅/❌/N/A | <詳細> |
 | 型安全性 | ✅/❌ | <詳細> |
 | セキュリティ | ✅/⚠️/❌ | <詳細> |
+| Handler/EntryService | ✅/⚠️/N/A | <詳細> |
 
 ---
 
@@ -163,11 +164,13 @@ Handler / EntryService に新しく足された private method は、中身で�
 - 段取りだけ（例外を応答に変える、イベントの付加情報）→ 指摘しない
 
 ```java
-// ❌ 表示名の優先順（ドメインの決まり）が Handler にあり、ユニットテストできない
-private static String federatedUsername(User federatedUser) { ... }
+// ❌ 「どちらの値を優先するか」というドメインの決まりが Handler の private にあり、ユニットテストできない
+private static String displayName(User user) {
+  return user.preferredUsername() != null ? user.preferredUsername() : user.email();
+}
 
-// ✅ 値オブジェクトに出す
-ExternalAccountIdentity identity = ExternalAccountIdentity.of(verifiedSubject, federatedUser);
+// ✅ 決まりを値オブジェクトに出し、そこでテストする（クラス名は一例）
+DisplayName displayName = DisplayName.of(user);
 ```
 
 ### セキュリティチェック

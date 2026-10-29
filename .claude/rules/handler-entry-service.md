@@ -19,6 +19,8 @@ Handler / EntryService に private method を足すときは、先に置き場�
 | 確認 | Verifier（void + throw） |
 | 段取りだけ（例外を応答に変える、イベントの付加情報を付ける） | Handler に残してよい |
 
+主フローを読みやすくするために、例外の処理などを private method に抜き出すのは段取りに入る。抜き出した中身が上の 3 つのどれかに当たるなら、そちらに置く。
+
 Handler に残すと決めた private method は、なぜ段取りだけと言えるのかを説明できるようにしておく。
 
 ## テストしたくなったら外に出す
