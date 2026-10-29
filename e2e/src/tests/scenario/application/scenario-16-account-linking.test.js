@@ -212,10 +212,10 @@ describe("account linking", () => {
 
   const PROVIDER_CONFIG_ID = "c1d4a3f8-6b2e-4d51-9a07-3f8b2c5e1d94";
 
-  /** OIDC の連携先の payload を、この describe の間だけ書き換え、終わったら戻す。 */
-  const patchProviderPayloadDuring = (patch) => {
+  /** 連携先の payload を、この describe の間だけ書き換え、終わったら戻す。既定は OIDC の連携先。 */
+  const patchProviderPayloadDuring = (patch, configId = PROVIDER_CONFIG_ID) => {
     const configUrl = () =>
-      `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/federation-configurations/${PROVIDER_CONFIG_ID}`;
+      `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/federation-configurations/${configId}`;
     let configBefore;
 
     beforeAll(async () => {
@@ -573,6 +573,110 @@ describe("account linking", () => {
         expect(await linkOnce(accessToken, OAUTH2_PROVIDER)).toBe(first);
 
         expect((await listLinks(accessToken)).filter((it) => it.provider === OAUTH2_PROVIDER)).toHaveLength(1);
+      });
+    });
+
+    /**
+     * OAuth 2.0（id_token なし）で、アカウントを独自の API で名乗る連携先。GitHub の /user のような形。
+     * 外部IdP役の userinfo は openid を要るので、userinfo_execution で外部IdP役のイントロスペクションを呼び、
+     * その応答の sub と username を独自 API の応答に見立てて読む。
+     */
+    describe("with an OAuth 2.0 provider that names the account through its own API", () => {
+      const INTROSPECTION = "https://api.local.test/1e68932e-ed4a-43e7-b412-460665e42df3/v1/tokens/introspection";
+
+      const userinfoExecution = (clientSecret) => ({
+        function: "http_requests",
+        http_requests: [
+          {
+            url: INTROSPECTION,
+            method: "POST",
+            header_mapping_rules: [
+              { static_value: "application/x-www-form-urlencoded", to: "Content-Type" },
+            ],
+            body_mapping_rules: [
+              { from: "$.request_body.access_token", to: "token" },
+              { static_value: clientSecretPostClient.clientId, to: "client_id" },
+              { static_value: clientSecret, to: "client_secret" },
+            ],
+          },
+        ],
+      });
+
+      patchProviderPayloadDuring(
+        {
+          provider: "oauth-extension",
+          userinfo_endpoint: INTROSPECTION,
+          userinfo_execution: userinfoExecution(clientSecretPostClient.clientSecret),
+          userinfo_mapping_rules: [
+            { from: "$.userinfo_execution_http_requests[0].response_body.sub", to: "external_user_id" },
+            { from: "$.userinfo_execution_http_requests[0].response_body.username", to: "email" },
+          ],
+          multiple_accounts: false,
+        },
+        OAUTH2_CONFIG_ID
+      );
+
+      it("reads the account and its name from the API, and renews the one link when it is linked again", async () => {
+        const accessToken = await loginAsNewUser();
+        const externalEmail = await createExternalUser();
+
+        const first = await linkThroughComplete(accessToken, OAUTH2_PROVIDER, "account offline_access", externalEmail);
+        console.log(first.status, first.data);
+        expect(first.status).toBe(201);
+        expect(first.data.federated_username).toBe(externalEmail);
+
+        // 名乗ったアカウントで同じだと分かるので、2 回目は更新。alias も変わらない。
+        const second = await linkOnce(accessToken, OAUTH2_PROVIDER, "account offline_access", externalEmail);
+        expect(second).toBe(first.data.alias);
+        expect((await listLinks(accessToken)).filter((it) => it.provider === OAUTH2_PROVIDER)).toHaveLength(1);
+      });
+
+      it("refuses another account of the provider while one is linked", async () => {
+        const accessToken = await loginAsNewUser();
+        await linkOnce(accessToken, OAUTH2_PROVIDER, "account offline_access", await createExternalUser());
+
+        const response = await linkThroughComplete(
+          accessToken,
+          OAUTH2_PROVIDER,
+          "account offline_access",
+          await createExternalUser()
+        );
+        console.log(response.status, response.data);
+        expect(response.status).toBe(409);
+        expect(response.data.error).toBe("another_account_linked");
+      });
+
+      it("refuses an external account another user has linked", async () => {
+        const externalEmail = await createExternalUser();
+        await linkOnce(await loginAsNewUser(), OAUTH2_PROVIDER, "account offline_access", externalEmail);
+
+        const response = await linkThroughComplete(
+          await loginAsNewUser(),
+          OAUTH2_PROVIDER,
+          "account offline_access",
+          externalEmail
+        );
+        console.log(response.status, response.data);
+        expect(response.status).toBe(409);
+        expect(response.data.error).toBe("account_already_linked");
+      });
+
+      describe("when the API refuses the request", () => {
+        patchProviderPayloadDuring({ userinfo_execution: userinfoExecution("wrong-secret") }, OAUTH2_CONFIG_ID);
+
+        it("returns the failure to the client, with the state, and links nothing", async () => {
+          const accessToken = await loginAsNewUser();
+          const linkResponse = await startLink(accessToken, OAUTH2_PROVIDER, "account offline_access");
+          expect(linkResponse.status).toBe(201);
+          const startResponse = await get({ url: linkResponse.data.start_url });
+          expect(startResponse.status).toBe(302);
+          const callbackUri = await consentAtExternalIdp(startResponse.headers.location, await createExternalUser());
+
+          const callbackResponse = await get({ url: callbackUri });
+          expect(callbackResponse.status).toBe(302);
+          expectReturnedFailure(callbackResponse.headers.location, "server_error", linkResponse.data.state);
+          expect(await listLinks(accessToken)).toEqual([]);
+        });
       });
     });
 
