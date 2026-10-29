@@ -610,6 +610,12 @@ describe("account linking", () => {
           userinfo_mapping_rules: [
             { from: "$.userinfo_execution_http_requests[0].response_body.sub", to: "external_user_id" },
             { from: "$.userinfo_execution_http_requests[0].response_body.username", to: "email" },
+            // 一覧に出す名前は preferred_username が優先。独自の形の応答でも、マッピングで好きな値にできる。
+            {
+              from: "$.userinfo_execution_http_requests[0].response_body.username",
+              to: "preferred_username",
+              functions: [{ name: "format", args: { template: "example-idp:{{value}}" } }],
+            },
           ],
           multiple_accounts: false,
         },
@@ -623,7 +629,7 @@ describe("account linking", () => {
         const first = await linkThroughComplete(accessToken, OAUTH2_PROVIDER, "account offline_access", externalEmail);
         console.log(first.status, first.data);
         expect(first.status).toBe(201);
-        expect(first.data.federated_username).toBe(externalEmail);
+        expect(first.data.federated_username).toBe(`example-idp:${externalEmail}`);
 
         // 名乗ったアカウントで同じだと分かるので、2 回目は更新。alias も変わらない。
         const second = await linkOnce(accessToken, OAUTH2_PROVIDER, "account offline_access", externalEmail);
@@ -788,6 +794,42 @@ describe("account linking", () => {
 
         const links = (await listLinks(accessToken)).filter((it) => it.provider === PROVIDER);
         expect(links.map((it) => it.alias).sort()).toEqual([first, second].sort());
+      });
+
+      it("hands out, for each alias, the token of the external account linked under it", async () => {
+        const accessToken = await loginAsNewUser();
+        const scope = "openid profile email offline_access";
+        const firstEmail = await createExternalUser();
+        const secondEmail = await createExternalUser();
+        const first = await linkOnce(accessToken, PROVIDER, scope, firstEmail);
+        const second = await linkOnce(accessToken, PROVIDER, scope, secondEmail);
+
+        const retrieve = async (alias) => {
+          const response = await retrieveToken({
+            alias,
+            token: accessToken,
+            clientId: clientSecretPostClient.clientId,
+            clientSecret: clientSecretPostClient.clientSecret,
+          });
+          expect(response.status).toBe(200);
+          return response.data.access_token;
+        };
+        const firstToken = await retrieve(first);
+        const secondToken = await retrieve(second);
+        expect(secondToken).not.toBe(firstToken);
+
+        // 外部IdP の userinfo で、それぞれの alias のトークンが、その alias でつないだアカウントのものだと確かめる。
+        const externalEmailOf = async (externalAccessToken) => {
+          const response = await get({
+            url: `${backendUrl}/${federationServerConfig.tenantId}/v1/userinfo`,
+            headers: { Authorization: `Bearer ${externalAccessToken}` },
+          });
+          console.log(response.status, response.data);
+          expect(response.status).toBe(200);
+          return response.data.email;
+        };
+        expect(await externalEmailOf(firstToken)).toBe(firstEmail);
+        expect(await externalEmailOf(secondToken)).toBe(secondEmail);
       });
     });
 

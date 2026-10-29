@@ -3147,8 +3147,9 @@ components:
           type: string
           nullable: true
           description: |
-            連携先設定の `userinfo_mapping_rules` で `email` にマッピングした userinfo の値。表示用です。
-            連携先に `userinfo_endpoint` が無い場合や、`email` へのマッピングが無い場合は `null`
+            外部アカウントの表示名。同じ連携先を複数つないだとき、ユーザーが見分けるために使います。
+            連携先設定の `userinfo_mapping_rules` で `preferred_username` にマッピングした値、無ければ `email` にマッピングした値です。
+            連携先に userinfo（`userinfo_endpoint` / `userinfo_execution`）が無い場合や、どちらへのマッピングも無い場合は `null`
           example: user@example.com
         scope:
           type: string

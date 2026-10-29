@@ -22,6 +22,7 @@ import java.util.Map;
 import org.idp.server.account_linking.AccountLinkingApi;
 import org.idp.server.account_linking.AccountLinkingConfigurationResolver;
 import org.idp.server.account_linking.AccountLinkingCookieDelegate;
+import org.idp.server.account_linking.AccountLinkingCredentialsService;
 import org.idp.server.account_linking.AccountLinkingTokenCipher;
 import org.idp.server.account_linking.LinkedExternalAccountRevoker;
 import org.idp.server.account_linking.LinkedExternalAccountTokenService;
@@ -937,11 +938,12 @@ public class IdpServerApplication {
                 new AccountLinkingCallbackHandler(
                     accountLinkingSessionQueryRepository,
                     accountLinkingSessionCommandRepository,
-                    accountLinkingConfigurationResolver,
-                    new ExternalIdpTokenGateway(httpRequestExecutor),
-                    new ExternalIdpIdTokenGateway(oidcSsoExecutors),
-                    new ExternalIdpUserinfoGateway(oidcSsoExecutors),
-                    accountLinkingTokenCipher),
+                    new AccountLinkingCredentialsService(
+                        accountLinkingConfigurationResolver,
+                        new ExternalIdpTokenGateway(httpRequestExecutor),
+                        new ExternalIdpIdTokenGateway(oidcSsoExecutors),
+                        new ExternalIdpUserinfoGateway(oidcSsoExecutors),
+                        accountLinkingTokenCipher)),
                 new AccountLinkingCompleteHandler(
                     accountLinkingSessionQueryRepository,
                     accountLinkingSessionCommandRepository,

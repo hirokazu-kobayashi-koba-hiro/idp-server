@@ -90,7 +90,7 @@ curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/t
 | `payload.provider` | `standard` |
 | `payload.issuer` / `jwks_uri` | 外部IdPが ID Token を返すときの検証に使う（`iss` の一致と署名）。`openid` を要求するなら必須 |
 | `payload.authorization_endpoint` / `token_endpoint` | 必須 |
-| `payload.userinfo_endpoint` | 任意。設定すると `email` のマッピングが一覧の `federated_username` になり、ID Token が無いときは `external_user_id` が外部アカウントの識別子になる |
+| `payload.userinfo_endpoint` | 任意。設定すると `preferred_username` のマッピング（無ければ `email`）が一覧の `federated_username` になり、ID Token が無いときは `external_user_id` が外部アカウントの識別子になる。同じ連携先を複数つなぐなら、ユーザーが見分けられるように設定する |
 | `payload.client_authentication_type` | `client_secret_basic` なら Basic 認証、それ以外はボディに `client_secret` を入れる。`private_key_jwt` などには対応していない。トークン交換・リフレッシュ・失効で共通 |
 | `payload.redirect_uri` | Step 1 で登録したコールバックURLと同じ値 |
 | `payload.scopes_supported` | RP が `link` で `scope` を省略したときに外部IdPへ要求するスコープ。RP はこの範囲でしか指定できない。`openid` を入れた連携先では、RP の `scope` にも `openid` が要る |

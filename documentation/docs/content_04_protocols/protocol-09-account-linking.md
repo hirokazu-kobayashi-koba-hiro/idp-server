@@ -217,6 +217,8 @@ iframe に埋め込むと third-party 文脈になり、Safari の ITP と Chrom
 
 外部アカウントの識別子（`federated_user_id`）は、ID Token が返れば検証した `sub`、無ければ userinfo の `external_user_id` へのマッピングから取ります。どちらも無い連携先（OAuth 2.0 の委譲だけ）でも連携できますが、同じ外部アカウントかを判定できません。扱いは下の `multiple_accounts` で決まります。
 
+一覧の `federated_username` は、外部アカウントの表示名です。userinfo のマッピングの `preferred_username`、無ければ `email` を入れます。独自の形で応答する連携先でも、`userinfo_mapping_rules`（JSONPath・固定値・`format` などの関数）で好きな値を `preferred_username` に入れられます。userinfo の無い連携先では `null` になり、同じ連携先を複数つなぐと、ユーザーには見分けがつきません。同じ連携先を複数つなぐ（`multiple_accounts: true`）なら、アカウントを名乗る userinfo を設定してください。
+
 `scopes_supported` は `link` のリクエストで `scope` を省略したときの既定値です。
 
 `openid` を要求する場合は `issuer` と `jwks_uri` が要ります。返ってきた ID Token の `iss` と署名を、この 2 つで検証するためです。足りないと検証に失敗し、戻り先へ `server_error` を返します。

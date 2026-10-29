@@ -19,27 +19,20 @@ package org.idp.server.account_linking.handler;
 import java.time.LocalDateTime;
 import org.idp.server.account_linking.*;
 import org.idp.server.account_linking.exception.AccountLinkingSessionStateException;
-import org.idp.server.account_linking.exception.ExternalIdpRequestFailedException;
-import org.idp.server.account_linking.gateway.ExternalIdpIdTokenGateway;
-import org.idp.server.account_linking.gateway.ExternalIdpTokenGateway;
-import org.idp.server.account_linking.gateway.ExternalIdpUserinfoGateway;
 import org.idp.server.account_linking.io.AccountLinkingCallbackRequest;
 import org.idp.server.account_linking.io.AccountLinkingResult;
 import org.idp.server.account_linking.repository.AccountLinkingSessionCommandRepository;
 import org.idp.server.account_linking.repository.AccountLinkingSessionQueryRepository;
 import org.idp.server.account_linking.verifier.AccountLinkingCallbackVerifier;
 import org.idp.server.core.openid.identity.User;
-import org.idp.server.federation.sso.oidc.OidcSsoConfiguration;
-import org.idp.server.federation.sso.oidc.OidcTokenResult;
-import org.idp.server.platform.crypto.SealedData;
-import org.idp.server.platform.crypto.datakey.TenantDataCipher;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 
 /**
- * Exchanges the authorization code and holds the result against the session.
+ * Checks that the callback comes back to the browser that started the link, and holds what the code
+ * obtained ({@link AccountLinkingCredentialsService}) against the session.
  *
  * <p>Reached by a browser navigation from the external IdP with no Bearer token, so this step
  * finalizes nothing. It writes only into the session row; the link itself is written by the
@@ -49,11 +42,7 @@ public class AccountLinkingCallbackHandler {
 
   AccountLinkingSessionQueryRepository sessionQueryRepository;
   AccountLinkingSessionCommandRepository sessionCommandRepository;
-  AccountLinkingConfigurationResolver configurationResolver;
-  ExternalIdpTokenGateway tokenGateway;
-  ExternalIdpIdTokenGateway idTokenGateway;
-  ExternalIdpUserinfoGateway userinfoGateway;
-  TenantDataCipher tokenCipher;
+  AccountLinkingCredentialsService credentialsService;
   AccountLinkingCallbackVerifier callbackVerifier;
   AccountLinkingErrorHandler errorHandler;
   LoggerWrapper log = LoggerWrapper.getLogger(AccountLinkingCallbackHandler.class);
@@ -61,18 +50,10 @@ public class AccountLinkingCallbackHandler {
   public AccountLinkingCallbackHandler(
       AccountLinkingSessionQueryRepository sessionQueryRepository,
       AccountLinkingSessionCommandRepository sessionCommandRepository,
-      AccountLinkingConfigurationResolver configurationResolver,
-      ExternalIdpTokenGateway tokenGateway,
-      ExternalIdpIdTokenGateway idTokenGateway,
-      ExternalIdpUserinfoGateway userinfoGateway,
-      TenantDataCipher tokenCipher) {
+      AccountLinkingCredentialsService credentialsService) {
     this.sessionQueryRepository = sessionQueryRepository;
     this.sessionCommandRepository = sessionCommandRepository;
-    this.configurationResolver = configurationResolver;
-    this.tokenGateway = tokenGateway;
-    this.idTokenGateway = idTokenGateway;
-    this.userinfoGateway = userinfoGateway;
-    this.tokenCipher = tokenCipher;
+    this.credentialsService = credentialsService;
     this.callbackVerifier = new AccountLinkingCallbackVerifier();
     this.errorHandler = new AccountLinkingErrorHandler();
   }
@@ -121,7 +102,8 @@ public class AccountLinkingCallbackHandler {
                 "Account linking session is not awaiting a callback."));
       }
 
-      ParkedCredentials credentials = exchange(tenant, session, request.code(), now);
+      ParkedCredentials credentials =
+          credentialsService.obtain(tenant, session, request.code(), now);
       sessionCommandRepository.update(tenant, session.park(credentials));
 
       return AccountLinkingResult.redirect(
@@ -178,69 +160,5 @@ public class AccountLinkingCallbackHandler {
       AccountLinkingResult result, AccountLinkingSession session) {
     return result.withContext(
         session.requestedClientId(), new User().setSub(session.userIdentifier().value()));
-  }
-
-  private ParkedCredentials exchange(
-      Tenant tenant, AccountLinkingSession session, String code, LocalDateTime now) {
-
-    OidcSsoConfiguration configuration =
-        configurationResolver.resolve(tenant, session.provider()).oidc();
-
-    OidcTokenResult tokenResult =
-        tokenGateway.exchangeAuthorizationCode(
-            configuration, code, configuration.redirectUri(), session.codeVerifier());
-
-    if (tokenResult.isError() || !tokenResult.hasAccessToken()) {
-      log.warn(
-          "Account linking token exchange failed. provider={}, status={}",
-          session.provider().value(),
-          tokenResult.statusCode());
-      throw new ExternalIdpRequestFailedException(
-          "Account linking failed at the external identity provider token endpoint.");
-    }
-
-    // The provider identifies the account when it issues an id_token; its verified sub is the only
-    // value it asserts about which account granted access. A plain OAuth 2.0 delegation says
-    // nothing, and a link does not need it to be keyed.
-    String federatedUserId = null;
-    if (tokenResult.hasIdToken()) {
-      federatedUserId = idTokenGateway.verifiedSubject(configuration, session, tokenResult);
-    }
-
-    String federatedUsername = null;
-    if (configuration.hasUserinfo()) {
-      User federatedUser = userinfoGateway.request(configuration, tokenResult.accessToken());
-      federatedUsername = federatedUser.email();
-      if (federatedUserId == null) {
-        federatedUserId = federatedUser.externalUserId();
-      }
-    }
-
-    TenantDataCipher.Sealer sealer = tokenCipher.sealer(tenant);
-    SealedData accessToken =
-        sealer.seal(
-            tokenResult.accessToken(),
-            AccountLinkingTokenCipher.accessToken(session.userIdentifier(), session.provider()));
-    SealedData refreshToken =
-        tokenResult.hasRefreshToken()
-            ? sealer.seal(
-                tokenResult.refreshToken(),
-                AccountLinkingTokenCipher.refreshToken(
-                    session.userIdentifier(), session.provider()))
-            : null;
-
-    return new ParkedCredentials.Builder()
-        .federatedUserId(federatedUserId)
-        .federatedUsername(federatedUsername)
-        .grantedScope(tokenResult.hasScope() ? tokenResult.scope() : configuration.scopeAsString())
-        .encryptedAccessToken(accessToken)
-        .encryptedRefreshToken(refreshToken)
-        .encryptionKeyId(sealer.keyId())
-        .accessTokenExpiresAt(ExternalTokenLifetime.accessTokenExpiresAt(tokenResult, now))
-        .refreshTokenExpiresAt(
-            refreshToken == null
-                ? null
-                : ExternalTokenLifetime.refreshTokenExpiresAt(configuration, now))
-        .build();
   }
 }

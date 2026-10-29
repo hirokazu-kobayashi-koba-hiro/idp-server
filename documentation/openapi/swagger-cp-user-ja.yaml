@@ -1956,7 +1956,7 @@ components:
         federated_username:
           type: string
           nullable: true
-          description: 外部IdP側の表示名（userinfo の email）
+          description: 外部IdP側の表示名（userinfo のマッピングの `preferred_username`、無ければ `email`）
         scope:
           type: string
           nullable: true
