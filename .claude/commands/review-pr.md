@@ -50,6 +50,7 @@ gh pr diff <pr_number>
 | **両DB対応** | PostgreSQL/MySQL 両方の実装があるか | High |
 | **マイグレーション** | MySQLは `.mysql.sql` 接尾辞 | Medium |
 | **Validator/Verifier** | void + throw パターン | Medium |
+| **Handler/EntryService** | 新しい private method に業務の決まり・組み立て・確認が入っていないか | Medium |
 | **セキュリティ** | SSRF、インジェクション、認証バイパスの懸念なし | Critical |
 
 #### 推奨チェック項目
@@ -150,6 +151,23 @@ public void process(String tenantId, String userId) { }
 
 // ✅ 値オブジェクト使用
 public void process(TenantId tenantId, UserId userId) { }
+```
+
+### Handler / EntryService の private method
+
+Handler / EntryService に新しく足された private method は、中身で置き場所を判断して指摘する（`.claude/rules/handler-entry-service.md`）。
+
+- ドメインの決まり → 値オブジェクト / エンティティ
+- 外部とのやりとり、保存する形への組み立て → Service
+- 確認 → Verifier（void + throw）
+- 段取りだけ（例外を応答に変える、イベントの付加情報）→ 指摘しない
+
+```java
+// ❌ 表示名の優先順（ドメインの決まり）が Handler にあり、ユニットテストできない
+private static String federatedUsername(User federatedUser) { ... }
+
+// ✅ 値オブジェクトに出す
+ExternalAccountIdentity identity = ExternalAccountIdentity.of(verifiedSubject, federatedUser);
 ```
 
 ### セキュリティチェック
