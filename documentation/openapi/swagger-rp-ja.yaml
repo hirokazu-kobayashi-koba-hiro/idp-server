@@ -1532,12 +1532,21 @@ paths:
         | 操作者が一致した | 外部IdPの認可URL（`state`・`nonce`・`code_challenge`（`S256`）付き） |
         | ブラウザセッションが無い、ログインが `linking_max_auth_age` より古い、またはログインの acr がクライアントの `linking_acr_values` に当たらない（連携セッションは有効） | このサーバーの認可エンドポイント（`prompt=login`・`login_hint=sub:<連携を始めたユーザー>`、`linking_acr_values` があれば `acr_values`）。ログインが終わると認可コードを発行せずに `/linking/start?state=...&returned_from_sign_in=true` へ戻る（ログインを取り消した場合も同じ） |
         | ログインから戻ってもブラウザセッションが無い、ログインを取り消した、または acr が `linking_acr_values` に当たらない | `{redirect_uri}?linking=failed&error=login_required`（`state` は付けない） |
-        | ブラウザセッションが無く、連携セッションが無い・期限切れ・開始済み | テナントのエラー画面（`error=invalid_request`） |
         | 操作者が一致しない | テナントのエラー画面（`error=access_denied`） |
-        | 連携セッションが無い・期限切れ・開始済み | テナントのエラー画面（`error=invalid_request`） |
+        | `state` が無い・連携セッションが無い・期限切れ・開始済み（ブラウザセッションの有無に関わらず） | テナントのエラー画面（`error=invalid_request`） |
+        | 連携を始めた後で、連携先の設定が削除・無効化された | テナントのエラー画面（`error=invalid_request`） |
         | その他のエラー | テナントのエラー画面（`error=server_error`） |
 
         ブラウザセッションが無い場合、連携セッションは消さずに残すので、サインインしたブラウザから同じ `start_url` で続けられます。
+
+        ログインし直しは、連携を始めたクライアントの認可リクエストとして送ります（`client_id`、`redirect_uri` はクライアントの `redirect_uris` の先頭、`response_type=code`、`scope=openid`、PKCE）。
+        そのため、このクライアントの認証ポリシーがこのログインにも当たります。クライアントに `redirect_uris` が無いと、テナントのエラー画面（`error=invalid_request`）になります。
+
+        ## RP に戻ってこない場合
+
+        テナントのエラー画面へ送った場合、ブラウザは RP の戻り先に戻りません。RP は連携中の表示のまま待たず、
+        連携開始の `expires_in`（900 秒）を過ぎたら、連携一覧（`GET /v1/me/linked-external-accounts`）で結果を確かめ、連携が無ければ失敗として扱ってください。
+        エラー画面からやり直すときは、連携開始（`link`）から始めます。
 
         テナントのエラー画面は `{ui_config.base_url}/error/?error=...&error_description=...&tenant_id=...` です
         （`ui_config.base_url` が無い場合はテナントのドメイン）。`error_description` は失敗の種類ごとの固定文です。
@@ -1550,10 +1559,8 @@ paths:
           in: query
           required: true
           description: |
-            連携開始レスポンスの `state`。
-
-            クエリ自体が無い場合はリクエストパラメータの欠落として共通のエラーハンドラが処理し、
-            `302` ではなく `500` の JSON（`server_error`）が返ります。
+            連携開始レスポンスの `state`。`start_url` に含まれています。
+            無い場合は、連携セッションが無いときと同じくテナントのエラー画面（`error=invalid_request`）へ送ります。
           schema:
             type: string
         - name: returned_from_sign_in
@@ -1621,6 +1628,7 @@ paths:
         `error_description` と外部IdPの応答本文は返しません。
 
         戻り先へ失敗を返したときは連携セッションを削除します。エラー画面へ送るときは、連携セッションに触れません。
+        エラー画面へ送った場合はブラウザが RP に戻らないので、`/v1/linking/start` の「RP に戻ってこない場合」のとおり扱ってください。
 
         戻り先（`redirect_uri`）は連携開始のときにクライアントの `linking_return_uris` と完全一致で照合済みです。
         テナントのエラー画面の形は `/v1/linking/start` と同じです。
@@ -1699,6 +1707,9 @@ paths:
         - `alias` がそのユーザーの連携にある
         - 連携先がクライアントの `extension.linking_token_providers` に含まれている
 
+        `token` は有効期限内でなければなりません（期限切れは `401` `invalid_token`）。ユーザーがその場にいない処理（バッチなど）で取り出すときは、
+        クライアントが持つ idp-server のリフレッシュトークンで、先にユーザーのアクセストークンを取り直してください。
+
         返すのはアクセストークンだけで、リフレッシュトークンは返しません。
         アクセストークンの期限まで 30 秒を切っていれば、保管しているリフレッシュトークンで更新してから返します。
         同じ連携への同時リクエストは行ロックで待ち合わせ、リフレッシュトークンを二重に使いません。
@@ -1728,6 +1739,14 @@ paths:
         - $ref: '#/components/parameters/Authorization'
         - $ref: '#/components/parameters/OAuthClientAttestation'
         - $ref: '#/components/parameters/OAuthClientAttestationPop'
+        - name: DPoP
+          in: header
+          required: false
+          description: |
+            `token` が DPoP で縛られているときに必須の DPoP proof（RFC 9449）。`htm` は `POST`、`htu` はこの API の URL、
+            `ath` は `token` の SHA-256 ハッシュ（base64url）です。縛られていない `token` では送りません。2 つ以上送ると `400` `invalid_request` です。
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -1815,7 +1834,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
         '502':
-          description: "`temporarily_unavailable` — 外部IdPがリフレッシュに 5xx か 429 を返した、または到達できない。時間をおいて再試行します"
+          description: "`temporarily_unavailable` — 外部IdPがリフレッシュに 5xx か 429 を返した、または到達できない。`Retry-After` は付きません。間隔を広げながら（指数バックオフ）再試行します"
           content:
             application/json:
               schema:
@@ -3228,7 +3247,7 @@ components:
     LinkedExternalAccountTokenRequest:
       type: object
       description: |
-        保管トークンの取得リクエスト。クライアント認証のパラメータはトークンエンドポイントと同じです。
+        保管トークンの取得リクエスト。クライアント認証のパラメータは、トークンイントロスペクションと同じです。
       required:
         - token
       properties:

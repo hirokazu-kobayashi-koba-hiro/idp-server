@@ -364,10 +364,10 @@ cd e2e && npm test -- --testPathPattern=scenario-16
 | `link` が `400`（`redirect_uri is not registered for this client.`） | `redirect_uri` が `linking_return_uris` と一致しない | 末尾のスラッシュまで含めて一致させる |
 | `/me` の連携APIが `403 insufficient_scope` | スコープがテナントかクライアントに無い、または認可リクエストで要求していない | Step 3・4 を確認し、トークンを取り直す |
 | 戻り先に `error=login_required` | 連携の途中のログインを取り消した、またはログインしてもブラウザにセッションが残らない | 5.1 からやり直す。続くなら `cookie_same_site` が `Strict` でないか、セッションの保存先（Redis）が動いているか確認 |
-| `start_url` を開くとエラー画面 | `{provider}` の名前が `sso_provider` と違う、または連携先が `enabled: false`（`link` は名前を検査しない） | `sso_provider` を確認 |
+| `start_url` を開くとエラー画面（RP に戻らない） | 連携セッションが期限切れ・開始済み（再読み込みなど）、別のブラウザや別のユーザーで開いた、または `link` の後で連携先が無効化された | 5.1 の `link` からやり直す。RP は `expires_in` を過ぎたら一覧で結果を確かめる |
 | 戻り先に `error=server_error` | 外部IdPでのトークン交換・ID Token 検証・userinfo の失敗 | `client_authentication_type`・`redirect_uri`・`issuer`・`jwks_uri` を確認 |
 | `complete` が `403` | 連携を始めたクライアントと別のクライアントのトークンで確定した | 開始と同じクライアントのトークンを使う |
-| `complete` が `409` | 連携セッションが期限切れ、または同じ外部アカウントが別ユーザーに連携済み（`reject`）、またはこの連携先の別のアカウントを連携済み（`multiple_accounts: false`） | 5.1 からやり直す / `duplicate_link_policy` を見直す / 前の連携を解除してからつなぐ |
+| `complete` が `409` | 連携セッションが期限切れ、または同じ外部アカウントが別ユーザーに連携済み（`reject`）、またはこの連携先の別のアカウントを連携済み（`multiple_accounts: false`） | 期限切れなら 5.1 からやり直す / `duplicate_link_policy` を見直す / 前の連携を解除してから、期限内なら同じ `state` で `complete` を送り直す |
 | トークン取得が `404 not_found` | 保存していた `alias` の連携が解除された。別のアカウントにつなぎ直されると `alias` が変わる | 一覧を引き直して、今の `alias` を使う |
 | トークン取得が `400 relink_required` | リフレッシュトークンが無い・期限切れ・拒否された、または連携先が削除・無効化された | `refresh_token_expires_in` と、外部IdPがリフレッシュトークンを返すスコープ（例: `offline_access`）を確認 |
 | `link` が `403` | 連携先がクライアントの `linking_providers` に無い | Step 4 を確認 |

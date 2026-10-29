@@ -51,6 +51,11 @@ tags:
       ブラウザ遷移（`/v1/linking/start`・`/v1/linking/callback/{provider}`）と保管トークンの取得は
       [RP向けAPI](/docs/content_07_reference/api-rp-ja/) にあります。
 
+      アクセストークンが送り手に縛られている場合は、その形で送ります。
+      DPoP で縛ったトークンは `Authorization: DPoP {access_token}` と、`DPoP` ヘッダーの proof（RFC 9449。`htu` は呼ぶ API の URL、`ath` はアクセストークンのハッシュ）で送ります。
+      mTLS で縛ったトークンは、発行のときと同じクライアント証明書で接続します（RFC 8705）。
+      クライアントインスタンスへの束縛（ABCA）は、これらの API では照合しません。クライアント認証を求めないためです。
+
       📘 [外部IdPアカウント連携](/docs/content_04_protocols/protocol-09-account-linking)
 
 paths:
@@ -1536,7 +1541,12 @@ paths:
         [RP向けAPI](/docs/content_07_reference/api-rp-ja/) を参照してください。
 
         - `redirect_uri` は連携の終わりにブラウザを戻す先です。クライアント設定の `extension.linking_return_uris` と完全一致で照合します。
+        - `redirect_uri` にはクエリを付けられます（戻すときに `&` でつなぎます）。フラグメント（`#...`）は付けないでください。戻すときのクエリがフラグメントの後ろに付き、RP が受け取れません。
         - 連携セッションの有効期間は 900 秒です（`expires_in`）。
+
+        ブラウザは、成功すると `redirect_uri?linking=done&state=...`、失敗すると `redirect_uri?linking=failed&error=...` に戻ります。
+        ただし、ブラウザがテナントのエラー画面で止まり、RP に戻らないこともあります（期限切れ・別のブラウザ・再読み込みなど）。
+        `expires_in` を過ぎても戻らなければ、連携一覧で結果を確かめ、連携が無ければ失敗として扱ってください。
 
         ## 必要なスコープ
         `linked_account:manage`
@@ -1578,6 +1588,18 @@ paths:
                   value:
                     error: invalid_request
                     error_description: "redirect_uri is not registered for this client."
+                provider_not_configured:
+                  value:
+                    error: invalid_request
+                    error_description: "The linking provider is not configured or not enabled: example-idp"
+                scope_beyond_provider:
+                  value:
+                    error: invalid_request
+                    error_description: "The requested scope is not configured for this provider: calendar.write"
+                openid_required:
+                  value:
+                    error: invalid_request
+                    error_description: "The scope must include openid for this provider."
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1630,6 +1652,16 @@ paths:
         同じユーザーが同じ外部アカウントをもう一度連携した場合はエラーにならず、既存の連携を更新します（`alias` は保たれます）。
         連携先が 1 件だけを許す（`multiple_accounts: false`、既定）ときは、外部アカウントを名乗らない連携先でも、もう一度の連携は既存の 1 件の更新になります。別の外部アカウントは `409` です。
 
+        新しい連携も連携し直し（更新）も `201` で、応答の本文は同じ形です。見分けたいときは、確定の前の一覧に同じ `alias` があるかで判断します。
+
+        ## 断られたときのやり直し
+        `400` / `403` / `409` で断ったとき、連携セッションは確定を待つ状態のまま残ります。
+        原因を取り除けば（例: 別のアカウントの連携を解除する）、期限内なら同じ `state` で送り直せます。
+        期限切れ・確定済みのときと `404` のときは、連携開始（`link`）からやり直します。
+
+        `state` が無いリクエストは、連携セッションが無いときと同じく `404` です。
+
+        ## 連携し直しとトークン
         連携し直し（更新）では、保管トークンを新しいものに置き換えます。連携先が `revoke_on_relink: true` なら、置き換えた後で、入れ替わる前のトークンを外部IdPの失効エンドポイント（RFC 7009）で失効させます。
         外部IdPが同じ値を返したトークンは失効させません。失効はベストエフォートで、失敗しても確定は成功します。
 
@@ -2940,6 +2972,7 @@ components:
             identity_verification_result: 身元確認結果のAPIに必要なスコープ
             linked_account:read: 外部アカウント連携の一覧に必要なスコープ
             linked_account:manage: 外部アカウント連携の開始・確定・解除に必要なスコープ。一覧も含む
+            linked_account:read_token: 保管トークンの取得（RP向けAPI）に必要なスコープ。このページの API では使わない。`read` / `manage` には含まれない
 
   requestBodies:
     ContactVerificationCode:
@@ -3011,7 +3044,7 @@ components:
       name: provider
       in: path
       required: true
-      description: "連携先の設定名（`federation-configurations` の `sso_provider`、`type: oidc`）"
+      description: "連携先の設定名。`federation-configurations` に `type: account-linking` で登録した設定の `sso_provider` です（ログイン用の `type: oidc` の設定は使いません）"
       schema:
         type: string
         example: example-idp
@@ -3067,7 +3100,7 @@ components:
           description: |
             ブラウザをトップレベル遷移で開かせる URL。外部IdPではなく idp-server の `/v1/linking/start` です
             （認可サーバーの issuer から組み立てます）。
-          example: "https://api.local.test/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/linking/start?state=Xb3k...Qz"
+          example: "https://api.example.com/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/linking/start?state=Xb3k...Qz"
         state:
           type: string
           description: 連携セッションの識別子。確定（`complete`）で送ります
@@ -3079,12 +3112,18 @@ components:
     LinkedExternalAccount:
       type: object
       description: 外部アカウントの連携。保管しているトークンは含みません。
+      required:
+        - alias
+        - provider
+        - created_at
+        - updated_at
       properties:
         alias:
           type: string
           description: |
             連携の識別子。`{provider}-{8 文字の乱数}` の形で、ユーザーの中で一意です。同じ外部アカウントを連携し直しても変わりません。解除した連携の識別子が別の連携に使い回されることはありません。
             解除して別のアカウントをつなぎ直すと新しい識別子になるので、前の識別子で取得すると `404` になります。そのときは一覧を引き直します。
+            中身に意味を持たせない値として扱ってください。連携先は `-` で分けて取り出さず、`provider` を使います（連携先の名前に `-` が入ることがあります）。
           example: example-idp-k3f9x2qa
         provider:
           type: string
@@ -3093,7 +3132,9 @@ components:
         federated_username:
           type: string
           nullable: true
-          description: 外部IdPの userinfo の `email`。連携先に userinfo が無い場合は `null`
+          description: |
+            連携先設定の `userinfo_mapping_rules` で `email` にマッピングした userinfo の値。表示用です。
+            連携先に `userinfo_endpoint` が無い場合や、`email` へのマッピングが無い場合は `null`
           example: user@example.com
         scope:
           type: string
