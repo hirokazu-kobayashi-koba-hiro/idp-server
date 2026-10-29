@@ -236,7 +236,7 @@ iframe に埋め込むと third-party 文脈になり、Safari の ITP と Chrom
 
 どちらでも `alias` は `{provider}-{8 文字の乱数}` で、連携し直し（更新）では変わらず、解除した `alias` は使い回しません。解除して別のアカウントをつなぎ直すと新しい `alias` になるので、前の `alias` を覚えている RP には `404` が返り、アカウントが入れ替わったことが分かります。`404` を受けた RP は一覧を引き直します。
 
-1 件の連携先では、行に `single_account` の印を付け、データベースの一意制約で 1 ユーザー×連携先に 1 行に保ちます。同時に complete しても 2 行目はできません（後の側は失敗して巻き戻ります）。
+1 件の連携先では、行に `single_account` の印を付け、データベースの一意制約で 1 ユーザー×連携先に 1 行に保ちます。同時に complete しても 2 行目はできません（後の側は `409` になり、何も書きません）。
 
 `revoke_on_relink` は、連携し直し（更新）のときに、入れ替わる前の保管トークンを `revocation_endpoint` で失効させるかです。既定は `false` で、古いトークンは上書きするだけで外部IdPには伝えません。
 
@@ -335,13 +335,13 @@ token={ユーザーのアクセストークン}&client_id=...&client_secret=...
 | ステータス | `error` | 発生条件 |
 |---|---|---|
 | 400 | `invalid_request` | `token` が無い / `DPoP` ヘッダーが 2 つ以上 |
-| 400 | `relink_required` | リフレッシュトークンが無い・期限切れ・外部IdPに拒否された / 連携先が削除・無効化された。連携し直す必要があります |
+| 400 | `relink_required` | リフレッシュトークンが無い・期限切れ・外部IdPに拒否された（429 以外の 4xx） / 連携先が削除・無効化された。連携し直す必要があります |
 | 401 | `invalid_client` | クライアント認証に失敗した / public クライアント |
 | 401 | `invalid_token` | `token` が無効・期限切れ・ユーザーを指していない / ユーザーが有効でない / sender-constrained なのに送り手の証明が合わない |
 | 403 | `unauthorized_client` | `token` が別のクライアントに発行された / 連携先が許可されていない |
 | 403 | `insufficient_scope` | `token` に `linked_account:read_token` が無い |
 | 404 | `not_found` | `alias` がユーザーの連携に無い |
-| 502 | `temporarily_unavailable` | 外部IdPがリフレッシュに 5xx を返した、または到達できない |
+| 502 | `temporarily_unavailable` | 外部IdPがリフレッシュに 5xx か 429 を返した、または到達できない |
 
 ---
 

@@ -1753,7 +1753,7 @@ paths:
         '400':
           description: |
             - `invalid_request` — `token` が無い / `DPoP` ヘッダーが 2 つ以上
-            - `relink_required` — リフレッシュトークンが無い・期限切れ、外部IdPがリフレッシュを 4xx で拒否した、または連携先が削除・無効化された。ユーザーが連携し直す必要があります
+            - `relink_required` — リフレッシュトークンが無い・期限切れ、外部IdPがリフレッシュを 4xx（429 を除く）で拒否した、または連携先が削除・無効化された。ユーザーが連携し直す必要があります
           content:
             application/json:
               schema:
@@ -1815,7 +1815,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
         '502':
-          description: "`temporarily_unavailable` — 外部IdPがリフレッシュに 5xx を返した、または到達できない。時間をおいて再試行します"
+          description: "`temporarily_unavailable` — 外部IdPがリフレッシュに 5xx か 429 を返した、または到達できない。時間をおいて再試行します"
           content:
             application/json:
               schema:

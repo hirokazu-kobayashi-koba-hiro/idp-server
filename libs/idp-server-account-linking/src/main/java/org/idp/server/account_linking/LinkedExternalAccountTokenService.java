@@ -223,14 +223,7 @@ public class LinkedExternalAccountTokenService {
         account.accountAlias().value(),
         tokenResult.statusCode());
 
-    // A 5xx or a network failure says nothing about the grant; only a 4xx from the provider means
-    // the refresh token itself is no longer accepted.
-    if (tokenResult.statusCode() >= 500) {
-      return LinkedExternalAccountTokenException.externalIdpUnavailable(
-          "The external identity provider could not refresh the token. Try again later.");
-    }
-    return LinkedExternalAccountTokenException.relinkRequired(
-        "The external identity provider rejected the stored refresh token. Link the account again.");
+    return LinkedExternalAccountTokenException.refreshFailed(tokenResult.statusCode());
   }
 
   private LinkedExternalAccount withRefreshedTokens(

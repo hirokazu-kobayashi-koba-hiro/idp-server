@@ -1480,18 +1480,34 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           description: |
-            スコープ不足（`linked_account:manage` が必要）。
-            または `{provider}` がクライアントの `linking_providers` に無い。
+            次のいずれか。
+
+            - スコープ不足（`linked_account:manage` が必要）。`insufficient_scope` 形式
+            - `{provider}` がクライアントの `linking_providers` に無い
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/InsufficientScopeError'
-              example:
-                error: insufficient_scope
-                error_description: "The request requires the 'linked_account:manage' scope."
-                scope: linked_account:manage
+                oneOf:
+                  - $ref: '#/components/schemas/InsufficientScopeError'
+                  - $ref: '#/components/schemas/AccountLinkingErrorResponse'
+              examples:
+                insufficient_scope:
+                  value:
+                    error: insufficient_scope
+                    error_description: "The request requires the 'linked_account:manage' scope."
+                    scope: linked_account:manage
+                provider_not_allowed:
+                  value:
+                    error: invalid_request
+                    error_description: "The client may not start a link to this provider."
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
 
   /{tenant-id}/v1/me/linked-external-accounts/complete:
     post:
@@ -1511,6 +1527,9 @@ paths:
 
         同じユーザーが同じ外部アカウントをもう一度連携した場合はエラーにならず、既存の連携を更新します（`alias` は保たれます）。
         連携先が 1 件だけを許す（`multiple_accounts: false`、既定）ときは、外部アカウントを名乗らない連携先でも、もう一度の連携は既存の 1 件の更新になります。別の外部アカウントは `409` です。
+
+        連携し直し（更新）では、保管トークンを新しいものに置き換えます。連携先が `revoke_on_relink: true` なら、置き換えた後で、入れ替わる前のトークンを外部IdPの失効エンドポイント（RFC 7009）で失効させます。
+        外部IdPが同じ値を返したトークンは失効させません。失効はベストエフォートで、失敗しても確定は成功します。
 
         ## 必要なスコープ
         `linked_account:manage`
@@ -1543,6 +1562,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LinkedExternalAccount'
+        '400':
+          description: |
+            連携を開始した後で、連携先の設定が削除・無効化された。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountLinkingErrorResponse'
+              example:
+                error: invalid_request
+                error_description: "The linking provider is no longer available."
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1590,6 +1619,8 @@ paths:
             - 連携セッションが確定できる状態にない（コールバック前、または確定済み）
             - 同じ外部アカウントが既に他のユーザーに紐付いている（連携先の `duplicate_link_policy` が `reject` のとき）。誰に紐付いているかは返しません
             - この連携先の別のアカウントを既に連携している（連携先の `multiple_accounts` が `false` のとき）。先に解除してから連携します
+            - この連携先の連携が複数あり、どれを更新するか決められない（連携先が `multiple_accounts: true` だった間に作られた連携が残っているとき）。不要な連携を解除してから連携します
+            - 同じユーザー・同じ連携先の確定が同時に届き、先に確定した方と重なった（連携先の `multiple_accounts` が `false` のとき）。一覧を引き直して結果を確かめます
           content:
             application/json:
               schema:
@@ -1603,8 +1634,26 @@ paths:
                   value:
                     error: invalid_request
                     error_description: "This external account cannot be linked."
+                another_account_linked:
+                  value:
+                    error: invalid_request
+                    error_description: "Another account of this provider is already linked. Unlink it before linking another."
+                several_accounts_linked:
+                  value:
+                    error: invalid_request
+                    error_description: "Several accounts of this provider are linked. Unlink them before linking again."
+                completed_at_once:
+                  value:
+                    error: invalid_request
+                    error_description: "The request could not be completed due to a conflict with existing data."
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
 
   /{tenant-id}/v1/me/linked-external-accounts:
     get:
@@ -1649,8 +1698,14 @@ paths:
                 error: insufficient_scope
                 error_description: "The request requires the 'linked_account:read' scope."
                 scope: linked_account:read
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
 
   /{tenant-id}/v1/me/linked-external-accounts/{alias}:
     delete:
@@ -1698,8 +1753,14 @@ paths:
               example:
                 error: not_found
                 error_description: "Linked external account not found."
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
 
 components:
   responses:

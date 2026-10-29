@@ -76,6 +76,22 @@ public class LinkedExternalAccountTokenException extends RuntimeException {
         AccountLinkingStatus.BAD_GATEWAY, "temporarily_unavailable", description);
   }
 
+  /**
+   * The answer to a refresh the external IdP did not grant, told apart by its status.
+   *
+   * <p>A 5xx or a network failure says nothing about the grant, nor does 429: the provider is busy
+   * and asks to be called later. Any other 4xx means the refresh token itself is no longer
+   * accepted, and only linking again brings a new one.
+   */
+  public static LinkedExternalAccountTokenException refreshFailed(int statusCode) {
+    if (statusCode >= 500 || statusCode == 429) {
+      return externalIdpUnavailable(
+          "The external identity provider could not refresh the token. Try again later.");
+    }
+    return relinkRequired(
+        "The external identity provider rejected the stored refresh token. Link the account again.");
+  }
+
   public AccountLinkingStatus status() {
     return status;
   }

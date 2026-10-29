@@ -626,6 +626,40 @@ describe("account linking", () => {
       });
     });
 
+    it("lets only one of two completions racing for the one link through", async () => {
+      const accessToken = await loginAsNewUser();
+      const scope = "openid profile email offline_access";
+
+      /** コールバックまで進めて、確定を待つ連携セッションの state を返す。 */
+      const parkLink = async (externalEmail) => {
+        const linkResponse = await startLink(accessToken, PROVIDER, scope);
+        expect(linkResponse.status).toBe(201);
+        const startResponse = await get({ url: linkResponse.data.start_url });
+        expect(startResponse.status).toBe(302);
+        const callbackUri = await consentAtExternalIdp(startResponse.headers.location, externalEmail);
+        expect((await get({ url: callbackUri })).status).toBe(302);
+        return linkResponse.data.state;
+      };
+      const states = [
+        await parkLink(await createExternalUser()),
+        await parkLink(await createExternalUser()),
+      ];
+
+      // どちらが先に着いても、もう一方は 409。同時に着けば一意制約で、後なら別のアカウントの連携として断る。
+      const responses = await Promise.all(
+        states.map((state) =>
+          postWithJson({
+            url: `${backendUrl}/${serverConfig.tenantId}/v1/me/linked-external-accounts/complete`,
+            headers: { Authorization: `Bearer ${accessToken}` },
+            body: { state },
+          })
+        )
+      );
+      console.log(responses.map((it) => [it.status, it.data]));
+      expect(responses.map((it) => it.status).sort()).toEqual([201, 409]);
+      expect((await listLinks(accessToken)).filter((it) => it.provider === PROVIDER)).toHaveLength(1);
+    });
+
     describe("with multiple_accounts on a provider that names the account", () => {
       patchProviderPayloadDuring({ multiple_accounts: true });
 

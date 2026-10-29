@@ -320,7 +320,7 @@ curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/t
 | `error` | 意味 | `provider` |
 |---|---|---|
 | `relink_required` | リフレッシュトークンが期限切れか、連携先に断られた。ユーザーに連携し直してもらう必要がある | あり |
-| `temporarily_unavailable` | 連携先がリフレッシュに 5xx を返した | あり |
+| `temporarily_unavailable` | 連携先がリフレッシュに 5xx か 429 を返した、または届かない | あり |
 | `unauthorized_client` | クライアントに許可されていない連携先か、ユーザーのトークンが別のクライアントのもの | 連携先の判定ならあり |
 | `invalid_client` / `invalid_token` / `insufficient_scope` / `invalid_request` / `not_found` | クライアントやユーザーのトークンの問題 | なし |
 
