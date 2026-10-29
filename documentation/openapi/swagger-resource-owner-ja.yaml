@@ -81,8 +81,14 @@ paths:
                 error: insufficient_scope
                 error_description: "The request requires 'openid' scope"
                 scope: openid
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
 
   /{tenant-id}/v1/me/mfa/{mfa-operation-type}:
     post:
@@ -122,8 +128,14 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
 
   /{tenant-id}/v1/me/authentication-devices/{device-id}:
     patch:
@@ -177,8 +189,14 @@ paths:
                 error: insufficient_scope
                 error_description: "The request requires 'claims:authentication_devices' scope"
                 scope: claims:authentication_devices
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
 
     delete:
       tags:
@@ -224,8 +242,14 @@ paths:
                   error_description:
                     type: string
                     example: "User does not have authentication device (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)."
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
 
   /{tenant-id}/v1/me/email/verification:
     post:
@@ -268,8 +292,14 @@ paths:
                 error: insufficient_scope
                 error_description: "The request requires 'openid' scope"
                 scope: openid
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
 
   /{tenant-id}/v1/me/email/verification/{id}/verify:
     post:
@@ -300,8 +330,14 @@ paths:
           description: スコープ不足（`openid` が必要）
         '404':
           $ref: '#/components/responses/ContactChallengeNotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
 
   /{tenant-id}/v1/me/email/change:
     post:
@@ -365,8 +401,14 @@ paths:
                 error: insufficient_scope
                 error_description: "The request requires 'email:change' scope"
                 scope: email:change
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
 
   /{tenant-id}/v1/me/email/change/{id}/verify:
     post:
@@ -399,8 +441,14 @@ paths:
           description: スコープ不足（`email:change` が必要）
         '404':
           $ref: '#/components/responses/ContactChallengeNotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
 
   /{tenant-id}/v1/me/phone/verification:
     post:
@@ -443,8 +491,14 @@ paths:
                 error: insufficient_scope
                 error_description: "The request requires 'openid' scope"
                 scope: openid
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
 
   /{tenant-id}/v1/me/phone/verification/{id}/verify:
     post:
@@ -475,8 +529,14 @@ paths:
           description: スコープ不足（`openid` が必要）
         '404':
           $ref: '#/components/responses/ContactChallengeNotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
 
   /{tenant-id}/v1/me/phone/change:
     post:
@@ -540,8 +600,14 @@ paths:
                 error: insufficient_scope
                 error_description: "The request requires 'phone:change' scope"
                 scope: phone:change
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
 
   /{tenant-id}/v1/me/phone/change/{id}/verify:
     post:
@@ -574,8 +640,14 @@ paths:
           description: スコープ不足（`phone:change` が必要）
         '404':
           $ref: '#/components/responses/ContactChallengeNotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
 
 
   /{tenant-id}/v1/me/password/change:
@@ -711,8 +783,14 @@ paths:
                   scope:
                     type: string
                     example: "openid"
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
 
   /{tenant-id}/v1/me/password/reset:
     post:
@@ -859,8 +937,14 @@ paths:
                   scope:
                     type: string
                     example: "password:reset"
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
 
   /{tenant-id}/v1/me/identity-verification/applications/{verification-type}/{verification-process}:
     post:
@@ -1126,8 +1210,14 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
 
 
 
@@ -1232,8 +1322,14 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
 
   /{tenant-id}/v1/me/identity-verification/results:
     get:
@@ -1417,8 +1513,14 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
 
   /{tenant-id}/v1/me/linked-external-accounts/link/{provider}:
     post:
@@ -2446,58 +2548,77 @@ components:
 
     TooManyRequests:
       description: |
-        レート制限超過、または外部サービスから429エラーが返された場合
+        レート制限超過。
+
+        クライアントが短時間に過剰なリクエストを送信した場合に、API Gateway がリクエストをアプリケーションに到達させる前に返却します。idp-server のアプリ層にはレート制限がありません。
+
+        `Retry-After` ヘッダーが含まれる場合は、指定された秒数後にリトライしてください。
+
+        身元確認の申込み・処理では、外部サービスが 429 を返したときに、アプリケーションがその応答を `execution_failed` で返すこともあります。
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: リトライまでの推奨待機時間（秒）
+          required: false
       content:
         application/json:
           schema:
-            type: object
-            required:
-              - error
-              - error_description
-            properties:
-              error:
-                type: string
-                example: "too_many_requests"
-                description: |
-                  エラーコード。`too_many_requests`（内部エラー）または `execution_failed`（外部サービスエラー）
-              error_description:
-                type: string
-                example: "Too many requests. Please try again later."
-              error_messages:
-                type: array
-                items:
-                  type: string
-                description: エラーメッセージ配列。オプショナル。
-              error_details:
-                type: object
-                description: 外部サービスエラー時の詳細情報（execution_failed の場合のみ）。オプショナル。
-                required:
-                  - execution_type
-                  - status_category
-                  - status_code
+            oneOf:
+              - type: object
+                description: API Gateway の応答
                 properties:
-                  execution_type:
+                  message:
                     type: string
-                    example: "http_request"
-                  status_category:
+                    description: エラーメッセージ（optional。API Gateway の設定により含まれない場合があります）
+              - type: object
+                description: 身元確認で外部サービスが 429 を返した場合
+                required:
+                  - error
+                  - error_description
+                properties:
+                  error:
                     type: string
-                    example: "client_error"
-                  status_code:
-                    type: integer
-                    example: 429
-                  response_body:
+                    example: "execution_failed"
+                  error_description:
+                    type: string
+                    example: "execution failed"
+                  error_messages:
+                    type: array
+                    items:
+                      type: string
+                    description: エラーメッセージ配列。オプショナル。
+                  error_details:
                     type: object
-                    description: 外部サービスのレスポンスボディ（オプショナル）
+                    description: 外部サービスエラーの詳細情報
+                    required:
+                      - execution_type
+                      - status_category
+                      - status_code
+                    properties:
+                      execution_type:
+                        type: string
+                        example: "http_request"
+                      status_category:
+                        type: string
+                        example: "client_error"
+                      status_code:
+                        type: integer
+                        example: 429
+                      response_body:
+                        type: object
+                        description: 外部サービスのレスポンスボディ（オプショナル）
           examples:
-            too_many_requests:
-              summary: "内部エラー - レート制限超過"
-              description: "idp-server内部でレート制限に達した場合"
+            throttled:
+              summary: スロットリング（秒間リクエスト制限）
               value:
-                error: "too_many_requests"
-                error_description: "Too many requests. Please try again later."
+                message: "Too Many Requests"
+            quota_exceeded:
+              summary: クォータ超過（日次/月次リクエスト制限）
+              value:
+                message: "Limit Exceeded"
             external_service_429:
-              summary: "外部サービスエラー - レート制限超過"
-              description: "外部サービスから429が返された場合。response_bodyにはレート制限情報（retry_after等）を含む可能性がある。"
+              summary: 身元確認で外部サービスが 429 を返した
               value:
                 error: "execution_failed"
                 error_description: "execution failed"
@@ -2642,54 +2763,73 @@ components:
 
     ServiceUnavailable:
       description: |
-        サービス一時利用不可、または外部サービスから503エラーが返された場合
+        サービス一時利用不可。
+
+        バックエンドサーバーが利用できない状態です。API Gateway がバックエンドへの接続に失敗した場合に返却します。
+
+        `Retry-After` ヘッダーが含まれる場合は、指定された秒数後にリトライしてください。
+
+        身元確認の申込み・処理では、外部サービスが 503 を返したときに、アプリケーションがその応答を `execution_failed` で返すこともあります。
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: サービス復旧までの推定時間（秒）
+          required: false
       content:
         application/json:
           schema:
-            type: object
-            required:
-              - error
-              - error_description
-            properties:
-              error:
-                type: string
-                example: "service_unavailable"
-                description: |
-                  エラーコード。`service_unavailable`（内部エラー）または `execution_failed`（外部サービスエラー）
-              error_description:
-                type: string
-                example: "The service is temporarily unavailable. Please try again later."
-              error_messages:
-                type: array
-                items:
-                  type: string
-                description: エラーメッセージ配列。オプショナル。
-              error_details:
-                type: object
-                description: 外部サービスエラー時の詳細情報（execution_failed の場合のみ）。オプショナル。
-                required:
-                  - execution_type
-                  - status_category
-                  - status_code
+            oneOf:
+              - type: object
+                description: API Gateway の応答
                 properties:
-                  execution_type:
+                  message:
                     type: string
-                    example: "http_request"
-                  status_category:
+                    description: エラーメッセージ（optional。API Gateway の設定により含まれない場合があります）
+              - type: object
+                description: 身元確認で外部サービスが 503 を返した場合
+                required:
+                  - error
+                  - error_description
+                properties:
+                  error:
                     type: string
-                    example: "server_error"
-                  status_code:
-                    type: integer
-                    example: 503
-                  response_body:
+                    example: "execution_failed"
+                  error_description:
+                    type: string
+                    example: "execution failed"
+                  error_messages:
+                    type: array
+                    items:
+                      type: string
+                    description: エラーメッセージ配列。オプショナル。
+                  error_details:
                     type: object
-                    description: 外部サービスのレスポンスボディ（オプショナル）
+                    description: 外部サービスエラーの詳細情報
+                    required:
+                      - execution_type
+                      - status_category
+                      - status_code
+                    properties:
+                      execution_type:
+                        type: string
+                        example: "http_request"
+                      status_category:
+                        type: string
+                        example: "server_error"
+                      status_code:
+                        type: integer
+                        example: 503
+                      response_body:
+                        type: object
+                        description: 外部サービスのレスポンスボディ（オプショナル）
           examples:
-            service_unavailable:
+            default:
+              summary: サービス利用不可
               value:
-                error: "service_unavailable"
-                error_description: "The service is temporarily unavailable. Please try again later."
+                message: "Service Unavailable"
             external_service_503:
+              summary: 身元確認で外部サービスが 503 を返した
               value:
                 error: "execution_failed"
                 error_description: "execution failed"
@@ -2707,54 +2847,67 @@ components:
 
     GatewayTimeout:
       description: |
-        外部サービスタイムアウト、または外部サービスから504エラーが返された場合
+        ゲートウェイタイムアウト。
+
+        バックエンドサーバーからの応答が制限時間内に返却されませんでした。API Gateway がバックエンドの応答を待機してタイムアウトした場合に返却します。
+
+        ネットワークの一時的な問題の可能性があります。時間をおいてリトライしてください。
+
+        身元確認の申込み・処理では、外部サービスが 504 を返したときに、アプリケーションがその応答を `execution_failed` で返すこともあります。
       content:
         application/json:
           schema:
-            type: object
-            required:
-              - error
-              - error_description
-            properties:
-              error:
-                type: string
-                example: "gateway_timeout"
-                description: |
-                  エラーコード。`gateway_timeout`（内部エラー）または `execution_failed`（外部サービスエラー）
-              error_description:
-                type: string
-                example: "The external service request timed out"
-              error_messages:
-                type: array
-                items:
-                  type: string
-                description: エラーメッセージ配列。オプショナル。
-              error_details:
-                type: object
-                description: 外部サービスエラー時の詳細情報（execution_failed の場合のみ）。オプショナル。
-                required:
-                  - execution_type
-                  - status_category
-                  - status_code
+            oneOf:
+              - type: object
+                description: API Gateway の応答
                 properties:
-                  execution_type:
+                  message:
                     type: string
-                    example: "http_request"
-                  status_category:
+                    description: エラーメッセージ（optional。API Gateway の設定により含まれない場合があります）
+              - type: object
+                description: 身元確認で外部サービスが 504 を返した場合
+                required:
+                  - error
+                  - error_description
+                properties:
+                  error:
                     type: string
-                    example: "server_error"
-                  status_code:
-                    type: integer
-                    example: 504
-                  response_body:
+                    example: "execution_failed"
+                  error_description:
+                    type: string
+                    example: "execution failed"
+                  error_messages:
+                    type: array
+                    items:
+                      type: string
+                    description: エラーメッセージ配列。オプショナル。
+                  error_details:
                     type: object
-                    description: 外部サービスのレスポンスボディ（オプショナル）
+                    description: 外部サービスエラーの詳細情報
+                    required:
+                      - execution_type
+                      - status_category
+                      - status_code
+                    properties:
+                      execution_type:
+                        type: string
+                        example: "http_request"
+                      status_category:
+                        type: string
+                        example: "server_error"
+                      status_code:
+                        type: integer
+                        example: 504
+                      response_body:
+                        type: object
+                        description: 外部サービスのレスポンスボディ（オプショナル）
           examples:
-            gateway_timeout:
+            default:
+              summary: タイムアウト
               value:
-                error: "gateway_timeout"
-                error_description: "The external service request timed out"
+                message: "Endpoint request timed out"
             external_service_504:
+              summary: 身元確認で外部サービスが 504 を返した
               value:
                 error: "execution_failed"
                 error_description: "execution failed"
