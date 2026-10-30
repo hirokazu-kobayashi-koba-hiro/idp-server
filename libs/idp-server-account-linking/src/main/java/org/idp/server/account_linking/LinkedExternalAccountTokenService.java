@@ -276,6 +276,8 @@ public class LinkedExternalAccountTokenService {
     SealedData accessToken = sealer.seal(tokenResult.accessToken(), accessContext(account));
     LocalDateTime accessTokenExpiresAt =
         ExternalTokenLifetime.accessTokenExpiresAt(tokenResult, now);
+    // A refresh may grant less than the link did (RFC 6749 §6); without a scope it grants the same.
+    String scope = tokenResult.scopeOr(account.scope());
 
     // A provider that does not rotate answers without a refresh token; the stored one stays valid.
     // It is encrypted again all the same, so that the row's one key id opens both tokens.
@@ -286,6 +288,7 @@ public class LinkedExternalAccountTokenService {
           sealer.keyId(),
           accessTokenExpiresAt,
           account.refreshTokenExpiresAt(),
+          scope,
           now);
     }
 
@@ -295,6 +298,7 @@ public class LinkedExternalAccountTokenService {
         sealer.keyId(),
         accessTokenExpiresAt,
         ExternalTokenLifetime.refreshTokenExpiresAt(configuration, now),
+        scope,
         now);
   }
 

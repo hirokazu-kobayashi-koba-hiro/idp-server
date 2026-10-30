@@ -138,6 +138,7 @@ public class LinkedExternalAccount {
       String encryptionKeyId,
       LocalDateTime accessTokenExpiresAt,
       LocalDateTime refreshTokenExpiresAt,
+      String scope,
       LocalDateTime now) {
     return toBuilder()
         .encryptedAccessToken(encryptedAccessToken)
@@ -145,6 +146,7 @@ public class LinkedExternalAccount {
         .encryptionKeyId(encryptionKeyId)
         .accessTokenExpiresAt(accessTokenExpiresAt)
         .refreshTokenExpiresAt(refreshTokenExpiresAt)
+        .scope(scope)
         .updatedAt(now)
         .build();
   }

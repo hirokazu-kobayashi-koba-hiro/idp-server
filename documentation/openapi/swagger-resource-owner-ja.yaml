@@ -3155,7 +3155,8 @@ components:
           type: string
           nullable: true
           description: |
-            外部IdPが許可したスコープ。トークン応答に `scope` が無い場合は連携先設定の `scopes_supported`
+            外部IdPが許可したスコープ。トークン応答に `scope` が無い場合は、外部IdPに要求したスコープ（RFC 6749 §5.1 で、要求どおりなら省略できるため）。
+            要求したスコープは `link` の `scope`、省略したときは連携先設定の `scopes_supported`。リフレッシュの応答が `scope` を返せば、その値に置き換えます
           example: "openid email offline_access"
         access_token_expires_at:
           type: string

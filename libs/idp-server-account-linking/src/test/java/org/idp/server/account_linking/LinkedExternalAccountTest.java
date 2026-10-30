@@ -39,7 +39,7 @@ class LinkedExternalAccountTest {
     LinkedExternalAccount read = read();
     LinkedExternalAccount refreshed =
         read.withRefreshedTokens(
-            sealed("access"), sealed("refresh"), "key-2", NOW.plusHours(1), null, NOW);
+            sealed("access"), sealed("refresh"), "key-2", NOW.plusHours(1), null, "openid", NOW);
 
     assertTrue(refreshed.hasNewAccessTokenSince(read));
   }
@@ -79,5 +79,27 @@ class LinkedExternalAccountTest {
     assertFalse(naming("sub-a").isFirstNamedBy(named("sub-a")));
     assertFalse(naming(null).isFirstNamedBy(named(null)));
     assertFalse(naming("sub-a").isFirstNamedBy(named(null)));
+  }
+
+  @Test
+  void carriesTheScopeARefreshGrants() {
+    LinkedExternalAccount linked =
+        new LinkedExternalAccount.Builder()
+            .accessTokenExpiresAt(NOW.plusMinutes(5))
+            .scope("read:user repo")
+            .build();
+
+    assertEquals(
+        "read:user",
+        linked
+            .withRefreshedTokens(
+                sealed("access"),
+                sealed("refresh"),
+                "key-2",
+                NOW.plusHours(1),
+                null,
+                "read:user",
+                NOW)
+            .scope());
   }
 }

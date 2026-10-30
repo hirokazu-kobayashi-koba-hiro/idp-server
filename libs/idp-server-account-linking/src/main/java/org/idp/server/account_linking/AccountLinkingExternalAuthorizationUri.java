@@ -47,11 +47,7 @@ public class AccountLinkingExternalAuthorizationUri {
     params.add("response_type", "code");
     params.add("state", session.state().value());
     params.add("nonce", session.nonce());
-    params.add(
-        "scope",
-        session.requestedScope() == null
-            ? configuration.scopeAsString()
-            : session.requestedScope());
+    params.add("scope", session.scopeAskedFor(configuration));
     params.add("code_challenge", pkce.codeChallenge());
     params.add("code_challenge_method", pkce.codeChallengeMethod());
 

@@ -19,13 +19,17 @@ package org.idp.server.account_linking;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 import org.idp.server.account_linking.exception.AccountLinkingOperatorMismatchException;
 import org.idp.server.account_linking.exception.AccountLinkingSessionExpiredException;
 import org.idp.server.account_linking.exception.AccountLinkingSessionStateException;
 import org.idp.server.core.openid.authentication.Authentication;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
+import org.idp.server.federation.sso.oidc.OidcSsoConfiguration;
 import org.idp.server.platform.crypto.SealedData;
+import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -230,6 +234,32 @@ class AccountLinkingSessionTest {
           AccountLinkingSessionExpiredException.class,
           () -> pending.verifyNotExpired(NOW.plusMinutes(16)));
       assertDoesNotThrow(() -> pending.verifyNotExpired(NOW));
+    }
+  }
+
+  @Nested
+  @DisplayName("the scope asked of the external IdP")
+  class ScopeAskedFor {
+
+    OidcSsoConfiguration provider =
+        JsonConverter.snakeCaseInstance()
+            .read(
+                Map.of("scopes_supported", List.of("read:user", "repo", "offline_access")),
+                OidcSsoConfiguration.class);
+
+    @Test
+    void isTheOneTheRpRequested() {
+      AccountLinkingSession session =
+          new AccountLinkingSession.Builder().requestedScope("read:user offline_access").build();
+
+      assertEquals("read:user offline_access", session.scopeAskedFor(provider));
+    }
+
+    @Test
+    void isTheProvidersConfiguredOneWithoutARequest() {
+      assertEquals(
+          "read:user repo offline_access",
+          new AccountLinkingSession.Builder().build().scopeAskedFor(provider));
     }
   }
 }

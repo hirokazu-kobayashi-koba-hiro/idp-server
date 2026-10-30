@@ -24,6 +24,7 @@ import org.idp.server.account_linking.exception.AccountLinkingSessionStateExcept
 import org.idp.server.core.openid.authentication.Authentication;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
+import org.idp.server.federation.sso.oidc.OidcSsoConfiguration;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 /**
@@ -253,6 +254,11 @@ public class AccountLinkingSession {
 
   public String requestedScope() {
     return requestedScope;
+  }
+
+  /** The scope asked of the external IdP: the RP's, or the provider's configured one without it. */
+  public String scopeAskedFor(OidcSsoConfiguration configuration) {
+    return requestedScope != null ? requestedScope : configuration.scopeAsString();
   }
 
   public String codeVerifier() {

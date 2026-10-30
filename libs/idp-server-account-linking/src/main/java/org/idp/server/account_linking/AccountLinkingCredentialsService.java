@@ -98,7 +98,7 @@ public class AccountLinkingCredentialsService {
     return new ParkedCredentials.Builder()
         .federatedUserId(identity.federatedUserId())
         .federatedUsername(identity.federatedUsername())
-        .grantedScope(tokenResult.hasScope() ? tokenResult.scope() : configuration.scopeAsString())
+        .grantedScope(tokenResult.scopeOr(session.scopeAskedFor(configuration)))
         .encryptedAccessToken(accessToken)
         .encryptedRefreshToken(refreshToken)
         .encryptionKeyId(sealer.keyId())
