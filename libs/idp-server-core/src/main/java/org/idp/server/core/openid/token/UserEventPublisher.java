@@ -75,7 +75,25 @@ public class UserEventPublisher implements SecurityEventUserCreatable {
       User user,
       SecurityEventType type,
       RequestAttributes requestAttributes) {
+    publish(tenant, requestedClientId, user, type, null, Map.of(), requestAttributes);
+  }
+
+  /**
+   * As {@link #publish(Tenant, RequestedClientId, User, SecurityEventType, RequestAttributes)},
+   * with details of the feature's own under {@code detailsKey}, such as which provider failed.
+   */
+  public void publish(
+      Tenant tenant,
+      RequestedClientId requestedClientId,
+      User user,
+      SecurityEventType type,
+      String detailsKey,
+      Map<String, Object> featureDetails,
+      RequestAttributes requestAttributes) {
     HashMap<String, Object> detailsMap = new HashMap<>();
+    if (detailsKey != null && featureDetails != null && !featureDetails.isEmpty()) {
+      detailsMap.put(detailsKey, featureDetails);
+    }
     SecurityEventBuilder builder = new SecurityEventBuilder();
     builder.add(type);
     builder.add(new SecurityEventDescription(type.value()));

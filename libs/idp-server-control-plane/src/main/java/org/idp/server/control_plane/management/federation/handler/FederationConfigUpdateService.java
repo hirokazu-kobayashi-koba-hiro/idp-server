@@ -25,6 +25,7 @@ import org.idp.server.control_plane.management.federation.io.FederationConfigMan
 import org.idp.server.control_plane.management.federation.io.FederationConfigRequest;
 import org.idp.server.control_plane.management.federation.io.FederationConfigUpdateRequest;
 import org.idp.server.core.openid.federation.FederationConfiguration;
+import org.idp.server.core.openid.federation.FederationConfigurationRules;
 import org.idp.server.core.openid.federation.repository.FederationConfigurationCommandRepository;
 import org.idp.server.core.openid.federation.repository.FederationConfigurationQueryRepository;
 import org.idp.server.core.openid.identity.User;
@@ -46,12 +47,15 @@ public class FederationConfigUpdateService
 
   private final FederationConfigurationQueryRepository queryRepository;
   private final FederationConfigurationCommandRepository commandRepository;
+  private final FederationConfigurationChecks checks;
 
   public FederationConfigUpdateService(
       FederationConfigurationQueryRepository queryRepository,
-      FederationConfigurationCommandRepository commandRepository) {
+      FederationConfigurationCommandRepository commandRepository,
+      FederationConfigurationRules rules) {
     this.queryRepository = queryRepository;
     this.commandRepository = commandRepository;
+    this.checks = new FederationConfigurationChecks(rules);
   }
 
   @Override
@@ -79,6 +83,9 @@ public class FederationConfigUpdateService
     // 3. Populate builder with before/after
     builder.withBefore(before);
     builder.withAfter(after);
+
+    checks.verifyUpdate(before, after);
+    checks.verifyUsable(after);
 
     // 4. Build response with diff
     JsonNodeWrapper beforeJson = JsonNodeWrapper.fromMap(before.toMap());

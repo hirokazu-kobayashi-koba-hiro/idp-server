@@ -56,8 +56,10 @@ import org.idp.server.core.openid.identity.hint.UserHintRelatedParams;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.oauth.*;
+import org.idp.server.core.openid.oauth.AccountLinkingReauthentication;
 import org.idp.server.core.openid.oauth.AuthenticationProof;
 import org.idp.server.core.openid.oauth.CrossSiteAuthorizationBinding;
+import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.exception.OAuthRequestNotFoundException;
@@ -72,6 +74,7 @@ import org.idp.server.core.openid.oauth.type.extension.OAuthDenyReason;
 import org.idp.server.core.openid.oauth.type.oauth.RedirectUri;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.session.AuthSessionCookieDelegate;
+import org.idp.server.core.openid.session.BrowserProof;
 import org.idp.server.core.openid.session.ClientSessionIdentifier;
 import org.idp.server.core.openid.session.OIDCSessionHandler;
 import org.idp.server.core.openid.session.OPSession;
@@ -114,6 +117,7 @@ public class OAuthFlowEntryService
   UserLifecycleEventPublisher userLifecycleEventPublisher;
   OIDCSessionHandler oidcSessionHandler;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
+  AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
   AesCipher aesCipher;
 
   public OAuthFlowEntryService(
@@ -133,6 +137,8 @@ public class OAuthFlowEntryService
       UserLifecycleEventPublisher userLifecycleEventPublisher,
       OIDCSessionHandler oidcSessionHandler,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository,
+      AuthorizationServerConfigurationQueryRepository
+          authorizationServerConfigurationQueryRepository,
       AesCipher aesCipher) {
     this.oAuthProtocols = oAuthProtocols;
     this.sessionCookieDelegate = sessionCookieDelegate;
@@ -150,6 +156,8 @@ public class OAuthFlowEntryService
     this.userLifecycleEventPublisher = userLifecycleEventPublisher;
     this.oidcSessionHandler = oidcSessionHandler;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
+    this.authorizationServerConfigurationQueryRepository =
+        authorizationServerConfigurationQueryRepository;
     this.aesCipher = aesCipher;
   }
 
@@ -389,6 +397,7 @@ public class OAuthFlowEntryService
 
       // Create or reuse OPSession based on session switch policy
       Authentication authentication = updatedTransaction.authentication();
+      BrowserProof browserProof = BrowserProof.generate();
       OPSession opSession =
           oidcSessionHandler.onAuthenticationSuccess(
               tenant,
@@ -396,14 +405,16 @@ public class OAuthFlowEntryService
               authentication,
               updatedTransaction.interactionResults().toStorageMap(),
               existingSession,
-              requestAttributes);
+              requestAttributes,
+              browserProof);
       // This runs on an XHR from the authorization view. Where that view is on another site the
       // request is third-party, and Safari drops the Set-Cookie outright — which is why /complete
       // writes the cookie again from a first-party top level navigation. The write is kept here so
       // that an authorization view which has not been updated to go through /complete still ends
       // up with a session on a same-site deployment; there, /complete finds this cookie and reuses
       // the session rather than creating a second one.
-      oidcSessionHandler.registerSessionCookies(tenant, opSession, sessionCookieDelegate);
+      oidcSessionHandler.registerSessionCookies(
+          tenant, opSession, browserProof, sessionCookieDelegate);
       createdSession = opSession;
     }
 
@@ -511,6 +522,7 @@ public class OAuthFlowEntryService
       OPSession existingSession = authenticatingSession(binding, tenant, updatedTransaction);
 
       Authentication authentication = updatedTransaction.authentication();
+      BrowserProof browserProof = BrowserProof.generate();
       OPSession opSession =
           oidcSessionHandler.onAuthenticationSuccess(
               tenant,
@@ -518,14 +530,16 @@ public class OAuthFlowEntryService
               authentication,
               updatedTransaction.interactionResults().toStorageMap(),
               existingSession,
-              requestAttributes);
+              requestAttributes,
+              browserProof);
       // This runs on an XHR from the authorization view. Where that view is on another site the
       // request is third-party, and Safari drops the Set-Cookie outright — which is why /complete
       // writes the cookie again from a first-party top level navigation. The write is kept here so
       // that an authorization view which has not been updated to go through /complete still ends
       // up with a session on a same-site deployment; there, /complete finds this cookie and reuses
       // the session rather than creating a second one.
-      oidcSessionHandler.registerSessionCookies(tenant, opSession, sessionCookieDelegate);
+      oidcSessionHandler.registerSessionCookies(
+          tenant, opSession, browserProof, sessionCookieDelegate);
       createdSession = opSession;
     }
 
@@ -583,6 +597,12 @@ public class OAuthFlowEntryService
             "auth_proof is missing, already used, or was not issued for this authorization request.");
       }
       case CHECK_BROWSER_COOKIE, PROCEED, SIGNED_IN_DURING_FLOW -> {}
+    }
+
+    AccountLinkingReauthentication reauthentication =
+        AccountLinkingReauthentication.of(authorizationRequest);
+    if (reauthentication.exists()) {
+      return continueToAccountLinking(tenant, binding, reauthentication, authenticationTransaction);
     }
 
     User user = authenticationTransaction.user();
@@ -732,6 +752,8 @@ public class OAuthFlowEntryService
     }
 
     CrossSiteAuthorizationBinding binding = bindingFor(tenant, authorizationRequest);
+    AccountLinkingReauthentication reauthentication =
+        AccountLinkingReauthentication.of(authorizationRequest);
     AuthSessionId cookieAuthSessionId =
         authSessionCookieDelegate
             .getAuthSessionId()
@@ -745,7 +767,9 @@ public class OAuthFlowEntryService
             authenticationTransaction,
             cookieAuthSessionId,
             authProof,
-            registeredRedirectUri(tenant, authorizationRequest));
+            reauthentication.exists()
+                ? new RedirectUri(accountLinkingResumeUri(tenant, reauthentication))
+                : registeredRedirectUri(tenant, authorizationRequest));
     if (!check.isAccepted()) {
       return OAuthCompleteResponse.errorPage(tenant, "invalid_request", check.errorDescription());
     }
@@ -755,6 +779,7 @@ public class OAuthFlowEntryService
       // The session the authentication already created. Passing it in is what stops a second one
       // being created and the first being left behind with nothing pointing at it.
       OPSession existingSession = authenticatingSession(binding, tenant, authenticationTransaction);
+      BrowserProof browserProof = BrowserProof.generate();
       OPSession opSession =
           oidcSessionHandler.onAuthenticationSuccess(
               tenant,
@@ -762,9 +787,11 @@ public class OAuthFlowEntryService
               authenticationTransaction.authentication(),
               authenticationTransaction.interactionResults().toStorageMap(),
               existingSession,
-              requestAttributes);
+              requestAttributes,
+              browserProof);
       // First-party write. This is the one that the browser actually keeps.
-      oidcSessionHandler.registerSessionCookies(tenant, opSession, sessionCookieDelegate);
+      oidcSessionHandler.registerSessionCookies(
+          tenant, opSession, browserProof, sessionCookieDelegate);
     }
 
     authenticationTransactionCommandRepository.delete(
@@ -793,6 +820,44 @@ public class OAuthFlowEntryService
       return oidcSessionHandler.getOPSession(tenant, boundSessionId).orElse(null);
     }
     return oidcSessionHandler.getOPSessionFromCookie(tenant, sessionCookieDelegate).orElse(null);
+  }
+
+  /**
+   * Ends a sign-in made for an account link: no code, and the browser back to {@code
+   * /linking/start}.
+   *
+   * <p>The OP session is the point. Same-site it was written when the authentication succeeded;
+   * cross-site it is written at {@code /complete}, so the resume URI travels in the hand-off like a
+   * redirect carrying a code would. Nothing else of an authorization happens: no grant, no client
+   * session, no user update and no authorization event. {@code /linking/start} decides, from the
+   * session it then finds, whether the link may go on.
+   */
+  private OAuthAuthorizeResponse continueToAccountLinking(
+      Tenant tenant,
+      CrossSiteAuthorizationBinding binding,
+      AccountLinkingReauthentication reauthentication,
+      AuthenticationTransaction authenticationTransaction) {
+    if (!authenticationTransaction.isSuccess()) {
+      return new OAuthAuthorizeResponse(
+          OAuthAuthorizeStatus.BAD_REQUEST, "invalid_request", "the sign-in is not complete.");
+    }
+    OAuthAuthorizeResponse response =
+        OAuthAuthorizeResponse.continueTo(accountLinkingResumeUri(tenant, reauthentication));
+    if (binding.crossSite()) {
+      handOff(
+          tenant, binding, authenticationTransaction, authenticationTransaction.user(), response);
+    } else {
+      authenticationTransactionCommandRepository.delete(
+          tenant, authenticationTransaction.identifier());
+      authSessionCookieDelegate.clearAuthSessionCookie(tenant);
+    }
+    return response;
+  }
+
+  private String accountLinkingResumeUri(
+      Tenant tenant, AccountLinkingReauthentication reauthentication) {
+    String issuer = authorizationServerConfigurationQueryRepository.get(tenant).issuer();
+    return reauthentication.resumeUri(issuer);
   }
 
   private OAuthAuthorizeResponse alreadyAuthorized() {
@@ -861,6 +926,14 @@ public class OAuthFlowEntryService
     OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
     AuthorizationRequest authorizationRequest =
         oAuthProtocol.get(tenant, authorizationRequestIdentifier);
+
+    // Asked for a fresh sign-in for an account link: an existing session is what was not enough.
+    if (AccountLinkingReauthentication.of(authorizationRequest).exists()) {
+      return new OAuthAuthorizeResponse(
+          OAuthAuthorizeStatus.BAD_REQUEST,
+          "invalid_request",
+          "this request asks for a sign-in; an existing session does not complete it.");
+    }
 
     switch (binding.gateAuthorizeWithSession(authenticationTransaction)) {
       case ALREADY_HANDED_OFF -> {
@@ -969,6 +1042,17 @@ public class OAuthFlowEntryService
 
     // Get user from AuthenticationTransaction
     User user = authenticationTransaction.user();
+
+    // A sign-in for an account link that the user gave up on. The client asked for no grant and is
+    // not told; the link learns it, and tells the RP the sign-in did not happen.
+    AccountLinkingReauthentication reauthentication =
+        AccountLinkingReauthentication.of(authorizationRequest);
+    if (reauthentication.exists()) {
+      authenticationTransactionCommandRepository.delete(
+          tenant, authenticationTransaction.identifier());
+      authSessionCookieDelegate.clearAuthSessionCookie(tenant);
+      return OAuthDenyResponse.continueTo(accountLinkingResumeUri(tenant, reauthentication));
+    }
 
     OAuthDenyRequest denyRequest =
         new OAuthDenyRequest(

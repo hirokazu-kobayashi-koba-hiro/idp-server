@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Box,
   Button,
@@ -22,6 +22,9 @@ const SCOPE_LABELS: Record<string, string> = {
   phone: "Your phone number",
   address: "Your address",
   offline_access: "Keep you signed in",
+  "linked_account:read": "See which external accounts you have linked",
+  "linked_account:manage": "Link and unlink your external accounts",
+  "linked_account:read_token": "Use your linked external accounts",
 };
 
 /** Scope prefix that releases a user custom property as a claim of the same name (backend). */
@@ -468,6 +471,29 @@ export const ConsentStep = ({ tenantId, id, viewData }: Props) => {
       setLoading(false);
     }
   };
+
+  // A sign-in an account link asked for (idp-server put the link's state on the request): nothing
+  // is granted to the app, so there is nothing to consent to. Continue straight back to the link.
+  const signInOnly = Boolean(viewData?.custom_params?.idp_linking_state);
+  const continued = useRef(false);
+  useEffect(() => {
+    if (signInOnly && !continued.current) {
+      continued.current = true;
+      void submit("authorize");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signInOnly]);
+
+  if (signInOnly) {
+    return (
+      <Stack spacing={2} alignItems="center">
+        <CircularProgress size={28} />
+        <Typography variant="body2" color="text.secondary">
+          Signed in. Returning to {clientName}…
+        </Typography>
+      </Stack>
+    );
+  }
 
   return (
     <Stack spacing={3}>

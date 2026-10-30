@@ -26,8 +26,8 @@ import { StepProps } from "./StepProps";
  * the username after a reload.
  */
 export const RegisterStep = ({ tenantId, id, onCompleted }: StepProps) => {
-  const [identifier, setIdentifier] = useAtom(authIdentifierAtom);
-  const [, setUserStatus] = useAtom(authUserStatusAtom);
+  const [identifier, setIdentifier] = useAtom(authIdentifierAtom(id));
+  const [, setUserStatus] = useAtom(authUserStatusAtom(id));
   const [email, setEmail] = useState(identifier);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);

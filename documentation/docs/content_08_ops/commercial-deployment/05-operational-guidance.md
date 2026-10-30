@@ -580,6 +580,8 @@ LIMIT 10;
 
 詳細は [環境変数設定](./02-environment-variables.md) を参照してください。
 
+`ENCRYPTION_KEYS` を設定した場合は、`ENCRYPTION_ACTIVE_KEY_ID` が無い・束の中に無い、key id の重複、書式の誤り、16 バイトに満たない鍵でも起動に失敗します（[データ鍵と鍵暗号化鍵のローテーション](./07-data-key-rotation.md)）。
+
 ### 5.2 Redis 障害時の影響
 
 Redis は **キャッシュ** と **セッション** の2つの用途で使用されており、障害時の影響は用途により異なります。

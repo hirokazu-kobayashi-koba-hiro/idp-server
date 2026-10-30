@@ -22,6 +22,7 @@ import static org.mockito.Mockito.mock;
 import java.util.Map;
 import org.idp.server.control_plane.management.federation.io.FederationConfigRequest;
 import org.idp.server.core.openid.federation.FederationConfiguration;
+import org.idp.server.core.openid.federation.FederationConfigurationRules;
 import org.idp.server.core.openid.federation.repository.FederationConfigurationCommandRepository;
 import org.junit.jupiter.api.Test;
 
@@ -33,7 +34,9 @@ import org.junit.jupiter.api.Test;
 class FederationConfigCreationServiceTest {
 
   private final FederationConfigCreationService service =
-      new FederationConfigCreationService(mock(FederationConfigurationCommandRepository.class));
+      new FederationConfigCreationService(
+          mock(FederationConfigurationCommandRepository.class),
+          new FederationConfigurationRules(java.util.List.of()));
 
   @Test
   void honorsEnabledFromRequest() {

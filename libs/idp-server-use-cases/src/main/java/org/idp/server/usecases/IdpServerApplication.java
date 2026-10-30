@@ -19,6 +19,28 @@ package org.idp.server.usecases;
 import java.net.http.HttpClient;
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.account_linking.AccountLinkingApi;
+import org.idp.server.account_linking.AccountLinkingConfigurationResolver;
+import org.idp.server.account_linking.AccountLinkingCookieDelegate;
+import org.idp.server.account_linking.AccountLinkingCredentialsService;
+import org.idp.server.account_linking.AccountLinkingPreparationService;
+import org.idp.server.account_linking.AccountLinkingTokenCipher;
+import org.idp.server.account_linking.LinkedExternalAccountRevoker;
+import org.idp.server.account_linking.LinkedExternalAccountTokenService;
+import org.idp.server.account_linking.gateway.ExternalIdpIdTokenGateway;
+import org.idp.server.account_linking.gateway.ExternalIdpTokenGateway;
+import org.idp.server.account_linking.gateway.ExternalIdpUserinfoGateway;
+import org.idp.server.account_linking.handler.AccountLinkingAuthorizeHandler;
+import org.idp.server.account_linking.handler.AccountLinkingCallbackHandler;
+import org.idp.server.account_linking.handler.AccountLinkingCompleteHandler;
+import org.idp.server.account_linking.handler.AccountLinkingStartHandler;
+import org.idp.server.account_linking.handler.AccountLinkingUnlinkHandler;
+import org.idp.server.account_linking.handler.LinkedExternalAccountTokenHandler;
+import org.idp.server.account_linking.repository.AccountLinkingSessionCommandRepository;
+import org.idp.server.account_linking.repository.AccountLinkingSessionOperationCommandRepository;
+import org.idp.server.account_linking.repository.AccountLinkingSessionQueryRepository;
+import org.idp.server.account_linking.repository.LinkedExternalAccountCommandRepository;
+import org.idp.server.account_linking.repository.LinkedExternalAccountQueryRepository;
 import org.idp.server.authentication.interactors.device.AuthenticationDeviceNotifiers;
 import org.idp.server.authentication.interactors.fidouaf.AuthenticationMetaDataApi;
 import org.idp.server.authentication.interactors.fidouaf.plugin.FidoUafAdditionalRequestResolvers;
@@ -118,6 +140,7 @@ import org.idp.server.core.openid.clientinstance.registration.ClientInstanceRegi
 import org.idp.server.core.openid.clientinstance.registration.ClientInstanceRegistrationProtocol;
 import org.idp.server.core.openid.clientinstance.registration.ClientInstanceRegistrationProtocols;
 import org.idp.server.core.openid.discovery.*;
+import org.idp.server.core.openid.federation.FederationConfigurationRules;
 import org.idp.server.core.openid.federation.FederationInteractors;
 import org.idp.server.core.openid.federation.plugin.FederationDependencyContainer;
 import org.idp.server.core.openid.federation.repository.FederationConfigurationCommandRepository;
@@ -190,8 +213,14 @@ import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.audit.AuditLogQueryRepository;
 import org.idp.server.platform.audit.AuditLogWriters;
 import org.idp.server.platform.crypto.AesCipher;
+import org.idp.server.platform.crypto.EncryptionKeyring;
 import org.idp.server.platform.crypto.HmacHasher;
 import org.idp.server.platform.crypto.ServerNonceCodec;
+import org.idp.server.platform.crypto.datakey.DataKeyPurposes;
+import org.idp.server.platform.crypto.datakey.DataKeyService;
+import org.idp.server.platform.crypto.datakey.TenantDataCipher;
+import org.idp.server.platform.crypto.datakey.TenantDataKeyOperationRepository;
+import org.idp.server.platform.crypto.datakey.TenantDataKeyRepository;
 import org.idp.server.platform.datasource.*;
 import org.idp.server.platform.datasource.DatabaseTypeConfiguration;
 import org.idp.server.platform.datasource.cache.CacheStore;
@@ -208,6 +237,7 @@ import org.idp.server.platform.http.SsrfProtectedHttpClient;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationTenantResolverApi;
 import org.idp.server.platform.multi_tenancy.tenant.*;
+import org.idp.server.platform.multi_tenancy.tenant.TenantDeletionSteps;
 import org.idp.server.platform.notification.email.EmailSenders;
 import org.idp.server.platform.notification.sms.SmsSenders;
 import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
@@ -266,6 +296,7 @@ public class IdpServerApplication {
   OrganizationTenantResolverApi organizationTenantResolverApi;
   TenantInvitationMetaDataApi tenantInvitationMetaDataApi;
   UserOperationApi userOperationApi;
+  AccountLinkingApi accountLinkingApi;
   UserOperationApi rawUserOperationApi;
   UserLifecycleEventApi userLifecycleEventApi;
   AuthenticationDeviceLogApi authenticationDeviceLogApi;
@@ -389,11 +420,13 @@ public class IdpServerApplication {
       ApplicationDatabaseTypeProvider databaseTypeProvider,
       DbConnectionProvider dbConnectionProvider,
       String encryptionKey,
+      EncryptionKeyring encryptionKeyring,
       String databaseType,
       CacheStore cacheStore,
       SessionStore sessionStore,
       SessionCookieDelegate sessionCookieDelegate,
       AuthSessionCookieDelegate authSessionCookieDelegate,
+      AccountLinkingCookieDelegate accountLinkingCookieDelegate,
       PasswordEncodeDelegation passwordEncodeDelegation,
       PasswordVerificationDelegation passwordVerificationDelegation,
       SecurityEventPublisher securityEventPublisher,
@@ -598,6 +631,17 @@ public class IdpServerApplication {
     // Protocol providers assemble plugins of their own and need it there too, not only in the
     // datasource container: see DefaultClientInstanceRegistrationProtocolProvider.
     applicationComponentContainer.register(CacheStore.class, cacheStore);
+    // Lifecycle executors are built from this container, and the linked account cleanup decrypts
+    // stored external tokens to revoke them.
+    applicationComponentContainer.register(AesCipher.class, aesCipher);
+    // Lifecycle executors are built from this container too; the linked account cleanup opens
+    // stored external tokens under the tenant's data key to revoke them.
+    DataKeyService dataKeyService =
+        new DataKeyService(
+            applicationComponentContainer.resolve(TenantDataKeyRepository.class),
+            applicationComponentContainer.resolve(TenantDataKeyOperationRepository.class),
+            encryptionKeyring);
+    applicationComponentContainer.register(DataKeyService.class, dataKeyService);
 
     SmsSenders smsSenders = SmsSenderPluginLoader.load(dependencyContainer);
     applicationComponentContainer.register(SmsSenders.class, smsSenders);
@@ -687,6 +731,13 @@ public class IdpServerApplication {
     AuthenticationInteractors authenticationInteractors =
         AuthenticationInteractorPluginLoader.load(authenticationDependencyContainer);
 
+    // What features contribute to managing tenants, federation configurations and data keys.
+    // Loaded with the user lifecycle executors, once the components they resolve are registered.
+    FederationConfigurationRules federationConfigurationRules =
+        FederationConfigurationRules.load(applicationComponentContainer);
+    TenantDeletionSteps tenantDeletionSteps =
+        TenantDeletionSteps.load(applicationComponentContainer);
+    DataKeyPurposes dataKeyPurposes = DataKeyPurposes.load(applicationComponentContainer);
     UserLifecycleEventExecutorsMap userLifecycleEventExecutorsMap =
         UserLifecycleEventExecutorPluginLoader.load(
             applicationComponentContainer, authenticationDependencyContainer);
@@ -719,7 +770,11 @@ public class IdpServerApplication {
                 cibaGrantOperationCommandRepository,
                 ssoSessionOperationCommandRepository,
                 contactVerificationChallengeOperationCommandRepository,
-                clientInstanceRegistrationChallengeOperationCommandRepository),
+                clientInstanceRegistrationChallengeOperationCommandRepository,
+                applicationComponentContainer.resolve(
+                    AccountLinkingSessionOperationCommandRepository.class),
+                dataKeyService,
+                dataKeyPurposes),
             IdpServerOperationApi.class,
             databaseTypeProvider);
 
@@ -761,6 +816,7 @@ public class IdpServerApplication {
             userLifecycleEventPublisher,
             oidcSessionHandler,
             clientConfigurationQueryRepository,
+            authorizationServerConfigurationQueryRepository,
             aesCipher);
     this.rawOAuthFlowApi = oAuthFlowEntryService;
     this.oAuthFlowApi =
@@ -848,6 +904,79 @@ public class IdpServerApplication {
                 httpRequestExecutor,
                 userQueryRepository,
                 userCommandRepository));
+    LinkedExternalAccountQueryRepository linkedExternalAccountQueryRepository =
+        applicationComponentContainer.resolve(LinkedExternalAccountQueryRepository.class);
+    AccountLinkingSessionCommandRepository accountLinkingSessionCommandRepository =
+        applicationComponentContainer.resolve(AccountLinkingSessionCommandRepository.class);
+    AccountLinkingSessionQueryRepository accountLinkingSessionQueryRepository =
+        applicationComponentContainer.resolve(AccountLinkingSessionQueryRepository.class);
+    AccountLinkingConfigurationResolver accountLinkingConfigurationResolver =
+        new AccountLinkingConfigurationResolver(federationConfigurationQueryRepository);
+    LinkedExternalAccountCommandRepository linkedExternalAccountCommandRepository =
+        applicationComponentContainer.resolve(LinkedExternalAccountCommandRepository.class);
+    TenantDataCipher accountLinkingTokenCipher = AccountLinkingTokenCipher.from(dataKeyService);
+    LinkedExternalAccountRevoker linkedExternalAccountRevoker =
+        new LinkedExternalAccountRevoker(
+            accountLinkingConfigurationResolver,
+            new ExternalIdpTokenGateway(httpRequestExecutor),
+            accountLinkingTokenCipher);
+    this.accountLinkingApi =
+        TenantAwareEntryServiceProxy.createProxy(
+            new AccountLinkingEntryService(
+                tenantQueryRepository,
+                linkedExternalAccountQueryRepository,
+                new AccountLinkingStartHandler(
+                    accountLinkingSessionCommandRepository,
+                    clientConfigurationQueryRepository,
+                    authorizationServerConfigurationQueryRepository,
+                    accountLinkingConfigurationResolver),
+                new AccountLinkingAuthorizeHandler(
+                    accountLinkingSessionQueryRepository,
+                    accountLinkingSessionCommandRepository,
+                    accountLinkingConfigurationResolver,
+                    clientConfigurationQueryRepository,
+                    authorizationServerConfigurationQueryRepository),
+                new AccountLinkingCallbackHandler(
+                    accountLinkingSessionQueryRepository,
+                    accountLinkingSessionCommandRepository,
+                    new AccountLinkingCredentialsService(
+                        accountLinkingConfigurationResolver,
+                        new ExternalIdpTokenGateway(httpRequestExecutor),
+                        new ExternalIdpIdTokenGateway(oidcSsoExecutors),
+                        new ExternalIdpUserinfoGateway(oidcSsoExecutors),
+                        accountLinkingTokenCipher)),
+                new AccountLinkingCompleteHandler(
+                    accountLinkingSessionQueryRepository,
+                    accountLinkingSessionCommandRepository,
+                    linkedExternalAccountCommandRepository,
+                    accountLinkingConfigurationResolver,
+                    new AccountLinkingPreparationService(linkedExternalAccountQueryRepository),
+                    linkedExternalAccountRevoker),
+                new AccountLinkingUnlinkHandler(
+                    linkedExternalAccountQueryRepository,
+                    linkedExternalAccountCommandRepository,
+                    linkedExternalAccountRevoker),
+                new LinkedExternalAccountTokenHandler(
+                    oAuthTokenQueryRepository,
+                    authorizationServerConfigurationQueryRepository,
+                    clientConfigurationQueryRepository,
+                    clientAuthenticationHandler,
+                    userQueryRepository,
+                    linkedExternalAccountQueryRepository,
+                    new LinkedExternalAccountTokenService(
+                        linkedExternalAccountQueryRepository,
+                        linkedExternalAccountCommandRepository,
+                        accountLinkingConfigurationResolver,
+                        new ExternalIdpTokenGateway(httpRequestExecutor),
+                        accountLinkingTokenCipher),
+                    new JwtReplayDetector(cacheStore)),
+                oidcSessionHandler,
+                sessionCookieDelegate,
+                accountLinkingCookieDelegate,
+                userEventPublisher),
+            AccountLinkingApi.class,
+            databaseTypeProvider);
+
     this.rawUserOperationApi = userOperationEntryService;
     this.userOperationApi =
         TenantAwareEntryServiceProxy.createProxy(
@@ -1038,6 +1167,9 @@ public class IdpServerApplication {
                 organizationRepository,
                 authorizationServerConfigurationCommandRepository,
                 userCommandRepository,
+                tenantDeletionSteps,
+                dataKeyService,
+                dataKeyPurposes,
                 auditLogPublisher),
             TenantManagementApi.class,
             databaseTypeProvider);
@@ -1132,7 +1264,10 @@ public class IdpServerApplication {
                 passwordEncodeDelegation,
                 userLifecycleEventPublisher,
                 auditLogPublisher,
-                securityEventPublisher),
+                securityEventPublisher,
+                linkedExternalAccountQueryRepository,
+                linkedExternalAccountCommandRepository,
+                linkedExternalAccountRevoker),
             UserManagementApi.class,
             databaseTypeProvider);
 
@@ -1162,6 +1297,7 @@ public class IdpServerApplication {
                 tenantQueryRepository,
                 federationConfigurationQueryRepository,
                 federationConfigurationCommandRepository,
+                federationConfigurationRules,
                 auditLogPublisher),
             FederationConfigurationManagementApi.class,
             databaseTypeProvider);
@@ -1299,6 +1435,9 @@ public class IdpServerApplication {
                 organizationRepository,
                 authorizationServerConfigurationCommandRepository,
                 userCommandRepository,
+                tenantDeletionSteps,
+                dataKeyService,
+                dataKeyPurposes,
                 auditLogPublisher),
             OrgTenantManagementApi.class,
             databaseTypeProvider);
@@ -1361,7 +1500,10 @@ public class IdpServerApplication {
                 passwordEncodeDelegation,
                 userLifecycleEventPublisher,
                 auditLogPublisher,
-                securityEventPublisher),
+                securityEventPublisher,
+                linkedExternalAccountQueryRepository,
+                linkedExternalAccountCommandRepository,
+                linkedExternalAccountRevoker),
             OrgUserManagementApi.class,
             databaseTypeProvider);
 
@@ -1392,6 +1534,7 @@ public class IdpServerApplication {
                 organizationRepository,
                 federationConfigurationQueryRepository,
                 federationConfigurationCommandRepository,
+                federationConfigurationRules,
                 auditLogPublisher),
             OrgFederationConfigManagementApi.class,
             databaseTypeProvider);
@@ -1607,6 +1750,10 @@ public class IdpServerApplication {
 
   public UserOperationApi userOperationApi() {
     return userOperationApi;
+  }
+
+  public AccountLinkingApi accountLinkingApi() {
+    return accountLinkingApi;
   }
 
   public UserOperationApi rawUserOperationApi() {

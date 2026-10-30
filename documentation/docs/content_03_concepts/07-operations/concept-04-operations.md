@@ -48,6 +48,7 @@ flowchart TB
 
 **運用API**:
 - `/v1/admin/operations/delete-expired-data`: 期限切れデータの一括削除
+- `/v1/admin/operations/data-keys`（`GET`）、`/data-keys/rewrap`、`/data-keys/rotate`: アカウント連携の保管トークンを暗号化する鍵の状況確認・包み直し・新しい世代の作成（[データ鍵と鍵暗号化鍵のローテーション](../../content_08_ops/commercial-deployment/07-data-key-rotation.md)）
 
 **特徴**:
 - バッチ処理に最適

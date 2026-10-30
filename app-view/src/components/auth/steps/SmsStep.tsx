@@ -30,7 +30,7 @@ const CODE_LENGTH = 6;
  * the code is sent on mount.
  */
 export const SmsStep = ({ tenantId, id, step, onCompleted }: StepProps) => {
-  const [userStatus] = useAtom(authUserStatusAtom);
+  const [userStatus] = useAtom(authUserStatusAtom(id));
   const needsPhoneInput = needsContactInput(step, userStatus);
 
   const [phone, setPhone] = useState("");

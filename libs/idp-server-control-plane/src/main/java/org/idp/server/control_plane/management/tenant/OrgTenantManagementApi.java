@@ -35,6 +35,8 @@ public interface OrgTenantManagementApi {
     map.put("get", new AdminPermissions(Set.of(DefaultAdminPermission.TENANT_READ)));
     map.put("update", new AdminPermissions(Set.of(DefaultAdminPermission.TENANT_UPDATE)));
     map.put("delete", new AdminPermissions(Set.of(DefaultAdminPermission.TENANT_DELETE)));
+    map.put("findDataKeys", new AdminPermissions(Set.of(DefaultAdminPermission.DATA_KEY_READ)));
+    map.put("rotateDataKey", new AdminPermissions(Set.of(DefaultAdminPermission.DATA_KEY_ROTATE)));
     AdminPermissions adminPermissions = map.get(method);
     if (adminPermissions == null) {
       throw new UnSupportedException("Method " + method + " not supported");
@@ -69,6 +71,21 @@ public interface OrgTenantManagementApi {
   TenantManagementResponse delete(
       OrganizationAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
+      RequestAttributes requestAttributes,
+      boolean dryRun);
+
+  /** Every generation of the tenant's data keys, without the key material. */
+  TenantManagementResponse findDataKeys(
+      OrganizationAuthenticationContext authenticationContext,
+      TenantIdentifier tenantIdentifier,
+      Map<String, String> queries,
+      RequestAttributes requestAttributes);
+
+  /** Starts a new generation of the tenant's data key for one purpose. */
+  TenantManagementResponse rotateDataKey(
+      OrganizationAuthenticationContext authenticationContext,
+      TenantIdentifier tenantIdentifier,
+      Map<String, Object> body,
       RequestAttributes requestAttributes,
       boolean dryRun);
 }
