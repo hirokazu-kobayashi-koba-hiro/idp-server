@@ -163,6 +163,8 @@ Handler / EntryService に新しく足された private method は、中身で�
 - 確認 → Verifier（void + throw）
 - 段取りだけ（例外を応答に変える、イベントの付加情報）→ 指摘しない
 
+Handler の状態を使わない static method や、テストから呼ぶために private を外したメソッドは、置き場所を疑う強い合図として指摘する。
+
 ```java
 // ❌ 「どちらの値を優先するか」というドメインの決まりが Handler の private にあり、ユニットテストできない
 private static String displayName(User user) {
