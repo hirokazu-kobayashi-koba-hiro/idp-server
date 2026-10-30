@@ -17,10 +17,7 @@
 package org.idp.server.account_linking.handler;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
 import org.idp.server.account_linking.*;
-import org.idp.server.account_linking.exception.AccountLinkingInvalidRequestException;
 import org.idp.server.account_linking.exception.AccountLinkingNotFoundException;
 import org.idp.server.account_linking.exception.AccountLinkingSessionStateException;
 import org.idp.server.account_linking.io.AccountLinkingAuthorizeRequest;
@@ -29,8 +26,6 @@ import org.idp.server.account_linking.io.AccountLinkingResult;
 import org.idp.server.account_linking.io.AccountLinkingStatus;
 import org.idp.server.account_linking.repository.AccountLinkingSessionCommandRepository;
 import org.idp.server.account_linking.repository.AccountLinkingSessionQueryRepository;
-import org.idp.server.core.openid.authentication.Authentication;
-import org.idp.server.core.openid.oauth.AccountLinkingReauthentication;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
@@ -38,7 +33,6 @@ import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.federation.sso.oidc.OidcSsoConfiguration;
 import org.idp.server.platform.date.SystemDateTime;
-import org.idp.server.platform.http.HttpQueryParams;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 
@@ -90,12 +84,11 @@ public class AccountLinkingAuthorizeHandler {
 
       ClientConfiguration client =
           clientConfigurationQueryRepository.get(tenant, session.requestedClientId());
-      if (!isRecentEnough(request.authentication(), session, client.linkingMaxAuthAge(), now)
-          || !hasReachedLinkingAcr(request.authentication(), client.linkingAcrValues())) {
+      if (!LinkingSignInRequirement.of(client).isMetBy(request.authentication(), session, now)) {
         return AccountLinkingAuthorizeResult.of(
             request.returnedFromSignIn()
                 ? loginRequired(session)
-                : signInAgain(tenant, session, client),
+                : signInAgain(tenant, client, session),
             null);
       }
 
@@ -117,7 +110,8 @@ public class AccountLinkingAuthorizeHandler {
       sessionCommandRepository.update(tenant, authorized);
 
       return AccountLinkingAuthorizeResult.of(
-          AccountLinkingResult.redirect(externalAuthorizationUri(configuration, authorized)),
+          AccountLinkingResult.redirect(
+              new AccountLinkingExternalAuthorizationUri(configuration, authorized).value()),
           browserBinding.secret());
 
     } catch (Exception exception) {
@@ -158,93 +152,20 @@ public class AccountLinkingAuthorizeHandler {
     try {
       ClientConfiguration client =
           clientConfigurationQueryRepository.get(tenant, session.requestedClientId());
-      return signInAgain(tenant, session, client);
+      return signInAgain(tenant, client, session);
     } catch (Exception exception) {
       AccountLinkingResult failure = errorHandler.handle(exception);
       return failure.redirectingTo(new AccountLinkingErrorPage(tenant, failure.status()).value());
     }
   }
 
-  /**
-   * Whether the browser's sign-in may start this link.
-   *
-   * <p>Recent enough is within the client's {@code linking_max_auth_age}, or after this link was
-   * started — that is, the sign-in this server asked for on the way. Without the second, a limit of
-   * 0 could never be met, since the sign-in is always a moment before the browser returns.
-   */
-  static boolean isRecentEnough(
-      Authentication authentication,
-      AccountLinkingSession session,
-      long maxAuthAgeSeconds,
-      LocalDateTime now) {
-    if (authentication == null || authentication.time() == null) {
-      return false;
-    }
-    LocalDateTime signedIn = authentication.time();
-    LocalDateTime linkStarted =
-        session.expiresAt().minusSeconds(AccountLinkingStartHandler.SESSION_DURATION_SECONDS);
-    return !signedIn.isBefore(now.minusSeconds(maxAuthAgeSeconds))
-        || !signedIn.isBefore(linkStarted);
-  }
-
-  /**
-   * Whether the browser's sign-in reached one of the client's {@code linking_acr_values}.
-   *
-   * <p>A recent sign-in is not enough on its own when the client asks for a stronger one for links:
-   * an ordinary sign-in a minute ago would otherwise let a link through without it. With no values
-   * configured, any sign-in passes.
-   */
-  static boolean hasReachedLinkingAcr(Authentication authentication, List<String> acrValues) {
-    if (acrValues.isEmpty()) {
-      return true;
-    }
-    return authentication != null
-        && authentication.acr() != null
-        && acrValues.contains(authentication.acr());
-  }
-
-  /**
-   * Sends the browser to sign in as the link's user, through the ordinary authorization flow, and
-   * back here afterwards.
-   *
-   * <p>The request is the client's own — its id and a redirect URI it registered — so its
-   * authentication policy applies as on any sign-in. {@code login_hint} pins the user who started
-   * the link; {@code prompt=login} asks for a sign-in even over a session. The link's state rides
-   * along as {@link AccountLinkingReauthentication#STATE_PARAMETER}, which makes the flow end at
-   * {@code /linking/start} instead of issuing a code. The PKCE challenge is there for clients that
-   * require one; its verifier is thrown away with the code that is never issued.
-   *
-   * <p>The client's {@code linking_acr_values} go out as {@code acr_values}, so the authentication
-   * policy matched on them, rather than the client's ordinary one, applies to this sign-in.
-   */
+  /** Sends the browser to sign in again as the link's user ({@link AccountLinkingSignInUri}). */
   private AccountLinkingResult signInAgain(
-      Tenant tenant, AccountLinkingSession session, ClientConfiguration client) {
-    if (client.redirectUris().isEmpty()) {
-      throw new AccountLinkingInvalidRequestException(
-          "The client has no redirect URI to sign in again through.");
-    }
+      Tenant tenant, ClientConfiguration client, AccountLinkingSession session) {
     AuthorizationServerConfiguration server =
         authorizationServerConfigurationQueryRepository.get(tenant);
-    AccountLinkingPkce pkce = AccountLinkingPkce.generate();
-
-    HttpQueryParams params = new HttpQueryParams();
-    params.add("response_type", "code");
-    params.add("client_id", session.requestedClientId().value());
-    params.add("redirect_uri", client.redirectUris().get(0));
-    params.add("scope", "openid");
-    params.add("prompt", "login");
-    params.add("login_hint", "sub:" + session.userIdentifier().value());
-    params.add("state", UUID.randomUUID().toString());
-    params.add("nonce", UUID.randomUUID().toString());
-    params.add("code_challenge", pkce.codeChallenge());
-    params.add("code_challenge_method", pkce.codeChallengeMethod());
-    if (!client.linkingAcrValues().isEmpty()) {
-      params.add("acr_values", String.join(" ", client.linkingAcrValues()));
-    }
-    params.add(AccountLinkingReauthentication.STATE_PARAMETER, session.state().value());
-
     return AccountLinkingResult.redirect(
-        String.format("%s?%s", server.authorizationEndpoint(), params.params()));
+        new AccountLinkingSignInUri(server.authorizationEndpoint(), client, session).value());
   }
 
   /**
@@ -264,26 +185,5 @@ public class AccountLinkingAuthorizeHandler {
       throw new AccountLinkingNotFoundException("Account linking session not found.");
     }
     return session;
-  }
-
-  private String externalAuthorizationUri(
-      OidcSsoConfiguration configuration, AccountLinkingSession session) {
-    AccountLinkingPkce pkce = new AccountLinkingPkce(session.codeVerifier());
-
-    HttpQueryParams params = new HttpQueryParams();
-    params.add("client_id", configuration.clientId());
-    params.add("redirect_uri", configuration.redirectUri());
-    params.add("response_type", "code");
-    params.add("state", session.state().value());
-    params.add("nonce", session.nonce());
-    params.add(
-        "scope",
-        session.requestedScope() == null
-            ? configuration.scopeAsString()
-            : session.requestedScope());
-    params.add("code_challenge", pkce.codeChallenge());
-    params.add("code_challenge_method", pkce.codeChallengeMethod());
-
-    return String.format("%s?%s", configuration.authorizationEndpoint(), params.params());
   }
 }

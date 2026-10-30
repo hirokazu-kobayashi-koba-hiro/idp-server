@@ -54,6 +54,9 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
  */
 public class AccountLinkingSession {
 
+  /** How long a link has from {@code link} to {@code complete}. */
+  public static final long DURATION_SECONDS = 900;
+
   AccountLinkingState state;
   TenantIdentifier tenantIdentifier;
   UserIdentifier userIdentifier;
@@ -286,6 +289,11 @@ public class AccountLinkingSession {
 
   public LocalDateTime expiresAt() {
     return expiresAt;
+  }
+
+  /** When the link was started: a session lives {@link #DURATION_SECONDS} from then. */
+  public LocalDateTime startedAt() {
+    return expiresAt.minusSeconds(DURATION_SECONDS);
   }
 
   public boolean exists() {

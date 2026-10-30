@@ -167,9 +167,7 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
       // The callback carries no Bearer token and is reached from the external IdP, so this cookie
       // is the only thing that will tell it the returning browser is the one leaving here now.
       accountLinkingCookieDelegate.setBrowserBindingCookie(
-          tenant,
-          authorization.browserBindingSecret(),
-          AccountLinkingStartHandler.SESSION_DURATION_SECONDS);
+          tenant, authorization.browserBindingSecret(), AccountLinkingSession.DURATION_SECONDS);
     }
 
     publish(

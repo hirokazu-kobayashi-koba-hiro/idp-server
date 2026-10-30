@@ -37,8 +37,6 @@ import org.idp.server.platform.random.RandomStringGenerator;
 /** Opens a linking session for the authenticated user and says where to send the browser. */
 public class AccountLinkingStartHandler {
 
-  public static final long SESSION_DURATION_SECONDS = 900;
-
   AccountLinkingStartRequestValidator validator;
   LinkingProviderVerifier providerVerifier;
   AccountLinkingSessionCommandRepository sessionCommandRepository;
@@ -87,7 +85,7 @@ public class AccountLinkingStartHandler {
               .codeVerifier(pkce.codeVerifier())
               .nonce(new RandomStringGenerator(16).generate())
               .status(AccountLinkingSessionStatus.PENDING)
-              .expiresAt(now.plusSeconds(SESSION_DURATION_SECONDS))
+              .expiresAt(now.plusSeconds(AccountLinkingSession.DURATION_SECONDS))
               .build();
 
       sessionCommandRepository.register(tenant, session);
@@ -95,7 +93,7 @@ public class AccountLinkingStartHandler {
       Map<String, Object> contents = new HashMap<>();
       contents.put("start_url", startUri(tenant, session));
       contents.put("state", session.state().value());
-      contents.put("expires_in", SESSION_DURATION_SECONDS);
+      contents.put("expires_in", AccountLinkingSession.DURATION_SECONDS);
 
       return AccountLinkingResult.success(AccountLinkingStatus.CREATED, contents, request.user());
 
