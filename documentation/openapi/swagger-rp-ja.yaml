@@ -3319,7 +3319,10 @@ components:
           example: 3599
         scope:
           type: string
-          description: 外部IdPが許可したスコープ。保管していない場合は含みません
+          description: |
+            外部IdPが許可したスコープ。保管していない場合は含みません。
+            外部IdPのトークン応答に `scope` が無かった場合は、外部IdPに要求したスコープ（`link` の `scope`、省略時は連携先設定の `scopes_supported`）です。
+            リフレッシュの応答が `scope` を返せば、その値に置き換わります
           example: "openid email offline_access"
       example:
         access_token: "ya29.a0Af..."

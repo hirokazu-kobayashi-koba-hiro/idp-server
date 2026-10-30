@@ -1960,7 +1960,9 @@ components:
         scope:
           type: string
           nullable: true
-          description: 外部IdPから付与されたスコープ
+          description: |
+            外部IdPから付与されたスコープ。トークン応答に `scope` が無かった場合は、外部IdPに要求したスコープ（`link` の `scope`、省略時は連携先設定の `scopes_supported`）。
+            リフレッシュの応答が `scope` を返せば、その値に置き換わります
         access_token_expires_at:
           type: string
           nullable: true
