@@ -115,7 +115,11 @@ public class LinkedExternalAccount {
    * user consented to this time.
    */
   public LinkedExternalAccount relinkedWith(ParkedCredentials credentials, LocalDateTime now) {
+    // A link that named no account learns it from the first re-link that does, so later duplicate
+    // checks see which account it holds. One that already names it keeps it: a re-link of another
+    // account is refused before this.
     return toBuilder()
+        .federatedUserId(hasFederatedUserId() ? federatedUserId : credentials.federatedUserId())
         .federatedUsername(credentials.federatedUsername())
         .scope(credentials.grantedScope())
         .encryptedAccessToken(credentials.encryptedAccessToken())
@@ -207,6 +211,22 @@ public class LinkedExternalAccount {
 
   public AccountAlias accountAlias() {
     return accountAlias;
+  }
+
+  public boolean hasFederatedUserId() {
+    return federatedUserId != null && !federatedUserId.isEmpty();
+  }
+
+  /**
+   * Whether linking with {@code credentials} is the first to say which external account this link
+   * holds: the link names none, and the credentials do.
+   *
+   * <p>A link made while the provider named no account (no id_token, no userinfo) is renewed by the
+   * next link of the user. Once the provider names the account, that account may be one another
+   * user has linked, so it is checked as a new link's would be.
+   */
+  public boolean isFirstNamedBy(ParkedCredentials credentials) {
+    return !hasFederatedUserId() && credentials.hasFederatedUserId();
   }
 
   public String federatedUserId() {

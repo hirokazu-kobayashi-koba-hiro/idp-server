@@ -53,4 +53,31 @@ class LinkedExternalAccountTest {
     assertFalse(reencrypted.hasNewAccessTokenSince(read));
     assertFalse(read().hasNewAccessTokenSince(read));
   }
+
+  static ParkedCredentials named(String federatedUserId) {
+    return new ParkedCredentials.Builder().federatedUserId(federatedUserId).build();
+  }
+
+  static LinkedExternalAccount naming(String federatedUserId) {
+    return new LinkedExternalAccount.Builder().federatedUserId(federatedUserId).build();
+  }
+
+  @Test
+  void learnsItsAccountFromTheFirstReLinkThatNamesIt() {
+    assertEquals("sub-a", naming(null).relinkedWith(named("sub-a"), NOW).federatedUserId());
+  }
+
+  @Test
+  void keepsTheAccountItNames() {
+    assertEquals("sub-a", naming("sub-a").relinkedWith(named(null), NOW).federatedUserId());
+    assertEquals("sub-a", naming("sub-a").relinkedWith(named("sub-a"), NOW).federatedUserId());
+  }
+
+  @Test
+  void isFirstNamedOnlyWhenItNamesNoAccountAndTheCredentialsDo() {
+    assertTrue(naming(null).isFirstNamedBy(named("sub-a")));
+    assertFalse(naming("sub-a").isFirstNamedBy(named("sub-a")));
+    assertFalse(naming(null).isFirstNamedBy(named(null)));
+    assertFalse(naming("sub-a").isFirstNamedBy(named(null)));
+  }
 }

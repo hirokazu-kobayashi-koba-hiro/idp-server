@@ -80,6 +80,10 @@ public class AccountLinkingPreparationService {
       LinkedExternalAccount current =
           accountQueryRepository.lock(tenant, session.userIdentifier(), renewed.accountAlias());
       sameExternalAccountVerifier.verify(current, credentials);
+      if (current.isFirstNamedBy(credentials)) {
+        duplicateLinkVerifier.verify(
+            tenant, session, credentials.federatedUserId(), configuration.duplicateLinkPolicy());
+      }
       return PreparedLink.relink(current, current.relinkedWith(credentials, now));
     }
 

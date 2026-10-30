@@ -468,6 +468,47 @@ class AccountLinkingCompleteHandlerTest {
   }
 
   @Test
+  void anotherUsersExternalAccountIsRefusedWhenItWouldRenewALinkThatNamesNoAccount() {
+    // The one link was made while the provider named no account (no userinfo yet). Linking now
+    // brings an account another user has linked: the duplicate policy still applies.
+    accounts.rows.add(
+        new LinkedExternalAccount.Builder()
+            .identifier(new LinkedExternalAccountIdentifier(UUID.randomUUID().toString()))
+            .userIdentifier(OWNER)
+            .provider(PROVIDER)
+            .accountAlias(new AccountAlias("google-aaaaaaaa"))
+            .build());
+    accounts.otherUserHolds = true;
+    parkSession("federated-sub");
+
+    AccountLinkingResult result = complete();
+
+    assertEquals(409, result.statusCode());
+    assertEquals("account_already_linked", result.contents().get("error"));
+    assertEquals(0, accounts.updates);
+  }
+
+  @Test
+  void aLinkThatNamesNoAccountLearnsItWhenTheProviderAllowsTheDuplicate() {
+    resolver.linking.put("duplicate_link_policy", "allow");
+    accounts.rows.add(
+        new LinkedExternalAccount.Builder()
+            .identifier(new LinkedExternalAccountIdentifier(UUID.randomUUID().toString()))
+            .userIdentifier(OWNER)
+            .provider(PROVIDER)
+            .accountAlias(new AccountAlias("google-aaaaaaaa"))
+            .build());
+    accounts.otherUserHolds = true;
+    parkSession("federated-sub");
+
+    assertFalse(complete().isError());
+
+    assertEquals(1, accounts.updates);
+    assertEquals("federated-sub", accounts.rows.getFirst().federatedUserId());
+    assertEquals("google-aaaaaaaa", accounts.rows.getFirst().accountAlias().value());
+  }
+
+  @Test
   void aliasesAreNeverReusedAfterUnlinking() {
     allowMultipleAccounts();
     parkSession(null);

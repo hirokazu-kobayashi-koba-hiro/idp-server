@@ -576,51 +576,51 @@ describe("account linking", () => {
       });
     });
 
+    const INTROSPECTION = "https://api.local.test/1e68932e-ed4a-43e7-b412-460665e42df3/v1/tokens/introspection";
+
+    const userinfoExecution = (clientSecret) => ({
+      function: "http_requests",
+      http_requests: [
+        {
+          url: INTROSPECTION,
+          method: "POST",
+          header_mapping_rules: [
+            { static_value: "application/x-www-form-urlencoded", to: "Content-Type" },
+          ],
+          body_mapping_rules: [
+            { from: "$.request_body.access_token", to: "token" },
+            { static_value: clientSecretPostClient.clientId, to: "client_id" },
+            { static_value: clientSecret, to: "client_secret" },
+          ],
+        },
+      ],
+    });
+
+    /** 連携先が独自の API（ここでは外部IdP役のイントロスペクション）でアカウントを名乗るときの payload。 */
+    const OWN_API_USERINFO = {
+      provider: "oauth-extension",
+      userinfo_endpoint: INTROSPECTION,
+      userinfo_execution: userinfoExecution(clientSecretPostClient.clientSecret),
+      userinfo_mapping_rules: [
+        { from: "$.userinfo_execution_http_requests[0].response_body.sub", to: "external_user_id" },
+        { from: "$.userinfo_execution_http_requests[0].response_body.username", to: "email" },
+        // 一覧に出す名前は preferred_username が優先。独自の形の応答でも、マッピングで好きな値にできる。
+        {
+          from: "$.userinfo_execution_http_requests[0].response_body.username",
+          to: "preferred_username",
+          functions: [{ name: "format", args: { template: "example-idp:{{value}}" } }],
+        },
+      ],
+      multiple_accounts: false,
+    };
+
     /**
      * OAuth 2.0（id_token なし）で、アカウントを独自の API で名乗る連携先。GitHub の /user のような形。
      * 外部IdP役の userinfo は openid を要るので、userinfo_execution で外部IdP役のイントロスペクションを呼び、
      * その応答の sub と username を独自 API の応答に見立てて読む。
      */
     describe("with an OAuth 2.0 provider that names the account through its own API", () => {
-      const INTROSPECTION = "https://api.local.test/1e68932e-ed4a-43e7-b412-460665e42df3/v1/tokens/introspection";
-
-      const userinfoExecution = (clientSecret) => ({
-        function: "http_requests",
-        http_requests: [
-          {
-            url: INTROSPECTION,
-            method: "POST",
-            header_mapping_rules: [
-              { static_value: "application/x-www-form-urlencoded", to: "Content-Type" },
-            ],
-            body_mapping_rules: [
-              { from: "$.request_body.access_token", to: "token" },
-              { static_value: clientSecretPostClient.clientId, to: "client_id" },
-              { static_value: clientSecret, to: "client_secret" },
-            ],
-          },
-        ],
-      });
-
-      patchProviderPayloadDuring(
-        {
-          provider: "oauth-extension",
-          userinfo_endpoint: INTROSPECTION,
-          userinfo_execution: userinfoExecution(clientSecretPostClient.clientSecret),
-          userinfo_mapping_rules: [
-            { from: "$.userinfo_execution_http_requests[0].response_body.sub", to: "external_user_id" },
-            { from: "$.userinfo_execution_http_requests[0].response_body.username", to: "email" },
-            // 一覧に出す名前は preferred_username が優先。独自の形の応答でも、マッピングで好きな値にできる。
-            {
-              from: "$.userinfo_execution_http_requests[0].response_body.username",
-              to: "preferred_username",
-              functions: [{ name: "format", args: { template: "example-idp:{{value}}" } }],
-            },
-          ],
-          multiple_accounts: false,
-        },
-        OAUTH2_CONFIG_ID
-      );
+      patchProviderPayloadDuring(OWN_API_USERINFO, OAUTH2_CONFIG_ID);
 
       it("reads the account and its name from the API, and renews the one link when it is linked again", async () => {
         const accessToken = await loginAsNewUser();
@@ -682,6 +682,89 @@ describe("account linking", () => {
           expect(callbackResponse.status).toBe(302);
           expectReturnedFailure(callbackResponse.headers.location, "server_error", linkResponse.data.state);
           expect(await listLinks(accessToken)).toEqual([]);
+        });
+      });
+    });
+
+    /**
+     * アカウントを名乗らない連携先でつないだあとで、運用者が userinfo を足した場合。
+     * 前の連携は外部アカウントの ID を持たないまま残る。次の連携でその ID が分かったら、新しい連携と
+     * 同じく、別のユーザーが連携済みかを確かめ、ID を連携に書き込む。
+     */
+    describe("a link made before the provider named the account", () => {
+      patchProviderPayloadDuring({ multiple_accounts: false }, OAUTH2_CONFIG_ID);
+
+      /**
+       * 後でログインし直せるユーザー。ほかのユーザーでログインすると、ブラウザの OP セッションが
+       * そちらに移るので、連携を始める前に持ち主でログインし直す。
+       */
+      const createOwner = async () => {
+        const email = `account-linking-${uuidv4()}@example.com`;
+        const response = await postWithJson({
+          url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/users`,
+          headers: { Authorization: `Bearer ${await requestAdminAccessToken()}` },
+          body: { sub: uuidv4(), provider_id: "idp-server", name: email, email, raw_password: "successUserCode001" },
+        });
+        expect(response.status).toBe(201);
+        return async () =>
+          await login(
+            { username: email, password: "successUserCode001" },
+            `openid profile email ${MANAGE_SCOPE} ${READ_TOKEN_SCOPE}`
+          );
+      };
+
+      let signInAsUnnamedOwner;
+      let signInAsAnotherUnnamedOwner;
+      let anotherUnnamedAlias;
+
+      beforeAll(async () => {
+        signInAsUnnamedOwner = await createOwner();
+        const unnamedOwner = await signInAsUnnamedOwner();
+        await linkOnce(unnamedOwner, OAUTH2_PROVIDER);
+        expect((await listLinks(unnamedOwner))[0].federated_username).toBeNull();
+
+        signInAsAnotherUnnamedOwner = await createOwner();
+        anotherUnnamedAlias = await linkOnce(await signInAsAnotherUnnamedOwner(), OAUTH2_PROVIDER);
+      });
+
+      describe("once the provider names it", () => {
+        patchProviderPayloadDuring({ ...OWN_API_USERINFO, multiple_accounts: false }, OAUTH2_CONFIG_ID);
+
+        it("refuses an external account another user has linked, and leaves the link as it was", async () => {
+          const externalEmail = await createExternalUser();
+          await linkOnce(await loginAsNewUser(), OAUTH2_PROVIDER, "account offline_access", externalEmail);
+
+          const unnamedOwner = await signInAsUnnamedOwner();
+          const before = await listLinks(unnamedOwner);
+          const response = await linkThroughComplete(unnamedOwner, OAUTH2_PROVIDER, "account offline_access", externalEmail);
+          console.log(response.status, response.data);
+          expect(response.status).toBe(409);
+          expect(response.data.error).toBe("account_already_linked");
+          expect(await listLinks(unnamedOwner)).toEqual(before);
+        });
+
+        it("renews the link with the account it names, which another user can no longer link", async () => {
+          const externalEmail = await createExternalUser();
+
+          const renewed = await linkThroughComplete(
+            await signInAsAnotherUnnamedOwner(),
+            OAUTH2_PROVIDER,
+            "account offline_access",
+            externalEmail
+          );
+          expect(renewed.status).toBe(201);
+          expect(renewed.data.alias).toBe(anotherUnnamedAlias);
+
+          // ID が連携に書き込まれたので、別のユーザーはこのアカウントをつなげない。
+          const response = await linkThroughComplete(
+            await loginAsNewUser(),
+            OAUTH2_PROVIDER,
+            "account offline_access",
+            externalEmail
+          );
+          console.log(response.status, response.data);
+          expect(response.status).toBe(409);
+          expect(response.data.error).toBe("account_already_linked");
         });
       });
     });

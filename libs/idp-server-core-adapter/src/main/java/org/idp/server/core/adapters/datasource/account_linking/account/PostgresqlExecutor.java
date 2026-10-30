@@ -91,6 +91,7 @@ public class PostgresqlExecutor implements LinkedExternalAccountSqlExecutor {
                access_token_expires_at = ?,
                refresh_token_expires_at = ?,
                scope = ?,
+               federated_user_id = ?,
                federated_username = ?,
                updated_at = now()
          WHERE id = ?::uuid AND tenant_id = ?::uuid;
@@ -103,6 +104,7 @@ public class PostgresqlExecutor implements LinkedExternalAccountSqlExecutor {
     params.add(account.accessTokenExpiresAt());
     params.add(account.refreshTokenExpiresAt());
     params.add(account.scope());
+    params.add(account.federatedUserId());
     params.add(account.federatedUsername());
     params.add(account.identifier().valueAsUuid());
     params.add(tenant.identifierUUID());
