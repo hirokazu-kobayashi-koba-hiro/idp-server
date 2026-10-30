@@ -21,14 +21,18 @@ import org.idp.server.account_linking.io.LinkedExternalAccountTokenRequest;
 import org.idp.server.core.openid.clientinstance.ClientInstanceThumbprint;
 import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientAuthenticationPublicKey;
 import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
+import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.dpop.DPoPHeaderValidator;
 import org.idp.server.core.openid.oauth.dpop.DPoPProofInvalidException;
+import org.idp.server.core.openid.oauth.dpop.DPoPProofVerifier;
+import org.idp.server.core.openid.oauth.replay.JwtReplayDetector;
 import org.idp.server.core.openid.token.AccessToken;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.core.openid.token.tokenintrospection.exception.TokenCertificationBindingInvalidException;
 import org.idp.server.core.openid.token.tokenintrospection.verifier.CertificateBindingVerifier;
 import org.idp.server.core.openid.token.tokenintrospection.verifier.DPoPBindingVerifier;
 import org.idp.server.platform.jose.JsonWebKeyInvalidException;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
  * The user's token is presented by the sender it is bound to.
@@ -43,6 +47,17 @@ public class LinkedExternalAccountTokenBindingVerifier {
 
   DPoPBindingVerifier dpopBindingVerifier;
   CertificateBindingVerifier certificateBindingVerifier;
+
+  /** DPoP proofs are checked against the tenant's window and replay cache, as at {@code /me}. */
+  public static LinkedExternalAccountTokenBindingVerifier of(
+      Tenant tenant,
+      AuthorizationServerConfiguration serverConfiguration,
+      JwtReplayDetector replayDetector) {
+    return new LinkedExternalAccountTokenBindingVerifier(
+        new DPoPBindingVerifier(
+            new DPoPProofVerifier(
+                tenant, serverConfiguration.dpopProofAcceptableWindow(), replayDetector)));
+  }
 
   public LinkedExternalAccountTokenBindingVerifier(DPoPBindingVerifier dpopBindingVerifier) {
     this.dpopBindingVerifier = dpopBindingVerifier;

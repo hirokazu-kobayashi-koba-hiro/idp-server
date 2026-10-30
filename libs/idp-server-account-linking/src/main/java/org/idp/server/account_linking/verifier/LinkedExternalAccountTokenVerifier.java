@@ -34,6 +34,20 @@ import org.idp.server.core.openid.token.OAuthToken;
  */
 public class LinkedExternalAccountTokenVerifier {
 
+  /**
+   * The client is a confidential one.
+   *
+   * <p>The shared client authentication lets {@code token_endpoint_auth_method=none} through
+   * unchecked; a public client cannot keep a stored token from the user agent it runs in, so it is
+   * refused before authentication.
+   */
+  public void verifyConfidentialClient(ClientConfiguration client) {
+    if (client.clientAuthenticationType().isNone()) {
+      throw LinkedExternalAccountTokenException.invalidClient(
+          "Public clients may not retrieve stored external tokens.");
+    }
+  }
+
   /** The user's access token, as the client presented it. */
   public void verifyUserToken(OAuthToken userToken, ClientConfiguration client, LocalDateTime now) {
     verifyTokenExistsAndNotExpired(userToken, now);

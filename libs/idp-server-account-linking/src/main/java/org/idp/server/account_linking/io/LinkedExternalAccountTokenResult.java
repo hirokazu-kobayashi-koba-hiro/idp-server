@@ -18,7 +18,13 @@ package org.idp.server.account_linking.io;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.account_linking.ExternalAccessTokenAcquisition;
 import org.idp.server.account_linking.ExternalIdpProvider;
+import org.idp.server.account_linking.exception.LinkedExternalAccountTokenException;
+import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
+import org.idp.server.platform.date.SystemDateTime;
+import org.idp.server.platform.security.event.DefaultSecurityEventType;
 
 /**
  * Outcome of a stored token retrieval.
@@ -46,6 +52,45 @@ public class LinkedExternalAccountTokenResult {
     this.relinkRequired = relinkRequired;
     this.provider = provider;
     this.error = error;
+  }
+
+  /** The stored access token handed to the client. */
+  public static LinkedExternalAccountTokenResult retrieved(
+      ExternalAccessTokenAcquisition acquisition,
+      ExternalIdpProvider provider,
+      RequestedClientId requestedClientId,
+      User user) {
+    AccountLinkingResult result =
+        AccountLinkingResult.success(
+                AccountLinkingStatus.OK,
+                acquisition.accessToken().toResponse(SystemDateTime.now()),
+                DefaultSecurityEventType.external_account_token_retrieved,
+                user)
+            .withContext(requestedClientId, user);
+    return new LinkedExternalAccountTokenResult(
+        result, acquisition.isRefreshed(), false, provider, null);
+  }
+
+  /**
+   * The retrieval refused.
+   *
+   * @param provider the account's provider, or {@code null} when it was refused before the account
+   *     was found
+   */
+  public static LinkedExternalAccountTokenResult refused(
+      LinkedExternalAccountTokenException exception,
+      RequestedClientId requestedClientId,
+      User user,
+      ExternalIdpProvider provider) {
+    AccountLinkingResult result =
+        AccountLinkingResult.error(
+                exception.status(),
+                exception.error(),
+                exception.getMessage(),
+                DefaultSecurityEventType.external_account_token_retrieval_failed)
+            .withContext(requestedClientId, user);
+    return new LinkedExternalAccountTokenResult(
+        result, false, exception.isRelinkRequired(), provider, exception.error());
   }
 
   public AccountLinkingResult result() {
