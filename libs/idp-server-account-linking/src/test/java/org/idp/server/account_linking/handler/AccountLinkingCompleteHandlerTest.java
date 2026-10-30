@@ -247,7 +247,13 @@ class AccountLinkingCompleteHandlerTest {
   Resolver resolver = new Resolver();
   RecordingRevoker revoker = new RecordingRevoker();
   AccountLinkingCompleteHandler handler =
-      new AccountLinkingCompleteHandler(sessions, sessions, accounts, accounts, resolver, revoker);
+      new AccountLinkingCompleteHandler(
+          sessions,
+          sessions,
+          accounts,
+          resolver,
+          new AccountLinkingPreparationService(accounts),
+          revoker);
 
   void allowMultipleAccounts() {
     resolver.linking.put("multiple_accounts", true);
@@ -419,6 +425,46 @@ class AccountLinkingCompleteHandlerTest {
 
     assertEquals(2, accounts.rows.size());
     assertFalse(accounts.rows.getLast().isSingleAccount());
+  }
+
+  @Test
+  void anotherUsersExternalAccountIsRefusedAmongSeveralByDefault() {
+    allowMultipleAccounts();
+    accounts.otherUserHolds = true;
+    parkSession("federated-sub");
+
+    AccountLinkingResult result = complete();
+
+    assertEquals(409, result.statusCode());
+    assertEquals("account_already_linked", result.contents().get("error"));
+    assertTrue(accounts.rows.isEmpty());
+  }
+
+  @Test
+  void anotherUsersExternalAccountIsAddedAmongSeveralWhenTheProviderAllowsIt() {
+    allowMultipleAccounts();
+    resolver.linking.put("duplicate_link_policy", "allow");
+    accounts.otherUserHolds = true;
+    parkSession("federated-sub");
+
+    assertFalse(complete().isError());
+
+    assertEquals(1, accounts.rows.size());
+  }
+
+  @Test
+  void everyLinkWithoutAnIdentifierIsAddedAmongSeveral() {
+    // Nothing to compare: neither a re-link nor the duplicate policy can be recognised.
+    allowMultipleAccounts();
+    accounts.otherUserHolds = true;
+    parkSession(null);
+    assertFalse(complete().isError());
+
+    parkSession(null);
+    assertFalse(complete().isError());
+
+    assertEquals(2, accounts.rows.size());
+    assertEquals(0, accounts.updates);
   }
 
   @Test

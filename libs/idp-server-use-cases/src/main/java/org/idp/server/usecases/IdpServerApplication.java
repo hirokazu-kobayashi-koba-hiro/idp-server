@@ -23,6 +23,7 @@ import org.idp.server.account_linking.AccountLinkingApi;
 import org.idp.server.account_linking.AccountLinkingConfigurationResolver;
 import org.idp.server.account_linking.AccountLinkingCookieDelegate;
 import org.idp.server.account_linking.AccountLinkingCredentialsService;
+import org.idp.server.account_linking.AccountLinkingPreparationService;
 import org.idp.server.account_linking.AccountLinkingTokenCipher;
 import org.idp.server.account_linking.LinkedExternalAccountRevoker;
 import org.idp.server.account_linking.LinkedExternalAccountTokenService;
@@ -947,9 +948,9 @@ public class IdpServerApplication {
                 new AccountLinkingCompleteHandler(
                     accountLinkingSessionQueryRepository,
                     accountLinkingSessionCommandRepository,
-                    linkedExternalAccountQueryRepository,
                     linkedExternalAccountCommandRepository,
                     accountLinkingConfigurationResolver,
+                    new AccountLinkingPreparationService(linkedExternalAccountQueryRepository),
                     linkedExternalAccountRevoker),
                 new AccountLinkingUnlinkHandler(
                     linkedExternalAccountQueryRepository,
