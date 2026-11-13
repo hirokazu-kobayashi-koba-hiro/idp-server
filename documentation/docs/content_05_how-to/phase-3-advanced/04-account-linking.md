@@ -290,7 +290,7 @@ curl -X POST "${IDP_SERVER_URL}/${TENANT_ID}/v1/linked-external-accounts/${ALIAS
 | 応答 | RP がすること |
 |------|--------------|
 | `400 relink_required` | リフレッシュできない（`force_refresh=true` で更新できなかったときも）。5.1 から連携し直してもらう |
-| `400 provider_unavailable` | 連携先が削除・無効化された。連携し直しも失敗するので、連携先が使えないことをユーザーに伝える |
+| `400 provider_unavailable` | 連携先が削除・無効化された（期限内のトークンも返さない）。連携し直しも失敗するので、連携先が使えないことをユーザーに伝える |
 | `502 temporarily_unavailable` | 外部IdPが一時的に応答しない。時間をおいて再試行 |
 
 ユーザートークンが DPoP・mTLS・クライアントインスタンス（ABCA）に縛られているときは、その証明も一緒に出します。DPoP なら `DPoP` ヘッダーの proof（`htu` はこの API の URL、`ath` は `token` のハッシュ）、mTLS なら同じクライアント証明書、ABCA ならトークンを受け取ったインスタンスの鍵でのクライアント認証です。合わなければ `401 invalid_token`。ABCA の縛りを照合するのはこの API だけで、`/me` 系の API（連携・一覧・解除）が照合するのは DPoP と mTLS だけです。`/me` 系でも送り手を縛るなら、ABCA に DPoP を組み合わせます。
@@ -363,7 +363,7 @@ curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/t
 
 - ユーザーを削除すると、そのユーザーの連携と連携セッションも削除され、保管トークンは外部IdPで失効されます（ベストエフォート）
 - テナントを削除するときも、削除の前にテナントの全ての連携のトークンを失効させます。連携 1 件ごとに外部IdPを呼ぶので、連携が多いテナントは削除の応答まで時間がかかります
-- 連携先の設定を `enabled: false` にすると新しい連携は始められなくなりますが、解除やユーザー削除のときの失効はそのまま行われます
+- 連携先の設定を `enabled: false` にすると、新しい連携は始められなくなり、保管トークンの取得も期限内のものを含めてすぐ `400 provider_unavailable` になります。解除やユーザー削除のときの失効はそのまま行われます
 
 ---
 

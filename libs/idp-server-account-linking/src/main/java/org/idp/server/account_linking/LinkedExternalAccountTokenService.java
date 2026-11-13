@@ -73,13 +73,19 @@ public class LinkedExternalAccountTokenService {
    * @param account the account as read without a lock; it is read again under its row lock before
    *     anything is written
    * @param forceRefresh refresh even when the stored token is still usable
-   * @throws LinkedExternalAccountTokenException when the account is gone, the token cannot be
-   *     refreshed and the user has to link again, or the external IdP is unavailable
+   *     <p>Nothing is handed out while the provider is removed or disabled, not even a token still
+   *     within its expiry. Disabling a provider is what an operator reaches for in an incident, and
+   *     it has to stop the tokens going out at once rather than when they next expire. Revoking
+   *     them on unlink still reaches a disabled provider ({@link LinkedExternalAccountRevoker}).
+   * @throws LinkedExternalAccountTokenException when the account is gone, the provider is removed
+   *     or disabled, the token cannot be refreshed and the user has to link again, or the external
+   *     IdP is unavailable
    */
   public ExternalAccessTokenAcquisition acquire(
       Tenant tenant, LinkedExternalAccount account, boolean forceRefresh) {
 
-    long refreshBeforeExpirySeconds = refreshBeforeExpirySeconds(tenant, account);
+    AccountLinkingProviderConfiguration configuration = providerConfiguration(tenant, account);
+    long refreshBeforeExpirySeconds = configuration.refreshBeforeExpirySeconds();
     if (!forceRefresh && isUsable(account, SystemDateTime.now(), refreshBeforeExpirySeconds)) {
       LinkedExternalAccount current =
           tokenCipher.isBehindActive(tenant, account.encryptionKeyId())
@@ -88,31 +94,13 @@ public class LinkedExternalAccountTokenService {
       return opened(tenant, current, false);
     }
 
-    LinkedExternalAccount refreshed =
-        refreshUnderLock(tenant, account, forceRefresh, refreshBeforeExpirySeconds);
-    return opened(tenant, refreshed, true);
+    return refreshUnderLock(
+        tenant, account, configuration.oidc(), forceRefresh, refreshBeforeExpirySeconds);
   }
 
   private boolean isUsable(
       LinkedExternalAccount account, LocalDateTime now, long refreshBeforeExpirySeconds) {
     return !account.isAccessTokenExpired(now.plusSeconds(refreshBeforeExpirySeconds));
-  }
-
-  /**
-   * The provider's {@code refresh_before_expiry_seconds}.
-   *
-   * <p>Read even when the provider is disabled: a token still within its expiry is handed out as
-   * before, and only a refresh needs the provider enabled. A provider that is gone falls back to
-   * the default, and its refresh is refused as unavailable.
-   */
-  private long refreshBeforeExpirySeconds(Tenant tenant, LinkedExternalAccount account) {
-    try {
-      return configurationResolver
-          .resolveIncludingDisabled(tenant, account.provider())
-          .refreshBeforeExpirySeconds();
-    } catch (FederationConfigurationNotFoundException exception) {
-      return AccountLinkingConfiguration.DEFAULT_REFRESH_BEFORE_EXPIRY_SECONDS;
-    }
   }
 
   /**
@@ -124,11 +112,13 @@ public class LinkedExternalAccountTokenService {
    *
    * <p>A forced refresh is skipped the same way when another request put a new token in place while
    * this one waited: clients that all got a 401 from the external API and retry at once reach the
-   * external IdP once, not once each.
+   * external IdP once, not once each. Such a token is reported as not refreshed by this request, so
+   * the refresh is recorded once, by the request that made it.
    */
-  private LinkedExternalAccount refreshUnderLock(
+  private ExternalAccessTokenAcquisition refreshUnderLock(
       Tenant tenant,
       LinkedExternalAccount account,
+      OidcSsoConfiguration configuration,
       boolean forceRefresh,
       long refreshBeforeExpirySeconds) {
 
@@ -139,7 +129,7 @@ public class LinkedExternalAccountTokenService {
             ? locked.hasNewAccessTokenSince(account)
             : isUsable(locked, now, refreshBeforeExpirySeconds);
     if (alreadyRefreshed) {
-      return locked;
+      return opened(tenant, locked, false);
     }
 
     if (!locked.hasRefreshToken() || locked.isRefreshTokenExpired(now)) {
@@ -152,7 +142,6 @@ public class LinkedExternalAccountTokenService {
           relinkRequiredDescription(forceRefresh));
     }
 
-    OidcSsoConfiguration configuration = providerConfiguration(tenant, locked);
     String storedRefreshToken =
         tokenCipher.open(
             tenant,
@@ -168,7 +157,7 @@ public class LinkedExternalAccountTokenService {
     LinkedExternalAccount refreshed =
         withRefreshedTokens(tenant, locked, configuration, tokenResult, storedRefreshToken, now);
     accountCommandRepository.update(tenant, refreshed);
-    return refreshed;
+    return opened(tenant, refreshed, true);
   }
 
   /**
@@ -227,15 +216,16 @@ public class LinkedExternalAccountTokenService {
   }
 
   /**
-   * The provider's settings for a refresh.
+   * The provider's settings, which must be enabled for anything to be handed out.
    *
-   * <p>An operator may have removed or disabled the provider since the account was linked. The
-   * stored refresh token cannot be spent without them. Linking again would fail as well while the
-   * provider is gone, so the caller is told the provider is unavailable rather than to link again.
+   * <p>An operator may have removed or disabled the provider since the account was linked. Linking
+   * again would fail as well while the provider is gone, so the caller is told the provider is
+   * unavailable rather than to link again.
    */
-  private OidcSsoConfiguration providerConfiguration(Tenant tenant, LinkedExternalAccount account) {
+  private AccountLinkingProviderConfiguration providerConfiguration(
+      Tenant tenant, LinkedExternalAccount account) {
     try {
-      return configurationResolver.resolve(tenant, account.provider()).oidc();
+      return configurationResolver.resolve(tenant, account.provider());
     } catch (FederationConfigurationNotFoundException exception) {
       log.warn(
           "Linking provider is no longer configured. provider={}, alias={}",

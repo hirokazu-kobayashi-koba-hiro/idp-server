@@ -51,6 +51,19 @@ class LinkedExternalAccountTokenExceptionTest {
   }
 
   @Test
+  void asksToTryLaterWhenTheProviderAnswersWithoutAnError() {
+    // A 2xx without an access token, or a redirect, is the provider's fault: linking again would
+    // not fix it.
+    for (int status : new int[] {200, 302}) {
+      LinkedExternalAccountTokenException exception =
+          LinkedExternalAccountTokenException.refreshFailed(status);
+
+      assertEquals("temporarily_unavailable", exception.error(), String.valueOf(status));
+      assertEquals(AccountLinkingStatus.BAD_GATEWAY, exception.status());
+    }
+  }
+
+  @Test
   void tellsTheProviderIsUnavailableRatherThanToLinkAgain() {
     // Linking again would fail too while the provider is removed or disabled.
     LinkedExternalAccountTokenException exception =

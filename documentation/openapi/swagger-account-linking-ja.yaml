@@ -28,7 +28,7 @@ info:
 
     ## 送り手に縛られたアクセストークン
 
-    ユーザーのアクセストークンを `Authorization` で送る API（開始・確定・一覧・解除）では、アクセストークンが送り手に縛られている場合はその形で送ります。
+    ユーザーのアクセストークンを `Authorization` で送る API（開始・確定・一覧・連携先の一覧・解除）では、アクセストークンが送り手に縛られている場合はその形で送ります。
     DPoP で縛ったトークンは `Authorization: DPoP {access_token}` と、`DPoP` ヘッダーの proof（RFC 9449。`htu` は呼ぶ API の URL、`ath` はアクセストークンのハッシュ）で送ります。
     mTLS で縛ったトークンは、発行のときと同じクライアント証明書で接続します（RFC 8705）。
     クライアントインスタンスへの束縛（ABCA）は、これらの API では照合しません。クライアント認証を求めないためです。
@@ -81,6 +81,9 @@ paths:
 
         ## 必要なスコープ
         `linked_account:manage`
+
+        ## セキュリティイベント
+        - `external_account_link_failed`（`400` / `403` で断ったとき）
       parameters:
         - $ref: '#/components/parameters/TenantId'
         - $ref: '#/components/parameters/LinkingProvider'
@@ -179,7 +182,7 @@ paths:
 
         idp-server のブラウザセッションから操作者を解決し、連携を開始したユーザーと一致するかを照合します。
         ブラウザセッションとして使うのは、ログインで発行した `__Host-IDP_BROWSER_{tenant-id}` Cookie が OP セッションと合うときだけです。合わなければセッションが無いのと同じに扱います。
-        一致すれば、ブラウザ束縛の Cookie（`__Host-IDP_LINK_BINDING_{tenant-id}`、`Secure`・`Path=/`・`SameSite=Lax`）を発行し、外部IdPの認可エンドポイントへ `302` で送ります。
+        一致すれば、ブラウザ束縛の Cookie（`__Host-IDP_LINK_BINDING_{tenant-id}`、`Secure`・`HttpOnly`・`Path=/`・`SameSite=Lax`・`Max-Age=900`）を発行し、外部IdPの認可エンドポイントへ `302` で送ります。
 
         Bearer は不要です。JSON は返さず、成功も失敗も `302` で答えます。
 
@@ -191,7 +194,7 @@ paths:
         | ブラウザセッションが無い、ログインが `linking_max_auth_age` より古い、またはログインの acr がクライアントの `linking_acr_values` に当たらない（連携セッションは有効） | このサーバーの認可エンドポイント（`prompt=login`・`login_hint=sub:<連携を始めたユーザー>`、`linking_acr_values` があれば `acr_values`）。ログインが終わると認可コードを発行せずに `/linking/start?state=...&returned_from_sign_in=true` へ戻る（ログインを取り消した場合も同じ） |
         | ログインから戻ってもブラウザセッションが無い、ログインを取り消した、または acr が `linking_acr_values` に当たらない | `{redirect_uri}?linking=failed&error=login_required`（`state` は付けない） |
         | 操作者が一致しない | テナントのエラー画面（`error=access_denied`） |
-        | `state` が無い・連携セッションが無い・期限切れ・開始済み（ブラウザセッションの有無に関わらず） | テナントのエラー画面（`error=invalid_request`） |
+        | `state` が無い・連携セッションが無い・期限切れ・開始済み | テナントのエラー画面（`error=invalid_request`）。ブラウザセッションがあるときは、操作者の照合とログインの判定が先なので、上の行（`access_denied`・ログインし直し）になることがある |
         | 連携を始めた後で、連携先の設定が削除・無効化された | テナントのエラー画面（`error=invalid_request`） |
         | その他のエラー | テナントのエラー画面（`error=server_error`） |
 
@@ -219,7 +222,7 @@ paths:
         （`ui_config.base_url` が無い場合はテナントのドメイン）。`error_description` は失敗の種類ごとの固定文です。
 
         ## セキュリティイベント
-        - `external_account_link_failed`（ブラウザセッションが無いだけの場合は記録しません）
+        - `external_account_link_failed`（ブラウザセッションが無い・ログインが古い・acr が足りないだけで、ログインし直しや `login_required` に進む場合は記録しません）
       parameters:
         - $ref: '#/components/parameters/TenantId'
         - name: state
@@ -288,6 +291,7 @@ paths:
         | トークン交換・ID Token の検証・userinfo の失敗、その他の想定外のエラー | `{redirect_uri}?linking=failed&error=server_error&state=...` |
         | `state` が無い・未知 | テナントのエラー画面（`error=invalid_request`） |
         | 連携セッションが期限切れ・コールバックを待つ状態でない（再読み込み・戻るボタン・二重送信） | テナントのエラー画面（`error=invalid_request`） |
+        | パスの `{provider}` が連携セッションの連携先と違う | テナントのエラー画面（`error=invalid_request`） |
         | ブラウザ束縛が無い・一致しない | テナントのエラー画面（`error=access_denied`） |
 
         戻り先へ返す `error` は `access_denied` / `temporarily_unavailable` / `server_error` のどれかです。
@@ -308,8 +312,8 @@ paths:
           in: path
           required: true
           description: |
-            連携先の設定名（`sso_provider`）。連携先設定の `redirect_uri` と合わせるためのもので、
-            処理には `state` から引いた連携セッションの連携先を使います。
+            連携先の設定名（`sso_provider`）。連携先設定の `redirect_uri` に、連携先ごとのこの URL を登録します。
+            `state` から引いた連携セッションの連携先と照らし、違えば認可コードを交換せずにテナントのエラー画面（`error=invalid_request`）へ送ります。
           schema:
             type: string
             example: example-idp
@@ -380,7 +384,7 @@ paths:
         ## 断られたときのやり直し
         `400` / `403` / `409` で断ったとき、連携セッションは確定を待つ状態のまま残ります。
         原因を取り除けば（例: 別のアカウントの連携を解除する）、期限内なら同じ `state` で送り直せます。
-        `expired_link`・`invalid_link_state`（確定済み）と `404` のときは、連携開始（`link`）からやり直します。
+        `expired_link` と `404` のときは、連携開始（`link`）からやり直します。確定に成功すると連携セッションを消すので、確定済みの `state` を送り直すと `404` です。
 
         分岐には `error` を使ってください。`error_description` は人が読むための文で、変わることがあります。
 
@@ -483,7 +487,7 @@ paths:
           description: |
             次のいずれか。
 
-            - `invalid_link_state` — 連携セッションが確定できる状態にない（コールバック前、または確定済み）
+            - `invalid_link_state` — 連携セッションが確定できる状態にない（コールバック前、または同じ `state` の確定が同時に届いて先を越された）
             - `account_already_linked` — 同じ外部アカウントが既に他のユーザーに紐付いている（連携先の `duplicate_link_policy` が `reject` のとき）。誰に紐付いているかは返しません
             - `another_account_linked` — この連携先の別のアカウントを既に連携している（連携先の `multiple_accounts` が `false` のとき）。先に解除してから連携します
             - `several_accounts_linked` — この連携先の連携が複数あり、どれを更新するか決められない（連携先が `multiple_accounts: true` だった間に作られた連携が残っているとき）。不要な連携を解除してから連携します
@@ -726,6 +730,7 @@ paths:
         - ユーザーが有効である
         - `alias` がそのユーザーの連携にある
         - 連携先がクライアントの `extension.linking_token_providers` に含まれている
+        - 連携先が設定されていて、有効である（無効にした連携先では、期限内のトークンも返しません）
 
         `token` は有効期限内でなければなりません（期限切れは `401` `invalid_token`）。ユーザーがその場にいない処理（バッチなど）で取り出すときは、
         クライアントが持つ idp-server のリフレッシュトークンで、先にユーザーのアクセストークンを取り直してください。
@@ -792,7 +797,7 @@ paths:
           description: |
             - `invalid_request` — `token` が無い / `force_refresh` が `true` でも `false` でもない / `DPoP` ヘッダーが 2 つ以上
             - `relink_required` — リフレッシュトークンが無い・期限切れ、または外部IdPがリフレッシュを 4xx（429 を除く）で拒否した。ユーザーが連携し直す必要があります
-            - `provider_unavailable` — 連携先の設定が削除・無効化された。連携し直しも失敗するので、ユーザーには連携先が使えないことを伝えます
+            - `provider_unavailable` — 連携先の設定が削除・無効化された。期限内のトークンも返しません（運用者が連携先を無効にすると、払い出しはすぐ止まります）。連携し直しも失敗するので、ユーザーには連携先が使えないことを伝えます
           content:
             application/json:
               schema:
@@ -858,7 +863,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
         '502':
-          description: "`temporarily_unavailable` — 外部IdPがリフレッシュに 5xx か 429 を返した、または到達できない。`Retry-After` は付きません。間隔を広げながら（指数バックオフ）再試行します"
+          description: "`temporarily_unavailable` — 外部IdPがリフレッシュに 5xx か 429 を返した、到達できない、またはエラーでない応答に `access_token` が無かった（リダイレクトを含む）。`Retry-After` は付きません。間隔を広げながら（指数バックオフ）再試行します"
           content:
             application/json:
               schema:
@@ -1228,7 +1233,7 @@ components:
           type: string
           description: |
             エラーコード。連携先が使えないときは `provider_unavailable`（開始・確定）。確定（`complete`）は理由ごとのコード（`expired_link` / `provider_unavailable` / `client_mismatch` / `access_denied` /
-            `invalid_link_state` / `account_already_linked` / `another_account_linked` / `several_accounts_linked`）、
+            `invalid_link_state` / `account_already_linked` / `another_account_linked` / `several_accounts_linked` / `account_limit_reached`）、
             `404` は `not_found`、想定外のエラーは `server_error`、それ以外は `invalid_request`
           example: invalid_request
         error_description:

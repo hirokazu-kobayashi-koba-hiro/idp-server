@@ -2713,8 +2713,19 @@ describe("account linking", () => {
     const configUrl = () =>
       `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/federation-configurations/c1d4a3f8-6b2e-4d51-9a07-3f8b2c5e1d94`;
     let configBefore;
+    let linkedAccessToken;
+    let linkedAlias;
 
     beforeAll(async () => {
+      // Linked while the provider is still enabled; its token is well within its expiry.
+      linkedAccessToken = await loginAsNewUser();
+      linkedAlias = await linkOnce(
+        linkedAccessToken,
+        PROVIDER,
+        "openid profile email offline_access",
+        await createExternalUser()
+      );
+
       const headers = { Authorization: `Bearer ${await requestAdminAccessToken()}` };
       const current = await get({ url: configUrl(), headers });
       expect(current.status).toBe(200);
@@ -2742,6 +2753,18 @@ describe("account linking", () => {
       expect(disabled.linked_accounts).toEqual(expect.any(Number));
       expect(disabled).not.toHaveProperty("max_accounts");
       expect(response.data.list.find((it) => it.provider === OAUTH2_PROVIDER).available).toBe(true);
+    });
+
+    it("stops handing out the stored token at once, even one well within its expiry", async () => {
+      const response = await retrieveToken({
+        alias: linkedAlias,
+        token: linkedAccessToken,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      console.log(response.status, response.data);
+      expect(response.status).toBe(400);
+      expect(response.data.error).toBe("provider_unavailable");
     });
 
     it("answers provider_unavailable at link, so the RP can tell the user the service is not available", async () => {
@@ -3363,15 +3386,22 @@ describe("account linking", () => {
       });
       expect(onboardingResponse.status).toBe(201);
 
-      const mgmtTokenResponse = await requestToken({
-        endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
-        grantType: "password",
-        username: user.username,
-        password: user.password,
-        scope: "management org-management",
-        clientId,
-        clientSecret,
-      });
+      // The tenant is written to the primary; the next request may reach the other server, which
+      // reads a replica that has not caught up yet and answers 404. Wait until it can see the tenant.
+      let mgmtTokenResponse;
+      for (let attempt = 0; attempt < 10; attempt++) {
+        mgmtTokenResponse = await requestToken({
+          endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+          grantType: "password",
+          username: user.username,
+          password: user.password,
+          scope: "management org-management",
+          clientId,
+          clientSecret,
+        });
+        if (mgmtTokenResponse.status !== 404) break;
+        await new Promise((resolve) => setTimeout(resolve, 300));
+      }
       expect(mgmtTokenResponse.status).toBe(200);
       const mgmtAccessToken = mgmtTokenResponse.data.access_token;
       const tenantApi = `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}`;

@@ -136,7 +136,7 @@ scope は「連携を見る」（`read`）と「連携を管理する」（`mana
 - `revocation_endpoint` が設定されていない
 - 外部IdPに届かない、または失効を拒否された
 
-連携先の設定を無効化（`enabled: false`）していても、失効は行います。無効化で止めるのは新しい連携であって、発行済みトークンの後始末ではないためです。
+連携先の設定を無効化（`enabled: false`）していても、失効は行います。無効化で止めるのは新しい連携と保管トークンの払い出しであって、発行済みトークンの後始末ではないためです。
 
 解除は行ロックを取ってから失効させます。保管トークンの取得が同時にリフレッシュしていると、外部IdPがトークンをローテーションした直後に古いトークンだけを失効させてしまうためです。
 
@@ -383,13 +383,13 @@ token={ユーザーのアクセストークン}&client_id=...&client_secret=...
 |---|---|---|
 | 400 | `invalid_request` | `token` が無い / `force_refresh` が `true` でも `false` でもない / `DPoP` ヘッダーが 2 つ以上 |
 | 400 | `relink_required` | リフレッシュトークンが無い・期限切れ・外部IdPに拒否された（429 以外の 4xx）。連携し直す必要があります |
-| 400 | `provider_unavailable` | 連携先が削除・無効化された。連携し直しも失敗します |
+| 400 | `provider_unavailable` | 連携先が削除・無効化された。期限内のトークンも返しません。連携し直しも失敗します |
 | 401 | `invalid_client` | クライアント認証に失敗した / public クライアント |
 | 401 | `invalid_token` | `token` が無効・期限切れ・ユーザーを指していない / ユーザーが有効でない / sender-constrained なのに送り手の証明が合わない |
 | 403 | `unauthorized_client` | `token` が別のクライアントに発行された / 連携先が許可されていない |
 | 403 | `insufficient_scope` | `token` に `linked_account:read_token` が無い |
 | 404 | `not_found` | `alias` がユーザーの連携に無い |
-| 502 | `temporarily_unavailable` | 外部IdPがリフレッシュに 5xx か 429 を返した、または到達できない |
+| 502 | `temporarily_unavailable` | 外部IdPがリフレッシュに 5xx か 429 を返した、到達できない、またはエラーでない応答に `access_token` が無かった（リダイレクトを含む） |
 
 ---
 

@@ -85,17 +85,19 @@ public class LinkedExternalAccountTokenException extends RuntimeException {
   /**
    * The answer to a refresh the external IdP did not grant, told apart by its status.
    *
-   * <p>A 5xx or a network failure says nothing about the grant, nor does 429: the provider is busy
-   * and asks to be called later. Any other 4xx means the refresh token itself is no longer
-   * accepted, and only linking again brings a new one.
+   * <p>Only a 4xx other than 429 means the refresh token itself is no longer accepted, and only
+   * linking again brings a new one. Everything else says nothing about the grant: a 5xx or a
+   * network failure, a 429 asking to be called later, and an answer that is not an error yet
+   * carries no access token (a 2xx without one, a redirect) — the provider is at fault there, and
+   * linking again would not fix it.
    */
   public static LinkedExternalAccountTokenException refreshFailed(int statusCode) {
-    if (statusCode >= 500 || statusCode == 429) {
-      return externalIdpUnavailable(
-          "The external identity provider could not refresh the token. Try again later.");
+    if (statusCode >= 400 && statusCode < 500 && statusCode != 429) {
+      return relinkRequired(
+          "The external identity provider rejected the stored refresh token. Link the account again.");
     }
-    return relinkRequired(
-        "The external identity provider rejected the stored refresh token. Link the account again.");
+    return externalIdpUnavailable(
+        "The external identity provider could not refresh the token. Try again later.");
   }
 
   public AccountLinkingStatus status() {
