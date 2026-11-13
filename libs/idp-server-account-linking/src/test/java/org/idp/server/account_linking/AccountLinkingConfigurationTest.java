@@ -39,4 +39,20 @@ class AccountLinkingConfigurationTest {
         300, read(Map.of("refresh_before_expiry_seconds", 300)).refreshBeforeExpirySeconds());
     assertEquals(0, read(Map.of("refresh_before_expiry_seconds", 0)).refreshBeforeExpirySeconds());
   }
+
+  @Test
+  void allowsOneAccountUnlessSeveralAreAllowed() {
+    assertEquals(1, read(Map.of()).maxAccounts());
+    assertEquals(1, read(Map.of("multiple_accounts", false, "max_accounts", 5)).maxAccounts());
+  }
+
+  @Test
+  void allowsTenAccountsWhenSeveralAreAllowedWithoutALimit() {
+    assertEquals(10, read(Map.of("multiple_accounts", true)).maxAccounts());
+  }
+
+  @Test
+  void readsMaxAccountsWhenSeveralAreAllowed() {
+    assertEquals(3, read(Map.of("multiple_accounts", true, "max_accounts", 3)).maxAccounts());
+  }
 }

@@ -287,6 +287,62 @@ describe("account linking", () => {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
 
+  const OAUTH2_PROVIDER = "account-linking-oauth2";
+  const OAUTH2_CONFIG_ID = "9e3b7d52-1c48-4a06-b7f9-2d5e8c0a4f13";
+
+  /** 外部IdP 役のテナントに、同意に使うユーザーを作る。 */
+  const createExternalUser = async () => {
+    const email = `account-linking-external-${uuidv4()}@example.com`;
+    const response = await postWithJson({
+      url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${federationServerConfig.tenantId}/users`,
+      headers: { Authorization: `Bearer ${await requestAdminAccessToken()}` },
+      body: { sub: uuidv4(), provider_id: "idp-server", name: email, email, raw_password: "successUserCode001" },
+    });
+    expect(response.status).toBe(201);
+    return email;
+  };
+
+  /** 連携に使う、このテストだけのユーザー。ほかのテストの連携と混ざらない。 */
+  const loginAsNewUser = async () => {
+    const email = `account-linking-${uuidv4()}@example.com`;
+    const response = await postWithJson({
+      url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/users`,
+      headers: { Authorization: `Bearer ${await requestAdminAccessToken()}` },
+      body: { sub: uuidv4(), provider_id: "idp-server", name: email, email, raw_password: "successUserCode001" },
+    });
+    expect(response.status).toBe(201);
+    return await login(
+      { username: email, password: "successUserCode001" },
+      `openid profile email ${MANAGE_SCOPE} ${READ_TOKEN_SCOPE}`
+    );
+  };
+
+  const listLinks = async (accessToken) => {
+    const response = await get({
+      url: `${backendUrl}/${serverConfig.tenantId}/v1/me/linked-external-accounts`,
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    expect(response.status).toBe(200);
+    return response.data.list;
+  };
+
+  const listProviders = async (accessToken) =>
+    await get({
+      url: `${backendUrl}/${serverConfig.tenantId}/v1/me/linking-providers`,
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+  /**
+   * ownerUser は実行をまたいで使い回すので、前の実行の連携が残っている。複数を許す連携先は
+   * 1 人あたり max_accounts 件までなので、残ったままだと追加が断られる。まっさらにしてから始める。
+   */
+  beforeAll(async () => {
+    const accessToken = await login(ownerUser);
+    for (const alias of await listAliases(accessToken)) {
+      expect((await unlink(accessToken, alias)).status).toBe(204);
+    }
+  });
+
   describe("success pattern", () => {
 
     it("link -> start -> callback -> complete", async () => {
@@ -381,8 +437,6 @@ describe("account linking", () => {
 
   describe("plain OAuth 2.0 delegation", () => {
 
-    const OAUTH2_PROVIDER = "account-linking-oauth2";
-
     /**
      * 連携先が OAuth 2.0 の認可委譲だけを行う場合。
      *
@@ -391,7 +445,7 @@ describe("account linking", () => {
      * ——リンクのキーは (tenant, user, provider, alias) であって、外部の識別子ではないため。
      */
     it("links without any identifier from the provider", async () => {
-      const accessToken = await login(ownerUser);
+      const accessToken = await loginAsNewUser();
 
       const linkResponse = await startLink(accessToken, OAUTH2_PROVIDER, "account offline_access");
       console.log(linkResponse.data);
@@ -440,7 +494,7 @@ describe("account linking", () => {
      * 「同じ外部アカウントか」を判定できないので、もう一度連携すれば別の連携として増える。
      */
     it("adds a new link each time, because there is nothing to compare", async () => {
-      const accessToken = await login(ownerUser);
+      const accessToken = await loginAsNewUser();
 
       const firstAlias = await linkOnce(accessToken, OAUTH2_PROVIDER);
       const secondAlias = await linkOnce(accessToken, OAUTH2_PROVIDER);
@@ -455,48 +509,58 @@ describe("account linking", () => {
       expect(aliases).toContain(firstAlias);
       expect(aliases).toContain(secondAlias);
     });
+
+    /**
+     * 複数を許す連携先は、1 人あたり max_accounts（既定 10）件まで。識別子が無い連携先は
+     * 連携するたびに増えるので、上限が無いと行と保管トークンが際限なく増える。
+     */
+    describe("with max_accounts", () => {
+      patchProviderPayloadDuring({ max_accounts: 2 }, OAUTH2_CONFIG_ID);
+
+      it("refuses a link beyond max_accounts, and completes the same link once one is unlinked", async () => {
+        const accessToken = await loginAsNewUser();
+        const first = await linkOnce(accessToken, OAUTH2_PROVIDER);
+        await linkOnce(accessToken, OAUTH2_PROVIDER);
+
+        const providers = await listProviders(accessToken);
+        expect(providers.status).toBe(200);
+        expect(providers.data.list.find((it) => it.provider === OAUTH2_PROVIDER)).toEqual({
+          provider: OAUTH2_PROVIDER,
+          available: true,
+          multiple_accounts: true,
+          max_accounts: 2,
+          linked_accounts: 2,
+        });
+
+        const linkResponse = await startLink(accessToken, OAUTH2_PROVIDER, "account offline_access");
+        expect(linkResponse.status).toBe(201);
+        const startResponse = await get({ url: linkResponse.data.start_url });
+        const callbackUri = await consentAtExternalIdp(startResponse.headers.location);
+        expect((await get({ url: callbackUri })).status).toBe(302);
+
+        const complete = async () =>
+          await postWithJson({
+            url: `${backendUrl}/${serverConfig.tenantId}/v1/me/linked-external-accounts/complete`,
+            headers: { Authorization: `Bearer ${accessToken}` },
+            body: { state: linkResponse.data.state },
+          });
+
+        const refused = await complete();
+        console.log(refused.status, refused.data);
+        expect(refused.status).toBe(409);
+        expect(refused.data.error).toBe("account_limit_reached");
+        expect((await listLinks(accessToken)).filter((it) => it.provider === OAUTH2_PROVIDER)).toHaveLength(2);
+
+        // 断っても連携セッションは確定を待つまま残る。1 件外せば、同じ state で確定できる。
+        expect((await unlink(accessToken, first)).status).toBe(204);
+        const completed = await complete();
+        expect(completed.status).toBe(201);
+        expect((await listLinks(accessToken)).filter((it) => it.provider === OAUTH2_PROVIDER)).toHaveLength(2);
+      });
+    });
   });
 
   describe("one account per provider", () => {
-    const OAUTH2_PROVIDER = "account-linking-oauth2";
-    const OAUTH2_CONFIG_ID = "9e3b7d52-1c48-4a06-b7f9-2d5e8c0a4f13";
-
-    /** 外部IdP 役のテナントに、同意に使うユーザーを作る。 */
-    const createExternalUser = async () => {
-      const email = `account-linking-external-${uuidv4()}@example.com`;
-      const response = await postWithJson({
-        url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${federationServerConfig.tenantId}/users`,
-        headers: { Authorization: `Bearer ${await requestAdminAccessToken()}` },
-        body: { sub: uuidv4(), provider_id: "idp-server", name: email, email, raw_password: "successUserCode001" },
-      });
-      expect(response.status).toBe(201);
-      return email;
-    };
-
-    /** 連携に使う、このテストだけのユーザー。ほかのテストの連携と混ざらない。 */
-    const loginAsNewUser = async () => {
-      const email = `account-linking-${uuidv4()}@example.com`;
-      const response = await postWithJson({
-        url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/users`,
-        headers: { Authorization: `Bearer ${await requestAdminAccessToken()}` },
-        body: { sub: uuidv4(), provider_id: "idp-server", name: email, email, raw_password: "successUserCode001" },
-      });
-      expect(response.status).toBe(201);
-      return await login(
-        { username: email, password: "successUserCode001" },
-        `openid profile email ${MANAGE_SCOPE} ${READ_TOKEN_SCOPE}`
-      );
-    };
-
-    const listLinks = async (accessToken) => {
-      const response = await get({
-        url: `${backendUrl}/${serverConfig.tenantId}/v1/me/linked-external-accounts`,
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      expect(response.status).toBe(200);
-      return response.data.list;
-    };
-
     it("renews the one link when the same external account is linked again", async () => {
       const accessToken = await loginAsNewUser();
       const externalEmail = await createExternalUser();
@@ -1801,6 +1865,36 @@ describe("account linking", () => {
     });
   });
 
+  /**
+   * 連携先の一覧。クライアントの linking_providers を、その順に、今つなげるか・何件まで
+   * つなげるか・このユーザーが何件つないでいるかと一緒に返す。RP はこれで連携の画面を作る。
+   */
+  describe("linking providers", () => {
+    it("lists the providers the client may link, with how many accounts each allows and the user holds", async () => {
+      const accessToken = await loginAsNewUser();
+      await linkOnce(accessToken, OAUTH2_PROVIDER);
+
+      const response = await listProviders(accessToken);
+      console.log(JSON.stringify(response.data));
+      expect(response.status).toBe(200);
+      expect(response.data.list).toEqual([
+        { provider: PROVIDER, available: true, multiple_accounts: false, max_accounts: 1, linked_accounts: 0 },
+        { provider: OAUTH2_PROVIDER, available: true, multiple_accounts: true, max_accounts: 10, linked_accounts: 1 },
+      ]);
+    });
+
+    it("answers to linked_account:read, and refuses a token with neither linking scope", async () => {
+      const readOnly = await login(ownerUser, "openid profile email linked_account:read");
+      expect((await listProviders(readOnly)).status).toBe(200);
+
+      const none = await login(ownerUser, "openid profile email");
+      const refused = await listProviders(none);
+      console.log(refused.status, refused.data);
+      expect(refused.status).toBe(403);
+      expect(refused.data.error).toBe("insufficient_scope");
+    });
+  });
+
   describe("user scopes", () => {
 
     const listWith = async (accessToken) =>
@@ -2635,6 +2729,19 @@ describe("account linking", () => {
         headers: { Authorization: `Bearer ${await requestAdminAccessToken()}` },
         body: configBefore,
       });
+    });
+
+    it("lists the provider as unavailable, without its settings, so the RP can hide its link button", async () => {
+      const accessToken = await login(ownerUser);
+
+      const response = await listProviders(accessToken);
+      console.log(JSON.stringify(response.data));
+      expect(response.status).toBe(200);
+      const disabled = response.data.list.find((it) => it.provider === PROVIDER);
+      expect(disabled.available).toBe(false);
+      expect(disabled.linked_accounts).toEqual(expect.any(Number));
+      expect(disabled).not.toHaveProperty("max_accounts");
+      expect(response.data.list.find((it) => it.provider === OAUTH2_PROVIDER).available).toBe(true);
     });
 
     it("answers provider_unavailable at link, so the RP can tell the user the service is not available", async () => {

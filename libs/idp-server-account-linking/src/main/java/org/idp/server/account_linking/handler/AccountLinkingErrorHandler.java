@@ -16,6 +16,7 @@
 
 package org.idp.server.account_linking.handler;
 
+import org.idp.server.account_linking.exception.AccountLinkingAccountLimitReachedException;
 import org.idp.server.account_linking.exception.AccountLinkingAnotherAccountLinkedException;
 import org.idp.server.account_linking.exception.AccountLinkingClientMismatchException;
 import org.idp.server.account_linking.exception.AccountLinkingDuplicateException;
@@ -95,6 +96,12 @@ public class AccountLinkingErrorHandler {
           AccountLinkingStatus.CONFLICT, "several_accounts_linked", exception.getMessage());
     }
 
+    if (exception instanceof AccountLinkingAccountLimitReachedException) {
+      log.warn("Account linking over the account limit rejected: {}", exception.getMessage());
+      return linkFailed(
+          AccountLinkingStatus.CONFLICT, "account_limit_reached", exception.getMessage());
+    }
+
     if (exception instanceof AccountLinkingNotFoundException) {
       log.warn("Account linking session not found: {}", exception.getMessage());
       return linkFailed(AccountLinkingStatus.NOT_FOUND, "not_found", exception.getMessage());
@@ -149,6 +156,7 @@ public class AccountLinkingErrorHandler {
         || exception instanceof AccountLinkingSessionStateException
         || exception instanceof AccountLinkingDuplicateException
         || exception instanceof AccountLinkingAnotherAccountLinkedException
+        || exception instanceof AccountLinkingAccountLimitReachedException
         || exception instanceof AccountLinkingNotFoundException
         || exception instanceof AccountLinkingProviderUnavailableException
         || exception instanceof AccountLinkingInvalidRequestException

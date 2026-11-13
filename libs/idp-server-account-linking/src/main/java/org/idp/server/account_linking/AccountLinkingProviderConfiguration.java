@@ -52,6 +52,10 @@ public class AccountLinkingProviderConfiguration {
     return linking.allowsMultipleAccounts();
   }
 
+  public int maxAccounts() {
+    return linking.maxAccounts();
+  }
+
   public boolean revokesOnRelink() {
     return linking.revokesOnRelink();
   }

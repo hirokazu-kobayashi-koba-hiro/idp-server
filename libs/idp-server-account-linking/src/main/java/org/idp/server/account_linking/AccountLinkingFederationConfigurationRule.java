@@ -48,6 +48,14 @@ public class AccountLinkingFederationConfigurationRule implements FederationConf
    */
   static final long MAX_REFRESH_BEFORE_EXPIRY_SECONDS = 3600;
 
+  /**
+   * The largest {@code max_accounts} accepted.
+   *
+   * <p>The limit is there to keep the links a user holds few: a user's links are listed in one
+   * response, and deleting the user revokes them one by one at the external IdP.
+   */
+  static final long MAX_MAX_ACCOUNTS = 100;
+
   LinkedExternalAccountQueryRepository accountQueryRepository;
 
   public AccountLinkingFederationConfigurationRule(
@@ -102,11 +110,16 @@ public class AccountLinkingFederationConfigurationRule implements FederationConf
 
     Object refreshBeforeExpiry = payload.get("refresh_before_expiry_seconds");
     if (refreshBeforeExpiry != null
-        && !isSecondsUpTo(refreshBeforeExpiry, MAX_REFRESH_BEFORE_EXPIRY_SECONDS)) {
+        && !isIntegerBetween(refreshBeforeExpiry, 0, MAX_REFRESH_BEFORE_EXPIRY_SECONDS)) {
       problems.add(
           "payload.refresh_before_expiry_seconds must be an integer from 0 to "
               + MAX_REFRESH_BEFORE_EXPIRY_SECONDS
               + ".");
+    }
+
+    Object maxAccounts = payload.get("max_accounts");
+    if (maxAccounts != null && !isIntegerBetween(maxAccounts, 1, MAX_MAX_ACCOUNTS)) {
+      problems.add("payload.max_accounts must be an integer from 1 to " + MAX_MAX_ACCOUNTS + ".");
     }
 
     // With openid the external account is identified by the id_token's sub, which needs the
@@ -138,12 +151,12 @@ public class AccountLinkingFederationConfigurationRule implements FederationConf
     return false;
   }
 
-  private static boolean isSecondsUpTo(Object value, long max) {
+  private static boolean isIntegerBetween(Object value, long min, long max) {
     if (!(value instanceof Integer) && !(value instanceof Long)) {
       return false;
     }
-    long seconds = ((Number) value).longValue();
-    return seconds >= 0 && seconds <= max;
+    long number = ((Number) value).longValue();
+    return number >= min && number <= max;
   }
 
   private static boolean hasText(Object value) {

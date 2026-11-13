@@ -40,6 +40,11 @@ public class ProviderLinks {
         accounts.stream().filter(account -> account.provider().equals(provider)).toList());
   }
 
+  /** How many links the user holds to the provider. */
+  public int count() {
+    return links.size();
+  }
+
   /**
    * The one link that linking with {@code credentials} renews; none when the user holds none.
    *

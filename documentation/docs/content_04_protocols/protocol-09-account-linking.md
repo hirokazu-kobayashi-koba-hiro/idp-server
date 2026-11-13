@@ -10,7 +10,7 @@
 |---|---|---|
 | 目的 | 外部IdPで**ログインする** | 外部IdPのトークンを**保管する** |
 | 起点 | 未認証の認可リクエスト | 認証済みユーザーの操作 |
-| 紐付け数 | 1ユーザー1件 | provider ごとに 1 件（`multiple_accounts: true` で複数可。`alias` で識別） |
+| 紐付け数 | 1ユーザー1件 | provider ごとに 1 件（`multiple_accounts: true` で `max_accounts` 件まで。`alias` で識別） |
 | トークン | 平文 JSONB | アプリ層で AES-GCM 暗号化 |
 
 両者は独立した系統です。連携を追加しても Federation の動作は変わりません。
@@ -95,6 +95,7 @@ sequenceDiagram
 | `POST /{tenant-id}/v1/me/linked-external-accounts/link/{provider}` | 連携の開始。`{ redirect_uri, scope }` を受け取り `{ start_url, state, expires_in }` を返す | `linked_account:manage` |
 | `POST /{tenant-id}/v1/me/linked-external-accounts/complete` | 連携の確定。`{ state }` を受け取る | `linked_account:manage` |
 | `GET /{tenant-id}/v1/me/linked-external-accounts` | 連携一覧 | `linked_account:read` または `linked_account:manage` |
+| `GET /{tenant-id}/v1/me/linking-providers` | 連携先の一覧。クライアントの `linking_providers` を、今つなげるか（`available`）・1 件だけか複数か（`multiple_accounts`）・何件までか（`max_accounts`）・このユーザーが何件つないでいるか（`linked_accounts`）と一緒に返す | `linked_account:read` または `linked_account:manage` |
 | `DELETE /{tenant-id}/v1/me/linked-external-accounts/{alias}` | 連携の解除。成功時は 204 | `linked_account:manage` |
 
 scope が足りないときは `403` `{ "error": "insufficient_scope", "scope": "..." }` を返します。
@@ -124,7 +125,9 @@ scope は「連携を見る」（`read`）と「連携を管理する」（`mana
 
 この2本が `/me` の外にあるのは、どちらもブラウザのトップレベル遷移で Bearer を運べないためです。`/me` は `ProtectedResourceApiFilter` によって Bearer 前提で保護されている名前空間なので、そこに未認証エンドポイントを混ぜると、実装者が「フィルタが通っているはず」と誤認する余地が生まれます。
 
-一覧のレスポンスにトークンは含まれません。返るのは `alias` / `provider` / `federated_username` / `scope` / 各有効期限 / `created_at` / `updated_at` です。ページングはなく、ユーザーの連携を全件返します。
+一覧のレスポンスにトークンは含まれません。返るのは `alias` / `provider` / `federated_username` / `scope` / 各有効期限 / `created_at` / `updated_at` です。ページングはなく、ユーザーの連携を全件返します。件数は連携先ごとに 1 件か `max_accounts` 件までなので、全件でも大きくなりません。
+
+連携先の一覧（`linking-providers`）は、アクセストークンのクライアントの `linking_providers` だけを、その順に返します。テナントのほかの連携先は返しません。RP はこれで「つなぐ」「つないである」「もう 1 つつなぐ」の画面を作れます。設定が無い、または運用者が無効にした連携先は `available: false` で、`multiple_accounts` / `max_accounts` は返さず、`linked_accounts` だけを数えます。無効にする前につないだ連携も、一覧で見て解除できるためです。
 
 解除は呼び出したユーザー自身の連携だけが対象で、他人の `alias` を指定しても 404 になります。行を消す前に、保管しているトークンを外部IdPの失効エンドポイント（RFC 7009）で失効させます。行を消すだけでは、写し取られたトークンが外部IdP側で有効なまま残るためです。
 
@@ -272,9 +275,11 @@ iframe に埋め込むと third-party 文脈になり、Safari の ITP と Chrom
 | 値 | 挙動 |
 |---|---|
 | `false`（既定） | 1 件。もう一度連携すると、その 1 件を連携し直しとして更新する。別の外部アカウント（ID Token の `sub` か userinfo の `external_user_id` が違う）なら 409 を返し、先に解除してもらう。外部アカウントを名乗らない連携先（OAuth 2.0 だけ）は見分けられないので、いつも更新になる |
-| `true` | 複数。同じ外部アカウントは更新し、別の外部アカウントは追加する。外部アカウントを名乗らない連携先では、連携するたびに追加になる |
+| `true` | `max_accounts`（既定 10、1〜100）件まで。同じ外部アカウントは更新し、別の外部アカウントは追加する。外部アカウントを名乗らない連携先では、連携するたびに追加になる。上限に達していると、追加は 409（`account_limit_reached`）で断る。更新は上限に関わらずできる |
 
 どちらでも `alias` は `{provider}-{8 文字の乱数}` で、連携し直し（更新）では変わらず、解除した `alias` は使い回しません。解除して別のアカウントをつなぎ直すと新しい `alias` になるので、前の `alias` を覚えている RP には `404` が返り、アカウントが入れ替わったことが分かります。`404` を受けた RP は一覧を引き直します。
+
+`max_accounts` で上限を設けるのは、連携ごとに行と暗号化した保管トークンが残り、ユーザーを削除するときは 1 件ずつ外部IdPで失効させるためです。外部アカウントを名乗らない連携先では、上限が無いと連携するたびに際限なく増えます。上限は確定のときに今の件数と比べるだけなので、同時に確定すると 1 件ほど超えることがあります。上限を下げても、すでにある連携はそのまま残り、追加だけを断ります。
 
 1 件の連携先では、行に `single_account` の印を付け、データベースの一意制約で 1 ユーザー×連携先に 1 行に保ちます。同時に complete しても 2 行目はできません（後の側は `409` になり、何も書きません）。
 
@@ -469,6 +474,7 @@ token={ユーザーのアクセストークン}&client_id=...&client_secret=...
 | 409 | `account_already_linked` | `complete`: 同じ外部アカウントが既に他のユーザーに紐付いている（`duplicate_link_policy: reject` のとき） |
 | 409 | `another_account_linked` | `complete`: この連携先の別のアカウントを既に連携している（`multiple_accounts: false` のとき） |
 | 409 | `several_accounts_linked` | `complete`: この連携先の連携が複数あって更新先を決められない |
+| 409 | `account_limit_reached` | `complete`: この連携先の連携が `max_accounts` 件に達している（`multiple_accounts: true` のとき）。1 件解除すれば、同じ `state` で確定できる |
 | 409 | `invalid_request` | `complete`: 同じユーザー・同じ連携先の確定が同時に届いた。一覧で結果を確かめる |
 | 500 | `server_error` | 想定外のエラー |
 

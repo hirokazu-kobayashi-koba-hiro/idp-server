@@ -65,6 +65,12 @@ class AccountLinkingErrorHandlerTest {
   }
 
   @Test
+  void asManyAccountsAsAllowedIsAConflict() {
+    assertAnswer(
+        new AccountLinkingAccountLimitReachedException("limit"), 409, "account_limit_reached");
+  }
+
+  @Test
   void anotherClientIsForbidden() {
     assertAnswer(new AccountLinkingClientMismatchException("client"), 403, "client_mismatch");
   }

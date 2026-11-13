@@ -27,6 +27,7 @@ import org.idp.server.account_linking.AccountLinkingPreparationService;
 import org.idp.server.account_linking.AccountLinkingTokenCipher;
 import org.idp.server.account_linking.LinkedExternalAccountRevoker;
 import org.idp.server.account_linking.LinkedExternalAccountTokenService;
+import org.idp.server.account_linking.LinkingProviderSummaryService;
 import org.idp.server.account_linking.gateway.ExternalIdpIdTokenGateway;
 import org.idp.server.account_linking.gateway.ExternalIdpTokenGateway;
 import org.idp.server.account_linking.gateway.ExternalIdpUserinfoGateway;
@@ -925,6 +926,10 @@ public class IdpServerApplication {
             new AccountLinkingEntryService(
                 tenantQueryRepository,
                 linkedExternalAccountQueryRepository,
+                new LinkingProviderSummaryService(
+                    clientConfigurationQueryRepository,
+                    accountLinkingConfigurationResolver,
+                    linkedExternalAccountQueryRepository),
                 new AccountLinkingStartHandler(
                     accountLinkingSessionCommandRepository,
                     clientConfigurationQueryRepository,

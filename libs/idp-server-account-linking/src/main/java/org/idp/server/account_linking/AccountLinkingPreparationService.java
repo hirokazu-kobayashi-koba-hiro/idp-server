@@ -19,6 +19,7 @@ package org.idp.server.account_linking;
 import java.time.LocalDateTime;
 import org.idp.server.account_linking.repository.LinkedExternalAccountQueryRepository;
 import org.idp.server.account_linking.verifier.DuplicateLinkVerifier;
+import org.idp.server.account_linking.verifier.LinkedAccountLimitVerifier;
 import org.idp.server.account_linking.verifier.SameExternalAccountVerifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -35,12 +36,14 @@ public class AccountLinkingPreparationService {
   LinkedExternalAccountQueryRepository accountQueryRepository;
   DuplicateLinkVerifier duplicateLinkVerifier;
   SameExternalAccountVerifier sameExternalAccountVerifier;
+  LinkedAccountLimitVerifier limitVerifier;
 
   public AccountLinkingPreparationService(
       LinkedExternalAccountQueryRepository accountQueryRepository) {
     this.accountQueryRepository = accountQueryRepository;
     this.duplicateLinkVerifier = new DuplicateLinkVerifier(accountQueryRepository);
     this.sameExternalAccountVerifier = new SameExternalAccountVerifier();
+    this.limitVerifier = new LinkedAccountLimitVerifier();
   }
 
   public PreparedLink prepare(
@@ -100,7 +103,8 @@ public class AccountLinkingPreparationService {
    * One of several links to the provider: the same external account is renewed, another is added.
    *
    * <p>Without an identifier from the provider there is nothing to compare, so neither recognising
-   * a re-link nor the duplicate policy applies, and every such link is added.
+   * a re-link nor the duplicate policy applies, and every such link is added — up to the provider's
+   * {@code max_accounts}, which bounds a new link of either kind.
    */
   private PreparedLink prepareOneOfSeveral(
       Tenant tenant,
@@ -123,6 +127,11 @@ public class AccountLinkingPreparationService {
       duplicateLinkVerifier.verify(
           tenant, session, credentials.federatedUserId(), configuration.duplicateLinkPolicy());
     }
+
+    limitVerifier.verify(
+        ProviderLinks.of(
+            accountQueryRepository.findList(tenant, session.userIdentifier()), session.provider()),
+        configuration.maxAccounts());
 
     AccountAlias alias = AccountAlias.generate(session.provider());
     return PreparedLink.created(

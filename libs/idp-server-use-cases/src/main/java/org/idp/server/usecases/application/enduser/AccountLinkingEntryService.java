@@ -66,6 +66,7 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
 
   TenantQueryRepository tenantQueryRepository;
   LinkedExternalAccountQueryRepository linkedExternalAccountQueryRepository;
+  LinkingProviderSummaryService providerSummaryService;
   AccountLinkingStartHandler startHandler;
   AccountLinkingAuthorizeHandler authorizeHandler;
   AccountLinkingCallbackHandler callbackHandler;
@@ -80,6 +81,7 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
   public AccountLinkingEntryService(
       TenantQueryRepository tenantQueryRepository,
       LinkedExternalAccountQueryRepository linkedExternalAccountQueryRepository,
+      LinkingProviderSummaryService providerSummaryService,
       AccountLinkingStartHandler startHandler,
       AccountLinkingAuthorizeHandler authorizeHandler,
       AccountLinkingCallbackHandler callbackHandler,
@@ -92,6 +94,7 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
       UserEventPublisher eventPublisher) {
     this.tenantQueryRepository = tenantQueryRepository;
     this.linkedExternalAccountQueryRepository = linkedExternalAccountQueryRepository;
+    this.providerSummaryService = providerSummaryService;
     this.startHandler = startHandler;
     this.authorizeHandler = authorizeHandler;
     this.callbackHandler = callbackHandler;
@@ -246,6 +249,33 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
     List<Map<String, Object>> list =
         linkedExternalAccountQueryRepository.findList(tenant, user.userIdentifier()).stream()
             .map(LinkedExternalAccount::toMap)
+            .toList();
+
+    Map<String, Object> contents = new HashMap<>();
+    contents.put("list", list);
+
+    return AccountLinkingResult.success(AccountLinkingStatus.OK, contents, user);
+  }
+
+  @Override
+  @Transaction(readOnly = true)
+  public AccountLinkingResult findProviders(
+      TenantIdentifier tenantIdentifier,
+      User user,
+      OAuthToken oAuthToken,
+      RequestAttributes requestAttributes) {
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+
+    if (!AccountLinkingScope.READ.isGrantedBy(oAuthToken)) {
+      return AccountLinkingResult.insufficientScope(AccountLinkingScope.READ);
+    }
+
+    List<Map<String, Object>> list =
+        providerSummaryService
+            .summarize(tenant, oAuthToken.requestedClientId(), user.userIdentifier())
+            .stream()
+            .map(LinkingProviderSummary::toMap)
             .toList();
 
     Map<String, Object> contents = new HashMap<>();

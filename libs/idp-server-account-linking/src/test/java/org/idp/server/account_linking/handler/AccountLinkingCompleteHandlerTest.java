@@ -452,6 +452,62 @@ class AccountLinkingCompleteHandlerTest {
     assertEquals(1, accounts.rows.size());
   }
 
+  void holdLinks(String... federatedUserIds) {
+    for (int i = 0; i < federatedUserIds.length; i++) {
+      accounts.rows.add(
+          new LinkedExternalAccount.Builder()
+              .identifier(new LinkedExternalAccountIdentifier(UUID.randomUUID().toString()))
+              .userIdentifier(OWNER)
+              .provider(PROVIDER)
+              .accountAlias(new AccountAlias("google-" + i))
+              .federatedUserId(federatedUserIds[i])
+              .build());
+    }
+  }
+
+  @Test
+  void anotherAccountIsRefusedOnceAsManyAsAllowedAreLinked() {
+    allowMultipleAccounts();
+    resolver.linking.put("max_accounts", 2);
+    holdLinks("sub-a", "sub-b");
+    parkSession("sub-c");
+
+    AccountLinkingResult result = complete();
+
+    assertEquals(409, result.statusCode());
+    assertEquals("account_limit_reached", result.contents().get("error"));
+    assertEquals(2, accounts.rows.size());
+    // Left awaiting completion: unlinking one and sending the same state again goes through.
+    assertEquals(AccountLinkingSessionStatus.PARKED, sessions.find(TENANT, STATE).status());
+  }
+
+  @Test
+  void aLinkWithoutAnIdentifierCountsTowardTheLimit() {
+    allowMultipleAccounts();
+    resolver.linking.put("max_accounts", 1);
+    parkSession(null);
+    assertFalse(complete().isError());
+
+    parkSession(null);
+    AccountLinkingResult result = complete();
+
+    assertEquals("account_limit_reached", result.contents().get("error"));
+    assertEquals(1, accounts.rows.size());
+  }
+
+  @Test
+  void anAccountAlreadyLinkedIsRenewedAtTheLimit() {
+    allowMultipleAccounts();
+    resolver.linking.put("max_accounts", 2);
+    holdLinks("sub-a", "sub-b");
+    parkSession("sub-b");
+
+    assertFalse(complete().isError());
+
+    assertEquals(2, accounts.rows.size());
+    assertEquals(1, accounts.updates);
+  }
+
   @Test
   void everyLinkWithoutAnIdentifierIsAddedAmongSeveral() {
     // Nothing to compare: neither a re-link nor the duplicate policy can be recognised.

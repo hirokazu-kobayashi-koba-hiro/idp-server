@@ -16,14 +16,14 @@ info:
     | 4 | RP | `POST /{tenant-id}/v1/me/linked-external-accounts/complete` | ユーザーのアクセストークン（`linked_account:manage`） |
     | 5 | クライアント | `POST /{tenant-id}/v1/linked-external-accounts/{alias}/token` | クライアント認証と、ユーザーのアクセストークン（`linked_account:read_token`） |
 
-    連携の一覧と解除も、ユーザーのアクセストークンで呼びます。
+    連携の一覧と解除、連携先の一覧（つなげる連携先と、それぞれ何件までつなげるか）も、ユーザーのアクセストークンで呼びます。
 
     ## スコープ
 
     | スコープ | 使う API |
     |---|---|
-    | `linked_account:read` | 一覧 |
-    | `linked_account:manage` | 開始・確定・一覧・解除 |
+    | `linked_account:read` | 一覧・連携先の一覧 |
+    | `linked_account:manage` | 開始・確定・一覧・連携先の一覧・解除 |
     | `linked_account:read_token` | 保管トークンの取得。`read` / `manage` には含まれません |
 
     ## 送り手に縛られたアクセストークン
@@ -52,7 +52,7 @@ tags:
       ブラウザが RP の戻り先に戻ってきたら 4 で確定します。2 と 3 はブラウザが開くもので、RP が直接呼ぶことはありません。
   - name: 連携の一覧と解除
     description: |
-      ユーザー本人が、自分の連携を確かめ、解除します。
+      ユーザー本人が、自分の連携と、つなげる連携先を確かめ、連携を解除します。
   - name: 保管トークンの取得
     description: |
       クライアントが、ユーザーに代わって連携先のアクセストークンを取り出します（上の流れの 5）。
@@ -486,6 +486,7 @@ paths:
             - `account_already_linked` — 同じ外部アカウントが既に他のユーザーに紐付いている（連携先の `duplicate_link_policy` が `reject` のとき）。誰に紐付いているかは返しません
             - `another_account_linked` — この連携先の別のアカウントを既に連携している（連携先の `multiple_accounts` が `false` のとき）。先に解除してから連携します
             - `several_accounts_linked` — この連携先の連携が複数あり、どれを更新するか決められない（連携先が `multiple_accounts: true` だった間に作られた連携が残っているとき）。不要な連携を解除してから連携します
+            - `account_limit_reached` — この連携先の連携が `max_accounts` 件に達している（連携先の `multiple_accounts` が `true` のとき）。1 件解除すれば、同じ `state` で確定できます
             - `invalid_request` — 同じユーザー・同じ連携先の確定が同時に届き、先に確定した方と重なった（連携先の `multiple_accounts` が `false` のとき）。一覧を引き直して結果を確かめます
           content:
             application/json:
@@ -508,6 +509,10 @@ paths:
                   value:
                     error: several_accounts_linked
                     error_description: "Several accounts of this provider are linked. Unlink them before linking again."
+                account_limit_reached:
+                  value:
+                    error: account_limit_reached
+                    error_description: "As many accounts of this provider as allowed are already linked. Unlink one before linking another."
                 completed_at_once:
                   value:
                     error: invalid_request
@@ -529,7 +534,7 @@ paths:
       description: |
         アクセストークンのユーザーの外部アカウント連携を一覧で返します。保管しているトークンは含みません。
 
-        ページングはありません。ユーザーの連携を全件返します。連携先が `multiple_accounts: true` のときは、1 つの連携先に何件でも連携できるので、件数に応じて応答が大きくなります。
+        ページングはありません。ユーザーの連携を全件返します。連携先ごとに 1 件（`multiple_accounts: false`）か、`max_accounts` 件（`multiple_accounts: true`、既定 10、最大 100）までです。
 
         ## 必要なスコープ
         `linked_account:read` または `linked_account:manage`
@@ -554,6 +559,79 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/LinkedExternalAccount'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: スコープ不足（`linked_account:read` または `linked_account:manage` が必要）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InsufficientScopeError'
+              example:
+                error: insufficient_scope
+                error_description: "The request requires the 'linked_account:read' scope."
+                scope: linked_account:read
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
+
+  /{tenant-id}/v1/me/linking-providers:
+    get:
+      tags:
+        - 連携の一覧と解除
+      summary: 連携先の一覧
+      description: |
+        アクセストークンのクライアントが連携できる連携先（クライアント設定の `extension.linking_providers`）を、その順に返します。
+        それぞれに、今つなげるか、1 件だけか複数か、何件までか、このユーザーが何件つないでいるかが付きます。
+        RP はこれで「つなぐ」「つないである」「もう 1 つつなぐ」の画面を作れます。
+
+        - テナントのほかの連携先は返しません
+        - 設定が無い、または運用者が無効にした連携先は `available: false` です。`multiple_accounts` と `max_accounts` は付かず、`linked_accounts` だけを数えます（無効にする前の連携も、一覧で見て解除できます）
+        - `linked_accounts` が `max_accounts` に達していると、別のアカウントの追加は確定（`complete`）で `409` `account_limit_reached` になります。つないであるアカウントの連携し直しはできます
+
+        ## 必要なスコープ
+        `linked_account:read` または `linked_account:manage`
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      security:
+        - OAuth2:
+            - linked_account:read
+        - OAuth2:
+            - linked_account:manage
+      responses:
+        '200':
+          description: 連携先の一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - list
+                properties:
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LinkingProviderSummary'
+              example:
+                list:
+                  - provider: example-idp
+                    available: true
+                    multiple_accounts: false
+                    max_accounts: 1
+                    linked_accounts: 1
+                  - provider: example-api
+                    available: true
+                    multiple_accounts: true
+                    max_accounts: 10
+                    linked_accounts: 0
+                  - provider: retired-idp
+                    available: false
+                    linked_accounts: 1
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -932,8 +1010,8 @@ components:
           authorizationUrl: https://api.local.test/{tenant-id}/v1/authorizations
           tokenUrl: https://api.local.test/{tenant-id}/v1/tokens
           scopes:
-            linked_account:read: 外部アカウント連携の一覧に必要なスコープ
-            linked_account:manage: 外部アカウント連携の開始・確定・解除に必要なスコープ。一覧も含む
+            linked_account:read: 外部アカウント連携の一覧と、連携先の一覧に必要なスコープ
+            linked_account:manage: 外部アカウント連携の開始・確定・解除に必要なスコープ。一覧と連携先の一覧も含む
             linked_account:read_token: 保管トークンの取得に必要なスコープ。`read` / `manage` には含まれない
 
   parameters:
@@ -1112,6 +1190,32 @@ components:
           type: string
           description: 更新日時（同上）
           example: "2026-10-21T10:15:30.123456"
+
+    LinkingProviderSummary:
+      type: object
+      required:
+        - provider
+        - available
+        - linked_accounts
+      properties:
+        provider:
+          type: string
+          description: 連携先の設定名（`sso_provider`）。連携開始の `{provider}` に指定する値
+          example: example-idp
+        available:
+          type: boolean
+          description: 今つなげるか。連携先が設定されていて有効なら `true`
+        multiple_accounts:
+          type: boolean
+          description: 1 人が複数のアカウントをつなげるか。`available` が `true` のときだけ付く
+        max_accounts:
+          type: integer
+          description: 1 人がつなげる件数の上限。`multiple_accounts` が `false` なら `1`。`available` が `true` のときだけ付く
+          example: 1
+        linked_accounts:
+          type: integer
+          description: このユーザーがこの連携先につないでいる件数
+          example: 1
 
     AccountLinkingErrorResponse:
       type: object

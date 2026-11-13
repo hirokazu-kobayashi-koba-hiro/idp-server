@@ -75,6 +75,16 @@ public interface AccountLinkingApi {
       OAuthToken oAuthToken,
       RequestAttributes requestAttributes);
 
+  /**
+   * The providers the caller's client may link, each with whether it is available now, how many
+   * accounts it allows and how many the caller holds.
+   */
+  AccountLinkingResult findProviders(
+      TenantIdentifier tenantIdentifier,
+      User user,
+      OAuthToken oAuthToken,
+      RequestAttributes requestAttributes);
+
   /** Removes one of the caller's linked accounts, revoking its tokens at the external IdP first. */
   AccountLinkingResult unlink(
       TenantIdentifier tenantIdentifier,

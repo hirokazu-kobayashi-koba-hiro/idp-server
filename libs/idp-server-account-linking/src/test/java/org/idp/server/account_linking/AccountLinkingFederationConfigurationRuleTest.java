@@ -101,6 +101,19 @@ class AccountLinkingFederationConfigurationRuleTest {
   }
 
   @Test
+  void acceptsMaxAccountsOnlyAsAnIntegerFromOneToAHundred() {
+    Map<String, Object> payload = usable();
+    for (Object refused : List.of("3", 0, -1, 101, 1.5)) {
+      payload.put("max_accounts", refused);
+      assertEquals(1, rule.problems(configuration(payload)).size(), String.valueOf(refused));
+    }
+    for (Object accepted : List.of(1, 10, 100L)) {
+      payload.put("max_accounts", accepted);
+      assertTrue(rule.problems(configuration(payload)).isEmpty(), String.valueOf(accepted));
+    }
+  }
+
+  @Test
   void requiresTheIssuerAndKeysForOpenid() {
     Map<String, Object> payload = usable();
     payload.put("scopes_supported", List.of("openid", "profile"));

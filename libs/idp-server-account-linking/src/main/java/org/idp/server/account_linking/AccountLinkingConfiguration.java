@@ -30,8 +30,12 @@ public class AccountLinkingConfiguration implements JsonReadable {
 
   public static final long DEFAULT_REFRESH_BEFORE_EXPIRY_SECONDS = 30;
 
+  /** How many accounts of a provider a user may link when it allows several and sets no limit. */
+  public static final int DEFAULT_MAX_ACCOUNTS = 10;
+
   String duplicateLinkPolicy;
   boolean multipleAccounts;
+  Integer maxAccounts;
   boolean revokeOnRelink;
   Long refreshBeforeExpirySeconds;
   String revocationEndpoint;
@@ -49,6 +53,21 @@ public class AccountLinkingConfiguration implements JsonReadable {
    */
   public boolean allowsMultipleAccounts() {
     return multipleAccounts;
+  }
+
+  /**
+   * How many accounts of this provider a user may link.
+   *
+   * <p>One when the provider allows one account. When it allows several, {@code max_accounts}, or
+   * {@value #DEFAULT_MAX_ACCOUNTS} when not set. Each link keeps a row and its encrypted tokens,
+   * and deleting the user revokes them one call to the external IdP at a time, so the number is
+   * bounded even where a provider names no account and every link is a new one.
+   */
+  public int maxAccounts() {
+    if (!multipleAccounts) {
+      return 1;
+    }
+    return maxAccounts == null ? DEFAULT_MAX_ACCOUNTS : maxAccounts;
   }
 
   /**

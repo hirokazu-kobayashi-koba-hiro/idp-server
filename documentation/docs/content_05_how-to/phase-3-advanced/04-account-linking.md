@@ -98,6 +98,7 @@ curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/t
 | `payload.refresh_token_expires_in` | 保管するリフレッシュトークンの有効期間（秒）。外部IdPの実際の期限に合わせる。未設定なら期限は不明として扱い、アクセストークンが切れるたびにリフレッシュを試す |
 | `payload.duplicate_link_policy` | 同じ外部アカウントが別ユーザーに連携済みのとき。`reject`（既定、409）/ `allow` |
 | `payload.multiple_accounts` | 1 人がこの連携先のアカウントを複数連携できるか。`false`（既定）なら 1 件で、もう一度連携すると更新し、別のアカウントは 409（先に解除）。`true` なら連携するたびに追加（同じ外部アカウントは更新）。`alias` はどちらも `{provider}-{乱数}` |
+| `payload.max_accounts` | `multiple_accounts: true` のとき、1 人がつなげる件数の上限。既定 10、1〜100。達すると追加は 409（`account_limit_reached`）、更新はできる。`multiple_accounts: false` では読まない（1 件） |
 | `payload.revoke_on_relink` | 連携し直したとき、入れ替わる前の保管トークンを `revocation_endpoint` で失効させるか。`false`（既定）なら失効させない。失効でアプリへの許可ごと取り消す外部IdP（Google など）で `true` にすると、新しいトークンまで止まるので使わない |
 | `payload.refresh_before_expiry_seconds` | 保管トークンの取得で、アクセストークンの期限まで何秒を切ったら更新してから返すか。既定 30、0〜3600。外部IdPのアクセストークンの有効期間以上にすると、取り出すたびに更新する |
 
@@ -239,12 +240,20 @@ curl -X POST "${IDP_SERVER_URL}/${TENANT_ID}/v1/me/linked-external-accounts/comp
 curl "${IDP_SERVER_URL}/${TENANT_ID}/v1/me/linked-external-accounts" \
   -H "Authorization: Bearer ${USER_ACCESS_TOKEN}"
 
+# 連携先の一覧（linked_account:read か linked_account:manage）
+curl "${IDP_SERVER_URL}/${TENANT_ID}/v1/me/linking-providers" \
+  -H "Authorization: Bearer ${USER_ACCESS_TOKEN}"
+
 # 解除（linked_account:manage）。成功は 204
 curl -X DELETE "${IDP_SERVER_URL}/${TENANT_ID}/v1/me/linked-external-accounts/${ALIAS}" \
   -H "Authorization: Bearer ${USER_ACCESS_TOKEN}"
 ```
 
-一覧は `{ "list": [...] }` で、トークンは含みません。解除すると、`revocation_endpoint` があれば外部IdPで保管トークンを失効させてから連携を消します。
+一覧は `{ "list": [...] }` で、トークンは含みません。
+
+連携先の一覧は、クライアントの `linking_providers` を、今つなげるか（`available`）・1 件だけか複数か（`multiple_accounts`）・何件までか（`max_accounts`）・このユーザーが何件つないでいるか（`linked_accounts`）と一緒に返します。連携の画面は、これで「つなぐ」ボタンを出すか、「もう 1 つつなぐ」を出すかを決めます。`available: false` の連携先（運用者が無効にした）は、つなぐボタンを出さず、つないである連携だけを表示します。
+
+解除すると、`revocation_endpoint` があれば外部IdPで保管トークンを失効させてから連携を消します。
 
 ### 5.5 保管トークンを取得する
 
@@ -382,7 +391,7 @@ cd e2e && npm test -- --testPathPattern=scenario-16
 | 戻り先に `error=server_error` | 外部IdPでのトークン交換・ID Token 検証・userinfo の失敗 | `client_authentication_type`・`redirect_uri`・`issuer`・`jwks_uri` を確認 |
 | `complete` が `403 client_mismatch` | 連携を始めたクライアントと別のクライアントのトークンで確定した | 開始と同じクライアントのトークンを使う |
 | `complete` が `400 expired_link` | 連携セッションが期限切れ（900 秒） | 5.1 からやり直す |
-| `complete` が `409` | `account_already_linked`: 同じ外部アカウントが別ユーザーに連携済み（`reject`） / `another_account_linked`: この連携先の別のアカウントを連携済み（`multiple_accounts: false`） | `duplicate_link_policy` を見直す / 前の連携を解除してから、期限内なら同じ `state` で `complete` を送り直す |
+| `complete` が `409` | `account_already_linked`: 同じ外部アカウントが別ユーザーに連携済み（`reject`） / `another_account_linked`: この連携先の別のアカウントを連携済み（`multiple_accounts: false`） / `account_limit_reached`: この連携先の連携が `max_accounts` 件に達している | `duplicate_link_policy` を見直す / 前の連携を解除してから、期限内なら同じ `state` で `complete` を送り直す |
 | トークン取得が `404 not_found` | 保存していた `alias` の連携が解除された。別のアカウントにつなぎ直されると `alias` が変わる | 一覧を引き直して、今の `alias` を使う |
 | トークン取得が `400 provider_unavailable` | 連携先が削除・無効化された | 連携先の設定を戻す。戻さないなら、その連携は使えないとユーザーに伝える |
 | トークン取得が `400 relink_required` | リフレッシュトークンが無い・期限切れ・拒否された | `refresh_token_expires_in` と、外部IdPがリフレッシュトークンを返すスコープ（例: `offline_access`）を確認 |
