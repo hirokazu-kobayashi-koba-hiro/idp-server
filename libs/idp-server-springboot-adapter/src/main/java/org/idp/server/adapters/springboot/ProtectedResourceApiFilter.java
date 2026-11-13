@@ -164,12 +164,24 @@ public class ProtectedResourceApiFilter extends OncePerRequestFilter
     throw new UnSupportedException("invalid request path");
   }
 
+  /**
+   * Whether the request is outside the resource owner's own APIs ({@code /{tenant-id}/v1/me} and
+   * below).
+   *
+   * <p>Matched on path segments. A plain substring match on {@code /me} also caught any path with a
+   * segment starting with {@code me}: an account-linking provider named {@code medium} put its
+   * browser callback ({@code /linking/callback/medium}) and its token retrieval ({@code
+   * /linked-external-accounts/medium-…/token}) behind a Bearer token neither carries.
+   */
   protected boolean shouldNotFilter(HttpServletRequest request) {
-    String path = request.getRequestURI();
-    List<String> protectedPrefixes = List.of("/me");
+    return !isResourceOwnerPath(request.getRequestURI());
+  }
+
+  static boolean isResourceOwnerPath(String path) {
     List<String> excludedPrefixes = List.of("/admin/", "/management/");
-    boolean protectedResourceMatch = protectedPrefixes.stream().anyMatch(path::contains);
-    boolean excludedResourceMatch = excludedPrefixes.stream().anyMatch(path::contains);
-    return !protectedResourceMatch || excludedResourceMatch;
+    if (excludedPrefixes.stream().anyMatch(path::contains)) {
+      return false;
+    }
+    return path.contains("/v1/me/") || path.endsWith("/v1/me");
   }
 }

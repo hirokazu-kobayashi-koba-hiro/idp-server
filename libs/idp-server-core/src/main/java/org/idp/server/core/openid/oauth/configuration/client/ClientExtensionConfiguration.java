@@ -46,6 +46,11 @@ public class ClientExtensionConfiguration implements JsonReadable {
   List<String> clientAttestationTrustedRootCertificates = new ArrayList<>();
   Map<String, Object> clientInstancePlatformConfig = new HashMap<>();
   Boolean crossSiteAuthorizationView;
+  List<String> linkingReturnUris;
+  List<String> linkingProviders;
+  List<String> linkingTokenProviders;
+  Long linkingMaxAuthAge;
+  List<String> linkingAcrValues;
   Map<String, Object> customProperties = new HashMap<>();
 
   public ClientExtensionConfiguration() {}
@@ -264,6 +269,92 @@ public class ClientExtensionConfiguration implements JsonReadable {
     return crossSiteAuthorizationView;
   }
 
+  /**
+   * Where an account linking flow may return the browser once it finishes.
+   *
+   * <p>Kept apart from {@code redirect_uris}. The place a user lands after linking is normally an
+   * application settings screen, not a URL that receives authorization codes; reusing the
+   * authorization list would mean registering such screens as redirect URIs, which would let
+   * authorization codes be sent to them.
+   */
+  public List<String> linkingReturnUris() {
+    return linkingReturnUris == null ? List.of() : linkingReturnUris;
+  }
+
+  public boolean hasLinkingReturnUris() {
+    return linkingReturnUris != null && !linkingReturnUris.isEmpty();
+  }
+
+  /**
+   * Providers this client may start an account link to.
+   *
+   * <p>A client able to start links could otherwise send its users to any provider the tenant
+   * configures, and have tokens issued to this server's external client on its own initiative.
+   * Empty means the client may start none.
+   */
+  public List<String> linkingProviders() {
+    return linkingProviders == null ? List.of() : linkingProviders;
+  }
+
+  public boolean hasLinkingProviders() {
+    return linkingProviders != null && !linkingProviders.isEmpty();
+  }
+
+  /**
+   * Linked external account providers whose stored access token this client may retrieve.
+   *
+   * <p>Named by provider ({@code sso_provider}), not by account alias: an alias is assigned per
+   * user and cannot be written into a client configuration. Empty means the client may retrieve
+   * none, so a client is never given stored tokens by default.
+   */
+  public List<String> linkingTokenProviders() {
+    return linkingTokenProviders == null ? List.of() : linkingTokenProviders;
+  }
+
+  public boolean hasLinkingTokenProviders() {
+    return linkingTokenProviders != null && !linkingTokenProviders.isEmpty();
+  }
+
+  /**
+   * How old a sign-in may be, in seconds, for the user to start a link without signing in again.
+   */
+  static final long DEFAULT_LINKING_MAX_AUTH_AGE = 300;
+
+  /**
+   * The longest time since the browser's sign-in, in seconds, for {@code /linking/start} to accept
+   * it. An older sign-in, or none, is made again before the link goes on; 0 asks for it every time.
+   *
+   * <p>A link attaches access to an external service to the account, as sensitive as changing a
+   * credential, so it is not left to a session signed in long ago. Five minutes when unset.
+   */
+  public long linkingMaxAuthAge() {
+    return linkingMaxAuthAge == null || linkingMaxAuthAge < 0
+        ? DEFAULT_LINKING_MAX_AUTH_AGE
+        : linkingMaxAuthAge;
+  }
+
+  public boolean hasLinkingMaxAuthAge() {
+    return linkingMaxAuthAge != null;
+  }
+
+  /**
+   * Authentication context classes a sign-in must have reached for {@code /linking/start} to accept
+   * it, in order of preference.
+   *
+   * <p>A link may call for a stronger sign-in than the client's ordinary one (FIDO only, say). The
+   * sign-in {@code /linking/start} asks for carries these as {@code acr_values}, so the
+   * authentication policy matched on them applies; a recent sign-in that reached none of them is
+   * made again. Kept on the client rather than taken from the request, so the client cannot lower
+   * it. Empty means any sign-in recent enough is accepted.
+   */
+  public List<String> linkingAcrValues() {
+    return linkingAcrValues == null ? List.of() : linkingAcrValues;
+  }
+
+  public boolean hasLinkingAcrValues() {
+    return linkingAcrValues != null && !linkingAcrValues.isEmpty();
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     if (hasAccessTokenDuration()) map.put("access_token_duration", accessTokenDuration);
@@ -299,6 +390,11 @@ public class ClientExtensionConfiguration implements JsonReadable {
           "client_attestation_trusted_root_certificates", clientAttestationTrustedRootCertificates);
     if (hasCrossSiteAuthorizationView())
       map.put("cross_site_authorization_view", crossSiteAuthorizationView);
+    if (hasLinkingReturnUris()) map.put("linking_return_uris", linkingReturnUris);
+    if (hasLinkingProviders()) map.put("linking_providers", linkingProviders);
+    if (hasLinkingTokenProviders()) map.put("linking_token_providers", linkingTokenProviders);
+    if (hasLinkingMaxAuthAge()) map.put("linking_max_auth_age", linkingMaxAuthAge);
+    if (hasLinkingAcrValues()) map.put("linking_acr_values", linkingAcrValues);
     if (hasCustomProperties()) map.put("custom_properties", customProperties);
     return map;
   }

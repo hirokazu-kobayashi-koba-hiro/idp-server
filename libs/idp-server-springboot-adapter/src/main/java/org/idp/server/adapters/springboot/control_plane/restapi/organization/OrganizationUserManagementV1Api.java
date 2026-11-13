@@ -18,6 +18,7 @@ package org.idp.server.adapters.springboot.control_plane.restapi.organization;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
+import org.idp.server.account_linking.AccountAlias;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
 import org.idp.server.adapters.springboot.control_plane.model.OrganizationOperatorPrincipal;
 import org.idp.server.control_plane.management.identity.user.OrgUserManagementApi;
@@ -514,6 +515,81 @@ public class OrganizationUserManagementV1Api implements ParameterTransformable {
             organizationOperatorPrincipal.authenticationContext(),
             new TenantIdentifier(tenantId),
             new UserIdentifier(userId),
+            requestAttributes,
+            dryRun);
+
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.add("content-type", "application/json");
+    return new ResponseEntity<>(
+        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+  }
+
+  @GetMapping("/{userId}/linked-external-accounts")
+  public ResponseEntity<?> findLinkedExternalAccounts(
+      @AuthenticationPrincipal OrganizationOperatorPrincipal organizationOperatorPrincipal,
+      @PathVariable String organizationId,
+      @PathVariable String tenantId,
+      @PathVariable String userId,
+      HttpServletRequest httpServletRequest) {
+
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    UserManagementResponse response =
+        orgUserManagementApi.findLinkedExternalAccounts(
+            organizationOperatorPrincipal.authenticationContext(),
+            new TenantIdentifier(tenantId),
+            new UserIdentifier(userId),
+            requestAttributes);
+
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.add("content-type", "application/json");
+    return new ResponseEntity<>(
+        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+  }
+
+  @GetMapping("/{userId}/linked-external-accounts/{alias}")
+  public ResponseEntity<?> getLinkedExternalAccount(
+      @AuthenticationPrincipal OrganizationOperatorPrincipal organizationOperatorPrincipal,
+      @PathVariable String organizationId,
+      @PathVariable String tenantId,
+      @PathVariable String userId,
+      @PathVariable String alias,
+      HttpServletRequest httpServletRequest) {
+
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    UserManagementResponse response =
+        orgUserManagementApi.getLinkedExternalAccount(
+            organizationOperatorPrincipal.authenticationContext(),
+            new TenantIdentifier(tenantId),
+            new UserIdentifier(userId),
+            new AccountAlias(alias),
+            requestAttributes);
+
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.add("content-type", "application/json");
+    return new ResponseEntity<>(
+        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+  }
+
+  @DeleteMapping("/{userId}/linked-external-accounts/{alias}")
+  public ResponseEntity<?> deleteLinkedExternalAccount(
+      @AuthenticationPrincipal OrganizationOperatorPrincipal organizationOperatorPrincipal,
+      @PathVariable String organizationId,
+      @PathVariable String tenantId,
+      @PathVariable String userId,
+      @PathVariable String alias,
+      @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
+      HttpServletRequest httpServletRequest) {
+
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    UserManagementResponse response =
+        orgUserManagementApi.deleteLinkedExternalAccount(
+            organizationOperatorPrincipal.authenticationContext(),
+            new TenantIdentifier(tenantId),
+            new UserIdentifier(userId),
+            new AccountAlias(alias),
             requestAttributes,
             dryRun);
 

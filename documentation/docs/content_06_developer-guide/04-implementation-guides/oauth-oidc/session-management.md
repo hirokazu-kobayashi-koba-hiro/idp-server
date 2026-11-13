@@ -51,6 +51,7 @@ idp-serverのセッション管理は、Keycloakのアーキテクチャを参�
 |----------|------|----------|------|
 | `IDP_IDENTITY` | opSessionId | Yes | SSO識別用（サーバー側で使用） |
 | `IDP_SESSION` | SHA256(opSessionId) | No | Session Management iframe用 |
+| `__Host-IDP_BROWSER_{tenantId}` | 乱数（OPSession にはハッシュだけ） | Yes | このブラウザがログインして受け取ったセッションかの証。`Secure`・`Path=/`・`Domain` なし固定。アカウント連携の `/linking/start` が `getBrowserHeldOPSessionFromCookie` で照合する |
 
 **参考実装**: [SessionCookieService.java](../../../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/session/SessionCookieService.java)
 

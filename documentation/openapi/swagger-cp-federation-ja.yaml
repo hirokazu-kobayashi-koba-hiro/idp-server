@@ -232,6 +232,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: この設定にまだ依存するデータがあります（アカウント連携の連携先なら、残っている連携）。先に削除してください
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LinkedAccountConflict'
 components:
   parameters:
     TenantId:
@@ -277,6 +283,24 @@ components:
         default: 0
       description: アイテムを返す開始インデックス
   schemas:
+    LinkedAccountConflict:
+      type: object
+      description: |
+        依存するデータが残っている設定の削除を拒否したときの応答。dry_run=true でも同じ応答を返します。
+        依存するデータの件数が、名前ごとに入ります（アカウント連携の連携先なら `linked_external_accounts`）。
+      properties:
+        error:
+          type: string
+          example: conflict
+        error_description:
+          type: string
+          example: Data still depends on this federation configuration. Remove it first.
+        linked_external_accounts:
+          type: integer
+          description: この連携先を使っている連携の数
+      required:
+      - error
+      - error_description
     ErrorResponse:
       type: object
       properties:
@@ -314,7 +338,8 @@ components:
           - oauth2
           - saml2
           - oidc
-          description: Federation type
+          - account-linking
+          description: Federation type。`account-linking` はアカウント連携の連携先（payload は `oidc` と同じ形で、ログインには使われない）
           example: oidc
         sso_provider:
           type: string
@@ -386,7 +411,8 @@ components:
           - oauth2
           - saml2
           - oidc
-          description: Federation type
+          - account-linking
+          description: Federation type。`account-linking` はアカウント連携の連携先（payload は `oidc` と同じ形で、ログインには使われない）
           example: oidc
         sso_provider:
           type: string
@@ -420,7 +446,8 @@ components:
           - oauth2
           - saml2
           - oidc
-          description: Federation type
+          - account-linking
+          description: Federation type。`account-linking` はアカウント連携の連携先（payload は `oidc` と同じ形で、ログインには使われない）
         sso_provider:
           type: string
           description: SSO provider identifier（設定の引き当てキー。全置換のため GET の値を必ず含めること）

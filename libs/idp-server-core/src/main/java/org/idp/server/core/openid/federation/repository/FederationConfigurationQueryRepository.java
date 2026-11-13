@@ -28,6 +28,19 @@ public interface FederationConfigurationQueryRepository {
 
   <T> T get(Tenant tenant, FederationType federationType, SsoProvider ssoProvider, Class<T> clazz);
 
+  /**
+   * Same as {@link #get}, but also finds a disabled configuration when {@code includeDisabled}.
+   *
+   * <p>For cleanup that must still reach the provider after an operator has disabled it, such as
+   * revoking tokens issued under it.
+   */
+  <T> T get(
+      Tenant tenant,
+      FederationType federationType,
+      SsoProvider ssoProvider,
+      Class<T> clazz,
+      boolean includeDisabled);
+
   FederationConfiguration find(Tenant tenant, FederationConfigurationIdentifier identifier);
 
   FederationConfiguration findWithDisabled(

@@ -54,7 +54,7 @@ const LogoutButton = ({ idToken, clientId, issuer }: LogoutButtonProps) => {
       }
 
       const logoutUrl = `${issuer}/v1/logout?${params.toString()}`;
-      console.log("[LogoutButton] Calling logout URL:", logoutUrl);
+      console.log("[LogoutButton] Calling logout URL:", `${issuer}/v1/logout`);
 
       // ブラウザから fetch で IDP server の logout を呼び出し（Cookie が送信される）
       const response = await fetch(logoutUrl, {

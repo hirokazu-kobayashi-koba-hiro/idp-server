@@ -18,6 +18,10 @@ idp:
    apiKey: ${IDP_SERVER_API_KEY}
    apiSecret: ${IDP_SERVER_API_SECRET}
    encryptionKey: ${ENCRYPTION_KEY}
+   # Optional keyring: "<key id>:<base64 key>,..." and the key id new data is encrypted with.
+   # Unset, ENCRYPTION_KEY alone is used under the key id "default".
+   encryptionKeys: "${ENCRYPTION_KEYS:}"
+   encryptionActiveKeyId: "${ENCRYPTION_ACTIVE_KEY_ID:}"
    databaseType: "${DATABASE_TYPE:POSTGRESQL}"
   auth-session:
     # Cookie SameSite attribute: Lax (same-origin) or None (cross-origin, requires HTTPS)

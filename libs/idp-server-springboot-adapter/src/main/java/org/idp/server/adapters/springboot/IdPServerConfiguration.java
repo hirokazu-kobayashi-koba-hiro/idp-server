@@ -24,12 +24,14 @@ import org.idp.server.adapters.springboot.application.event.SecurityEventPublish
 import org.idp.server.adapters.springboot.application.event.UserLifecycleEventPublisherService;
 import org.idp.server.adapters.springboot.application.property.AppDatabaseConfigProperties;
 import org.idp.server.adapters.springboot.application.property.ControlPlaneDatabaseConfigProperties;
+import org.idp.server.adapters.springboot.application.session.AccountLinkingCookieService;
 import org.idp.server.adapters.springboot.application.session.AuthSessionCookieService;
 import org.idp.server.adapters.springboot.application.session.SessionCookieService;
 import org.idp.server.core.adapters.datasource.cache.JedisCacheStore;
 import org.idp.server.core.adapters.datasource.config.HikariConnectionProvider;
 import org.idp.server.core.adapters.datasource.session.InMemorySessionStore;
 import org.idp.server.core.adapters.datasource.session.JedisSessionStore;
+import org.idp.server.platform.crypto.EncryptionKeyring;
 import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
 import org.idp.server.platform.datasource.ConfigurableApplicationDatabaseTypeProvider;
 import org.idp.server.platform.datasource.DatabaseConfig;
@@ -62,6 +64,12 @@ public class IdPServerConfiguration {
 
   @Value("${idp.configurations.encryptionKey}")
   String encryptionKey;
+
+  @Value("${idp.configurations.encryptionKeys:}")
+  String encryptionKeys;
+
+  @Value("${idp.configurations.encryptionActiveKeyId:}")
+  String encryptionActiveKeyId;
 
   @Value("${idp.configurations.databaseType}")
   String databaseType;
@@ -133,6 +141,7 @@ public class IdPServerConfiguration {
   public IdpServerApplication idpServerApplication(
       SessionCookieService sessionCookieService,
       AuthSessionCookieService authSessionCookieService,
+      AccountLinkingCookieService accountLinkingCookieService,
       SecurityEventPublisherService eventPublisherService,
       AuditLogPublisherService auditLogPublisher,
       UserLifecycleEventPublisherService userLifecycleEventPublisherService) {
@@ -155,11 +164,13 @@ public class IdPServerConfiguration {
         applicationDatabaseTypeProvider,
         dbConnectionProvider,
         encryptionKey,
+        EncryptionKeyring.of(encryptionKeys, encryptionActiveKeyId, encryptionKey),
         databaseType,
         cacheStore,
         sessionStore,
         sessionCookieService,
         authSessionCookieService,
+        accountLinkingCookieService,
         passwordEncoder,
         passwordVerification,
         eventPublisherService,

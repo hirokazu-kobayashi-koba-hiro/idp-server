@@ -92,6 +92,20 @@ public class OidcTokenResult {
     return body.containsKey("expires_in");
   }
 
+  /**
+   * The scope the response grants, or {@code fallback} when it names none.
+   *
+   * <p>RFC 6749 §5.1 lets the authorization server leave {@code scope} out when it is identical to
+   * the one requested, so a missing scope means what was asked for, not something else.
+   */
+  public String scopeOr(String fallback) {
+    Object scope = body.get("scope");
+    if (scope instanceof String value && !value.isBlank()) {
+      return value;
+    }
+    return fallback;
+  }
+
   public boolean hasScope() {
     return body.containsKey("scope");
   }

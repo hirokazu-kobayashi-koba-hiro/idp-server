@@ -268,6 +268,29 @@ for federation_config_file in "${federation_config_files[@]}"; do
 
 done
 
+#federation-account-linking
+echo "-------------------------------------------------"
+echo ""
+echo "federation-config account-linking"
+
+account_linking_config_files=(
+  account-linking.json
+  account-linking-oauth2.json
+)
+
+for federation_config_file in "${account_linking_config_files[@]}"; do
+  echo "🔧 Registering: $(basename "$federation_config_file")"
+
+./config/scripts/upsert-federation-config.sh \
+  -t "${TENANT_ID}" \
+  -o "${ORGANIZATION_ID}" \
+  -f "./config/examples/e2e/test-tenant/federation/account-linking/${federation_config_file}" \
+  -b "${AUTHORIZATION_SERVER_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
+done
+
 #security-event-hook
 echo "-------------------------------------------------"
 echo ""

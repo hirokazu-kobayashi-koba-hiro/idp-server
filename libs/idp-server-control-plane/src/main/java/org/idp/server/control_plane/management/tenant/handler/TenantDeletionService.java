@@ -27,6 +27,7 @@ import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantCommandRepository;
+import org.idp.server.platform.multi_tenancy.tenant.TenantDeletionSteps;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
@@ -40,19 +41,26 @@ import org.idp.server.platform.type.RequestAttributes;
  *
  * <ul>
  *   <li>Tenant existence verification
+ *   <li>Each feature's work before the deletion (e.g. revoking linked accounts' external tokens)
  *   <li>Tenant deletion from repository
  * </ul>
+ *
+ * <p>The tenant's rows go with it through foreign key cascades, which do nothing outside this
+ * database. Features undo what they hold elsewhere first, through {@link TenantDeletionSteps}.
  */
 public class TenantDeletionService implements TenantManagementService<TenantDeleteRequest> {
 
   private final TenantQueryRepository tenantQueryRepository;
   private final TenantCommandRepository tenantCommandRepository;
+  private final TenantDeletionSteps deletionSteps;
 
   public TenantDeletionService(
       TenantQueryRepository tenantQueryRepository,
-      TenantCommandRepository tenantCommandRepository) {
+      TenantCommandRepository tenantCommandRepository,
+      TenantDeletionSteps deletionSteps) {
     this.tenantQueryRepository = tenantQueryRepository;
     this.tenantCommandRepository = tenantCommandRepository;
+    this.deletionSteps = deletionSteps;
   }
 
   @Override
@@ -82,6 +90,9 @@ public class TenantDeletionService implements TenantManagementService<TenantDele
       response.put("dry_run", true);
       return new TenantManagementResponse(TenantManagementStatus.OK, response);
     }
+
+    // 3. What features hold outside this database, undone while the rows still say what it is
+    deletionSteps.runBefore(before);
 
     // 4. Repository operation
     tenantCommandRepository.delete(tenantIdentifier);

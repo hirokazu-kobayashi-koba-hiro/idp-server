@@ -37,7 +37,21 @@ public class OAuthAuthorizeResponse {
    */
   String authProof;
 
+  /** Where a request that issues nothing sends the browser instead of the client. */
+  String continueUri;
+
   public OAuthAuthorizeResponse() {}
+
+  /**
+   * Success without an authorization response: the browser goes on to {@code continueUri}, and
+   * nothing is issued to the client.
+   */
+  public static OAuthAuthorizeResponse continueTo(String continueUri) {
+    OAuthAuthorizeResponse response = new OAuthAuthorizeResponse();
+    response.status = OAuthAuthorizeStatus.OK;
+    response.continueUri = continueUri;
+    return response;
+  }
 
   public OAuthAuthorizeResponse(
       OAuthAuthorizeStatus status, AuthorizationResponse authorizationResponse) {
@@ -67,6 +81,9 @@ public class OAuthAuthorizeResponse {
   }
 
   public String redirectUriValue() {
+    if (status.isOK() && continueUri != null) {
+      return continueUri;
+    }
     if (status.isOK()) {
       return authorizationResponse.redirectUriValue();
     }

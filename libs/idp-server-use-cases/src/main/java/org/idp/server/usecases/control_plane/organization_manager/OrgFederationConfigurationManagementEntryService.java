@@ -25,6 +25,7 @@ import org.idp.server.control_plane.management.federation.OrgFederationConfigMan
 import org.idp.server.control_plane.management.federation.handler.*;
 import org.idp.server.control_plane.management.federation.io.*;
 import org.idp.server.core.openid.federation.FederationConfigurationIdentifier;
+import org.idp.server.core.openid.federation.FederationConfigurationRules;
 import org.idp.server.core.openid.federation.FederationQueries;
 import org.idp.server.core.openid.federation.repository.FederationConfigurationCommandRepository;
 import org.idp.server.core.openid.federation.repository.FederationConfigurationQueryRepository;
@@ -81,22 +82,29 @@ public class OrgFederationConfigurationManagementEntryService
       OrganizationRepository organizationRepository,
       FederationConfigurationQueryRepository federationConfigurationQueryRepository,
       FederationConfigurationCommandRepository federationConfigurationCommandRepository,
+      FederationConfigurationRules federationConfigurationRules,
       AuditLogPublisher auditLogPublisher) {
 
     Map<String, FederationConfigManagementService<?>> services = new HashMap<>();
     services.put(
-        "create", new FederationConfigCreationService(federationConfigurationCommandRepository));
+        "create",
+        new FederationConfigCreationService(
+            federationConfigurationCommandRepository, federationConfigurationRules));
     services.put(
         "findList", new FederationConfigFindListService(federationConfigurationQueryRepository));
     services.put("get", new FederationConfigFindService(federationConfigurationQueryRepository));
     services.put(
         "update",
         new FederationConfigUpdateService(
-            federationConfigurationQueryRepository, federationConfigurationCommandRepository));
+            federationConfigurationQueryRepository,
+            federationConfigurationCommandRepository,
+            federationConfigurationRules));
     services.put(
         "delete",
         new FederationConfigDeletionService(
-            federationConfigurationQueryRepository, federationConfigurationCommandRepository));
+            federationConfigurationQueryRepository,
+            federationConfigurationCommandRepository,
+            federationConfigurationRules));
 
     this.handler =
         new OrgFederationConfigManagementHandler(

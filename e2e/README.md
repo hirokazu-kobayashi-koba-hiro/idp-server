@@ -120,10 +120,18 @@ stack. Run the full suite on MySQL once before each release.
    ```bash
    ./setup.sh
    ./config/scripts/e2e-test-data.sh
+   ./config/scripts/e2e-test-tenant-data.sh -t 1e68932e-ed4a-43e7-b412-460665e42df3
    ```
+   The last line registers the federation tenant. Without it every test that goes through the
+   external IdP (federation, account linking) fails with `404`.
 4. Run the suite.
    ```bash
    cd e2e && npm test
+   ```
+   The KEK rotation check restarts the servers itself; run it from the repository root, pointed at
+   the MySQL stack:
+   ```bash
+   COMPOSE_FILE=docker-compose-mysql.yaml e2e/scripts/kek-rotation.sh
    ```
 5. Switch back to PostgreSQL.
    ```bash

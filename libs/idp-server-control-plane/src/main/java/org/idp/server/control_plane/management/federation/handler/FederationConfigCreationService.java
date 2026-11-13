@@ -24,6 +24,7 @@ import org.idp.server.control_plane.management.federation.io.FederationConfigMan
 import org.idp.server.control_plane.management.federation.io.FederationConfigManagementStatus;
 import org.idp.server.control_plane.management.federation.io.FederationConfigRequest;
 import org.idp.server.core.openid.federation.FederationConfiguration;
+import org.idp.server.core.openid.federation.FederationConfigurationRules;
 import org.idp.server.core.openid.federation.repository.FederationConfigurationCommandRepository;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
@@ -41,10 +42,13 @@ public class FederationConfigCreationService
     implements FederationConfigManagementService<FederationConfigRequest> {
 
   private final FederationConfigurationCommandRepository commandRepository;
+  private final FederationConfigurationChecks checks;
 
   public FederationConfigCreationService(
-      FederationConfigurationCommandRepository commandRepository) {
+      FederationConfigurationCommandRepository commandRepository,
+      FederationConfigurationRules rules) {
     this.commandRepository = commandRepository;
+    this.checks = new FederationConfigurationChecks(rules);
   }
 
   @Override
@@ -62,6 +66,7 @@ public class FederationConfigCreationService
 
     // 2. Populate builder with created configuration
     builder.withAfter(configuration);
+    checks.verifyUsable(configuration);
 
     // 3. Build response
     Map<String, Object> contents = Map.of("result", configuration.toMap(), "dry_run", dryRun);

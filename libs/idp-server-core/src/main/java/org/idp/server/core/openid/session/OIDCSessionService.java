@@ -47,7 +47,8 @@ public class OIDCSessionService {
       Map<String, Map<String, Object>> interactionResults,
       long sessionTimeoutSeconds,
       String ipAddress,
-      String userAgent) {
+      String userAgent,
+      BrowserProof browserProof) {
     OPSession session =
         OPSession.create(
             tenant.identifier(),
@@ -58,7 +59,8 @@ public class OIDCSessionService {
             interactionResults,
             sessionTimeoutSeconds,
             ipAddress,
-            userAgent);
+            userAgent,
+            browserProof);
     opSessionRepository.register(tenant, session);
     return session;
   }
@@ -73,8 +75,10 @@ public class OIDCSessionService {
       Instant authTime,
       String acr,
       List<String> amr,
-      Map<String, Map<String, Object>> interactionResults) {
-    OPSession reauthenticated = session.reauthenticate(authTime, acr, amr, interactionResults);
+      Map<String, Map<String, Object>> interactionResults,
+      BrowserProof browserProof) {
+    OPSession reauthenticated =
+        session.reauthenticate(authTime, acr, amr, interactionResults, browserProof);
     opSessionRepository.update(tenant, reauthenticated);
     return reauthenticated;
   }

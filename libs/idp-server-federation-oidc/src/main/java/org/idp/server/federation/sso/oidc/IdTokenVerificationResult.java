@@ -17,14 +17,33 @@
 package org.idp.server.federation.sso.oidc;
 
 import java.util.Map;
+import org.idp.server.platform.jose.JsonWebTokenClaims;
 
+/**
+ * Outcome of verifying an ID Token.
+ *
+ * <p>Carries the verified claims on success. Verification has already parsed the token, so a caller
+ * that needs a claim out of it — the {@code sub} identifying the external account, for instance —
+ * would otherwise parse the same JWT a second time.
+ */
 public class IdTokenVerificationResult {
   boolean result;
   Map<String, Object> data;
+  JsonWebTokenClaims claims;
 
   public IdTokenVerificationResult(boolean result, Map<String, Object> data) {
+    this(result, data, null);
+  }
+
+  public IdTokenVerificationResult(
+      boolean result, Map<String, Object> data, JsonWebTokenClaims claims) {
     this.result = result;
     this.data = data;
+    this.claims = claims;
+  }
+
+  public static IdTokenVerificationResult success(JsonWebTokenClaims claims) {
+    return new IdTokenVerificationResult(true, Map.of(), claims);
   }
 
   public boolean isError() {
@@ -33,5 +52,10 @@ public class IdTokenVerificationResult {
 
   public Map<String, Object> data() {
     return data;
+  }
+
+  /** Verified claims. Present only on success. */
+  public JsonWebTokenClaims claims() {
+    return claims;
   }
 }

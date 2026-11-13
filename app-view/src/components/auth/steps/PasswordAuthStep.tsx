@@ -27,8 +27,8 @@ import { StepProps } from "./StepProps";
  * Use {@code RegisterStep} instead when the step creates a new account.
  */
 export const PasswordAuthStep = ({ tenantId, id, onCompleted }: StepProps) => {
-  const [identifier, setIdentifier] = useAtom(authIdentifierAtom);
-  const [, setUserStatus] = useAtom(authUserStatusAtom);
+  const [identifier, setIdentifier] = useAtom(authIdentifierAtom(id));
+  const [, setUserStatus] = useAtom(authUserStatusAtom(id));
   const [email, setEmail] = useState(identifier);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);

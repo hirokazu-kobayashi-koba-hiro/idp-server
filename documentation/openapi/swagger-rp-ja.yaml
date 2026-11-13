@@ -92,7 +92,6 @@ tags:
 
       📘 仕様: [RFC 8935 - Push-Based Event Delivery](https://www.rfc-editor.org/rfc/rfc8935.html)
 
-
 paths:
   /{tenant-id}/v1/authorizations/push:
     post:

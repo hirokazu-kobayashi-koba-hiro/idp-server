@@ -36,13 +36,26 @@ public class AesCipher {
   Base64.Decoder decoder;
 
   public AesCipher(String encryptionKey) {
-    byte[] decodedKey = Base64.getDecoder().decode(encryptionKey);
-    this.secretKey = new SecretKeySpec(decodedKey, 0, decodedKey.length, "AES");
+    this(Base64.getDecoder().decode(encryptionKey));
+  }
+
+  public AesCipher(byte[] key) {
+    this.secretKey = new SecretKeySpec(key, 0, key.length, "AES");
     this.encoder = Base64.getEncoder();
     this.decoder = Base64.getDecoder();
   }
 
   public EncryptedData encrypt(String plainText) {
+    return encrypt(plainText, null);
+  }
+
+  /**
+   * Encrypts with additional authenticated data.
+   *
+   * <p>The AAD is not stored. Decryption must present the same bytes, so data bound to one owner or
+   * purpose does not open when copied to another.
+   */
+  public EncryptedData encrypt(String plainText, byte[] additionalData) {
     try {
       byte[] iv = new byte[IV_LENGTH];
       SecureRandom random = new SecureRandom();
@@ -51,6 +64,9 @@ public class AesCipher {
       Cipher cipher = Cipher.getInstance(TRANSFORMATION);
       GCMParameterSpec spec = new GCMParameterSpec(128, iv);
       cipher.init(Cipher.ENCRYPT_MODE, secretKey, spec);
+      if (additionalData != null) {
+        cipher.updateAAD(additionalData);
+      }
       byte[] cipherText = cipher.doFinal(plainText.getBytes(StandardCharsets.UTF_8));
 
       return new EncryptedData(encoder.encodeToString(cipherText), encoder.encodeToString((iv)));
@@ -66,12 +82,19 @@ public class AesCipher {
   }
 
   public String decrypt(EncryptedData data) {
+    return decrypt(data, null);
+  }
+
+  public String decrypt(EncryptedData data, byte[] additionalData) {
     try {
       Cipher cipher = Cipher.getInstance(TRANSFORMATION);
       cipher.init(
           Cipher.DECRYPT_MODE,
           secretKey,
           new GCMParameterSpec(TAG_LENGTH, decoder.decode(data.iv())));
+      if (additionalData != null) {
+        cipher.updateAAD(additionalData);
+      }
 
       byte[] decrypted = cipher.doFinal(decoder.decode(data.cipherText()));
 

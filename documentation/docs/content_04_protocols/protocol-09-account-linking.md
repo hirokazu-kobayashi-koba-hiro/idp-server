@@ -1,0 +1,519 @@
+# 外部IdPアカウント連携
+
+## 概要
+
+認証済みのユーザーが、自分のアカウントに**外部IdPのアカウントを追加で紐付ける**ための idp-server 独自のプロトコル拡張です。紐付けの過程で外部IdPが発行したアクセストークンとリフレッシュトークンを暗号化して保管し、後から外部APIの呼び出しに使えるようにします。
+
+既存の Federation（外部IdPでログインする機能）とは目的が異なります。
+
+| | Federation | アカウント連携 |
+|---|---|---|
+| 目的 | 外部IdPで**ログインする** | 外部IdPのトークンを**保管する** |
+| 起点 | 未認証の認可リクエスト | 認証済みユーザーの操作 |
+| 紐付け数 | 1ユーザー1件 | provider ごとに 1 件（`multiple_accounts: true` で `max_accounts` 件まで。`alias` で識別） |
+| トークン | 平文 JSONB | アプリ層で AES-GCM 暗号化 |
+
+両者は独立した系統です。連携を追加しても Federation の動作は変わりません。
+
+---
+
+## シーケンス
+
+```mermaid
+sequenceDiagram
+    participant RP as RPアプリ（サーバー）
+    participant Browser as ブラウザ
+    participant idp as idp-server
+    participant Ext as 外部IdP
+
+    Note over RP,Ext: ① 開始
+    RP ->> idp: POST /v1/me/linked-external-accounts/link/{provider}<br/>Authorization: Bearer、{ redirect_uri, scope }
+    idp ->> idp: トークンのユーザーとクライアントを連携セッションに結び付ける<br/>redirect_uri を linking_return_uris と完全一致で照合
+    idp ->> idp: 連携セッションを保存（PENDING）
+    idp -->> RP: 201 { start_url, state, expires_in }
+
+    Note over RP,Ext: ② ブラウザで start_url を開く（トップレベル遷移）
+    RP -->> Browser: start_url へ遷移させる
+    Browser ->> idp: GET /v1/linking/start?state=<br/>Cookie: IDP_IDENTITY、__Host-IDP_BROWSER_*
+    idp ->> idp: ブラウザセッションを確かめる<br/>操作者が連携を始めたユーザーか照合
+    opt ログインが無い・古い・acr が足りないとき
+        idp -->> Browser: 302 認可エンドポイント（prompt=login、login_hint）
+        Browser ->> idp: ログイン（認可コードは発行しない）
+        idp -->> Browser: 302 /v1/linking/start?state=&returned_from_sign_in=true
+        Browser ->> idp: GET /v1/linking/start
+        idp ->> idp: もう一度ブラウザセッションとログインを確かめる
+    end
+    idp ->> idp: 連携セッションを AUTHORIZED に
+    idp -->> Browser: 302 外部IdPの認可URL（state、nonce、code_challenge）<br/>Set-Cookie: __Host-IDP_LINK_BINDING_*
+    Browser ->> Ext: 認可リクエスト
+    Ext ->> Ext: ユーザーがログイン・同意
+    Ext -->> Browser: 302 /v1/linking/callback/{provider}?code=&state=
+
+    Note over RP,Ext: ③ コールバック
+    Browser ->> idp: GET /v1/linking/callback/{provider}<br/>Cookie: __Host-IDP_LINK_BINDING_*
+    idp ->> idp: ブラウザ束縛を照合（コードを交換する前に）<br/>連携セッションを PARKED に
+    idp ->> Ext: トークン交換（code_verifier）
+    Ext -->> idp: access_token、refresh_token、id_token
+    idp ->> idp: id_token を検証（返ってきたとき）
+    opt userinfo の設定があるとき
+        idp ->> Ext: userinfo
+        Ext -->> idp: 外部アカウントの情報
+    end
+    idp ->> idp: トークンを暗号化して連携セッションに預ける
+    idp -->> Browser: 302 {redirect_uri}?linking=done&state=
+    Browser ->> RP: 戻り先を開く
+
+    Note over RP,Ext: ④ 確定
+    RP ->> idp: POST /v1/me/linked-external-accounts/complete<br/>Authorization: Bearer、{ state }
+    idp ->> idp: クライアントとユーザーが開始と同じか照合<br/>重複を確かめて連携を保存（CONSUMED）
+    idp -->> RP: 201 { alias, provider, ... }
+
+    Note over RP,Ext: ⑤ 保管トークンの取得（あとで、何度でも）
+    RP ->> idp: POST /v1/linked-external-accounts/{alias}/token<br/>クライアント認証、token=ユーザーのアクセストークン
+    opt 期限が近い、または force_refresh=true のとき
+        idp ->> Ext: リフレッシュ
+        Ext -->> idp: 新しい access_token
+    end
+    idp -->> RP: 200 { access_token, expires_in, ... }
+```
+
+- 認可コードは idp-server の中で交換されて完結し、**RPには渡りません**。
+- 連携セッションは `PENDING` → `AUTHORIZED` → `PARKED` → `CONSUMED` の順にしか進みません。進める前に今の状態を条件に取り直すので、同じ `start_url` やコールバックが 2 回届いても、進むのは 1 回だけです。
+- ② のログインし直し（`opt` の枠）は、ブラウザセッションが無い、ログインがクライアントの `linking_max_auth_age` より古い、またはログインの acr が `linking_acr_values` に当たらないときだけ通ります。ログインから戻っても足りなければ、`{redirect_uri}?linking=failed&error=login_required` へ戻します。
+- ブラウザセッションとして使うのは、ログインで発行した `__Host-IDP_BROWSER_{tenant-id}` が OP セッションと合うときだけです。合わなければセッションが無いのと同じに扱います。
+- ③ は認可コードを交換する前に、② を通ったブラウザか（`__Host-IDP_LINK_BINDING_{tenant-id}`）を照合します。合わなければテナントのエラー画面へ送り、コードは使いません。
+- ⑤ でリフレッシュするのは、アクセストークンの期限まで連携先の `refresh_before_expiry_seconds`（既定 30 秒）を切っているとき、または `force_refresh=true` のときです。詳しくは [保管トークンの取得](#保管トークンの取得) を参照してください。
+
+---
+
+## エンドポイント体系
+
+### RPが呼ぶもの（Bearer 必須）
+
+| エンドポイント | 用途 | 必要な scope |
+|---|---|---|
+| `POST /{tenant-id}/v1/me/linked-external-accounts/link/{provider}` | 連携の開始。`{ redirect_uri, scope }` を受け取り `{ start_url, state, expires_in }` を返す | `linked_account:manage` |
+| `POST /{tenant-id}/v1/me/linked-external-accounts/complete` | 連携の確定。`{ state }` を受け取る | `linked_account:manage` |
+| `GET /{tenant-id}/v1/me/linked-external-accounts` | 連携一覧 | `linked_account:read` または `linked_account:manage` |
+| `GET /{tenant-id}/v1/me/linking-providers` | 連携先の一覧。クライアントの `linking_providers` を、今つなげるか（`available`）・1 件だけか複数か（`multiple_accounts`）・何件までか（`max_accounts`）・このユーザーが何件つないでいるか（`linked_accounts`）と一緒に返す | `linked_account:read` または `linked_account:manage` |
+| `DELETE /{tenant-id}/v1/me/linked-external-accounts/{alias}` | 連携の解除。成功時は 204 | `linked_account:manage` |
+
+scope が足りないときは `403` `{ "error": "insufficient_scope", "scope": "..." }` を返します。
+
+scope は「連携を見る」（`read`）と「連携を管理する」（`manage`）の 2 つに分けています。連携の追加と解除は分けません。管理する画面は両方を使い、外す連携を選ぶには一覧も要るので、`manage` は一覧も含みます。保管トークンの取得（`linked_account:read_token`）は別の許可で、`read` / `manage` のどちらにも含まれず、どちらも含みません。
+
+連携の確定は、連携を始めたクライアントのトークンでしか受け付けません。同じユーザーでも、別のクライアントのトークンでは `403` になります。
+
+`{provider}` には連携先の設定名（`sso_provider`）を指定します。
+
+`redirect_uri` は連携完了後にブラウザを戻す先で、開始時にクライアント設定の allow-list と完全一致で照合されます。
+
+### クライアントが呼ぶもの（クライアント認証）
+
+| エンドポイント | 用途 |
+|---|---|
+| `POST /{tenant-id}/v1/linked-external-accounts/{alias}/token` | 保管している外部IdPのアクセストークンを取り出す |
+
+保管トークンの取得は、[下の節](#保管トークンの取得)で説明します。
+
+### ブラウザ遷移（Bearer なし）
+
+| エンドポイント | 認証 | 用途 |
+|---|---|---|
+| `GET /{tenant-id}/v1/linking/start?state=` | ブラウザセッション | 操作者を検証し、外部IdPの認可URLへ 302 |
+| `GET /{tenant-id}/v1/linking/callback/{provider}?code&state` | `state` + ブラウザ束縛 | 認可コードを交換し、`redirect_uri` へ 302。パスの `{provider}` は使わず、`state` が指す連携セッションの連携先で処理する |
+
+この2本が `/me` の外にあるのは、どちらもブラウザのトップレベル遷移で Bearer を運べないためです。`/me` は `ProtectedResourceApiFilter` によって Bearer 前提で保護されている名前空間なので、そこに未認証エンドポイントを混ぜると、実装者が「フィルタが通っているはず」と誤認する余地が生まれます。
+
+一覧のレスポンスにトークンは含まれません。返るのは `alias` / `provider` / `federated_username` / `scope` / 各有効期限 / `created_at` / `updated_at` です。ページングはなく、ユーザーの連携を全件返します。件数は連携先ごとに 1 件か `max_accounts` 件までなので、全件でも大きくなりません。
+
+連携先の一覧（`linking-providers`）は、アクセストークンのクライアントの `linking_providers` だけを、その順に返します。テナントのほかの連携先は返しません。RP はこれで「つなぐ」「つないである」「もう 1 つつなぐ」の画面を作れます。設定が無い、または運用者が無効にした連携先は `available: false` で、`multiple_accounts` / `max_accounts` は返さず、`linked_accounts` だけを数えます。無効にする前につないだ連携も、一覧で見て解除できるためです。
+
+解除は呼び出したユーザー自身の連携だけが対象で、他人の `alias` を指定しても 404 になります。行を消す前に、保管しているトークンを外部IdPの失効エンドポイント（RFC 7009）で失効させます。行を消すだけでは、写し取られたトークンが外部IdP側で有効なまま残るためです。
+
+失効はベストエフォートです。次の場合でも連携は解除されます。外部側の都合で解除できないと、ユーザーが連携を取り消せなくなるためです。
+
+- `revocation_endpoint` が設定されていない
+- 外部IdPに届かない、または失効を拒否された
+
+連携先の設定を無効化（`enabled: false`）していても、失効は行います。無効化で止めるのは新しい連携と保管トークンの払い出しであって、発行済みトークンの後始末ではないためです。
+
+解除は行ロックを取ってから失効させます。保管トークンの取得が同時にリフレッシュしていると、外部IdPがトークンをローテーションした直後に古いトークンだけを失効させてしまうためです。
+
+ユーザーが削除されたときも、同じ手順で全ての連携を失効・削除します。あわせて、そのユーザーが始めた連携セッションも削除し、コールバックまで進んで確定されていないセッション（`parked`）が預かっているトークンは失効させます。本人がいなくなると、Bearer を要する `complete` は二度と通らないためです。`linked_external_accounts` は `user_id` に外部キーを張っていないため、ユーザー削除のライフサイクル処理（`LinkedExternalAccountDeletionExecutor`）が後始末を担います。
+
+テナントを削除するときも、削除の前にテナントの全ての連携と `parked` の連携セッションを失効・削除します（`TenantLinkedAccountCleanup`）。行はテナントへの外部キーの `ON DELETE CASCADE` でも消えますが、それでは失効されないためです。失効は連携 1 件ごとに外部IdPを呼ぶので、削除にかかる時間は連携の数に比例します。
+
+---
+
+## 確定を分ける理由
+
+外部IdPからのコールバックはブラウザのリダイレクトで届くため、`Authorization` ヘッダを持ちません。つまりコールバック自身には「これが誰の連携か」を確かめる手段がありません。
+
+そこでコールバックでは連携を確定させず、交換したトークンを暗号化して**連携セッションに預けるだけ**にします。確定するのは、Bearer を持つ `complete` だけです。
+
+```
+pending ──[start] 操作者を照合──▶ authorized ──[callback] コード交換──▶ parked ──[complete] Bearer 照合──▶ consumed
+```
+
+各遷移は条件付き UPDATE による単回消費です。コールバックでは**コードを交換する前に**状態を取りにいき、競合に負けた側が認可コードに触れないようにしています。認可コードは単回のため、二重に使うと外部IdP側で認可ごと失効させられる場合があります。
+
+### 同一性の検証は3箇所に要る
+
+連携の乗っ取りには向きが3つあり、止まる場所がそれぞれ違います。3つの検査は守る相手が違うため、どれも他で代替できません。
+
+![外部IdPアカウント連携の防御層](account-linking-defenses.svg)
+
+
+| # | 攻撃者がすること | 止まる場所 |
+|---|---|---|
+| 1 | **被害者の `state`** を自分の Bearer で `complete` する | `complete`（Bearer と照合） |
+| 2 | **自分の `start_url`** を被害者に踏ませる | `/linking/start`（操作者と照合） |
+| 3 | **自分で `/linking/start` を通り、外部IdPの認可URLだけ**を被害者に渡す | **コールバック（ブラウザ束縛と照合）** |
+
+3つとも成立した場合の結果は同じで、**被害者の外部アカウントが攻撃者のレコードに紐付きます**。攻撃者が欲しいのは被害者のトークンだからです。逆向き（攻撃者の外部アカウントが被害者に紐付く）を成立させるには被害者の `state` で `/linking/start` を通す必要があり、2 と同じ検査で落ちます。
+
+違うのは結果ではなく**どこで止まるか**です。
+
+1 は `state` を握っていても Bearer が一致しないため `complete` で落ちます。
+
+2 は `complete` では落ちません。`state` を握っているのは攻撃者なので、攻撃者自身の Bearer で確定できてしまいます。`/linking/start` で操作者を照合することで、被害者が外部IdPに到達する前に止めます。
+
+3 が厄介です。**攻撃者は `/linking/start` を自分で通過できます**（攻撃者こそが束縛されたユーザーなので、操作者照合は正常に通ります）。そこで返る `302` の `Location` には、外部IdPの認可URLが `state` も `code_challenge` も込みで完成した形で載っています。それだけを被害者に渡せば、被害者は `/linking/start` に一切触れずに外部IdPへ行き、コールバックだけが被害者のブラウザで発火します。**操作者照合は被害者に対して一度も評価されません。**
+
+これを止めるのがブラウザ束縛です。`/linking/start` は乱数の秘密値を発行し、そのハッシュだけをセッションに保存して、値そのものは `__Host-IDP_LINK_BINDING_{tenant-id}` Cookie でブラウザに渡します。コールバックはこの Cookie を要求し、**認可コードを交換する前に**照合します。被害者のブラウザはこの Cookie を持たないため、被害者の認可コードは交換されません。同じ名前の Cookie が 2 つ以上届いたコールバックも、同じく止めます。
+
+この Cookie には `__Host-` 接頭辞を付け、`Secure`・`Path=/`・`Domain` なしで出します（テナントの `session_config` には従いません）。接頭辞が無いと、同じ登録可能ドメインの別のサブドメインが同じ名前の Cookie を被害者のブラウザに書けてしまい、束縛が意味を持ちません。`Path=/` になるので、テナントは名前で分けます。
+
+:::info Cookie の `SameSite` はテナント設定に従いません
+コールバックは外部IdPからのクロスサイトのトップレベル GET です。`SameSite=Lax` はこの遷移をちょうど許可しますが、`Strict` だと Cookie が送られず連携が必ず失敗します。そのため束縛の Cookie は `Lax` 固定で、テナントの `cookie_same_site` には従いません。
+:::
+
+`/linking/start` は idp-server のブラウザセッションから操作者を解決します。連携は外部サービスの API を使う許可をアカウントにつなぐ操作なので、セッションのログインが新しいことも求めます。
+
+ブラウザセッションとして数えるのは、**このブラウザがログインして受け取った**ものだけです。セッションの Cookie（`IDP_IDENTITY`）はテナントのパスに置かれ接頭辞も無いので、別のサブドメインから攻撃者のセッションの Cookie を被害者のブラウザに置けます。そこで idp-server はログインのたびに乱数を `__Host-IDP_BROWSER_{tenant-id}` Cookie（`Secure`・`HttpOnly`・`Path=/`・`Domain` なし）で渡し、そのハッシュを OP セッションに持たせます。`/linking/start` はこの値が OP セッションのものと合うときだけセッションを使い、合わなければセッションが無いのと同じに扱います（下のとおり本人としてログインし直させます）。値はセッション ID ではないので、`Path=/` で他のテナントへのリクエストに付いても、それだけでは使えません。
+
+- セッションが無いか、ログインがクライアントの `linking_max_auth_age`（既定 300 秒）より古い場合は、RP へ戻さずに idp-server の認証画面へ送ります。認可リクエストは連携を始めたクライアントの名前で、`prompt=login` と `login_hint=sub:<連携を始めたユーザー>` を付けるので、本人だけがログインできます。
+- クライアントに `linking_acr_values` があるときは、ログインの acr がそのどれかに当たることも求めます。当たらなければ、ログインが新しくてもログインし直させ、認可リクエストに `acr_values` として載せます。認証ポリシーは `client_id`・`acr_values`・`scope` で選ばれるので、普段のログインより強いポリシー（例：FIDO だけ）を連携に当てられます。無いときは、普段のログインと同じポリシーが当たります。
+- ログインが終わると、認可コードは発行せずに `/linking/start` へ戻り、もう一度セッションとログインの新しさを確かめてから外部IdPへ進みます。認証画面の同意は省きます。
+  - 戻り先は authorize の応答で渡します。認可リクエストにはカスタムパラメータ `idp_linking_state` が付いていて、ログインの後に認可画面が authorize を呼ぶと、応答の `redirect_uri` が `/linking/start?state=...&returned_from_sign_in=true` になります（認可画面が別サイトにある構成では、ほかの認可と同じく `/complete` を経由して同じ URL へ戻ります）。ログインを取り消して deny を呼んだときも、同じ URL が返ります。
+  - 同梱の認可画面はこれに対応しています。認可画面を自分で作る場合は、view-data の `custom_params.idp_linking_state` で見分けて、同意画面を出さずに authorize を呼び、返った `redirect_uri` へ遷移します。authorize-with-session は `400` になります。
+- ログインを取り消した場合や、戻ってもセッションが無い場合（セッションを書けない環境）、戻っても acr が `linking_acr_values` に当たらない場合は、戻り先へ `linking=failed&error=login_required` を返します（[ブラウザ遷移の失敗](#ブラウザ遷移の失敗)）。
+- セッションが別のユーザーのものなら、ログインへは送らずにエラー画面で止めます。
+
+ネイティブアプリの ephemeral なブラウザのように、ブラウザにログインが残らない場合でも、この流れで連携できます。
+
+### RP 側の前提: トップレベル遷移で開くこと
+
+RP と idp-server が別ドメインでも連携は成立します。Cookie が要る2箇所はどちらもトップレベル遷移で、`SameSite=Lax` はまさにその経路を許可するためです。`SameSite` が制限するのは Cookie の送信であって保存ではないので、クロスサイトの遷移先で `Set-Cookie` を受け取ること自体は妨げられません。
+
+| 局面 | サイト関係 | 種類 | 結果 |
+|---|---|---|---|
+| `/linking/start` で発行 | RP → idp-server | トップレベル遷移 | 保存される（遷移先が first-party になる）|
+| コールバックで送信 | 外部IdP → idp-server | トップレベル GET | 送られる |
+
+:::warning iframe の中では成立しません
+iframe に埋め込むと third-party 文脈になり、Safari の ITP と Chrome のサードパーティ Cookie 制限によって**保存の時点で**落ちます。`location.href` などで**トップレベル遷移**させてください。別ウィンドウ（ポップアップ）は独立したトップレベル閲覧コンテキストなので問題ありません。
+:::
+
+外部IdPが `response_mode=form_post` で返す場合も成立しません。クロスサイトの POST には `Lax` の Cookie が送られないためです。コールバックは GET のみを受け付けます。
+
+---
+
+## 設定
+
+### 連携先IdP
+
+`federation-configurations` に `type: account-linking` で登録します。`payload` はログイン用の OIDC の設定（`type: oidc`）と同じ形ですが、別の設定として扱い、ログインと連携で互いに使われません。`redirect_uri` には連携用コールバックを指定します。
+
+```json
+{
+  "type": "account-linking",
+  "sso_provider": "example-idp",
+  "enabled": true,
+  "payload": {
+    "provider": "standard",
+    "issuer_name": "example-idp",
+    "issuer": "https://idp.example.com",
+    "jwks_uri": "https://idp.example.com/jwks",
+    "authorization_endpoint": "https://idp.example.com/authorize",
+    "token_endpoint": "https://idp.example.com/token",
+    "revocation_endpoint": "https://idp.example.com/revoke",
+    "userinfo_endpoint": "https://idp.example.com/userinfo",
+    "client_id": "...",
+    "client_secret": "...",
+    "client_authentication_type": "client_secret_post",
+    "redirect_uri": "https://api.example.com/{tenant-id}/v1/linking/callback/example-idp",
+    "scopes_supported": ["openid", "email", "offline_access"],
+    "userinfo_mapping_rules": [
+      { "from": "$.http_request.response_body.sub", "to": "external_user_id" },
+      { "from": "$.http_request.response_body.email", "to": "email" }
+    ],
+    "refresh_token_expires_in": 86400
+  }
+}
+```
+
+外部アカウントの識別子（`federated_user_id`）は、ID Token が返れば検証した `sub`、無ければ userinfo の `external_user_id` へのマッピングから取ります。どちらも無い連携先（OAuth 2.0 の委譲だけ）でも連携できますが、同じ外部アカウントかを判定できません。扱いは下の `multiple_accounts` で決まります。
+
+一覧の `federated_username` は、外部アカウントの表示名です。userinfo のマッピングの `preferred_username`、無ければ `email` を入れます。独自の形で応答する連携先でも、`userinfo_mapping_rules`（JSONPath・固定値・`format` などの関数）で好きな値を `preferred_username` に入れられます。userinfo の無い連携先では `null` になり、同じ連携先を複数つなぐと、ユーザーには見分けがつきません。同じ連携先を複数つなぐ（`multiple_accounts: true`）なら、アカウントを名乗る userinfo を設定してください。
+
+`scopes_supported` は `link` のリクエストで `scope` を省略したときの既定値です。
+
+`openid` を要求する場合は `issuer` と `jwks_uri` が要ります。返ってきた ID Token の `iss` と署名を、この 2 つで検証するためです。足りないと検証に失敗し、戻り先へ `server_error` を返します。
+
+外部IdPのトークン応答に `expires_in` が無い場合、アクセストークンの有効期間は 1 時間とみなします。連携したときもリフレッシュしたときも同じです。
+
+`refresh_before_expiry_seconds` は、保管トークンの取得でアクセストークンを更新し始める、期限までの秒数です。既定は 30 秒で、0〜3600 の整数を指定できます。期限ぎりぎりのトークンを渡すと、RP が次に呼ぶ外部APIで失敗するため、少し前に更新します。外部IdPのアクセストークンの有効期間以上にすると、取り出すたびに更新します。有効期間はトークン応答ごとに決まるので、設定の登録時には断れません。
+
+`refresh_token_expires_in` はリフレッシュトークンの有効期間です。トークン応答はリフレッシュトークンの期限を返さないため、この値で期限を決めます。未設定なら期限は「不明」として扱い、アクセストークンが切れたらリフレッシュを試して、外部IdPの応答に従います。
+
+`revocation_endpoint` は解除、ユーザーの削除、テナントの削除のとき（`revoke_on_relink: true` なら連携し直しのときも）に保管トークンを失効させる先です。省略すると、外部IdP側のトークンは失効させずに連携だけを削除します。クライアント認証はトークンエンドポイントと同じ方式で行います。`client_authentication_type` が `client_secret_basic` なら Basic 認証、それ以外はリクエストボディの `client_secret` です。`private_key_jwt` などには対応していません。
+
+`multiple_accounts` は、1 人のユーザーがこの連携先のアカウントをいくつ連携できるかです。
+
+| 値 | 挙動 |
+|---|---|
+| `false`（既定） | 1 件。もう一度連携すると、その 1 件を連携し直しとして更新する。別の外部アカウント（ID Token の `sub` か userinfo の `external_user_id` が違う）なら 409 を返し、先に解除してもらう。外部アカウントを名乗らない連携先（OAuth 2.0 だけ）は見分けられないので、いつも更新になる |
+| `true` | `max_accounts`（既定 10、1〜100）件まで。同じ外部アカウントは更新し、別の外部アカウントは追加する。外部アカウントを名乗らない連携先では、連携するたびに追加になる。上限に達していると、追加は 409（`account_limit_reached`）で断る。更新は上限に関わらずできる |
+
+どちらでも `alias` は `{provider}-{8 文字の乱数}` で、連携し直し（更新）では変わらず、解除した `alias` は使い回しません。解除して別のアカウントをつなぎ直すと新しい `alias` になるので、前の `alias` を覚えている RP には `404` が返り、アカウントが入れ替わったことが分かります。`404` を受けた RP は一覧を引き直します。
+
+`max_accounts` で上限を設けるのは、連携ごとに行と暗号化した保管トークンが残り、ユーザーを削除するときは 1 件ずつ外部IdPで失効させるためです。外部アカウントを名乗らない連携先では、上限が無いと連携するたびに際限なく増えます。上限は確定のときに今の件数と比べるだけなので、同時に確定すると 1 件ほど超えることがあります。上限を下げても、すでにある連携はそのまま残り、追加だけを断ります。
+
+1 件の連携先では、行に `single_account` の印を付け、データベースの一意制約で 1 ユーザー×連携先に 1 行に保ちます。同時に complete しても 2 行目はできません（後の側は `409` になり、何も書きません）。
+
+`revoke_on_relink` は、連携し直し（更新）のときに、入れ替わる前の保管トークンを `revocation_endpoint` で失効させるかです。既定は `false` で、古いトークンは上書きするだけで外部IdPには伝えません。
+
+| 値 | 挙動 |
+|---|---|
+| `false`（既定） | 失効させない。古いトークンは外部IdPの上で期限まで有効なまま残る（idp-server はもう使わない） |
+| `true` | 新しいトークンを保存したあとで、古いリフレッシュトークン、古いアクセストークンの順に失効させる。新しいトークンと同じ値（外部IdPが同じリフレッシュトークンを返した場合）は失効させない。失効はベストエフォートで、失敗しても連携し直しは成功する |
+
+RFC 7009 では、トークンを失効させた外部IdPが、同じ認可（grant）から出た他のトークンもまとめて失効させてよいことになっています。連携し直しは同じクライアントでの認可のやり直しなので、新しいトークンも同じ認可に入ることがあります。そういう外部IdP（Google など、失効でアプリへの許可ごと取り消すもの）で `true` にすると、受け取ったばかりの新しいトークンまで使えなくなり、連携し直した直後に連携が切れます。`true` にするのは、指定したトークンだけを失効させると分かっている外部IdPだけにしてください。`revocation_endpoint` が無いと、`true` でも失効させません。
+
+`duplicate_link_policy` は、同じ外部アカウントが既にテナント内の別ユーザーに紐付いている場合の挙動です。
+
+| 値 | 挙動 |
+|---|---|
+| `reject`（既定） | 409 を返す |
+| `allow` | 複数ユーザーがそれぞれ自分の連携として保持できる |
+
+**データベース側では一意制約をかけていません。** 保管している外部アカウント識別子は識別子であって identity ではなく（この値で認証する経路はありません）、一律に禁止すると共用の法人アカウントのような正当なケースを塞ぐうえ、先に連携した側が本来の持ち主を締め出せてしまうためです。ログイン用の Federation は `idp_user` 側に一意制約を持っており、そちらは「1つの外部 identity が2人に解決されない」ことを担保する必要があるので事情が異なります。
+
+### クライアント
+
+連携の API を呼ぶクライアントは、ユーザーのトークンで `linked_account:read` / `linked_account:manage` を得る必要があります。保管トークンを取り出すクライアントは `linked_account:read_token` も要ります。テナントの `scopes_supported` と、クライアントの `scope` の両方に追加してください。どちらかが無いと scope が付与されず、常に `403` になります。
+
+連携完了後の戻り先を `extension.linking_return_uris` に登録します。
+
+```json
+{
+  "extension": {
+    "linking_return_uris": ["https://rp.example.com/linking/callback"]
+  }
+}
+```
+
+認可の `redirect_uris` とは分けています。連携後の戻り先は通常アプリの設定画面であり、認可コードを受け取るURLではありません。流用すると、本来コールバックでないURLに認可コードを飛ばせるようになります。
+
+`extension.linking_providers` には連携の開始を許す連携先、`extension.linking_token_providers` には保管トークンの取得を許す連携先（どちらも `sso_provider`）を列挙します。列挙していない連携先への `link` は `403`、そのトークンの取得は `403 unauthorized_client` です。
+
+```json
+{
+  "extension": {
+    "linking_providers": ["example-idp"],
+    "linking_token_providers": ["example-idp"]
+  }
+}
+```
+
+`link` の `scope` は、連携先の設定の `scopes_supported` の範囲に限ります。外部IdPには idp-server の外部クライアントの名義で要求するため、範囲を決めるのは運用者で、RP はそれを狭めることしかできません。範囲外の値は `400` です。
+
+### 暗号化
+
+トークンはテナントごとのデータ鍵（DEK）で AES-GCM 暗号化して保管します。DEK は鍵暗号化鍵（KEK、環境変数 `ENCRYPTION_KEYS`）で包んで `tenant_data_keys` に置き、行の `encryption_key_id` は DEK の id を指します。
+
+- 暗号化ごとに乱数の salt から鍵を派生させ、暗号文と一緒に `{version, salt, iv, cipher_text}` として保存します。
+- テナント・用途・DEK の id に加えて、ユーザー・連携先・トークンの種類（アクセストークンかリフレッシュトークンか）を AAD に入れます。別のテナントや別のユーザーの行へ書き写した暗号文、2 つのトークンを入れ替えた暗号文は開きません。
+- KEK を替えても DEK を包み直すだけで、保管トークンは書き換えません。手順は [データ鍵と鍵暗号化鍵のローテーション](../content_08_ops/commercial-deployment/07-data-key-rotation.md) を参照してください。
+
+`ENCRYPTION_KEYS` が無ければ `ENCRYPTION_KEY` を KEK として使うため、追加の設定なしで動きます。
+
+---
+
+## 保管トークンの取得
+
+連携したアカウントの外部IdPアクセストークンを、クライアントがユーザーに代わって取り出します。
+
+```
+POST /{tenant-id}/v1/linked-external-accounts/{alias}/token
+Content-Type: application/x-www-form-urlencoded
+
+token={ユーザーのアクセストークン}&client_id=...&client_secret=...
+```
+
+次の全てを満たす場合だけトークンを返します。
+
+- クライアントが認証に成功している。public クライアント（`none`）は拒否します。`attest_jwt_client_auth`（ABCA）は使えます
+- `token` が有効なユーザーのアクセストークンで、**同じクライアント**に発行され、`linked_account:read_token` スコープを持つ
+- `token` が sender-constrained なら、その送り手から出されている。DPoP は `DPoP` ヘッダーの proof（RFC 9449。`htu` はこの API の URL、`ath` は `token` のハッシュ）、mTLS 証明書は TLS クライアント証明書の thumbprint（RFC 8705）、クライアントインスタンス束縛はこのリクエストのクライアント認証で使われたインスタンスの鍵と登録で照合します
+- 連携先がクライアントの `linking_token_providers` に含まれている
+
+クライアントインスタンス束縛を照合するのは、クライアント認証を求めるこの API だけです。`/me/linked-external-accounts` 系の API はクライアント認証を求めないので、照合するのは DPoP と mTLS だけです。`/me` 系でも送り手を縛るなら、ABCA に DPoP を組み合わせます。
+
+```json
+{
+  "access_token": "...",
+  "token_type": "Bearer",
+  "issued_token_type": "urn:ietf:params:oauth:token-type:access_token",
+  "expires_in": 3599
+}
+```
+
+連携時に付与された scope を保管していれば `scope` も返します。外部IdPのトークン応答に `scope` が無いときは、要求どおりに認められたとみなし（RFC 6749 §5.1）、外部IdPに要求した scope（`link` の `scope`、省略時は `scopes_supported`）を保管します。リフレッシュの応答が `scope` を返したら、その値に置き換えます。
+
+レスポンスには `Cache-Control: no-store` が付きます。返すのはアクセストークンだけで、リフレッシュトークンは返しません。リフレッシュトークンはこのサーバーが保管して使います。アプリが使うと、ローテーションで保管側のトークンが無効になるためです。
+
+アクセストークンの期限まで `refresh_before_expiry_seconds`（既定 30 秒）を切っていれば、保管しているリフレッシュトークンで更新してから返します。同じ連携への同時リクエストは行ロックで待ち合わせ、リフレッシュトークンを二重に使いません。
+
+`force_refresh=true` を付けると、期限に関わらず更新してから返します。外部IdPでトークンが取り消され、外部APIが期限前のトークンを `401` で断ったときのためです。付けなければ、期限前は同じトークンを返し続けます。ロックを待つ間にほかのリクエストが更新を済ませていれば、もう一度は更新せずにそのトークンを返します。`401` を受けた処理が一斉に取り直しても、外部IdPを呼ぶのは 1 回です。`force_refresh` は付けるたびに外部IdPを呼ぶので、外部APIに断られたときだけ付けます。
+
+| ステータス | `error` | 発生条件 |
+|---|---|---|
+| 400 | `invalid_request` | `token` が無い / `force_refresh` が `true` でも `false` でもない / `DPoP` ヘッダーが 2 つ以上 |
+| 400 | `relink_required` | リフレッシュトークンが無い・期限切れ・外部IdPに拒否された（429 以外の 4xx）。連携し直す必要があります |
+| 400 | `provider_unavailable` | 連携先が削除・無効化された。期限内のトークンも返しません。連携し直しも失敗します |
+| 401 | `invalid_client` | クライアント認証に失敗した / public クライアント |
+| 401 | `invalid_token` | `token` が無効・期限切れ・ユーザーを指していない / ユーザーが有効でない / sender-constrained なのに送り手の証明が合わない |
+| 403 | `unauthorized_client` | `token` が別のクライアントに発行された / 連携先が許可されていない |
+| 403 | `insufficient_scope` | `token` に `linked_account:read_token` が無い |
+| 404 | `not_found` | `alias` がユーザーの連携に無い |
+| 502 | `temporarily_unavailable` | 外部IdPがリフレッシュに 5xx か 429 を返した、到達できない、またはエラーでない応答に `access_token` が無かった（リダイレクトを含む） |
+
+---
+
+## 管理API
+
+管理者がユーザーの連携を確認・解除するための API です。システムレベルと組織レベルの両方にあります。保管しているトークンはどれも返しません。
+
+| メソッド | パス | 権限 |
+|---|---|---|
+| GET | `/v1/management/organizations/{organization-id}/tenants/{tenant-id}/users/{user-id}/linked-external-accounts` | `idp:linked-account:read` |
+| GET | `.../users/{user-id}/linked-external-accounts/{alias}` | `idp:linked-account:read` |
+| DELETE | `.../users/{user-id}/linked-external-accounts/{alias}` | `idp:linked-account:delete` |
+
+システムレベルは `/v1/management/tenants/{tenant-id}/users/{user-id}/linked-external-accounts` から始まる同じ形です。
+
+ユーザーを指定せずにテナント全体の連携を見るときは `.../tenants/{tenant-id}/linked-external-accounts`（一覧、`provider`・`user_id`・`from`・`to` で絞り込み、`total_count` 付き）と `.../linked-external-accounts/{id}`（個別取得・解除）を使います。権限は同じです。
+
+入出力は、1 人のユーザーの連携は [ユーザー管理API](/docs/content_07_reference/cp-user-api-ja/)、テナント全体の連携は [連携管理API](/docs/content_07_reference/cp-linked-account-api-ja/) にあります。
+
+- 一覧と個別取得は `/me` の一覧と同じ項目に加えて、外部IdP側の識別子 `federated_user_id` を返します。問い合わせの対応で「どの外部アカウントの連携か」を照合するためです。
+- 解除は本人の解除と同じ手順です。行ロックを取り、保管トークンを外部IdPで失効させてから行を消します。失効はベストエフォートです。`dry_run=true` を付けると、解除せずに結果だけを返します。
+- 解除はセキュリティイベント `external_account_unlinked_by_admin` で記録します。本人の解除（`external_account_unlinked`）と分けているのは、監査で誰が外したかを区別するためです。
+- 操作は管理APIの監査ログにも残ります。
+
+権限は `idp:*` を持つロールには自動的に含まれます。権限を明示的に列挙しているロールで使うには、次の手順が要ります。
+
+1. テナントに権限が無ければ作る。権限のレコードはテナントのオンボーディング時に作られるため、それより後に追加された `idp:linked-account:read` / `idp:linked-account:delete` は既存のテナントにありません。`POST .../tenants/{tenant-id}/permissions` に `{ "name": "idp:linked-account:read", "description": "..." }` を送って作成します。
+2. 作った権限をロールに追加する。
+
+---
+
+## エラー
+
+### ブラウザ遷移の失敗
+
+`/linking/start` とコールバックはブラウザがトップレベルで開くページなので、失敗しても JSON は返さず、ブラウザを 302 で送ります。送り先は「どの連携の失敗か」と「このブラウザが連携を始めた本人のものか」で決まります。
+
+| 失敗 | 送り先 | `state` |
+|---|---|---|
+| 外部IdPで拒否された・外部IdPがエラーを返した | 戻り先（`redirect_uri`） | 付ける |
+| 外部IdPでのトークン交換・ID Token の検証・userinfo に失敗した、その他の想定外のエラー | 戻り先 | 付ける |
+| コールバックに `code` も `error` も無い | 戻り先 | 付ける |
+| `/linking/start` からのログインし直しの後もブラウザセッションが無い・ログインを取り消した・acr が `linking_acr_values` に当たらない（`login_required`） | 戻り先 | 付けない |
+| ブラウザ束縛が一致しない・操作者が一致しない | エラー画面 | — |
+| `state` が無い・未知・期限切れ | エラー画面 | — |
+| `link` の後で連携先の設定が削除・無効化された（`/linking/start`） | エラー画面 | — |
+| 連携が既に先へ進んでいる（再読み込み・戻るボタン・二重送信） | エラー画面 | — |
+
+戻り先へは次の形で返します。成功時の `linking=done` と揃えています。
+
+```
+{redirect_uri}?linking=failed&error=access_denied&state=...
+```
+
+- `error` は `access_denied` / `login_required` / `temporarily_unavailable` / `server_error` のどれかです。外部IdPがコールバックに付けてきた `error` は誰でも付けられる値なので、そのまま流さずにこの中から選びます。
+- `error_description` と外部IdPの応答本文は返しません。
+- `state` は、このブラウザが連携を始めたブラウザだと確かめられたときだけ付けます。`/linking/start` にブラウザセッションが無い場合は確かめられないため、付けません。連携セッションもそのまま残すので、サインインしたブラウザからは続けられます。
+- 戻り先は `link` のときにクライアントの `linking_return_uris` と完全一致で照合済みなので、失敗を返してもオープンリダイレクトにはなりません。
+
+戻り先へ返す失敗では、連携セッションを削除します（`login_required` は除きます。外部IdPへはまだ送っていないので、連携セッションを残し、サインインしたブラウザから同じ `start_url` で続けられます）。外部IdPはその認可リクエストに二度と答えず、認可コードも使い直せないためです。拒否もブラウザ束縛を照合してから受け付けるので、束縛を持たないブラウザから他人の連携を終わらせることはできません。
+
+コールバックは、ブラウザ束縛より先に連携の状態を見ます。既に先へ進んだ連携へのコールバックは、多くは同じブラウザの再読み込みです（束縛の Cookie はコールバックで使い終わって消えています）。これを「別のブラウザで始めた連携」として扱わないためです。
+
+失敗はセキュリティイベント `external_account_link_failed` で記録し、連携セッションが分かる場合はそのユーザーとクライアントを付けます。`/linking/start` にブラウザセッションが無いだけの場合は記録しません。セッションが切れただけの日常的なケースで、記録すると束縛や操作者の不一致が埋もれるためです。
+
+エラー画面はテナントの認証画面（`ui_config.base_url`。未設定ならテナントのドメイン）の `/error/` です。認可エンドポイントが戻せないエラーを送る先と同じです。
+
+エラー画面へ送ったときは、ブラウザは RP の戻り先に戻りません。RP は連携中の表示のまま待たず、`link` の `expires_in`（900 秒）を過ぎたら連携一覧で結果を確かめ、連携が無ければ失敗として扱います。
+
+### API の失敗
+
+`link` / `complete` / 一覧 / 解除のエラーは `{ "error": "...", "error_description": "..." }` の形です。分岐には `error` を使います。`error_description` は人が読むための文で、変わることがあります。
+
+| ステータス | `error` | 発生条件 |
+|---|---|---|
+| 400 | `invalid_request` | `link`: `redirect_uri` が未指定、または allow-list に無い / `scope` が連携先の `scopes_supported` を超える / 連携先が `openid` を持つのに `scope` に `openid` が無い |
+| 400 | `provider_unavailable` | `link`: 連携先が設定されていない・無効 |
+| 400 | `expired_link` | `complete`: 連携セッションが期限切れ |
+| 400 | `provider_unavailable` | `complete`: 連携の途中で連携先が削除・無効化された（保管トークンの取得も同じ） |
+| 403 | `insufficient_scope` | `linked_account:read` / `linked_account:manage` が無い（`scope` も付く） |
+| 403 | `invalid_request` | `link`: 連携先がクライアントの `linking_providers` に無い |
+| 403 | `client_mismatch` | `complete`: 確定したクライアントが連携を始めたクライアントと違う |
+| 403 | `access_denied` | `complete`: 操作者が連携セッションのユーザーと一致しない |
+| 404 | `not_found` | `complete`: `state` に対応する連携セッションが無い / 解除: `alias` が呼び出したユーザーの連携に無い |
+| 409 | `invalid_link_state` | `complete`: 連携セッションが確定できる状態にない（コールバック前・確定済み） |
+| 409 | `account_already_linked` | `complete`: 同じ外部アカウントが既に他のユーザーに紐付いている（`duplicate_link_policy: reject` のとき） |
+| 409 | `another_account_linked` | `complete`: この連携先の別のアカウントを既に連携している（`multiple_accounts: false` のとき） |
+| 409 | `several_accounts_linked` | `complete`: この連携先の連携が複数あって更新先を決められない |
+| 409 | `account_limit_reached` | `complete`: この連携先の連携が `max_accounts` 件に達している（`multiple_accounts: true` のとき）。1 件解除すれば、同じ `state` で確定できる |
+| 409 | `invalid_request` | `complete`: 同じユーザー・同じ連携先の確定が同時に届いた。一覧で結果を確かめる |
+| 500 | `server_error` | 想定外のエラー |
+
+`complete` を 400・403・409 で断ったときは、連携セッションは確定を待つ状態のまま残ります。原因を取り除けば、期限内なら同じ `state` で送り直せます。`expired_link`・`invalid_link_state`（確定済み）・404 のときは `link` からやり直します。
+
+409 のうち重複連携は、誰に紐付いているかを返しません。返すと外部アカウントの所有者を列挙する手がかりになるためです。
+
+同じユーザーが同じ外部アカウントをもう一度連携した場合はエラーになりません。既存の連携が更新され、`alias` は保たれます。
+
+---
+
+## 期限切れの連携セッション
+
+期限を過ぎた連携セッションは、期限切れデータの一括削除 `POST /v1/admin/operations/delete-expired-data` で消えます。応答の内訳では `account_linking_session` です。確定されなかったセッション（`parked`）が預かっていた暗号化トークンも、行と一緒に消えます。
+
+外部IdPでの失効はしません。行を消したあとは、そのトークンを持つ者がいないためです。失効させるには行ごとに外部IdPを呼ぶ必要があり、全テナントをまとめて消す一括処理には向きません。外部IdP側の許可は、そのトークンの期限まで残ります。
+
+ユーザーが削除されたときは、期限内のセッションも含めて消し、確定前のトークンは外部IdPで失効させます（エンドポイント体系の解除の説明を参照）。
+
+---
+
+## 未対応の機能
+
+| 項目 | 状態 |
+|---|---|
+| 期限切れの連携セッションの外部IdPでの失効 | 行わない。削除だけです（上の「期限切れの連携セッション」） |
+| WebView | 対応しません。外部IdP（Google など）が WebView での認可を拒否することがあるため、ASWebAuthenticationSession や Custom Tabs で開いてください |
+| 外部IdPの `response_mode=form_post` | 未対応。コールバックは GET のみです |
+| MySQL | DDL と永続化実装はありますが、MySQL での e2e は未実施です |
+| 管理APIでの保管トークンの取得 | 提供しません。管理者が他人の外部トークンを取れる強い権限になるため、使い道がはっきりするまで作りません |
+
+---
+
+## 関連ドキュメント
+
+- [外部アカウント連携のAPI仕様](/docs/content_07_reference/api-account-linking-ja/) - このページのエンドポイントの入出力
+- [認可コードフロー](./protocol-01-authorization-code-flow.md) - 連携先IdPとのやり取りのベース
+- [クライアント認証](./protocol-06-client-authentication.md) - 連携先IdPへのクライアント認証方式

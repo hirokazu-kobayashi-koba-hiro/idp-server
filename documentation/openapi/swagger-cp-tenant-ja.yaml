@@ -275,6 +275,131 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/data-keys:
+    parameters:
+    - $ref: '#/components/parameters/OrganizationId'
+    - $ref: '#/components/parameters/TenantId'
+    get:
+      summary: List tenant data keys
+      description: |
+        テナントのデータ鍵（DEK）を、世代ごとに返します。鍵そのもの（KEK で包んだ値）は返しません。
+        用途が `account-linking-token` の鍵には、その鍵で保管トークンを暗号化している連携の数が付きます。
+        古い世代が 0 になれば、その世代で暗号化したものは残っていません。
+
+        権限 `idp:data-key:read` が必要です。システムレベルは `GET /v1/management/tenants/{tenant-id}/data-keys` です。
+      tags:
+      - organization-tenant
+      parameters:
+      - name: purpose
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: [account-linking-token]
+        description: 用途で絞り込む
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: [active, passive, destroyed]
+        description: 状態で絞り込む。それ以外の値は 400
+      responses:
+        '200':
+          description: データ鍵の一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TenantDataKey'
+                  total_count:
+                    type: integer
+                    description: 絞り込みに合う鍵の数
+                required:
+                - list
+                - total_count
+        '400':
+          description: '`status` が不正です'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限不足または無効な組織・テナントアクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/data-keys/rotate:
+    parameters:
+    - $ref: '#/components/parameters/OrganizationId'
+    - $ref: '#/components/parameters/TenantId'
+    post:
+      summary: Rotate tenant data key
+      description: |
+        テナントのデータ鍵の新しい世代を作ります。新しく暗号化するものは新しい世代を使い、
+        前の世代は開くためだけに残ります。既存のデータを一括で暗号化し直すことはしません。
+        他のサーバーは active な鍵を最大 60 秒キャッシュするため、その間は前の世代で暗号化することがあります（前の世代も開けます）。
+
+        権限 `idp:data-key:rotate` が必要です。システムレベルは `POST /v1/management/tenants/{tenant-id}/data-keys/rotate` です。
+      tags:
+      - organization-tenant
+      parameters:
+      - $ref: '#/components/parameters/DryRun'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                purpose:
+                  type: string
+                  enum: [account-linking-token]
+                  default: account-linking-token
+      responses:
+        '200':
+          description: 新しい世代を作りました（`dry_run=true` のときは作らずに結果だけを返します）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tenant_id:
+                    type: string
+                    format: uuid
+                  purpose:
+                    type: string
+                  data_key_id:
+                    type: string
+                    format: uuid
+                    description: 新しい世代の鍵の id（`dry_run=true` のときは無い）
+                  dry_run:
+                    type: boolean
+                  message:
+                    type: string
+        '400':
+          description: '`purpose` が不正です'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限不足または無効な組織・テナントアクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 同じテナントで、同時に新しい世代を作ろうとしました。やり直してください
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 security:
 - BearerAuth: []
 components:
@@ -927,6 +1052,35 @@ components:
               description: >-
                 `standard_claims:` プレフィックス付きスコープによる、アクセストークンでの標準 OIDC クレーム（email/name/phone_number 等）の選択的包含を有効にする。
                 デフォルト false。PII をアクセストークンに載せる能力のため、`custom_claims_scope_mapping` とは別の専用 opt-in。
+    TenantDataKey:
+      type: object
+      description: テナントのデータ鍵の 1 世代。KEK で包んだ鍵そのものは含みません
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenant_id:
+          type: string
+          format: uuid
+        purpose:
+          type: string
+          example: account-linking-token
+        version:
+          type: integer
+          description: 世代。新しい世代を作るたびに 1 増えます
+        status:
+          type: string
+          enum: [active, passive, destroyed]
+          description: active は新しく暗号化する鍵（用途ごとに 1 本）、passive は開くためだけに残る鍵
+        kek_id:
+          type: string
+          description: この鍵を包んでいる鍵暗号化鍵（KEK）の key id
+        created_at:
+          type: string
+          format: date-time
+        linked_external_accounts:
+          type: integer
+          description: この鍵で保管トークンを暗号化している連携の数。用途が account-linking-token の鍵だけに付きます
     ErrorResponse:
       type: object
       properties:

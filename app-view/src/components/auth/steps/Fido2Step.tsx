@@ -36,7 +36,7 @@ type ChallengeResponse = {
  * AppContext and was sent empty after a reload, causing a `forbidden` error (Issue #1373).
  */
 export const Fido2Step = ({ tenantId, id, onCompleted }: StepProps) => {
-  const [identifier, setIdentifier] = useAtom(authIdentifierAtom);
+  const [identifier, setIdentifier] = useAtom(authIdentifierAtom(id));
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 

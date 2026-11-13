@@ -76,7 +76,7 @@ export const StepRenderer = ({
   passwordRegister,
   ...props
 }: StepRendererProps) => {
-  const [userStatus] = useAtom(authUserStatusAtom);
+  const [userStatus] = useAtom(authUserStatusAtom(props.id));
   const Component = resolveStepComponent(
     props.step,
     userStatus,

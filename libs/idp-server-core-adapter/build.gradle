@@ -19,6 +19,7 @@ dependencies {
 	implementation project(':libs:idp-server-core-extension-verifiable-credentials')
 	implementation project(':libs:idp-server-authentication-interactors')
 	implementation project(':libs:idp-server-control-plane')
+	implementation project(':libs:idp-server-account-linking')
 
 	//database
 	runtimeOnly 'org.postgresql:postgresql:42.7.2'
