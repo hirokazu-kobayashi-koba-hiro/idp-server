@@ -126,6 +126,10 @@ const config = {
             route: '/docs/content_07_reference/cp-user-api-ja/',
           },
           {
+            spec: 'openapi/swagger-cp-linked-account-ja.yaml',
+            route: '/docs/content_07_reference/cp-linked-account-api-ja/',
+          },
+          {
             spec: 'openapi/swagger-cp-role-permission-ja.yaml',
             route: '/docs/content_07_reference/cp-role-permission-api-ja/',
           },

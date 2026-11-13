@@ -311,6 +311,8 @@ curl -X POST "${IDP_SERVER_URL}/${TENANT_ID}/v1/linked-external-accounts/${ALIAS
 
 ユーザーを指定せずにテナント全体を見るときは `.../tenants/{tenant-id}/linked-external-accounts` を使います。`provider`・`user_id`・`from`・`to` で絞り込み、`total_count` で件数を返します。連携先を消したり名前を変えたりする前に、その連携先の連携が残っていないかを確かめます。
 
+入出力は、1 人のユーザーの連携は [ユーザー管理API](/docs/content_07_reference/cp-user-api-ja/)、テナント全体の連携は [連携管理API](/docs/content_07_reference/cp-linked-account-api-ja/) にあります。
+
 ```bash
 # 連携先 example-idp に残っている連携の数（total_count）
 curl "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/linked-external-accounts?provider=example-idp&limit=1" \

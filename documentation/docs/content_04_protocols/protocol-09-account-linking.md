@@ -405,6 +405,10 @@ token={ユーザーのアクセストークン}&client_id=...&client_secret=...
 
 システムレベルは `/v1/management/tenants/{tenant-id}/users/{user-id}/linked-external-accounts` から始まる同じ形です。
 
+ユーザーを指定せずにテナント全体の連携を見るときは `.../tenants/{tenant-id}/linked-external-accounts`（一覧、`provider`・`user_id`・`from`・`to` で絞り込み、`total_count` 付き）と `.../linked-external-accounts/{id}`（個別取得・解除）を使います。権限は同じです。
+
+入出力は、1 人のユーザーの連携は [ユーザー管理API](/docs/content_07_reference/cp-user-api-ja/)、テナント全体の連携は [連携管理API](/docs/content_07_reference/cp-linked-account-api-ja/) にあります。
+
 - 一覧と個別取得は `/me` の一覧と同じ項目に加えて、外部IdP側の識別子 `federated_user_id` を返します。問い合わせの対応で「どの外部アカウントの連携か」を照合するためです。
 - 解除は本人の解除と同じ手順です。行ロックを取り、保管トークンを外部IdPで失効させてから行を消します。失効はベストエフォートです。`dry_run=true` を付けると、解除せずに結果だけを返します。
 - 解除はセキュリティイベント `external_account_unlinked_by_admin` で記録します。本人の解除（`external_account_unlinked`）と分けているのは、監査で誰が外したかを区別するためです。

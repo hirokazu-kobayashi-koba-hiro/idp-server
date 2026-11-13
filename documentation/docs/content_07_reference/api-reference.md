@@ -24,6 +24,7 @@
 - [クライアント管理API](cp-client-api-ja)
 - [Client Instance 管理API](cp-client-instance-api-ja)
 - [ユーザー管理API](cp-user-api-ja)
+- [連携管理API](cp-linked-account-api-ja)
 - [ロール・権限管理API](cp-role-permission-api-ja)
 - [認証設定管理API](cp-authentication-api-ja)
 - [身元確認設定管理API](cp-identity-verification-api-ja)

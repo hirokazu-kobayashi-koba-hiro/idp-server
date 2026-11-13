@@ -36,7 +36,8 @@ info:
 
     ## このページに無いもの
 
-    - 利用者の連携の一覧・解除（管理者向け）: [ユーザー管理API](/docs/content_07_reference/cp-user-api-ja/)
+    - 1 人のユーザーの連携の確認・解除（管理者向け）: [ユーザー管理API](/docs/content_07_reference/cp-user-api-ja/)
+    - テナント全体の連携の確認・解除（管理者向け）: [連携管理API](/docs/content_07_reference/cp-linked-account-api-ja/)
     - 連携先の設定（`federation-configurations` の `type: account-linking`）: [フェデレーション設定管理API](/docs/content_07_reference/cp-federation-api-ja/)
     - 保管トークンを暗号化する鍵（用途 `account-linking-token`）: [テナント管理API](/docs/content_07_reference/cp-tenant-api-ja/)
 
