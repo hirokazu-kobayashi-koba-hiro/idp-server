@@ -175,7 +175,7 @@ RP は認可リクエストの `scope` にもこれらを含め、ユーザー�
 
 ## Step 5: RP を実装する
 
-API の入出力は [リソースオーナー向けAPI（OpenAPI）](../../../openapi/swagger-resource-owner-ja.yaml) を参照してください。動く実装は `sample-web/src/app/api/linked-accounts/` と `sample-web/src/app/(authenticated)/linked-accounts/` にあります。
+API の入出力は [外部アカウント連携のAPI仕様](/docs/content_07_reference/api-account-linking-ja/) を参照してください。動く実装は `sample-web/src/app/api/linked-accounts/` と `sample-web/src/app/(authenticated)/linked-accounts/` にあります。
 
 ### 5.1 連携を開始する
 

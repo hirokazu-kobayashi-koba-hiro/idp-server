@@ -19,36 +19,70 @@
 
 ## シーケンス
 
-```
-RPアプリ                       idp-server                    外部IdP
- │                                │                              │
- ├─ POST /v1/me/linked-external-accounts/link/{provider} ───────▶│
- │   Authorization: Bearer         │  Bearer から user を確定      │
- │                                │  redirect_uri を allow-list 照合
- │◀─ 201 { start_url, state }      │  連携セッションを保存 (pending)
- │                                │                              │
- ├─ location.href = start_url ────▶                              │
- │                                │  操作者 == セッションの user か
- │                                │  を照合 (authorized)          │
- │◀─ 302 外部IdPの認可URL ──────────┤                              │
- ├────────────────────────────────┼─────────────────────────────▶│
- │                                │        ユーザーがログイン・同意 │
- │                                │◀─ 302 /v1/linking/callback ───┤
- │                                │                              │
- │                                ├─ token 交換 (code_verifier) ─▶│
- │                                │◀─ access_token / refresh_token│
- │                                ├─ userinfo ──────────────────▶│
- │                                │  暗号化してセッションに預ける   │
- │                                │  (parked)                    │
- │◀─ 302 return_to?linking=done&state=                            │
- │                                │                              │
- ├─ POST /v1/me/linked-external-accounts/complete ──────────────▶│
- │   Authorization: Bearer { state }  Bearer と セッションの user  │
- │                                │  を照合して確定 (consumed)     │
- │◀─ 201 { alias, provider, ... }  │                              │
+```mermaid
+sequenceDiagram
+    participant RP as RPアプリ（サーバー）
+    participant Browser as ブラウザ
+    participant idp as idp-server
+    participant Ext as 外部IdP
+
+    Note over RP,Ext: ① 開始
+    RP ->> idp: POST /v1/me/linked-external-accounts/link/{provider}<br/>Authorization: Bearer、{ redirect_uri, scope }
+    idp ->> idp: トークンのユーザーとクライアントを連携セッションに結び付ける<br/>redirect_uri を linking_return_uris と完全一致で照合
+    idp ->> idp: 連携セッションを保存（PENDING）
+    idp -->> RP: 201 { start_url, state, expires_in }
+
+    Note over RP,Ext: ② ブラウザで start_url を開く（トップレベル遷移）
+    RP -->> Browser: start_url へ遷移させる
+    Browser ->> idp: GET /v1/linking/start?state=<br/>Cookie: IDP_IDENTITY、__Host-IDP_BROWSER_*
+    idp ->> idp: ブラウザセッションを確かめる<br/>操作者が連携を始めたユーザーか照合
+    opt ログインが無い・古い・acr が足りないとき
+        idp -->> Browser: 302 認可エンドポイント（prompt=login、login_hint）
+        Browser ->> idp: ログイン（認可コードは発行しない）
+        idp -->> Browser: 302 /v1/linking/start?state=&returned_from_sign_in=true
+        Browser ->> idp: GET /v1/linking/start
+        idp ->> idp: もう一度ブラウザセッションとログインを確かめる
+    end
+    idp ->> idp: 連携セッションを AUTHORIZED に
+    idp -->> Browser: 302 外部IdPの認可URL（state、nonce、code_challenge）<br/>Set-Cookie: __Host-IDP_LINK_BINDING_*
+    Browser ->> Ext: 認可リクエスト
+    Ext ->> Ext: ユーザーがログイン・同意
+    Ext -->> Browser: 302 /v1/linking/callback/{provider}?code=&state=
+
+    Note over RP,Ext: ③ コールバック
+    Browser ->> idp: GET /v1/linking/callback/{provider}<br/>Cookie: __Host-IDP_LINK_BINDING_*
+    idp ->> idp: ブラウザ束縛を照合（コードを交換する前に）<br/>連携セッションを PARKED に
+    idp ->> Ext: トークン交換（code_verifier）
+    Ext -->> idp: access_token、refresh_token、id_token
+    idp ->> idp: id_token を検証（返ってきたとき）
+    opt userinfo の設定があるとき
+        idp ->> Ext: userinfo
+        Ext -->> idp: 外部アカウントの情報
+    end
+    idp ->> idp: トークンを暗号化して連携セッションに預ける
+    idp -->> Browser: 302 {redirect_uri}?linking=done&state=
+    Browser ->> RP: 戻り先を開く
+
+    Note over RP,Ext: ④ 確定
+    RP ->> idp: POST /v1/me/linked-external-accounts/complete<br/>Authorization: Bearer、{ state }
+    idp ->> idp: クライアントとユーザーが開始と同じか照合<br/>重複を確かめて連携を保存（CONSUMED）
+    idp -->> RP: 201 { alias, provider, ... }
+
+    Note over RP,Ext: ⑤ 保管トークンの取得（あとで、何度でも）
+    RP ->> idp: POST /v1/linked-external-accounts/{alias}/token<br/>クライアント認証、token=ユーザーのアクセストークン
+    opt 期限が近い、または force_refresh=true のとき
+        idp ->> Ext: リフレッシュ
+        Ext -->> idp: 新しい access_token
+    end
+    idp -->> RP: 200 { access_token, expires_in, ... }
 ```
 
-認可コードは idp-server の中で交換されて完結し、**RPには渡りません**。
+- 認可コードは idp-server の中で交換されて完結し、**RPには渡りません**。
+- 連携セッションは `PENDING` → `AUTHORIZED` → `PARKED` → `CONSUMED` の順にしか進みません。進める前に今の状態を条件に取り直すので、同じ `start_url` やコールバックが 2 回届いても、進むのは 1 回だけです。
+- ② のログインし直し（`opt` の枠）は、ブラウザセッションが無い、ログインがクライアントの `linking_max_auth_age` より古い、またはログインの acr が `linking_acr_values` に当たらないときだけ通ります。ログインから戻っても足りなければ、`{redirect_uri}?linking=failed&error=login_required` へ戻します。
+- ブラウザセッションとして使うのは、ログインで発行した `__Host-IDP_BROWSER_{tenant-id}` が OP セッションと合うときだけです。合わなければセッションが無いのと同じに扱います。
+- ③ は認可コードを交換する前に、② を通ったブラウザか（`__Host-IDP_LINK_BINDING_{tenant-id}`）を照合します。合わなければテナントのエラー画面へ送り、コードは使いません。
+- ⑤ でリフレッシュするのは、アクセストークンの期限まで連携先の `refresh_before_expiry_seconds`（既定 30 秒）を切っているとき、または `force_refresh=true` のときです。詳しくは [保管トークンの取得](#保管トークンの取得) を参照してください。
 
 ---
 
@@ -90,7 +124,7 @@ scope は「連携を見る」（`read`）と「連携を管理する」（`mana
 
 この2本が `/me` の外にあるのは、どちらもブラウザのトップレベル遷移で Bearer を運べないためです。`/me` は `ProtectedResourceApiFilter` によって Bearer 前提で保護されている名前空間なので、そこに未認証エンドポイントを混ぜると、実装者が「フィルタが通っているはず」と誤認する余地が生まれます。
 
-一覧のレスポンスにトークンは含まれません。返るのは `alias` / `provider` / `federated_username` / `scope` / 各有効期限 / `created_at` / `updated_at` です。
+一覧のレスポンスにトークンは含まれません。返るのは `alias` / `provider` / `federated_username` / `scope` / 各有効期限 / `created_at` / `updated_at` です。ページングはなく、ユーザーの連携を全件返します。
 
 解除は呼び出したユーザー自身の連携だけが対象で、他人の `alias` を指定しても 404 になります。行を消す前に、保管しているトークンを外部IdPの失効エンドポイント（RFC 7009）で失効させます。行を消すだけでは、写し取られたトークンが外部IdP側で有効なまま残るためです。
 
@@ -159,6 +193,8 @@ pending ──[start] 操作者を照合──▶ authorized ──[callback] �
 - セッションが無いか、ログインがクライアントの `linking_max_auth_age`（既定 300 秒）より古い場合は、RP へ戻さずに idp-server の認証画面へ送ります。認可リクエストは連携を始めたクライアントの名前で、`prompt=login` と `login_hint=sub:<連携を始めたユーザー>` を付けるので、本人だけがログインできます。
 - クライアントに `linking_acr_values` があるときは、ログインの acr がそのどれかに当たることも求めます。当たらなければ、ログインが新しくてもログインし直させ、認可リクエストに `acr_values` として載せます。認証ポリシーは `client_id`・`acr_values`・`scope` で選ばれるので、普段のログインより強いポリシー（例：FIDO だけ）を連携に当てられます。無いときは、普段のログインと同じポリシーが当たります。
 - ログインが終わると、認可コードは発行せずに `/linking/start` へ戻り、もう一度セッションとログインの新しさを確かめてから外部IdPへ進みます。認証画面の同意は省きます。
+  - 戻り先は authorize の応答で渡します。認可リクエストにはカスタムパラメータ `idp_linking_state` が付いていて、ログインの後に認可画面が authorize を呼ぶと、応答の `redirect_uri` が `/linking/start?state=...&returned_from_sign_in=true` になります（認可画面が別サイトにある構成では、ほかの認可と同じく `/complete` を経由して同じ URL へ戻ります）。ログインを取り消して deny を呼んだときも、同じ URL が返ります。
+  - 同梱の認可画面はこれに対応しています。認可画面を自分で作る場合は、view-data の `custom_params.idp_linking_state` で見分けて、同意画面を出さずに authorize を呼び、返った `redirect_uri` へ遷移します。authorize-with-session は `400` になります。
 - ログインを取り消した場合や、戻ってもセッションが無い場合（セッションを書けない環境）、戻っても acr が `linking_acr_values` に当たらない場合は、戻り先へ `linking=failed&error=login_required` を返します（[ブラウザ遷移の失敗](#ブラウザ遷移の失敗)）。
 - セッションが別のユーザーのものなら、ログインへは送らずにエラー画面で止めます。
 
@@ -468,5 +504,6 @@ token={ユーザーのアクセストークン}&client_id=...&client_secret=...
 
 ## 関連ドキュメント
 
+- [外部アカウント連携のAPI仕様](/docs/content_07_reference/api-account-linking-ja/) - このページのエンドポイントの入出力
 - [認可コードフロー](./protocol-01-authorization-code-flow.md) - 連携先IdPとのやり取りのベース
 - [クライアント認証](./protocol-06-client-authentication.md) - 連携先IdPへのクライアント認証方式

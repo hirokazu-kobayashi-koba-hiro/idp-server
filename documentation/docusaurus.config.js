@@ -102,6 +102,10 @@ const config = {
             route: '/docs/content_07_reference/api-resource-owner-ja/',
           },
           {
+            spec: 'openapi/swagger-account-linking-ja.yaml',
+            route: '/docs/content_07_reference/api-account-linking-ja/',
+          },
+          {
             spec: 'openapi/swagger-internal-ja.yaml',
             route: '/docs/content_07_reference/api-internal-ja/',
           },
