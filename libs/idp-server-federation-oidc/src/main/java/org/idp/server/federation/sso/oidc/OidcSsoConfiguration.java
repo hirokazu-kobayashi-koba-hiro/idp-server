@@ -21,6 +21,9 @@ import java.util.Objects;
 import org.idp.server.core.openid.federation.sso.SsoProvider;
 import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.mapper.MappingRule;
+import org.idp.server.platform.oauth.client.OutboundClientAuthenticationConfig;
+import org.idp.server.platform.oauth.client.OutboundClientAuthenticationType;
+import org.idp.server.platform.oauth.client.OutboundClientCredentials;
 
 public class OidcSsoConfiguration implements JsonReadable {
 
@@ -45,6 +48,7 @@ public class OidcSsoConfiguration implements JsonReadable {
   long accessTokenExpiresIn;
   long refreshTokenExpiresIn;
   boolean storeCredentials = false;
+  OutboundClientAuthenticationConfig clientAuthentication;
 
   public OidcSsoConfiguration() {}
 
@@ -159,6 +163,37 @@ public class OidcSsoConfiguration implements JsonReadable {
 
   public String jwksUri() {
     return jwksUri;
+  }
+
+  /**
+   * The client authentication values beyond {@code client_id} and {@code client_secret} ({@code
+   * client_authentication}).
+   */
+  public OutboundClientAuthenticationConfig clientAuthentication() {
+    return clientAuthentication == null
+        ? new OutboundClientAuthenticationConfig()
+        : clientAuthentication;
+  }
+
+  /**
+   * How this server authenticates to the external IdP's token endpoint.
+   *
+   * <p>Without a {@code client_authentication_type}, the secret goes in the form ({@code
+   * client_secret_post}), as before. A client assertion addressed to the issuer is addressed to
+   * this configuration's {@code issuer}.
+   *
+   * @throws org.idp.server.platform.exception.InvalidConfigurationException when {@code
+   *     client_authentication_type} names no supported type
+   */
+  public OutboundClientCredentials clientCredentials() {
+    return new OutboundClientCredentials(
+        OutboundClientAuthenticationType.of(
+            clientAuthenticationType, OutboundClientAuthenticationType.client_secret_post),
+        clientId,
+        clientSecret,
+        tokenEndpoint,
+        issuer,
+        clientAuthentication());
   }
 
   public String privateKeys() {

@@ -24,6 +24,8 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Map;
 import org.idp.server.platform.http.SsrfProtectedHttpClient;
+import org.idp.server.platform.oauth.client.OutboundClientAuthenticationType;
+import org.idp.server.platform.oauth.client.OutboundClientCredentials;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -49,8 +51,17 @@ class OAuthAuthorizationResolverErrorTest {
   }
 
   private void stubConfig() {
-    when(config.toRequestValues()).thenReturn(Map.of("grant_type", "password"));
+    when(config.toGrantValues()).thenReturn(Map.of("grant_type", "password"));
     when(config.tokenEndpoint()).thenReturn("https://idp.example.com/token");
+    when(config.clientCredentials())
+        .thenReturn(
+            new OutboundClientCredentials(
+                OutboundClientAuthenticationType.client_secret_post,
+                "client",
+                "secret",
+                "https://idp.example.com/token",
+                null,
+                null));
   }
 
   @Test
@@ -88,7 +99,6 @@ class OAuthAuthorizationResolverErrorTest {
   @Test
   void clientCredentialsResolver_throwsOAuthAuthorizationExceptionOn401() {
     stubConfig();
-    when(config.isClientSecretBasic()).thenReturn(false);
     stubResponse(401, "{\"error\":\"invalid_client\"}");
     var resolver = new ClientCredentialsAuthorizationResolver(httpClient);
 
@@ -101,7 +111,6 @@ class OAuthAuthorizationResolverErrorTest {
   @Test
   void clientCredentialsResolver_returnsAccessTokenOn200() {
     stubConfig();
-    when(config.isClientSecretBasic()).thenReturn(false);
     stubResponse(200, "{\"access_token\":\"tok-456\"}");
     var resolver = new ClientCredentialsAuthorizationResolver(httpClient);
 

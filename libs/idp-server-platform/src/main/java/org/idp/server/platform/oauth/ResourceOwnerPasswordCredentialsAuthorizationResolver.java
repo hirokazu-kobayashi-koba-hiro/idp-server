@@ -16,10 +16,8 @@
 
 package org.idp.server.platform.oauth;
 
-import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import org.idp.server.platform.http.HttpQueryParams;
 import org.idp.server.platform.http.SsrfProtectedHttpClient;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonNodeWrapper;
@@ -30,6 +28,8 @@ public class ResourceOwnerPasswordCredentialsAuthorizationResolver
 
   SsrfProtectedHttpClient ssrfProtectedHttpClient;
   JsonConverter jsonConverter;
+  OAuthAuthorizationTokenRequestFactory tokenRequestFactory =
+      new OAuthAuthorizationTokenRequestFactory();
   LoggerWrapper log =
       LoggerWrapper.getLogger(ResourceOwnerPasswordCredentialsAuthorizationResolver.class);
 
@@ -46,16 +46,7 @@ public class ResourceOwnerPasswordCredentialsAuthorizationResolver
 
   @Override
   public String resolve(OAuthAuthorizationConfiguration config) {
-    HttpQueryParams httpQueryParams = new HttpQueryParams(config.toRequestValues());
-
-    HttpRequest.Builder builder =
-        HttpRequest.newBuilder()
-            .uri(URI.create(config.tokenEndpoint()))
-            .header("Content-Type", "application/x-www-form-urlencoded")
-            .header("Accept", "application/json")
-            .POST(HttpRequest.BodyPublishers.ofString(httpQueryParams.params()));
-
-    HttpRequest request = builder.build();
+    HttpRequest request = tokenRequestFactory.create(config);
 
     log.debug("Request headers: {}", request.headers());
 

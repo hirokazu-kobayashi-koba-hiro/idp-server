@@ -30,6 +30,8 @@ import org.idp.server.platform.log.LoggerWrapper;
 
 public class FacebookOidcExecutor implements OidcSsoExecutor {
 
+  OidcTokenHttpRequestFactory tokenHttpRequestFactory = new OidcTokenHttpRequestFactory();
+
   LoggerWrapper log = LoggerWrapper.getLogger(FacebookOidcExecutor.class);
   HttpRequestExecutor httpRequestExecutor;
   JsonConverter jsonConverter;
@@ -48,20 +50,7 @@ public class FacebookOidcExecutor implements OidcSsoExecutor {
   public OidcTokenResult requestToken(OidcTokenRequest oidcTokenRequest) {
     try {
 
-      HttpQueryParams httpQueryParams = new HttpQueryParams(oidcTokenRequest.toMap());
-
-      HttpRequest.Builder builder =
-          HttpRequest.newBuilder()
-              .uri(new URI(oidcTokenRequest.endpoint()))
-              .header("Content-Type", "application/x-www-form-urlencoded")
-              .header("Accept", "application/json")
-              .POST(HttpRequest.BodyPublishers.ofString(httpQueryParams.params()));
-
-      if (oidcTokenRequest.isClientSecretBasic()) {
-        builder.header("Authorization", oidcTokenRequest.basicAuthenticationValue());
-      }
-
-      HttpRequest request = builder.build();
+      HttpRequest request = tokenHttpRequestFactory.create(oidcTokenRequest);
 
       HttpRequestResult httpResult = httpRequestExecutor.execute(request);
       JsonNodeWrapper json = httpResult.body();

@@ -16,7 +16,6 @@
 
 package org.idp.server.federation.sso.oidc;
 
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.http.HttpRequest;
 import java.util.Map;
@@ -24,7 +23,6 @@ import org.idp.server.core.openid.federation.FederationType;
 import org.idp.server.core.openid.federation.sso.SsoProvider;
 import org.idp.server.core.openid.federation.sso.oidc.OidcSsoSession;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequestIdentifier;
-import org.idp.server.platform.http.HttpQueryParams;
 import org.idp.server.platform.http.HttpRequestExecutor;
 import org.idp.server.platform.http.HttpRequestResult;
 import org.idp.server.platform.json.JsonConverter;
@@ -33,6 +31,8 @@ import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class OAuthExtensionExecutor implements OidcSsoExecutor {
+
+  OidcTokenHttpRequestFactory tokenHttpRequestFactory = new OidcTokenHttpRequestFactory();
 
   LoggerWrapper log = LoggerWrapper.getLogger(OAuthExtensionExecutor.class);
   HttpRequestExecutor httpRequestExecutor;
@@ -74,20 +74,7 @@ public class OAuthExtensionExecutor implements OidcSsoExecutor {
   public OidcTokenResult requestToken(OidcTokenRequest oidcTokenRequest) {
     try {
 
-      HttpQueryParams httpQueryParams = new HttpQueryParams(oidcTokenRequest.toMap());
-
-      HttpRequest.Builder builder =
-          HttpRequest.newBuilder()
-              .uri(new URI(oidcTokenRequest.endpoint()))
-              .header("Content-Type", "application/x-www-form-urlencoded")
-              .header("Accept", "application/json")
-              .POST(HttpRequest.BodyPublishers.ofString(httpQueryParams.params()));
-
-      if (oidcTokenRequest.isClientSecretBasic()) {
-        builder.header("Authorization", oidcTokenRequest.basicAuthenticationValue());
-      }
-
-      HttpRequest request = builder.build();
+      HttpRequest request = tokenHttpRequestFactory.create(oidcTokenRequest);
 
       HttpRequestResult httpResult = httpRequestExecutor.execute(request);
       JsonNodeWrapper json = httpResult.body();

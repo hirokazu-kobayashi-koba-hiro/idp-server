@@ -221,6 +221,20 @@ HttpRequestExecutor は OAuth 2.0 認証を透過的にサポートしていま�
 }
 ```
 
+#### クライアント認証
+
+`client_authentication_type` は、トークンエンドポイントでのクライアント認証です。
+
+| 値 | 送るもの |
+|---|---|
+| `client_secret_basic` | `Authorization: Basic` ヘッダー |
+| `client_secret_post` | フォームの `client_secret` |
+| `client_secret_jwt` | `client_secret` で署名したクライアントアサーション（RFC 7523） |
+| `private_key_jwt` | `client_authentication.signing_key` で署名したクライアントアサーション |
+| `none`（省略時） | `client_id` だけ |
+
+これ以外の値はトークン要求のときにエラーになります。`client_secret_jwt` / `private_key_jwt` の `client_authentication`（`signing_algorithm` / `signing_key` / `assertion_audience`）は [Federation設定ガイド](../../05-configuration/federation.md) と同じです。`assertion_audience` を `issuer` にするときは、`client_authentication.issuer` に宛先の issuer を書きます。
+
 #### キャッシュ設定
 
 - **`cache_enabled`**: トークンキャッシュの有効/無効

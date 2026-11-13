@@ -16,11 +16,12 @@
 
 package org.idp.server.platform.oauth;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.platform.json.JsonReadable;
+import org.idp.server.platform.oauth.client.OutboundClientAuthenticationConfig;
+import org.idp.server.platform.oauth.client.OutboundClientAuthenticationType;
+import org.idp.server.platform.oauth.client.OutboundClientCredentials;
 
 public class OAuthAuthorizationConfiguration implements JsonReadable {
 
@@ -36,6 +37,7 @@ public class OAuthAuthorizationConfiguration implements JsonReadable {
   Integer cacheBufferSeconds;
   Integer cacheTtlSeconds;
   Boolean cacheEnabled;
+  OutboundClientAuthenticationConfig clientAuthentication;
 
   public OAuthAuthorizationConfiguration() {}
 
@@ -155,16 +157,6 @@ public class OAuthAuthorizationConfiguration implements JsonReadable {
     return type != null && !type.isEmpty();
   }
 
-  public boolean isClientSecretBasic() {
-    return clientAuthenticationType != null
-        && clientAuthenticationType.equals("client_secret_basic");
-  }
-
-  public boolean isClientSecretPost() {
-    return clientAuthenticationType != null
-        && clientAuthenticationType.equals("client_secret_post");
-  }
-
   public boolean isClientCredentials() {
     return "client_credentials".equals(type);
   }
@@ -173,24 +165,42 @@ public class OAuthAuthorizationConfiguration implements JsonReadable {
     return "password".equals(type);
   }
 
-  public String basicAuthenticationValue() {
-    String auth = clientId + ":" + clientSecret;
-    String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes(StandardCharsets.UTF_8));
-    return "Basic " + encodedAuth;
+  /**
+   * The client authentication values beyond {@code client_id} and {@code client_secret} ({@code
+   * client_authentication}).
+   */
+  public OutboundClientAuthenticationConfig clientAuthentication() {
+    return clientAuthentication == null
+        ? new OutboundClientAuthenticationConfig()
+        : clientAuthentication;
   }
 
-  public Map<String, String> toRequestValues() {
-    Map<String, String> map = new HashMap<>();
+  /**
+   * How this configuration authenticates to the token endpoint.
+   *
+   * <p>Without a {@code client_authentication_type}, only {@code client_id} is sent, as before.
+   *
+   * @throws org.idp.server.platform.exception.InvalidConfigurationException when {@code
+   *     client_authentication_type} names no supported type
+   */
+  public OutboundClientCredentials clientCredentials() {
+    return new OutboundClientCredentials(
+        OutboundClientAuthenticationType.of(
+            clientAuthenticationType, OutboundClientAuthenticationType.none),
+        clientId,
+        clientSecret,
+        tokenEndpoint,
+        null,
+        clientAuthentication());
+  }
 
-    map.put("client_id", clientId);
+  /** The grant's own parameters. The client authentication adds its own to them. */
+  public Map<String, String> toGrantValues() {
+    Map<String, String> map = new HashMap<>();
 
     if (isResourceOwnerPassword()) {
       map.put("username", username);
       map.put("password", password);
-    }
-
-    if (isClientSecretPost()) {
-      map.put("client_secret", clientSecret);
     }
 
     map.put("scope", scope);
@@ -212,6 +222,9 @@ public class OAuthAuthorizationConfiguration implements JsonReadable {
     result.put("cache_buffer_seconds", cacheBufferSeconds);
     result.put("cache_ttl_seconds", cacheTtlSeconds);
     result.put("cache_enabled", cacheEnabled);
+    if (clientAuthentication != null) {
+      result.put("client_authentication", clientAuthentication.toMap());
+    }
     return result;
   }
 }
