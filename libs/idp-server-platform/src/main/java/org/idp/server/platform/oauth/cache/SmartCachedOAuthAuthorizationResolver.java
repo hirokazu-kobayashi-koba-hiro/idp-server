@@ -16,12 +16,10 @@
 
 package org.idp.server.platform.oauth.cache;
 
-import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Optional;
 import org.idp.server.platform.datasource.cache.CacheStore;
-import org.idp.server.platform.http.HttpQueryParams;
 import org.idp.server.platform.http.SsrfProtectedHttpClient;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonNodeWrapper;
@@ -29,6 +27,7 @@ import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
 import org.idp.server.platform.oauth.OAuthAuthorizationException;
 import org.idp.server.platform.oauth.OAuthAuthorizationResolver;
+import org.idp.server.platform.oauth.OAuthAuthorizationTokenRequestFactory;
 
 public class SmartCachedOAuthAuthorizationResolver implements OAuthAuthorizationResolver {
 
@@ -38,6 +37,8 @@ public class SmartCachedOAuthAuthorizationResolver implements OAuthAuthorization
   private final int defaultTtlSeconds;
   private final SsrfProtectedHttpClient ssrfProtectedHttpClient;
   private final JsonConverter jsonConverter;
+  private final OAuthAuthorizationTokenRequestFactory tokenRequestFactory =
+      new OAuthAuthorizationTokenRequestFactory();
   private final LoggerWrapper log =
       LoggerWrapper.getLogger(SmartCachedOAuthAuthorizationResolver.class);
 
@@ -115,20 +116,7 @@ public class SmartCachedOAuthAuthorizationResolver implements OAuthAuthorization
   }
 
   private OAuthTokenResponse executeTokenRequest(OAuthAuthorizationConfiguration config) {
-    HttpQueryParams httpQueryParams = new HttpQueryParams(config.toRequestValues());
-
-    HttpRequest.Builder builder =
-        HttpRequest.newBuilder()
-            .uri(URI.create(config.tokenEndpoint()))
-            .header("Content-Type", "application/x-www-form-urlencoded")
-            .header("Accept", "application/json")
-            .POST(HttpRequest.BodyPublishers.ofString(httpQueryParams.params()));
-
-    if (config.isClientSecretBasic()) {
-      builder.header("Authorization", config.basicAuthenticationValue());
-    }
-
-    HttpRequest request = builder.build();
+    HttpRequest request = tokenRequestFactory.create(config);
 
     log.debug("Executing token request to: {}", config.tokenEndpoint());
 

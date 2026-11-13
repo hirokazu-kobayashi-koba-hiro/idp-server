@@ -35,14 +35,11 @@ public class OidcTokenRequestCreator {
   }
 
   public OidcTokenRequest create() {
-    String endpoint = configuration.tokenEndpoint();
-    String code = parameters.code();
-    String clientId = configuration.clientId();
-    String clientSecret = configuration.clientSecret();
-    String redirectUri = session.redirectUri();
-    String grantType = "authorization_code";
-    String clientAuthenticationType = configuration.clientAuthenticationType();
     return new OidcTokenRequest(
-        endpoint, code, clientId, clientSecret, redirectUri, grantType, clientAuthenticationType);
+        configuration.tokenEndpoint(),
+        parameters.code(),
+        session.redirectUri(),
+        "authorization_code",
+        configuration.clientCredentials());
   }
 }

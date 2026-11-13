@@ -222,9 +222,32 @@ Federation認証を構成する3つの設定要素の関係を示します。
 | `token_endpoint` | ✅ | トークンエンドポイント |
 | `userinfo_endpoint` | ✅ | UserInfoエンドポイント |
 | `client_id` | ✅ | idp-serverのクライアントID |
-| `client_secret` | ✅ | idp-serverのクライアントシークレット |
+| `client_secret` | ✅ | idp-serverのクライアントシークレット（`private_key_jwt` では不要） |
+| `client_authentication_type` | - | 外部IdPのトークンエンドポイントでのクライアント認証。`client_secret_basic` / `client_secret_post`（省略時）/ `client_secret_jwt` / `private_key_jwt` / `none`。これ以外の値はトークン要求のときにエラーになる |
+| `client_authentication` | - | `client_secret_jwt` / `private_key_jwt` の追加の値（下の表） |
 | `redirect_uri` | ✅ | コールバックURI（`/{tenant-id}/v1/authorizations/federations/oidc/callback`） |
 | `scopes_supported` | ✅ | リクエストするスコープ |
+
+#### クライアント認証（`client_authentication`）
+
+`client_secret_jwt` と `private_key_jwt` は、クライアントアサーション（RFC 7523）を作ってトークン要求に載せます。アサーションの `iss` と `sub` は `client_id`、`aud` は下の `assertion_audience` に従い、`jti` は毎回新しく、有効期間は 60 秒です。
+
+| フィールド | 方式 | 説明 |
+|-----------|------|------|
+| `signing_algorithm` | 両方 | 署名のアルゴリズム。`client_secret_jwt` は `HS256`（省略時）/ `HS384` / `HS512`、`private_key_jwt` は `RS256` / `PS256` / `ES256` など（省略時は `signing_key` の `alg`） |
+| `signing_key` | `private_key_jwt` | 秘密鍵を含む JWK 1 つ。`kid` はアサーションのヘッダーに入る |
+| `assertion_audience` | 両方 | `token_endpoint`（省略時）/ `issuer`。`issuer` なら、この設定の `issuer` に宛てる。RFC 7523・OpenID Connect Core はトークンエンドポイント、FAPI 2.0 は issuer |
+
+`client_secret_jwt` の鍵は `client_secret` です。`HS256` には 32 バイト以上、`HS384` には 48 バイト以上、`HS512` には 64 バイト以上の `client_secret` が要り、短いとトークン要求のときにエラーになります。
+
+```json
+"client_id": "my-client",
+"client_authentication_type": "private_key_jwt",
+"client_authentication": {
+  "signing_algorithm": "PS256",
+  "signing_key": { "kty": "RSA", "kid": "client-key-1", "n": "...", "e": "AQAB", "d": "...", "p": "...", "q": "...", "dp": "...", "dq": "...", "qi": "..." }
+}
+```
 
 ---
 

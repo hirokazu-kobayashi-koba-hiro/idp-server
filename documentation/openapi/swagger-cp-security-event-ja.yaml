@@ -924,6 +924,72 @@ components:
         default: 0
       description: アイテムを返す開始インデックス
   schemas:
+    OAuthAuthorizationConfiguration:
+      type: object
+      description: "外部 API を呼ぶ前にアクセストークンを取るための設定（`auth_type: oauth2`）"
+      properties:
+        type:
+          type: string
+          enum: [client_credentials, password]
+          description: グラントの種類
+        token_endpoint:
+          type: string
+          format: uri
+        client_authentication_type:
+          type: string
+          enum: [client_secret_basic, client_secret_post, client_secret_jwt, private_key_jwt, none]
+          description: |
+            トークンエンドポイントでのクライアント認証。省略すると `client_id` だけを送る（`none`）。
+            これ以外の値はトークン要求のときにエラーになる
+        client_id:
+          type: string
+        client_secret:
+          type: string
+        client_authentication:
+          $ref: '#/components/schemas/OutboundClientAuthentication'
+        scope:
+          type: string
+        username:
+          type: string
+          description: "`type: password` のときのユーザー名"
+        password:
+          type: string
+          description: "`type: password` のときのパスワード"
+        cache_enabled:
+          type: boolean
+          description: 取ったトークンをキャッシュするか
+        cache_ttl_seconds:
+          type: integer
+          description: 応答に `expires_in` が無いときのキャッシュの期間（秒）
+        cache_buffer_seconds:
+          type: integer
+          description: 期限の何秒前にキャッシュを捨てるか
+      additionalProperties: false
+    OutboundClientAuthentication:
+      type: object
+      description: |
+        `client_secret_jwt` / `private_key_jwt` の追加の値。クライアントアサーション（RFC 7523）は `iss` = `sub` = `client_id`、`jti` は毎回新しく、有効期間 60 秒。
+      properties:
+        signing_algorithm:
+          type: string
+          description: |
+            署名のアルゴリズム。`client_secret_jwt` は `HS256`（省略時）/ `HS384` / `HS512`（それぞれ 32 / 48 / 64 バイト以上の `client_secret` が要る）。
+            `private_key_jwt` は `RS256` / `PS256` / `ES256` など（省略時は `signing_key` の `alg`）
+          example: PS256
+        signing_key:
+          type: object
+          description: "`private_key_jwt` の秘密鍵を含む JWK 1 つ。`kid` はアサーションのヘッダーに入る"
+          additionalProperties: true
+        assertion_audience:
+          type: string
+          enum: [token_endpoint, issuer]
+          default: token_endpoint
+          description: アサーションの `aud`。RFC 7523・OpenID Connect Core はトークンエンドポイント、FAPI 2.0 は issuer
+        issuer:
+          type: string
+          format: uri
+          description: "`assertion_audience: issuer` のときの宛先。Federation は `payload.issuer` を使うので不要"
+      additionalProperties: false
     SecurityEvent:
       type: object
       required:
@@ -1162,9 +1228,7 @@ components:
           type: string
           description: 認証タイプ
         oauth_authorization:
-          type: object
-          description: OAuth認証設定
-          additionalProperties: true
+          $ref: '#/components/schemas/OAuthAuthorizationConfiguration'
         hmac_authentication:
           type: object
           description: HMAC認証設定
@@ -1214,9 +1278,7 @@ components:
           type: string
           description: 認証タイプ
         oauth_authorization:
-          type: object
-          description: OAuth認証設定
-          additionalProperties: true
+          $ref: '#/components/schemas/OAuthAuthorizationConfiguration'
         hmac_authentication:
           type: object
           description: HMAC認証設定

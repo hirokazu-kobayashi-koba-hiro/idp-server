@@ -21,10 +21,12 @@ import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.crypto.ECDSASigner;
+import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.security.PrivateKey;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.RSAPrivateKey;
@@ -157,6 +159,63 @@ public class JsonWebSignatureFactory {
       signedJWT.sign(jwsSigner);
       return new JsonWebSignature(signedJWT);
     } catch (JsonWebKeyInvalidException | JOSEException | ParseException e) {
+      throw new JoseInvalidException(e.getMessage(), e);
+    }
+  }
+
+  /**
+   * Signs with {@code jsonWebKey} under {@code algorithm}, which need not be the key's own {@code
+   * alg}.
+   *
+   * <p>For a key configured apart from the algorithm it is used with, such as a client's signing
+   * key whose algorithm is a separate setting. The algorithm must suit the key type: an RSA key
+   * cannot sign ES256.
+   */
+  public JsonWebSignature createWithAsymmetricKey(
+      Map<String, Object> claims,
+      Map<String, Object> customHeaders,
+      JsonWebKey jsonWebKey,
+      String algorithm)
+      throws JoseInvalidException {
+    try {
+      JWSHeader jwsHeader =
+          new JWSHeader.Builder(JWSAlgorithm.parse(algorithm))
+              .keyID(jsonWebKey.keyId())
+              .customParams(customHeaders)
+              .build();
+
+      SignedJWT signedJWT = new SignedJWT(jwsHeader, JWTClaimsSet.parse(claims));
+      signedJWT.sign(of(jsonWebKey));
+      return new JsonWebSignature(signedJWT);
+    } catch (JsonWebKeyInvalidException | JOSEException | ParseException e) {
+      throw new JoseInvalidException(e.getMessage(), e);
+    }
+  }
+
+  /**
+   * Signs with a shared secret (HS256, HS384 or HS512), as {@code client_secret_jwt} does.
+   *
+   * <p>The secret's UTF-8 bytes are the key. It must be at least as long as the hash: 32 bytes for
+   * HS256, 48 for HS384, 64 for HS512 (RFC 7518 §3.2); a shorter one fails here rather than signing
+   * with a weak key.
+   */
+  public JsonWebSignature createWithSymmetricKey(
+      Map<String, Object> claims,
+      Map<String, Object> customHeaders,
+      String algorithm,
+      String secret)
+      throws JoseInvalidException {
+    try {
+      JWSAlgorithm jwsAlgorithm = JWSAlgorithm.parse(algorithm);
+      if (!JWSAlgorithm.Family.HMAC_SHA.contains(jwsAlgorithm)) {
+        throw new JoseInvalidException("not an HMAC algorithm: " + algorithm);
+      }
+      JWSHeader jwsHeader = new JWSHeader.Builder(jwsAlgorithm).customParams(customHeaders).build();
+
+      SignedJWT signedJWT = new SignedJWT(jwsHeader, JWTClaimsSet.parse(claims));
+      signedJWT.sign(new MACSigner(secret.getBytes(StandardCharsets.UTF_8)));
+      return new JsonWebSignature(signedJWT);
+    } catch (JOSEException | ParseException e) {
       throw new JoseInvalidException(e.getMessage(), e);
     }
   }
